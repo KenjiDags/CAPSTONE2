@@ -17,7 +17,7 @@ include 'sidebar.php'
         <h2>Registry of Semi-Expendable Property Issued</h2>
         
         <div class="search-container">
-        <button class="add-btn" onclick="document.getElementById('addModal').style.display='block'">
+        <button class="add-btn" id="addItemsBtn">
                 <i class="fas fa-plus"></i> Add new Item
             </button>
             <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, description, or unit...">
@@ -45,16 +45,11 @@ include 'sidebar.php'
                     </div>
                 </div>
             </div>
-            <div class="zoom-slider-container">
-                <label for="zoomSlider">🔍 Zoom:</label>
-                <input type="range" id="zoomSlider" min="50" max="200" value="100">
-                <span id="zoomValue">100%</span>
-            </div>
+            
 
             <!-- Main Table -->
             <div class="rsep-table-container">
                 <div class="rsep-table-wrapper">
-                    <div class="table-zoom-wrapper">
                         <table class="rsep-table">
                             <thead>
                                 <tr>
@@ -109,7 +104,6 @@ include 'sidebar.php'
                                 <!-- Empty rows will be added here -->
                             </tbody>
                         </table>
-                    </div>
                 </div>
             </div>
         </div>
@@ -221,8 +215,8 @@ include 'sidebar.php'
 
     <script>
         // Modal functionality
-        const modal = document.getElementById('itemModal');
-        const addItemsBtn = document.getElementById('addItemsBtn');
+    const modal = document.getElementById('itemModal');
+    const addItemsBtn = document.getElementById('addItemsBtn');
         const closeModal = document.getElementById('closeModal');
         const cancelBtn = document.getElementById('cancelBtn');
         const addItemBtn = document.getElementById('addItemBtn');
@@ -325,40 +319,7 @@ include 'sidebar.php'
             }
         });
     </script>
-    <script>
-        const tableWrapper = document.querySelector(".table-zoom-wrapper");
-        const table = document.querySelector(".rsep-table");
-        const zoomSlider = document.getElementById("zoomSlider");
-        const zoomValue = document.getElementById("zoomValue");
-
-        let zoomLevel = 1;
-
-        function applyZoom(zoomPercent) {
-            zoomLevel = zoomPercent / 100;
-            table.style.transform = `scale(${zoomLevel})`;
-            zoomSlider.value = zoomPercent;
-            zoomValue.textContent = `${zoomPercent}%`;
-        }
-
-        // Zoom via slider
-        zoomSlider.addEventListener("input", function () {
-            applyZoom(this.value);
-        });
-
-        // Zoom via scroll
-        tableWrapper.addEventListener("wheel", function (e) {
-            if (e.ctrlKey || e.shiftKey) return;
-
-            e.preventDefault();
-            const zoomFactor = 5;
-            let newZoom = zoomLevel * 100 + (e.deltaY < 0 ? zoomFactor : -zoomFactor);
-            newZoom = Math.min(Math.max(50, newZoom), 200);
-            applyZoom(newZoom);
-        });
-
-        // Initialize
-        applyZoom(100);
-        </script>
+    
 
 
 </body>

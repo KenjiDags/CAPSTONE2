@@ -80,7 +80,7 @@ function editIctEntry($conn, $data) {
     // i(issued_qty) s(issued_officer) i(returned_qty) s(returned_officer)
     // i(reissued_qty) s(reissued_officer) i(disposed_qty) i(balance_qty)
     // d(total_amount) s(remarks) i(id)
-    $stmt->bind_param("ssssiisisiisiidsi", 
+        $stmt->bind_param("ssssiisisiisiids", 
         $data['entry_date'],
         $data['reference_no'],
         $data['property_no'],
@@ -96,7 +96,7 @@ function editIctEntry($conn, $data) {
         $balance_qty,
         $data['total_amount'],
         $data['remarks'],
-        $data['id']
+            $data['id']
     );
     
     return $stmt->execute();

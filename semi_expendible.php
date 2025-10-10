@@ -349,11 +349,11 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
                                 <td>₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td>
-                                    <button class="btn btn-sm btn-info" onclick="window.location.href='view_semi_expendable.php?id=<?php echo $item['id']; ?>'" title="View Details">
-                                        <i class="fas fa-eye"></i>
+                                    <button class="btn btn-sm btn-info" onclick="window.location.href='view_semi_expendable.php?id=<?php echo $item['id']; ?>'" title="View Details" aria-label="View">
+                                        <i class="fas fa-eye"></i> View
                                     </button>
-                                    <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="btn btn-sm btn-primary" title="Edit">
-                                        <i class="fas fa-edit"></i>
+                                    <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="btn btn-sm btn-primary" title="Edit" aria-label="Edit">
+                                        <i class="fas fa-edit"></i> Edit
                                     </a>
                                 </td>
                             </tr>

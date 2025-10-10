@@ -53,8 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 quantity_balance = ?, 
                 amount_total = ?, 
                 category = ?, 
-                remarks = ?,
-                updated_at = CURRENT_TIMESTAMP
+                remarks = ?
             WHERE id = ?
         ");
         
@@ -62,24 +61,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
         
+        // Prepare variables (must be variables for bind_param references)
+        $p_date = $_POST['date'];
+        $p_ics_rrsp_no = $_POST['ics_rrsp_no'];
+        $p_property_no = $_POST['semi_expendable_property_no'];
+        $p_item_desc = $_POST['item_description'];
+        $p_useful_life = isset($_POST['estimated_useful_life']) ? (int)$_POST['estimated_useful_life'] : 0;
+        $p_qty_issued = isset($_POST['quantity_issued']) ? (int)$_POST['quantity_issued'] : 0;
+        $p_officer_issued = $_POST['office_officer_issued'] ?? '';
+        $p_qty_returned = isset($_POST['quantity_returned']) ? (int)$_POST['quantity_returned'] : 0;
+        $p_officer_returned = $_POST['office_officer_returned'] ?? '';
+        $p_qty_reissued = isset($_POST['quantity_reissued']) ? (int)$_POST['quantity_reissued'] : 0;
+        $p_officer_reissued = $_POST['office_officer_reissued'] ?? '';
+        $p_qty_disposed = isset($_POST['quantity_disposed']) ? (int)$_POST['quantity_disposed'] : 0;
+        $p_qty_balance = isset($_POST['quantity_balance']) ? (int)$_POST['quantity_balance'] : 0;
+        $p_amount_total = isset($_POST['amount_total']) ? (float)$_POST['amount_total'] : 0.0;
+        $p_category = $_POST['category'];
+        $p_remarks = $_POST['remarks'] ?? '';
+
         $stmt->bind_param(
-            "ssssiississdssi",
-            $_POST['date'],
-            $_POST['ics_rrsp_no'],
-            $_POST['semi_expendable_property_no'],
-            $_POST['item_description'],
-            $_POST['estimated_useful_life'],
-            $_POST['quantity_issued'],
-            $_POST['office_officer_issued'],
-            $_POST['quantity_returned'] ?: 0,
-            $_POST['office_officer_returned'],
-            $_POST['quantity_reissued'] ?: 0,
-            $_POST['office_officer_reissued'],
-            $_POST['quantity_disposed'] ?: 0,
-            $_POST['quantity_balance'],
-            $_POST['amount_total'],
-            $_POST['category'],
-            $_POST['remarks'],
+            "ssssiisisisiidssi",
+            $p_date,
+            $p_ics_rrsp_no,
+            $p_property_no,
+            $p_item_desc,
+            $p_useful_life,
+            $p_qty_issued,
+            $p_officer_issued,
+            $p_qty_returned,
+            $p_officer_returned,
+            $p_qty_reissued,
+            $p_officer_reissued,
+            $p_qty_disposed,
+            $p_qty_balance,
+            $p_amount_total,
+            $p_category,
+            $p_remarks,
             $id
         );
         
