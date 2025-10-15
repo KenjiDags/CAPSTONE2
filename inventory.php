@@ -503,6 +503,19 @@ case 'update':
     <title>TESDA Inventory Management System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Keep icon and text on a single line for action buttons */
+        .btn.edit-btn, .btn.delete-btn, .btn.clear-entries-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        /* Slight spacing polish for icons */   
+        .btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
+            font-size: 0.95em;
+        }
+    </style>
 </head>
 <body>
 <?php include 'sidebar.php'; ?>

@@ -100,6 +100,18 @@ $stmt->close();
   </tr>
     </table>
 
+    <?php
+      // Load history rows for this semi item
+      $hist_rows = [];
+      if ($hstmt = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at DESC, id DESC")) {
+        $hstmt->bind_param("i", $id);
+        $hstmt->execute();
+        $hres = $hstmt->get_result();
+        while ($hr = $hres->fetch_assoc()) { $hist_rows[] = $hr; }
+        $hstmt->close();
+      }
+    ?>
+
     <table class="property-card-table">
       <thead>
         <tr class="meta-row">
@@ -144,6 +156,7 @@ $stmt->close();
             (int)($item['quantity_disposed'] ?? 0)
           );
         ?>
+        <!-- Current snapshot row -->
         <tr>
           <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
           <td><?php echo htmlspecialchars($item['ics_rrsp_no'] ?? ''); ?></td>
@@ -157,7 +170,31 @@ $stmt->close();
           <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
           <td><?php echo htmlspecialchars($item['remarks'] ?? ''); ?></td>
         </tr>
-        <?php for ($i = 0; $i < 19; $i++): ?>
+        <?php $rendered = 1; ?>
+        <?php if (!empty($hist_rows)): ?>
+          <?php foreach ($hist_rows as $hr): 
+              $h_qtyIssued = (int)($hr['quantity_issued'] ?? 0);
+              $h_amount = (float)($hr['amount_total'] ?? 0.0);
+              $h_unit = $h_qtyIssued > 0 ? $h_amount / $h_qtyIssued : 0;
+              $h_issue = (int)($hr['quantity_reissued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
+          ?>
+            <tr>
+              <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($hr['ics_rrsp_no'] ?? ''); ?></td>
+              <td><?php echo $h_qtyIssued ?: ''; ?></td>
+              <td><?php echo $h_qtyIssued ? number_format($h_unit, 2) : ''; ?></td>
+              <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
+              <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
+              <td><?php echo $h_issue ?: ''; ?></td>
+              <td><?php echo htmlspecialchars($hr['office_officer_reissued'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($hr['quantity_balance'] ?? ''); ?></td>
+              <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
+              <td><?php echo htmlspecialchars($hr['remarks'] ?? ''); ?></td>
+            </tr>
+            <?php $rendered++; ?>
+          <?php endforeach; ?>
+        <?php endif; ?>
+        <?php for ($i = $rendered; $i < 20; $i++): ?>
         <tr>
           <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
         </tr>

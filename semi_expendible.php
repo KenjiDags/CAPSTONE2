@@ -1,6 +1,24 @@
 <?php
+// Start output buffering to allow safe redirects after delete
+ob_start();
 include 'config.php'; // This gives us $conn (MySQLi connection)
 include 'sidebar.php';
+
+// Handle delete action
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $delete_id = (int)$_POST['delete_id'];
+    if ($delete_id > 0) {
+        if ($stmt = $conn->prepare("DELETE FROM semi_expendable_property WHERE id = ?")) {
+            $stmt->bind_param("i", $delete_id);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
+    $redirectCategory = isset($_POST['category']) ? $_POST['category'] : (isset($_GET['category']) ? $_GET['category'] : '');
+    if (ob_get_level() > 0) { ob_end_clean(); }
+    header('Location: semi_expendible.php' . ($redirectCategory ? ('?category=' . urlencode($redirectCategory) . '&deleted=1') : ''));
+    exit();
+}
 
 // Get category from URL parameter, default to 'Other PPE'
 $category = isset($_GET['category']) ? $_GET['category'] : 'Other PPE';
@@ -112,6 +130,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
         .table th {
             background: #2563eb;
@@ -180,6 +199,28 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             padding: 6px 12px;
             font-size: 12px;
         }
+        /* Pill-style action buttons (Edit/Delete) */
+        .pill-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            width: 110px; /* equal width for both, slightly smaller */
+            border-radius: 9999px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        }
+        .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.18); opacity: 0.96; text-decoration: none; }
+        .pill-edit { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
+        .pill-delete { background: linear-gradient(135deg, #ff9aa2 0%, #ef4444 100%); }
+    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.9em; }
+        .actions-cell { white-space: nowrap; }
+    .action-stack { display: inline-flex; flex-direction: column; gap: 6px; align-items: center; }
         .modal {
             display: none;
             position: fixed;
@@ -230,6 +271,23 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             color: #991b1b;
             border: 1px solid #fca5a5;
         }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        /* Align action buttons nicely */
+        .actions-cell { white-space: nowrap; }
+        .action-buttons { display: inline-flex; gap: 8px; align-items: center; }
+        .action-buttons .btn { margin: 0; }
+        .action-buttons form { margin: 0; display: inline; }
     </style>
 </head>
 <body>
@@ -292,6 +350,10 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             </div>
         </div>
 
+        <?php if (isset($_GET['deleted']) && $_GET['deleted'] == '1'): ?>
+            <div class="alert alert-success">Item deleted successfully.</div>
+        <?php endif; ?>
+
         <?php if (isset($error)): ?>
             <div class="alert alert-error">
                 <?php echo htmlspecialchars($error); ?>
@@ -348,13 +410,19 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                 <td><?php echo htmlspecialchars($item['office_officer_issued']); ?></td>
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
                                 <td>₱<?php echo number_format($item['amount_total'], 2); ?></td>
-                                <td>
-                                    <button class="btn btn-sm btn-info" onclick="window.location.href='view_semi_expendable.php?id=<?php echo $item['id']; ?>'" title="View Details" aria-label="View">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                    <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="btn btn-sm btn-primary" title="Edit" aria-label="Edit">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                <td class="actions-cell">
+                                    <div class="action-stack">
+                                        <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="pill-btn pill-edit" title="Edit" aria-label="Edit">
+                                            <i class="fas fa-pen"></i> Edit
+                                        </a>
+                                        <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="margin:0;">
+                                            <input type="hidden" name="delete_id" value="<?php echo (int)$item['id']; ?>">
+                                            <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
+                                            <button type="submit" class="pill-btn pill-delete" title="Delete" aria-label="Delete">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

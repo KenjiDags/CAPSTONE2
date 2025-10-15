@@ -1,5 +1,7 @@
 <?php
 // edit_semi_expendable.php - Edit form for semi-expendable property
+// Start output buffering to allow safe redirects even if sidebar outputs content
+ob_start();
 require_once 'config.php';
 require_once 'sidebar.php'; // Add sidebar requirement
 
@@ -101,16 +103,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         );
         
         if ($stmt->execute()) {
-            $success = "Item updated successfully!";
+            // Close statement and then record a history snapshot for exports/views
             $stmt->close();
-            
-            // Refresh item data
-            $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $item = $result->fetch_assoc();
-            $stmt->close();
+
+            // Ensure history table exists (idempotent)
+            $conn->query("CREATE TABLE IF NOT EXISTS semi_expendable_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                semi_id INT NOT NULL,
+                date DATE NULL,
+                ics_rrsp_no VARCHAR(255) NULL,
+                quantity_issued INT DEFAULT 0,
+                quantity_returned INT DEFAULT 0,
+                quantity_reissued INT DEFAULT 0,
+                quantity_disposed INT DEFAULT 0,
+                quantity_balance INT DEFAULT 0,
+                office_officer_issued VARCHAR(255) NULL,
+                office_officer_returned VARCHAR(255) NULL,
+                office_officer_reissued VARCHAR(255) NULL,
+                amount_total DECIMAL(15,2) DEFAULT 0,
+                remarks TEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX (semi_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // Insert snapshot using current posted values
+            if ($hist = $conn->prepare("INSERT INTO semi_expendable_history (
+                semi_id, date, ics_rrsp_no, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
+                quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount_total, remarks
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+                $hist->bind_param(
+                    "issiiiiisssds",
+                    $id,
+                    $p_date,
+                    $p_ics_rrsp_no,
+                    $p_qty_issued,
+                    $p_qty_returned,
+                    $p_qty_reissued,
+                    $p_qty_disposed,
+                    $p_qty_balance,
+                    $p_officer_issued,
+                    $p_officer_returned,
+                    $p_officer_reissued,
+                    $p_amount_total,
+                    $p_remarks
+                );
+                $hist->execute();
+                $hist->close();
+            }
+            // Determine return target: prefer explicit return param, else fallback to supply list by category
+            $returnTarget = $_POST['return'] ?? ($_GET['return'] ?? '');
+            // Basic safety: only allow relative PHP pages with optional query string
+            $isSafe = is_string($returnTarget) && preg_match('/^[A-Za-z0-9_\-]+\.php(\?.*)?$/', $returnTarget);
+            if (ob_get_level() > 0) { ob_end_clean(); }
+            if ($isSafe && $returnTarget !== '') {
+                header('Location: ' . $returnTarget);
+                exit();
+            }
+            $redirectCategory = isset($p_category) && $p_category !== '' ? ('?category=' . urlencode($p_category)) : '';
+            header('Location: semi_expendible.php' . $redirectCategory);
+            exit();
         } else {
             $error = "Failed to update item: " . $stmt->error;
             $stmt->close();
@@ -222,7 +273,16 @@ if (!$item && empty($error)) {
             <?php endif; ?>
 
             <?php if ($item): ?>
+                <?php
+                  // Compute cancel/back URL: prefer 'return' when safe
+                  $cancelUrl = 'semi_expendible.php?category=' . urlencode($item['category']);
+                  $returnGet = $_GET['return'] ?? '';
+                  if (is_string($returnGet) && preg_match('/^[A-Za-z0-9_\-]+\.php(\?.*)?$/', $returnGet)) {
+                      $cancelUrl = $returnGet;
+                  }
+                ?>
                 <form method="POST">
+                    <input type="hidden" name="return" value="<?php echo htmlspecialchars($_GET['return'] ?? ''); ?>">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="date">Date</label>
@@ -334,7 +394,7 @@ if (!$item && empty($error)) {
 
                     <div style="margin-top: 30px;">
                         <button type="submit" class="btn btn-primary">Update Item</button>
-                        <a href="semi_expendible.php?category=<?php echo urlencode($item['category']); ?>" class="btn btn-secondary">Cancel</a>
+                        <a href="<?php echo htmlspecialchars($cancelUrl); ?>" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
             <?php endif; ?> 
