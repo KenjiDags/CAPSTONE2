@@ -125,6 +125,7 @@ CREATE TABLE semi_expendable_property (
     semi_expendable_property_no VARCHAR(50) NOT NULL,
     item_description TEXT NOT NULL,
     estimated_useful_life INT DEFAULT 5,
+  quantity INT DEFAULT 0,
     quantity_issued INT DEFAULT 0,
     office_officer_issued VARCHAR(255),
     quantity_returned INT DEFAULT 0,
@@ -133,6 +134,7 @@ CREATE TABLE semi_expendable_property (
     office_officer_reissued VARCHAR(255),
     quantity_disposed INT DEFAULT 0,
     quantity_balance INT DEFAULT 0,
+    amount DECIMAL(15,2) DEFAULT 0.00,
     amount_total DECIMAL(10,2) DEFAULT 0.00,
     category ENUM('Other PPE', 'Office Equipment', 'ICT Equipment', 'Communication Equipment', 'Furniture and Fixtures') NOT NULL,
     fund_cluster VARCHAR(10) DEFAULT '101',
@@ -140,6 +142,36 @@ CREATE TABLE semi_expendable_property (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Ensure 'amount' exists for existing databases
+ALTER TABLE semi_expendable_property
+  ADD COLUMN IF NOT EXISTS amount DECIMAL(15,2) DEFAULT 0.00;
+
+-- Create history table for semi-expendables (captures snapshots)
+CREATE TABLE IF NOT EXISTS semi_expendable_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    semi_id INT NOT NULL,
+    date DATE NULL,
+    ics_rrsp_no VARCHAR(255) NULL,
+    quantity INT DEFAULT 0,
+    quantity_issued INT DEFAULT 0,
+    quantity_returned INT DEFAULT 0,
+    quantity_reissued INT DEFAULT 0,
+    quantity_disposed INT DEFAULT 0,
+    quantity_balance INT DEFAULT 0,
+    office_officer_issued VARCHAR(255) NULL,
+    office_officer_returned VARCHAR(255) NULL,
+    office_officer_reissued VARCHAR(255) NULL,
+    amount DECIMAL(15,2) DEFAULT 0.00,
+    amount_total DECIMAL(15,2) DEFAULT 0.00,
+    remarks TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (semi_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Ensure 'amount' exists on history for existing databases
+ALTER TABLE semi_expendable_history
+  ADD COLUMN IF NOT EXISTS amount DECIMAL(15,2) DEFAULT 0.00;
 
 -- Insert sample data from the registry images
 

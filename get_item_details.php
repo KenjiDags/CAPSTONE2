@@ -1,4 +1,4 @@
-<?php
+    <?php
 // get_item_details.php - API endpoint to fetch item details
 header('Content-Type: application/json');
 require_once 'config.php'; // Your database config

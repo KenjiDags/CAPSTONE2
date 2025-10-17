@@ -1,5 +1,8 @@
 <?php include 'sidebar.php'; ?>
 <?php require 'config.php'; 
+      require_once 'functions.php';
+      // Make sure history table exists to avoid fatal errors on first use
+      ensure_semi_expendable_history($conn);
     
     if (!isset($_GET['id'])) {
         die("❌ Error: item not found.");
@@ -54,8 +57,24 @@
             <p><strong>Property No.:</strong> <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></p>
             <p><strong>Description:</strong> <?php echo htmlspecialchars($item['item_description']); ?></p>
             <p><strong>Category:</strong> <?php echo htmlspecialchars($item['category']); ?></p>
+            <?php $baseQty = (int)($item['quantity'] ?? ($item['quantity_issued'] ?? 0)); ?>
+            <p><strong>Quantity:</strong> <?php echo number_format($baseQty); ?></p>
             <p><strong>Quantity Issued:</strong> <?php echo htmlspecialchars($item['quantity_issued']); ?></p>
-            <p><strong>Officer/Office Issued:</strong> <?php echo htmlspecialchars($item['office_officer_issued']); ?></p>
+            <?php 
+                // Choose the appropriate Office/Officer field for the current item summary
+                $summary_officer = '';
+                if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
+                    $summary_officer = $item['office_officer_returned'] ?? '';
+                    $summary_label = 'Office/Officer Returned';
+                } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+                    $summary_officer = $item['office_officer_reissued'] ?? '';
+                    $summary_label = 'Office/Officer Re-issued';
+                } else {
+                    $summary_officer = $item['office_officer_issued'] ?? '';
+                    $summary_label = 'Office/Officer Issued';
+                }
+            ?>
+            <p><strong><?php echo $summary_label; ?>:</strong> <?php echo htmlspecialchars($summary_officer); ?></p>
             <p><strong>Quantity Returned:</strong> <?php echo htmlspecialchars($item['quantity_returned']); ?></p>
             <p><strong>Quantity Re-issued:</strong> <?php echo htmlspecialchars($item['quantity_reissued']); ?></p>
             <p><strong>Quantity Disposed:</strong> <?php echo htmlspecialchars($item['quantity_disposed']); ?></p>
@@ -67,20 +86,37 @@
             <p><strong>Remarks:</strong> <?php echo htmlspecialchars($item['remarks']); ?></p>
             <?php
                 // Prepare computed values similar to export/PC list
-                $qtyIssued = (int)($item['quantity_issued'] ?? 0);
+                // Base quantity comes from 'quantity' column when present; fallback if needed
+                $qtyIssued = (int)($item['quantity'] ?? ($item['quantity_issued'] ?? 0));
                 $amountTotal = (float)($item['amount_total'] ?? 0);
-                $issueQty = (int)($item['quantity_reissued'] ?? 0) + (int)($item['quantity_disposed'] ?? 0);
-                $officeOfficer = $item['office_officer_reissued'] ?: ($item['office_officer_issued'] ?? '');
+                // Issue/Transfer/Disposal Qty now equals Quantity Issued + Quantity Disposed
+                $issueQty = (int)($item['quantity_issued'] ?? 0) + (int)($item['quantity_disposed'] ?? 0);
+                // Compute Office/Officer label for the current snapshot row
+                $officeOfficer = '';
+                if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
+                    $officeOfficer = $item['office_officer_returned'] ?? '';
+                } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+                    $officeOfficer = $item['office_officer_reissued'] ?? '';
+                } else {
+                    $officeOfficer = $item['office_officer_issued'] ?? '';
+                }
 
                 // Fetch history rows (latest first)
                 $hist_rows = [];
-                $hist_q = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at DESC, id DESC");
+                $hist_q = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at ASC, id ASC");
                 if ($hist_q) {
                     $hist_q->bind_param("i", $id);
                     $hist_q->execute();
                     $hist_res = $hist_q->get_result();
                     while ($hr = $hist_res->fetch_assoc()) { $hist_rows[] = $hr; }
                     $hist_q->close();
+                }
+                // Remove only 'Pre-ICS Snapshot' rows from view rendering (show Initial Receipt)
+                if (!empty($hist_rows)) {
+                    $hist_rows = array_values(array_filter($hist_rows, function($hr){
+                        $remarks = isset($hr['remarks']) ? trim($hr['remarks']) : '';
+                        return strcasecmp($remarks, 'Pre-ICS Snapshot') !== 0;
+                    }));
                 }
             ?>
 
@@ -90,10 +126,10 @@
                         <tr>
                             <th rowspan="2" style="width:10%;">Date</th>
                             <th rowspan="2">Reference</th>
+                            <th rowspan="2">Description</th>
                             <th>Receipt</th>
-                            <th colspan="2">Issue</th>
+                            <th colspan="2">Issue/Transfer/Disposal</th>
                             <th rowspan="2">Balance Qty.</th>
-                            <th rowspan="2">Days to Consume</th>
                         </tr>
                         <tr>
                             <th>Qty.</th>
@@ -106,25 +142,37 @@
                         <tr>
                             <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($item['ics_rrsp_no'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($item['item_description'] ?? ''); ?></td>
                             <td><?php echo $qtyIssued ?: ''; ?></td>
                             <td><?php echo $issueQty ?: ''; ?></td>
                             <td><?php echo htmlspecialchars($officeOfficer); ?></td>
                             <td><?php echo htmlspecialchars($item['quantity_balance'] ?? ''); ?></td>
-                            <td>--</td>
                         </tr>
                         <?php if (!empty($hist_rows)): ?>
                             <?php foreach ($hist_rows as $hr): 
-                                $h_issueQty = (int)($hr['quantity_reissued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
-                                $h_office = $hr['office_officer_reissued'] ?: ($hr['office_officer_issued'] ?? '');
+                                // For history rows, Issue Qty = quantity_issued + quantity_disposed
+                                $h_issueQty = (int)($hr['quantity_issued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
+                                // Pick proper Office/Officer for this history row
+                                $h_office = '';
+                                $rtext = strtolower(trim($hr['remarks'] ?? ''));
+                                if (strpos($rtext, 'returned') !== false || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0)) {
+                                    $h_office = $hr['office_officer_returned'] ?? '';
+                                } elseif (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
+                                    $h_office = $hr['office_officer_reissued'] ?? '';
+                                } elseif (strpos($rtext, 'issued') !== false || (isset($hr['quantity_issued']) && (int)$hr['quantity_issued'] > 0)) {
+                                    $h_office = $hr['office_officer_issued'] ?? '';
+                                } else {
+                                    $h_office = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
+                                }
                             ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
                                 <td><?php echo htmlspecialchars($hr['ics_rrsp_no'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($item['item_description'] ?? ''); ?></td>
                                 <td><?php echo (int)($hr['quantity_issued'] ?? 0) ?: ''; ?></td>
                                 <td><?php echo $h_issueQty ?: ''; ?></td>
                                 <td><?php echo htmlspecialchars($h_office); ?></td>
                                 <td><?php echo htmlspecialchars($hr['quantity_balance'] ?? ''); ?></td>
-                                <td>--</td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

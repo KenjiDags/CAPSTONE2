@@ -79,6 +79,43 @@ function updateAverageCost($conn, $item_id) {
 }
 
 
+// Ensure the semi_expendable_history table exists (idempotent)
+function ensure_semi_expendable_history($conn) {
+    if (!$conn) { return; }
+    $sql = "CREATE TABLE IF NOT EXISTS semi_expendable_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        semi_id INT NOT NULL,
+        date DATE NULL,
+        ics_rrsp_no VARCHAR(255) NULL,
+        quantity INT DEFAULT 0,
+        quantity_issued INT DEFAULT 0,
+        quantity_returned INT DEFAULT 0,
+        quantity_reissued INT DEFAULT 0,
+        quantity_disposed INT DEFAULT 0,
+        quantity_balance INT DEFAULT 0,
+        office_officer_issued VARCHAR(255) NULL,
+        office_officer_returned VARCHAR(255) NULL,
+        office_officer_reissued VARCHAR(255) NULL,
+        amount DECIMAL(15,2) DEFAULT 0,
+        amount_total DECIMAL(15,2) DEFAULT 0,
+        remarks TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX (semi_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    // Suppress fatal on create attempt; rely on mysqli error reporting elsewhere
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+    // Add missing column if the table existed before (MySQL/MariaDB IF NOT EXISTS supported in common versions)
+    try { $conn->query("ALTER TABLE semi_expendable_history ADD COLUMN IF NOT EXISTS amount DECIMAL(15,2) DEFAULT 0"); } catch (Throwable $e) { /* no-op */ }
+}
+
+// Ensure 'amount' column exists on both semi_expendable_property and semi_expendable_history
+function ensure_semi_expendable_amount_columns($conn) {
+    if (!$conn) { return; }
+    try { $conn->query("ALTER TABLE semi_expendable_property ADD COLUMN IF NOT EXISTS amount DECIMAL(15,2) DEFAULT 0"); } catch (Throwable $e) { /* no-op */ }
+    ensure_semi_expendable_history($conn);
+}
+
+
 function logItemHistory($conn, $item_id, ?int $quantity_change = null, string $change_type = 'update', ?int $ris_id = null) {
     // Fetch current item info
     $stmt = $conn->prepare("SELECT * FROM items WHERE item_id = ?");

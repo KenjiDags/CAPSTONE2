@@ -1,5 +1,8 @@
 <?php
 require 'config.php';
+require_once 'functions.php';
+// Ensure history table exists to prevent fatal errors on export
+ensure_semi_expendable_history($conn);
 
 if (!isset($_GET['id'])) {
     die("❌ Error: item not found.");
@@ -103,13 +106,20 @@ $stmt->close();
     <?php
       // Load history rows for this semi item
       $hist_rows = [];
-      if ($hstmt = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at DESC, id DESC")) {
+  if ($hstmt = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at ASC, id ASC")) {
         $hstmt->bind_param("i", $id);
         $hstmt->execute();
         $hres = $hstmt->get_result();
-        while ($hr = $hres->fetch_assoc()) { $hist_rows[] = $hr; }
+    while ($hr = $hres->fetch_assoc()) { $hist_rows[] = $hr; }
         $hstmt->close();
       }
+    // Remove only 'Pre-ICS Snapshot' rows from export rendering (show Initial Receipt as old data)
+    if (!empty($hist_rows)) {
+      $hist_rows = array_values(array_filter($hist_rows, function($hr){
+        $remarks = isset($hr['remarks']) ? trim($hr['remarks']) : '';
+        return strcasecmp($remarks, 'Pre-ICS Snapshot') !== 0;
+      }));
+    }
     ?>
 
     <table class="property-card-table">
@@ -147,37 +157,15 @@ $stmt->close();
       </thead>
       <tbody>
         <?php
-          $qtyIssued = (int)($item['quantity_issued'] ?? 0);
-          $amountTotal = (float)($item['amount_total'] ?? 0);
-          $unitCost = $qtyIssued > 0 ? $amountTotal / $qtyIssued : 0;
-          $qtyIssueTransfer = (
-            (int)($item['quantity_issued'] ?? 0) +
-            (int)($item['quantity_reissued'] ?? 0) +
-            (int)($item['quantity_disposed'] ?? 0)
-          );
+          // First, render history rows (oldest to newest)
+          $rendered = 0;
+          if (!empty($hist_rows)) {
+              foreach ($hist_rows as $hr) {
+                  $h_qtyIssued = (int)($hr['quantity'] ?? ($hr['quantity_issued'] ?? 0));
+                  $h_amount = (float)($hr['amount_total'] ?? 0.0);
+                  $h_unit = isset($hr['amount']) && $hr['amount'] !== null ? (float)$hr['amount'] : ($h_qtyIssued > 0 ? $h_amount / $h_qtyIssued : 0);
+                  $h_issue = (int)($hr['quantity_issued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
         ?>
-        <!-- Current snapshot row -->
-        <tr>
-          <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
-          <td><?php echo htmlspecialchars($item['ics_rrsp_no'] ?? ''); ?></td>
-          <td><?php echo $qtyIssued ?: ''; ?></td>
-          <td><?php echo $qtyIssued ? number_format($unitCost, 2) : ''; ?></td>
-          <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
-          <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
-          <td><?php echo $qtyIssueTransfer ?: ''; ?></td>
-          <td><?php echo htmlspecialchars($item['office_officer_reissued'] ?? ''); ?></td>
-          <td><?php echo htmlspecialchars($item['quantity_balance'] ?? ''); ?></td>
-          <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
-          <td><?php echo htmlspecialchars($item['remarks'] ?? ''); ?></td>
-        </tr>
-        <?php $rendered = 1; ?>
-        <?php if (!empty($hist_rows)): ?>
-          <?php foreach ($hist_rows as $hr): 
-              $h_qtyIssued = (int)($hr['quantity_issued'] ?? 0);
-              $h_amount = (float)($hr['amount_total'] ?? 0.0);
-              $h_unit = $h_qtyIssued > 0 ? $h_amount / $h_qtyIssued : 0;
-              $h_issue = (int)($hr['quantity_reissued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
-          ?>
             <tr>
               <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
               <td><?php echo htmlspecialchars($hr['ics_rrsp_no'] ?? ''); ?></td>
@@ -186,14 +174,72 @@ $stmt->close();
               <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
               <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
               <td><?php echo $h_issue ?: ''; ?></td>
-              <td><?php echo htmlspecialchars($hr['office_officer_reissued'] ?? ''); ?></td>
+        <td><?php 
+          // Choose the correct Office/Officer based on action for this history row
+          $rtext = strtolower(trim($hr['remarks'] ?? ''));
+          $h_officer = '';
+          if (strpos($rtext, 'returned') !== false || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0)) {
+            $h_officer = $hr['office_officer_returned'] ?? '';
+          } elseif (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
+            $h_officer = $hr['office_officer_reissued'] ?? '';
+          } elseif (strpos($rtext, 'issued') !== false || (isset($hr['quantity_issued']) && (int)$hr['quantity_issued'] > 0)) {
+            $h_officer = $hr['office_officer_issued'] ?? '';
+          } else {
+            // Fallback to any available value
+            $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
+          }
+          echo htmlspecialchars($h_officer);
+        ?></td>
               <td><?php echo htmlspecialchars($hr['quantity_balance'] ?? ''); ?></td>
               <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
-              <td><?php echo htmlspecialchars($hr['remarks'] ?? ''); ?></td>
+              <td><?php 
+                    $r = isset($hr['remarks']) ? trim($hr['remarks']) : ''; 
+                    echo htmlspecialchars(strcasecmp($r, 'Initial Receipt') === 0 ? '' : $r); 
+                  ?></td>
             </tr>
-            <?php $rendered++; ?>
-          <?php endforeach; ?>
-        <?php endif; ?>
+        <?php
+                  $rendered++;
+              }
+          }
+
+          // Only append current snapshot when there is no history at all
+          if (empty($hist_rows)) {
+              $qtyIssued = (int)($item['quantity'] ?? ($item['quantity_issued'] ?? 0));
+              $amountTotal = (float)($item['amount_total'] ?? 0);
+              $unitCost = isset($item['amount']) && $item['amount'] !== null ? (float)$item['amount'] : ($qtyIssued > 0 ? $amountTotal / $qtyIssued : 0);
+              $qtyIssueTransfer = (int)($item['quantity_issued'] ?? 0) + (int)($item['quantity_disposed'] ?? 0);
+        ?>
+              <tr>
+                <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($item['ics_rrsp_no'] ?? ''); ?></td>
+                <td><?php echo $qtyIssued ?: ''; ?></td>
+                <td><?php echo $qtyIssued ? number_format($unitCost, 2) : ''; ?></td>
+                <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
+                <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
+                <td><?php echo $qtyIssueTransfer ?: ''; ?></td>
+        <td><?php 
+            // Choose appropriate Office/Officer for current snapshot (no history)
+            $c_officer = '';
+            if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
+              $c_officer = $item['office_officer_returned'] ?? '';
+            } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+              $c_officer = $item['office_officer_reissued'] ?? '';
+            } else {
+              $c_officer = $item['office_officer_issued'] ?? '';
+            }
+            echo htmlspecialchars($c_officer);
+          ?></td>
+                <td><?php echo htmlspecialchars($item['quantity_balance'] ?? ''); ?></td>
+                <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
+                <td><?php 
+                      $r = isset($item['remarks']) ? trim($item['remarks']) : '';
+                      echo htmlspecialchars(strcasecmp($r, 'Initial Receipt') === 0 ? '' : $r);
+                    ?></td>
+              </tr>
+        <?php
+              $rendered++;
+          }
+        ?>
         <?php for ($i = $rendered; $i < 20; $i++): ?>
         <tr>
           <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>

@@ -3,6 +3,7 @@
 // Start output buffering to allow safe redirects even if sidebar outputs content
 ob_start();
 require_once 'config.php';
+require_once 'functions.php';
 require_once 'sidebar.php'; // Add sidebar requirement
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -38,6 +39,80 @@ if ($id > 0) {
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
     try {
+    // Ensure required columns exist (idempotent)
+    ensure_semi_expendable_amount_columns($conn);
+        // Ensure history table exists (idempotent) and record a snapshot BEFORE updating
+    $conn->query("CREATE TABLE IF NOT EXISTS semi_expendable_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                semi_id INT NOT NULL,
+                date DATE NULL,
+                ics_rrsp_no VARCHAR(255) NULL,
+                quantity INT DEFAULT 0,
+                quantity_issued INT DEFAULT 0,
+                quantity_returned INT DEFAULT 0,
+                quantity_reissued INT DEFAULT 0,
+                quantity_disposed INT DEFAULT 0,
+                quantity_balance INT DEFAULT 0,
+                office_officer_issued VARCHAR(255) NULL,
+                office_officer_returned VARCHAR(255) NULL,
+                office_officer_reissued VARCHAR(255) NULL,
+        amount DECIMAL(15,2) DEFAULT 0,
+                amount_total DECIMAL(15,2) DEFAULT 0,
+                remarks TEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX (semi_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    // Add missing column for legacy tables
+    try { $conn->query("ALTER TABLE semi_expendable_history ADD COLUMN IF NOT EXISTS amount DECIMAL(15,2) DEFAULT 0"); } catch (Throwable $e) { /* no-op */ }
+
+        // Begin transaction so history and update are atomic
+        if (method_exists($conn, 'begin_transaction')) {
+            $conn->begin_transaction();
+        }
+
+        // Build previous-state snapshot from $item (so edits append as next row rather than duplicating current)
+        $prev_date = $item['date'] ?? null;
+        $prev_ics = $item['ics_rrsp_no'] ?? '';
+        $prev_qty_base = isset($item['quantity']) ? (int)$item['quantity'] : (int)($item['quantity_issued'] ?? 0);
+    // quantity_issued column represents issued-out movement; keep previous value as-is
+    $prev_qty_issued = (int)($item['quantity_issued'] ?? 0);
+        $prev_qty_returned = (int)($item['quantity_returned'] ?? 0);
+        $prev_qty_reissued = (int)($item['quantity_reissued'] ?? 0);
+        $prev_qty_disposed = (int)($item['quantity_disposed'] ?? 0);
+        $prev_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $prev_qty_base - ($prev_qty_reissued + $prev_qty_disposed));
+        $prev_officer_issued = $item['office_officer_issued'] ?? '';
+        $prev_officer_returned = $item['office_officer_returned'] ?? '';
+        $prev_officer_reissued = $item['office_officer_reissued'] ?? '';
+        $prev_amount_total = isset($item['amount_total']) ? (float)$item['amount_total'] : 0.0;
+        $prev_amount_unit = isset($item['amount']) ? (float)$item['amount'] : ($prev_qty_base > 0 ? $prev_amount_total / $prev_qty_base : 0.0);
+        $prev_remarks = $item['remarks'] ?? '';
+
+        if ($histPre = $conn->prepare("INSERT INTO semi_expendable_history (
+                semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
+                quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount, amount_total, remarks
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+            $histPre->bind_param(
+                "issiiiiiisssdds",
+                $id,
+                $prev_date,
+                $prev_ics,
+                $prev_qty_base,
+                $prev_qty_issued,
+                $prev_qty_returned,
+                $prev_qty_reissued,
+                $prev_qty_disposed,
+                $prev_qty_balance,
+                $prev_officer_issued,
+                $prev_officer_returned,
+                $prev_officer_reissued,
+                $prev_amount_unit,
+                $prev_amount_total,
+                $prev_remarks
+            );
+            $histPre->execute();
+            $histPre->close();
+        }
+
         $stmt = $conn->prepare("
             UPDATE semi_expendable_property 
             SET date = ?, 
@@ -45,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 semi_expendable_property_no = ?, 
                 item_description = ?, 
                 estimated_useful_life = ?, 
+                quantity = ?,
                 quantity_issued = ?, 
                 office_officer_issued = ?, 
                 quantity_returned = ?, 
@@ -53,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 office_officer_reissued = ?, 
                 quantity_disposed = ?, 
                 quantity_balance = ?, 
+                amount = ?, 
                 amount_total = ?, 
                 category = ?, 
                 remarks = ?
@@ -69,26 +146,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         $p_property_no = $_POST['semi_expendable_property_no'];
         $p_item_desc = $_POST['item_description'];
         $p_useful_life = isset($_POST['estimated_useful_life']) ? (int)$_POST['estimated_useful_life'] : 0;
-        $p_qty_issued = isset($_POST['quantity_issued']) ? (int)$_POST['quantity_issued'] : 0;
+    $p_qty_issued = isset($_POST['quantity_issued']) ? (int)$_POST['quantity_issued'] : 0; // base quantity
+    $p_qty_issued_out = isset($_POST['quantity_issued_out']) ? (int)$_POST['quantity_issued_out'] : 0; // optional issued qty for balance
         $p_officer_issued = $_POST['office_officer_issued'] ?? '';
         $p_qty_returned = isset($_POST['quantity_returned']) ? (int)$_POST['quantity_returned'] : 0;
         $p_officer_returned = $_POST['office_officer_returned'] ?? '';
         $p_qty_reissued = isset($_POST['quantity_reissued']) ? (int)$_POST['quantity_reissued'] : 0;
         $p_officer_reissued = $_POST['office_officer_reissued'] ?? '';
         $p_qty_disposed = isset($_POST['quantity_disposed']) ? (int)$_POST['quantity_disposed'] : 0;
-        $p_qty_balance = isset($_POST['quantity_balance']) ? (int)$_POST['quantity_balance'] : 0;
-        $p_amount_total = isset($_POST['amount_total']) ? (float)$_POST['amount_total'] : 0.0;
+    // Balance = Quantity - (Quantity Issued + Quantity Re-issued + Quantity Disposed)
+    $p_qty_balance = max(0, $p_qty_issued - ($p_qty_issued_out + $p_qty_reissued + $p_qty_disposed));
+    // Unit amount input; compute total = quantity × unit amount
+    $p_unit_amount = isset($_POST['amount']) ? (float)$_POST['amount'] : 0.0;
+    $p_amount_total = round($p_unit_amount * $p_qty_issued, 2);
         $p_category = $_POST['category'];
         $p_remarks = $_POST['remarks'] ?? '';
 
+        // If current balance is zero, allow decreases but block increases beyond previous values
+        if ($prev_qty_balance === 0) {
+            $incIssued = $p_qty_issued_out > $prev_qty_issued;
+            $incReissued = $p_qty_reissued > $prev_qty_reissued;
+            $incDisposed = $p_qty_disposed > $prev_qty_disposed;
+            if ($incIssued || $incReissued || $incDisposed) {
+                throw new Exception('Balance is 0: You can reduce values but cannot increase issued/reissued/disposed.');
+            }
+        }
+
         $stmt->bind_param(
-            "ssssiisisisiidssi",
+            "ssssiiisisisiiddssi",
             $p_date,
             $p_ics_rrsp_no,
             $p_property_no,
             $p_item_desc,
             $p_useful_life,
-            $p_qty_issued,
+            $p_qty_issued, // quantity (base)
+            $p_qty_issued_out,
             $p_officer_issued,
             $p_qty_returned,
             $p_officer_returned,
@@ -96,6 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             $p_officer_reissued,
             $p_qty_disposed,
             $p_qty_balance,
+            $p_unit_amount,
             $p_amount_total,
             $p_category,
             $p_remarks,
@@ -103,53 +196,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         );
         
         if ($stmt->execute()) {
-            // Close statement and then record a history snapshot for exports/views
+            // After successful update, sync related ICS items so ICS stays connected to Semi edits
             $stmt->close();
 
-            // Ensure history table exists (idempotent)
-            $conn->query("CREATE TABLE IF NOT EXISTS semi_expendable_history (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                semi_id INT NOT NULL,
-                date DATE NULL,
-                ics_rrsp_no VARCHAR(255) NULL,
-                quantity_issued INT DEFAULT 0,
-                quantity_returned INT DEFAULT 0,
-                quantity_reissued INT DEFAULT 0,
-                quantity_disposed INT DEFAULT 0,
-                quantity_balance INT DEFAULT 0,
-                office_officer_issued VARCHAR(255) NULL,
-                office_officer_returned VARCHAR(255) NULL,
-                office_officer_reissued VARCHAR(255) NULL,
-                amount_total DECIMAL(15,2) DEFAULT 0,
-                remarks TEXT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX (semi_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-            // Insert snapshot using current posted values
-            if ($hist = $conn->prepare("INSERT INTO semi_expendable_history (
-                semi_id, date, ics_rrsp_no, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
-                quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount_total, remarks
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
-                $hist->bind_param(
-                    "issiiiiisssds",
-                    $id,
-                    $p_date,
-                    $p_ics_rrsp_no,
-                    $p_qty_issued,
-                    $p_qty_returned,
-                    $p_qty_reissued,
-                    $p_qty_disposed,
-                    $p_qty_balance,
-                    $p_officer_issued,
-                    $p_officer_returned,
-                    $p_officer_reissued,
-                    $p_amount_total,
-                    $p_remarks
-                );
-                $hist->execute();
-                $hist->close();
+            // 1) Update ICS item description and useful life for this property number
+            $newPropNo = (string)$p_property_no;
+            $newDesc = (string)$p_item_desc;
+            $newLife = (string)$p_useful_life; // ics_items stores useful life as text
+            if ($u1 = $conn->prepare("UPDATE ics_items SET description = ?, estimated_useful_life = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
+                $u1->bind_param("ssss", $newDesc, $newLife, $newPropNo, $newPropNo);
+                @ $u1->execute();
+                $u1->close();
             }
+
+            // 2) If the property number changed, propagate the new number to existing ICS items
+            $oldPropNo = (string)($item['semi_expendable_property_no'] ?? '');
+            if ($oldPropNo !== '' && $oldPropNo !== $newPropNo) {
+                if ($u2 = $conn->prepare("UPDATE ics_items SET inventory_item_no = ?, stock_number = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
+                    $u2->bind_param("ssss", $newPropNo, $newPropNo, $oldPropNo, $oldPropNo);
+                    @ $u2->execute();
+                    $u2->close();
+                }
+            }
+
+            if (method_exists($conn, 'commit')) { $conn->commit(); }
             // Determine return target: prefer explicit return param, else fallback to supply list by category
             $returnTarget = $_POST['return'] ?? ($_GET['return'] ?? '');
             // Basic safety: only allow relative PHP pages with optional query string
@@ -165,9 +235,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         } else {
             $error = "Failed to update item: " . $stmt->error;
             $stmt->close();
+            if (method_exists($conn, 'rollback')) { $conn->rollback(); }
         }
     } catch (Exception $e) {
         $error = "Database error: " . $e->getMessage();
+        if (method_exists($conn, 'rollback')) { $conn->rollback(); }
     }
 }
 
@@ -286,11 +358,11 @@ if (!$item && empty($error)) {
                     <div class="form-row">
                         <div class="form-group">
                             <label for="date">Date</label>
-                            <input type="date" id="date" name="date" value="<?php echo htmlspecialchars($item['date']); ?>" required>
+                            <input type="date" id="date" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? $item['date']); ?>" required>
                         </div>
                         <div class="form-group">
                             <label for="ics_rrsp_no">ICS/RRSP No.</label>
-                            <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" value="<?php echo htmlspecialchars($item['ics_rrsp_no']); ?>" required>
+                            <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" value="<?php echo htmlspecialchars($_POST['ics_rrsp_no'] ?? $item['ics_rrsp_no']); ?>" required>
                         </div>
                     </div>
 
@@ -298,14 +370,14 @@ if (!$item && empty($error)) {
                         <div class="form-group">
                             <label for="semi_expendable_property_no">Semi-Expendable Property No.</label>
                             <input type="text" id="semi_expendable_property_no" name="semi_expendable_property_no" 
-                                   value="<?php echo htmlspecialchars($item['semi_expendable_property_no']); ?>" required>
+                                   value="<?php echo htmlspecialchars($_POST['semi_expendable_property_no'] ?? $item['semi_expendable_property_no']); ?>" required>
                         </div>
                         <div class="form-group">
                             <label for="category">Category</label>
                             <select id="category" name="category" required>
                                 <?php foreach ($valid_categories as $cat): ?>
-                                    <option value="<?php echo htmlspecialchars($cat); ?>" 
-                                            <?php echo $cat === $item['category'] ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($cat); ?>" 
+                        <?php echo $cat === ($_POST['category'] ?? $item['category']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($cat); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -315,81 +387,98 @@ if (!$item && empty($error)) {
 
                     <div class="form-group">
                         <label for="item_description">Item Description</label>
-                        <textarea id="item_description" name="item_description" required><?php echo htmlspecialchars($item['item_description']); ?></textarea>
+                        <textarea id="item_description" name="item_description" required><?php echo htmlspecialchars($_POST['item_description'] ?? $item['item_description']); ?></textarea>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="estimated_useful_life">Estimated Useful Life (years)</label>
-                            <input type="number" id="estimated_useful_life" name="estimated_useful_life" 
-                                   value="<?php echo htmlspecialchars($item['estimated_useful_life']); ?>" min="1" max="20" required>
+                <input type="number" id="estimated_useful_life" name="estimated_useful_life" 
+                    value="<?php echo htmlspecialchars($_POST['estimated_useful_life'] ?? $item['estimated_useful_life']); ?>" min="1" max="20" required>
                         </div>
                         <div class="form-group">
-                            <label for="amount_total">Amount (Total)</label>
-                            <input type="number" id="amount_total" name="amount_total" step="0.01" min="0"
-                                   value="<?php echo htmlspecialchars($item['amount_total']); ?>" required>
+                            <label for="amount">Amount</label>
+                            <?php 
+                                $unitAmount = null;
+                                if (isset($_POST['amount'])) {
+                                    $unitAmount = (float)$_POST['amount'];
+                                } else {
+                                    $qtyBase = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                                    $unitAmount = ($qtyBase > 0) ? ((float)$item['amount_total'] / $qtyBase) : 0.0;
+                                }
+                            ?>
+                            <input type="number" id="amount" name="amount" step="0.01" min="0"
+                                   value="<?php echo htmlspecialchars(number_format((float)$unitAmount, 2, '.', '')); ?>" required>
                         </div>
                     </div>
 
-                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Issued Information</h3>
+                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Quantity</h3>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="quantity_issued">Quantity Issued</label>
-                            <input type="number" id="quantity_issued" name="quantity_issued" min="0"
-                                   value="<?php echo htmlspecialchars($item['quantity_issued']); ?>" required>
+                            <label for="quantity_issued">Quantity</label>
+                <input type="number" id="quantity_issued" name="quantity_issued" min="0"
+                    value="<?php echo htmlspecialchars(isset($_POST['quantity_issued']) ? $_POST['quantity_issued'] : (isset($item['quantity']) ? $item['quantity'] : ($item['quantity_issued'] ?? 0))); ?>" required>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns, Issued & Reissued (Optional)</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity_issued_out">Quantity Issued</label>
+                            <input type="number" id="quantity_issued_out" name="quantity_issued_out" min="0" value="<?php echo htmlspecialchars(isset($_POST['quantity_issued_out']) ? (int)$_POST['quantity_issued_out'] : (int)($item['quantity_issued'] ?? 0)); ?>" data-original="<?php echo htmlspecialchars((int)($item['quantity_issued'] ?? 0)); ?>">
                         </div>
                         <div class="form-group">
                             <label for="office_officer_issued">Office/Officer Issued</label>
                             <input type="text" id="office_officer_issued" name="office_officer_issued" 
-                                   value="<?php echo htmlspecialchars($item['office_officer_issued']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_issued'] ?? $item['office_officer_issued']); ?>">
                         </div>
                     </div>
-
-                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns & Reissued</h3>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label for="quantity_returned">Quantity Returned</label>
                             <input type="number" id="quantity_returned" name="quantity_returned" min="0"
-                                   value="<?php echo htmlspecialchars($item['quantity_returned']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['quantity_returned'] ?? $item['quantity_returned']); ?>">
                         </div>
                         <div class="form-group">
                             <label for="office_officer_returned">Office/Officer Returned</label>
                             <input type="text" id="office_officer_returned" name="office_officer_returned" 
-                                   value="<?php echo htmlspecialchars($item['office_officer_returned']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_returned'] ?? $item['office_officer_returned']); ?>">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="quantity_reissued">Quantity Re-issued</label>
-                            <input type="number" id="quantity_reissued" name="quantity_reissued" min="0"
-                                   value="<?php echo htmlspecialchars($item['quantity_reissued']); ?>">
+                <input type="number" id="quantity_reissued" name="quantity_reissued" min="0"
+                    value="<?php echo htmlspecialchars($_POST['quantity_reissued'] ?? $item['quantity_reissued']); ?>" data-original="<?php echo htmlspecialchars((int)($item['quantity_reissued'] ?? 0)); ?>">
                         </div>
                         <div class="form-group">
                             <label for="office_officer_reissued">Office/Officer Re-issued</label>
                             <input type="text" id="office_officer_reissued" name="office_officer_reissued" 
-                                   value="<?php echo htmlspecialchars($item['office_officer_reissued']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_reissued'] ?? $item['office_officer_reissued']); ?>">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="quantity_disposed">Quantity Disposed</label>
-                            <input type="number" id="quantity_disposed" name="quantity_disposed" min="0"
-                                   value="<?php echo htmlspecialchars($item['quantity_disposed']); ?>">
+                <input type="number" id="quantity_disposed" name="quantity_disposed" min="0"
+                    value="<?php echo htmlspecialchars($_POST['quantity_disposed'] ?? $item['quantity_disposed']); ?>" data-original="<?php echo htmlspecialchars((int)($item['quantity_disposed'] ?? 0)); ?>">
                         </div>
                         <div class="form-group">
                             <label for="quantity_balance">Quantity Balance</label>
                             <input type="number" id="quantity_balance" name="quantity_balance" min="0"
-                                   value="<?php echo htmlspecialchars($item['quantity_balance']); ?>" required>
+                                   value="<?php echo htmlspecialchars($_POST['quantity_balance'] ?? $item['quantity_balance']); ?>" required>
+                            <small style="color:#6b7280;">Auto-calculated: Quantity - (Quantity Issued + Quantity Re-issued + Quantity Disposed)</small>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="remarks">Remarks</label>
-                        <textarea id="remarks" name="remarks"><?php echo htmlspecialchars($item['remarks']); ?></textarea>
+                        <textarea id="remarks" name="remarks"><?php echo htmlspecialchars($_POST['remarks'] ?? $item['remarks']); ?></textarea>
                     </div>
 
                     <div style="margin-top: 30px;">
@@ -404,18 +493,37 @@ if (!$item && empty($error)) {
     <script>
     // Auto-calculate balance when quantities change
     function calculateBalance() {
-        const issued = parseInt(document.getElementById('quantity_issued').value) || 0;
-        const returned = parseInt(document.getElementById('quantity_returned').value) || 0;
+        const quantity = parseInt(document.getElementById('quantity_issued').value) || 0;
+        const issuedOut = parseInt(document.getElementById('quantity_issued_out')?.value) || 0;
         const reissued = parseInt(document.getElementById('quantity_reissued').value) || 0;
         const disposed = parseInt(document.getElementById('quantity_disposed').value) || 0;
-        
-        const balance = issued - returned + reissued - disposed;
+        const balance = quantity - (issuedOut + reissued + disposed);
         document.getElementById('quantity_balance').value = Math.max(0, balance);
+
+        // When balance is 0, allow decreases but prevent increases beyond original values
+        const locked = (Math.max(0, balance) === 0);
+        ['quantity_issued_out','quantity_reissued','quantity_disposed'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (locked) {
+                const maxVal = el.dataset.original ? parseInt(el.dataset.original) : null;
+                if (maxVal !== null && !Number.isNaN(maxVal)) {
+                    el.max = String(maxVal);
+                    if ((parseInt(el.value) || 0) > maxVal) {
+                        el.value = String(maxVal);
+                    }
+                }
+                el.title = 'Balance is 0: You can reduce values but cannot increase beyond original amounts.';
+            } else {
+                el.removeAttribute('max');
+                el.removeAttribute('title');
+            }
+        });
     }
 
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
-        const quantityFields = ['quantity_issued', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
+    const quantityFields = ['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
         
         quantityFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -424,6 +532,8 @@ if (!$item && empty($error)) {
                 field.addEventListener('change', calculateBalance);
             }
         });
+        // Initial calculation and lock state
+        calculateBalance();
     });
     </script>
 </body>

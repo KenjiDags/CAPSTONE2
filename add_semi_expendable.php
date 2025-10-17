@@ -1,6 +1,11 @@
 <?php
+// Enable safe redirects even if sidebar outputs content
+ob_start();
 require_once 'config.php';
+require_once 'functions.php';
 require_once 'sidebar.php'; // Add sidebar requirement
+// Ensure required columns exist (idempotent)
+ensure_semi_expendable_amount_columns($conn);
 
 $error = '';
 $success = '';
@@ -16,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $semi_expendable_property_no = $_POST['semi_expendable_property_no'];
     $item_description = $_POST['item_description'];
     $estimated_useful_life = intval($_POST['estimated_useful_life']);
+    // Base Quantity (receipt)
     $quantity_issued = intval($_POST['quantity_issued']);
     $office_officer_issued = $_POST['office_officer_issued'];
     $quantity_returned = intval($_POST['quantity_returned'] ?? 0);
@@ -23,8 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity_reissued = intval($_POST['quantity_reissued'] ?? 0);
     $office_officer_reissued = $_POST['office_officer_reissued'];
     $quantity_disposed = intval($_POST['quantity_disposed'] ?? 0);
-    $quantity_balance = intval($_POST['quantity_balance']);
-    $amount_total = floatval($_POST['amount_total']);
+    // Quantity Issued (issued-out movement that reduces balance)
+    $quantity_issued_out = intval($_POST['quantity_issued_out'] ?? 0);
+    // Compute balance: base quantity - (issued + reissued + disposed)
+    // Note: quantity_issued_out is stored in quantity_issued column
+    $quantity_balance = max(0, $quantity_issued - ($quantity_issued_out + $quantity_reissued + $quantity_disposed));
+    // Unit amount entered by user; store total = quantity × unit amount
+    $unit_amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0.0;
+    // amount_total = unit_amount × base quantity
+    $amount_total = round($unit_amount * $quantity_issued, 2);
     $category = $_POST['category'];
     $fund_cluster = $_POST['fund_cluster'] ?? '101';
     $remarks = $_POST['remarks'];
@@ -42,22 +55,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conn->prepare("
             INSERT INTO semi_expendable_property 
             (date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, 
-             quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, 
+             quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, 
              quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, 
-             amount_total, category, fund_cluster, remarks) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             amount, amount_total, category, fund_cluster, remarks) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         if (!$stmt) {
             $error = "Prepare failed: " . $conn->error;
         } else {
             $stmt->bind_param(
-                "ssssiississdsssss",
+                "ssssiiisisisiiddsss",
                 $date,
                 $ics_rrsp_no,
                 $semi_expendable_property_no,
                 $item_description,
                 $estimated_useful_life,
-                $quantity_issued,
+                $quantity_issued,      // quantity (base)
+                $quantity_issued_out,  // quantity_issued (issued-out movement)
                 $office_officer_issued,
                 $quantity_returned,
                 $office_officer_returned,
@@ -65,15 +79,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $office_officer_reissued,
                 $quantity_disposed,
                 $quantity_balance,
+                $unit_amount,
                 $amount_total,
                 $category,
                 $fund_cluster,
                 $remarks
             );
             if ($stmt->execute()) {
-                $success = "Item added successfully!";
+                // Capture new row id before closing
+                $new_id = $conn->insert_id;
                 $stmt->close();
-                $_POST = [];
+
+                // Record initial snapshot in history so exports always show a baseline row
+                ensure_semi_expendable_history($conn);
+                if ($h = $conn->prepare("INSERT INTO semi_expendable_history (
+                        semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
+                        quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount, amount_total, remarks
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+                    $histRemarks = $remarks !== '' ? $remarks : 'Initial Receipt';
+                    $h->bind_param(
+                        "issiiiiiisssdds",
+                        $new_id,
+                        $date,
+                        $ics_rrsp_no,
+                        $quantity_issued,        // quantity (base)
+                        $quantity_issued_out,    // quantity_issued (issued-out)
+                        $quantity_returned,
+                        $quantity_reissued,
+                        $quantity_disposed,
+                        $quantity_balance,
+                        $office_officer_issued,
+                        $office_officer_returned,
+                        $office_officer_reissued,
+                        $unit_amount,
+                        $amount_total,
+                        $histRemarks
+                    );
+                    @ $h->execute();
+                    $h->close();
+                }
+                // Redirect back to listing with category filter
+                $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
+                if (ob_get_level() > 0) { ob_end_clean(); }
+                header('Location: semi_expendible.php' . $redirectCategory);
+                exit();
             } else {
                 $error = "Failed to add item: " . $stmt->error;
                 $stmt->close();
@@ -231,10 +280,10 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                                value="<?php echo $_POST['estimated_useful_life'] ?? '5'; ?>" min="1" max="20" required>
                     </div>
                     <div class="form-group">
-                        <label for="amount_total">Amount (Total) <span class="required">*</span></label>
-                        <input type="number" id="amount_total" name="amount_total" step="0.01" min="0"
-                               value="<?php echo $_POST['amount_total'] ?? ''; ?>" 
-                               placeholder="0.00" required>
+                        <label for="amount">Amount <span class="required">*</span></label>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0"
+                               value="<?php echo $_POST['amount'] ?? ''; ?>" 
+                               placeholder="Unit amount (per item)" required>
                     </div>
                 </div>
 
@@ -245,24 +294,31 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                            placeholder="101">
                 </div>
 
-                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Issued Information</h3>
+                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Quantity</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="quantity_issued">Quantity Issued <span class="required">*</span></label>
+                        <label for="quantity_issued">Quantity <span class="required">*</span></label>
                         <input type="number" id="quantity_issued" name="quantity_issued" min="0"
                                value="<?php echo $_POST['quantity_issued'] ?? '1'; ?>" required>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns, Issued & Reissued (Optional)</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantity_issued_out">Quantity Issued</label>
+                        <input type="number" id="quantity_issued_out" name="quantity_issued_out" min="0"
+                               value="<?php echo $_POST['quantity_issued_out'] ?? '0'; ?>">
                     </div>
                     <div class="form-group">
                         <label for="office_officer_issued">Office/Officer Issued</label>
                         <input type="text" id="office_officer_issued" name="office_officer_issued" 
-                               value="<?php echo $_POST['office_officer_issued'] ?? ''; ?>"
-                               placeholder="Name of officer or office">
+                               value="<?php echo $_POST['office_officer_issued'] ?? ''; ?>">
                     </div>
                 </div>
 
-                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns & Reissued (Optional)</h3>
-                
                 <div class="form-row">
                     <div class="form-group">
                         <label for="quantity_returned">Quantity Returned</label>
@@ -299,7 +355,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <label for="quantity_balance">Quantity Balance <span class="required">*</span></label>
                         <input type="number" id="quantity_balance" name="quantity_balance" min="0"
                                value="<?php echo $_POST['quantity_balance'] ?? '1'; ?>" required readonly>
-                        <small style="color: #6b7280;">Auto-calculated based on issued, returned, reissued, and disposed quantities</small>
+                        <small style="color: #6b7280;">Auto-calculated: Quantity - (Quantity Issued + Quantity Re-issued + Quantity Disposed)</small>
                     </div>
                 </div>
 
@@ -310,7 +366,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
 
                 <div style="margin-top: 30px;">
                     <button type="submit" class="btn btn-primary">Add Item</button>
-                    <a href="semi_expendable.php?category=<?php echo urlencode($default_category); ?>" class="btn btn-secondary">Cancel</a>
+                    <a href="semi_expendible.php?category=<?php echo urlencode($default_category); ?>" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>
@@ -319,18 +375,33 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     <script>
     // Auto-calculate balance when quantities change
     function calculateBalance() {
-        const issued = parseInt(document.getElementById('quantity_issued').value) || 0;
-        const returned = parseInt(document.getElementById('quantity_returned').value) || 0;
-        const reissued = parseInt(document.getElementById('quantity_reissued').value) || 0;
-        const disposed = parseInt(document.getElementById('quantity_disposed').value) || 0;
-        
-        const balance = issued - returned + reissued - disposed;
+        const quantity = parseInt(document.getElementById('quantity_issued').value) || 0; // base quantity
+        const qtyIssuedOut = parseInt(document.getElementById('quantity_issued_out')?.value) || 0;
+        const qtyReissued = parseInt(document.getElementById('quantity_reissued').value) || 0;
+        const qtyDisposed = parseInt(document.getElementById('quantity_disposed').value) || 0;
+        const balance = quantity - (qtyIssuedOut + qtyReissued + qtyDisposed);
         document.getElementById('quantity_balance').value = Math.max(0, balance);
+
+        // When balance is 0, allow decreases but prevent increases beyond current values
+        const locked = (Math.max(0, balance) === 0);
+        ['quantity_issued_out','quantity_reissued','quantity_disposed'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (locked) {
+                // Use current value as the cap
+                const cap = parseInt(el.value) || 0;
+                el.max = String(cap);
+                el.title = 'Balance is 0: You can reduce values but cannot increase beyond current amounts.';
+            } else {
+                el.removeAttribute('max');
+                el.removeAttribute('title');
+            }
+        });
     }
 
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
-        const quantityFields = ['quantity_issued', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
+    const quantityFields = ['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
         
         quantityFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -340,7 +411,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             }
         });
 
-        // Initial calculation
+        // Initial calculation and lock state
         calculateBalance();
     });
     </script>

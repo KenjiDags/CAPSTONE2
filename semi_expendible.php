@@ -370,8 +370,8 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                         <th>Property No.</th>
                         <th>Item Description</th>
                         <th>Useful Life</th>
-                        <th>Qty Issued</th>
-                        <th>Officer/Office Issued</th>
+                        <th>Quantity</th>
+                        <th>Office/Officer</th>
                         <th>Balance</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -406,8 +406,23 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                         $item['item_description']); ?>
                                 </td>
                                 <td><?php echo $item['estimated_useful_life']; ?> years</td>
-                                <td><?php echo number_format($item['quantity_issued']); ?></td>
-                                <td><?php echo htmlspecialchars($item['office_officer_issued']); ?></td>
+                                <td><?php echo number_format(isset($item['quantity']) ? $item['quantity'] : 0); ?></td>
+                                <?php 
+                                    // Determine label and value dynamically per row
+                                    $list_label = 'Office/Officer Issued';
+                                    $list_officer = '';
+                                    if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
+                                        $list_label = 'Office/Officer Returned';
+                                        $list_officer = $item['office_officer_returned'] ?? '';
+                                    } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+                                        $list_label = 'Office/Officer Re-issued';
+                                        $list_officer = $item['office_officer_reissued'] ?? '';
+                                    } else {
+                                        $list_label = 'Office/Officer Issued';
+                                        $list_officer = $item['office_officer_issued'] ?? '';
+                                    }
+                                ?>
+                                <td title="<?php echo htmlspecialchars($list_label); ?>"><?php echo htmlspecialchars($list_officer); ?></td>
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
                                 <td>₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td class="actions-cell">
