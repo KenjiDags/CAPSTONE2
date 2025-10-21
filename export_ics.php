@@ -30,9 +30,10 @@ $item_query = "
         ii.estimated_useful_life,
         ii.serial_number
     FROM items i
-    INNER JOIN ics_items ii ON i.stock_number = ii.stock_number 
+    INNER JOIN ics_items ii 
+        ON (i.stock_number COLLATE utf8mb4_general_ci) = (ii.stock_number COLLATE utf8mb4_general_ci)
     WHERE ii.ics_id = $ics_id AND ii.quantity > 0
-    ORDER BY i.stock_number
+    ORDER BY (i.stock_number COLLATE utf8mb4_general_ci)
 ";
 $item_result = $conn->query($item_query);
 
@@ -55,15 +56,21 @@ if ($format == 'excel') {
     echo '<head><meta charset="UTF-8"></head>';
     echo '<body>';
     echo '<table border="1" style="border-collapse: collapse; width: 100%;">';
-    echo '<tr><th colspan="7" style="text-align: center; font-size: 16px; font-weight: bold; padding: 10px;">INVENTORY CUSTODIAN SLIP (ICS)</th></tr>';
+    // Top right label: Annex A.3
+    echo '<tr><td colspan="7" style="text-align:right; font-style:italic;">Annex A.3</td></tr>';
+    // Title
+    echo '<tr><th colspan="7" style="text-align: center; font-size: 16px; font-weight: bold; padding: 10px;">INVENTORY CUSTODIAN SLIP</th></tr>';
     echo '<tr><td colspan="7">&nbsp;</td></tr>';
-    
-    // ICS Information
-    echo '<tr><td><strong>Entity Name:</strong></td><td colspan="2">' . htmlspecialchars($ics['entity_name']) . '</td><td><strong>ICS No.:</strong></td><td colspan="2">' . htmlspecialchars($ics['ics_no']) . '</td><td></td></tr>';
-    echo '<tr><td><strong>Fund Cluster:</strong></td><td colspan="2">' . htmlspecialchars($ics['fund_cluster']) . '</td><td><strong>Date Issued:</strong></td><td colspan="2">' . date('F d, Y', strtotime($ics['date_issued'])) . '</td><td></td></tr>';
+
+    // Header line: Name of Department/Office and ICS Control No.
+    $dept = isset($ics['entity_name']) ? $ics['entity_name'] : '';
+    echo '<tr>';
+    echo '<td colspan="4" style="padding:6px;"><strong>Name of Department/Office :</strong> ' . htmlspecialchars($dept) . '</td>';
+    echo '<td colspan="3" style="padding:6px; text-align:right;"><strong>ICS Control No.</strong> ' . htmlspecialchars($ics['ics_no']) . '</td>';
+    echo '</tr>';
     echo '<tr><td colspan="7">&nbsp;</td></tr>';
-    
-    // Items Header
+
+    // Items Header matching template
     echo '<tr>';
     echo '<th rowspan="2" style="text-align: center; vertical-align: middle;">Quantity</th>';
     echo '<th rowspan="2" style="text-align: center; vertical-align: middle;">Unit</th>';
@@ -83,8 +90,8 @@ if ($format == 'excel') {
             echo '<tr>';
             echo '<td style="text-align: center;">' . number_format($item['quantity'], 2) . '</td>';
             echo '<td>' . htmlspecialchars($item['unit']) . '</td>';
-            echo '<td style="text-align: right;">₱' . number_format($item['unit_cost'], 2) . '</td>';
-            echo '<td style="text-align: right;">₱' . number_format($item['total_cost'], 2) . '</td>';
+            echo '<td style="text-align: right;">' . number_format($item['unit_cost'], 2) . '</td>';
+            echo '<td style="text-align: right;">' . number_format($item['total_cost'], 2) . '</td>';
             echo '<td>' . htmlspecialchars($item['item_name']) . ', ' . htmlspecialchars($item['description']);
             if (!empty($item['serial_number'])) {
                 echo ' (S/N: ' . htmlspecialchars($item['serial_number']) . ')';
@@ -99,23 +106,49 @@ if ($format == 'excel') {
     // Total Row
     echo '<tr>';
     echo '<td colspan="3" style="text-align: center; font-weight: bold;">TOTAL</td>';
-    echo '<td style="text-align: right; font-weight: bold;">₱' . number_format($total_amount, 2) . '</td>';
+    echo '<td style="text-align: right; font-weight: bold;">' . number_format($total_amount, 2) . '</td>';
     echo '<td colspan="3"></td>';
     echo '</tr>';
     
     echo '<tr><td colspan="7">&nbsp;</td></tr>';
     
-    // Signature Section
+    // Signature Section, formatted per template
     echo '<tr>';
-    echo '<td colspan="3" style="text-align: center; font-weight: bold;">Received from:</td>';
-    echo '<td>&nbsp;</td>';
-    echo '<td colspan="3" style="text-align: center; font-weight: bold;">Received by:</td>';
+    echo '<td colspan="3" style="text-align: left; font-weight: bold;">Received from :</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: left; font-weight: bold;">Received by :</td>';
     echo '</tr>';
-    echo '<tr><td colspan="3" style="text-align: center; height: 50px; vertical-align: bottom; border-bottom: 1px solid black;">&nbsp;</td><td>&nbsp;</td><td colspan="3" style="text-align: center; height: 50px; vertical-align: bottom; border-bottom: 1px solid black;">&nbsp;</td></tr>';
-    echo '<tr><td colspan="3" style="text-align: center;">Signature Over Printed Name</td><td>&nbsp;</td><td colspan="3" style="text-align: center;">Signature Over Printed Name</td></tr>';
-    echo '<tr><td colspan="3" style="text-align: center; font-weight: bold;">' . htmlspecialchars($ics['received_from']) . '</td><td>&nbsp;</td><td colspan="3" style="text-align: center; font-weight: bold;">' . htmlspecialchars($ics['received_by']) . '</td></tr>';
-    echo '<tr><td colspan="3" style="text-align: center;">' . htmlspecialchars($ics['received_from_position']) . '</td><td>&nbsp;</td><td colspan="3" style="text-align: center;">' . htmlspecialchars($ics['received_by_position']) . '</td></tr>';
-    echo '<tr><td colspan="3" style="text-align: center;">Position/Office</td><td>&nbsp;</td><td colspan="3" style="text-align: center;">Position/Office</td></tr>';
+    // Signature lines
+    echo '<tr>';
+    echo '<td colspan="3" style="height: 50px; vertical-align: bottom; border-bottom: 1px solid #000;">&nbsp;</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="height: 50px; vertical-align: bottom; border-bottom: 1px solid #000;">&nbsp;</td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<td colspan="3" style="text-align: center;">Signature over Printed Name</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: center;">Signature over Printed Name</td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<td colspan="3" style="text-align: center; font-weight: bold;">' . htmlspecialchars($ics['received_from']) . '</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: center; font-weight: bold;">' . htmlspecialchars($ics['received_by']) . '</td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<td colspan="3" style="text-align: center;">' . htmlspecialchars($ics['received_from_position']) . '</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: center;">' . htmlspecialchars($ics['received_by_position']) . '</td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<td colspan="3" style="text-align: center;">Position/Office</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: center;">Position/Office</td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<td colspan="3" style="text-align: center;">Date</td>';
+    echo '<td></td>';
+    echo '<td colspan="3" style="text-align: center;">Date</td>';
+    echo '</tr>';
     
     echo '</table>';
     echo '</body></html>';

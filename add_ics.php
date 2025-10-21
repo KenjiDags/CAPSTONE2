@@ -324,18 +324,7 @@ function generateICSNumberSimple($conn) {
     return $prefix . $formatted_increment;
 }
 
-// Utility: check if a column exists in a table (avoids errors on older schemas)
-function columnExists($conn, $table, $column) {
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
-    $column = preg_replace('/[^a-zA-Z0-9_]/', '', $column);
-    // Note: MySQL doesn't support placeholders in SHOW statements reliably; use escaped literal
-    $like = $conn->real_escape_string($column);
-    $sql = "SHOW COLUMNS FROM `{$table}` LIKE '{$like}'";
-    $res = $conn->query($sql);
-    if (!$res) { return false; }
-    $exists = $res->num_rows > 0;
-    return $exists;
-}
+// columnExists helper is provided in functions.php
 ?>
 
 <!DOCTYPE html>
@@ -497,12 +486,10 @@ function columnExists($conn, $table, $column) {
                 </div>
             </div>
 
-            <div class="actions">
-                <button type="submit"><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
-                <a href="<?php echo $is_editing ? 'view_ics.php?ics_id=' . $ics_id : 'ics.php'; ?>">
-                    <button type="button">Cancel</button>
-                </a>
-            </div>
+            <button type="submit"><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
+            <a href="<?php echo $is_editing ? 'ics.php?ics_id=' . $ics_id : 'ics.php'; ?>" style="margin-left: 10px;">
+                <button type="button">Cancel</button>
+            </a>
         </form>
     </div>
 

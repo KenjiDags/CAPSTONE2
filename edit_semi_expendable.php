@@ -70,49 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             $conn->begin_transaction();
         }
 
-        // Build previous-state snapshot from $item (so edits append as next row rather than duplicating current)
-        $prev_date = $item['date'] ?? null;
-        $prev_ics = $item['ics_rrsp_no'] ?? '';
-        $prev_qty_base = isset($item['quantity']) ? (int)$item['quantity'] : (int)($item['quantity_issued'] ?? 0);
-    // quantity_issued column represents issued-out movement; keep previous value as-is
-    $prev_qty_issued = (int)($item['quantity_issued'] ?? 0);
-        $prev_qty_returned = (int)($item['quantity_returned'] ?? 0);
-        $prev_qty_reissued = (int)($item['quantity_reissued'] ?? 0);
-        $prev_qty_disposed = (int)($item['quantity_disposed'] ?? 0);
-        $prev_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $prev_qty_base - ($prev_qty_reissued + $prev_qty_disposed));
-        $prev_officer_issued = $item['office_officer_issued'] ?? '';
-        $prev_officer_returned = $item['office_officer_returned'] ?? '';
-        $prev_officer_reissued = $item['office_officer_reissued'] ?? '';
-        $prev_amount_total = isset($item['amount_total']) ? (float)$item['amount_total'] : 0.0;
-        $prev_amount_unit = isset($item['amount']) ? (float)$item['amount'] : ($prev_qty_base > 0 ? $prev_amount_total / $prev_qty_base : 0.0);
-        $prev_remarks = $item['remarks'] ?? '';
-
-        if ($histPre = $conn->prepare("INSERT INTO semi_expendable_history (
-                semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
-                quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount, amount_total, remarks
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
-            $histPre->bind_param(
-                "issiiiiiisssdds",
-                $id,
-                $prev_date,
-                $prev_ics,
-                $prev_qty_base,
-                $prev_qty_issued,
-                $prev_qty_returned,
-                $prev_qty_reissued,
-                $prev_qty_disposed,
-                $prev_qty_balance,
-                $prev_officer_issued,
-                $prev_officer_returned,
-                $prev_officer_reissued,
-                $prev_amount_unit,
-                $prev_amount_total,
-                $prev_remarks
-            );
-            $histPre->execute();
-            $histPre->close();
-        }
-
         $stmt = $conn->prepare("
             UPDATE semi_expendable_property 
             SET date = ?, 
@@ -159,8 +116,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
     // Unit amount input; compute total = quantity × unit amount
     $p_unit_amount = isset($_POST['amount']) ? (float)$_POST['amount'] : 0.0;
     $p_amount_total = round($p_unit_amount * $p_qty_issued, 2);
-        $p_category = $_POST['category'];
-        $p_remarks = $_POST['remarks'] ?? '';
+    $p_category = $_POST['category'];
+    $p_remarks = $_POST['remarks'] ?? '';
+
+    // Previous state values for validation (from loaded $item)
+    $prev_qty_base = isset($item['quantity']) ? (int)$item['quantity'] : (int)($item['quantity_issued'] ?? 0);
+    $prev_qty_issued = (int)($item['quantity_issued'] ?? 0);
+    $prev_qty_returned = (int)($item['quantity_returned'] ?? 0);
+    $prev_qty_reissued = (int)($item['quantity_reissued'] ?? 0);
+    $prev_qty_disposed = (int)($item['quantity_disposed'] ?? 0);
+    $prev_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $prev_qty_base - ($prev_qty_reissued + $prev_qty_disposed));
 
         // If current balance is zero, allow decreases but block increases beyond previous values
         if ($prev_qty_balance === 0) {
@@ -170,6 +135,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             if ($incIssued || $incReissued || $incDisposed) {
                 throw new Exception('Balance is 0: You can reduce values but cannot increase issued/reissued/disposed.');
             }
+        }
+
+        // Do not allow the sum of issued+reissued+disposed to exceed base quantity
+        $totalOut = $p_qty_issued_out + $p_qty_reissued + $p_qty_disposed;
+        if ($totalOut > $p_qty_issued) {
+            throw new Exception('Issued + Re-issued + Disposed cannot exceed Quantity.');
         }
 
         $stmt->bind_param(
@@ -198,6 +169,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         if ($stmt->execute()) {
             // After successful update, sync related ICS items so ICS stays connected to Semi edits
             $stmt->close();
+
+            // Record a post-update snapshot so exports reflect the latest values
+            if ($histPost = $conn->prepare("INSERT INTO semi_expendable_history (
+                    semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed,
+                    quantity_balance, office_officer_issued, office_officer_returned, office_officer_reissued, amount, amount_total, remarks
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+                $histPost->bind_param(
+                    "issiiiiiisssdds",
+                    $id,
+                    $p_date,
+                    $p_ics_rrsp_no,
+                    $p_qty_issued,
+                    $p_qty_issued_out,
+                    $p_qty_returned,
+                    $p_qty_reissued,
+                    $p_qty_disposed,
+                    $p_qty_balance,
+                    $p_officer_issued,
+                    $p_officer_returned,
+                    $p_officer_reissued,
+                    $p_unit_amount,
+                    $p_amount_total,
+                    $p_remarks
+                );
+                @ $histPost->execute();
+                $histPost->close();
+            }
 
             // 1) Update ICS item description and useful life for this property number
             $newPropNo = (string)$p_property_no;
@@ -344,7 +342,7 @@ if (!$item && empty($error)) {
                 </div>
             <?php endif; ?>
 
-            <?php if ($item): ?>
+                        <?php if ($item): ?>
                 <?php
                   // Compute cancel/back URL: prefer 'return' when safe
                   $cancelUrl = 'semi_expendible.php?category=' . urlencode($item['category']);
@@ -352,6 +350,11 @@ if (!$item && empty($error)) {
                   if (is_string($returnGet) && preg_match('/^[A-Za-z0-9_\-]+\.php(\?.*)?$/', $returnGet)) {
                       $cancelUrl = $returnGet;
                   }
+                                    // Determine previous balance from DB to drive client-side lock behavior
+                                    $orig_qty_base = isset($item['quantity']) ? (int)$item['quantity'] : (int)($item['quantity_issued'] ?? 0);
+                                    $orig_qty_reissued = (int)($item['quantity_reissued'] ?? 0);
+                                    $orig_qty_disposed = (int)($item['quantity_disposed'] ?? 0);
+                                    $orig_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $orig_qty_base - ($orig_qty_reissued + $orig_qty_disposed));
                 ?>
                 <form method="POST">
                     <input type="hidden" name="return" value="<?php echo htmlspecialchars($_GET['return'] ?? ''); ?>">
@@ -491,40 +494,89 @@ if (!$item && empty($error)) {
     </div>
 
     <script>
-    // Auto-calculate balance when quantities change
-    function calculateBalance() {
-        const quantity = parseInt(document.getElementById('quantity_issued').value) || 0;
-        const issuedOut = parseInt(document.getElementById('quantity_issued_out')?.value) || 0;
-        const reissued = parseInt(document.getElementById('quantity_reissued').value) || 0;
-        const disposed = parseInt(document.getElementById('quantity_disposed').value) || 0;
-        const balance = quantity - (issuedOut + reissued + disposed);
-        document.getElementById('quantity_balance').value = Math.max(0, balance);
+    // Previous balance from DB; if zero, we lock increases beyond original values
+    window.PREV_BALANCE_ZERO = <?php echo ($orig_qty_balance === 0) ? 'true' : 'false'; ?>;
 
-        // When balance is 0, allow decreases but prevent increases beyond original values
-        const locked = (Math.max(0, balance) === 0);
-        ['quantity_issued_out','quantity_reissued','quantity_disposed'].forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (locked) {
+    // Auto-calculate balance when quantities change
+    function calculateBalance(ev) {
+        const qEl = document.getElementById('quantity_issued');
+        const iEl = document.getElementById('quantity_issued_out');
+        const rEl = document.getElementById('quantity_reissued');
+        const dEl = document.getElementById('quantity_disposed');
+        const bEl = document.getElementById('quantity_balance');
+
+        const quantity = parseInt(qEl?.value) || 0;
+        let issuedOut = parseInt(iEl?.value) || 0;
+        let reissued  = parseInt(rEl?.value) || 0;
+        let disposed  = parseInt(dEl?.value) || 0;
+
+        // Only enforce lock if the PREVIOUS (DB) balance was already zero
+        const locked = !!window.PREV_BALANCE_ZERO;
+        if (locked) {
+            [{el:iEl},{el:rEl},{el:dEl}].forEach(({el}) => {
+                if (!el) return;
                 const maxVal = el.dataset.original ? parseInt(el.dataset.original) : null;
                 if (maxVal !== null && !Number.isNaN(maxVal)) {
                     el.max = String(maxVal);
-                    if ((parseInt(el.value) || 0) > maxVal) {
-                        el.value = String(maxVal);
-                    }
+                    const cur = parseInt(el.value) || 0;
+                    if (cur > maxVal) { el.value = String(maxVal); }
                 }
-                el.title = 'Balance is 0: You can reduce values but cannot increase beyond original amounts.';
-            } else {
-                el.removeAttribute('max');
-                el.removeAttribute('title');
-            }
-        });
+                el.title = 'Previous balance is 0: you can reduce values but cannot increase beyond original amounts.';
+            });
+            // Re-read values after potential clamping
+            issuedOut = parseInt(iEl?.value) || 0;
+            reissued  = parseInt(rEl?.value) || 0;
+            disposed  = parseInt(dEl?.value) || 0;
+        } else {
+            // No lock: ensure fields are free to change
+            [iEl, rEl, dEl].forEach(el => { if (el) { el.removeAttribute('max'); el.removeAttribute('title'); } });
+        }
+
+        // Enforce that issuedOut + reissued + disposed cannot exceed quantity
+        let total = issuedOut + reissued + disposed;
+        if (!locked && total > quantity) {
+            const last = ev && ev.target ? ev.target.id : '';
+            const clampField = (fieldEl) => {
+                if (!fieldEl) return;
+                const cur = parseInt(fieldEl.value) || 0;
+                const over = (issuedOut + reissued + disposed) - quantity;
+                const newVal = Math.max(0, cur - over);
+                fieldEl.value = String(newVal);
+            };
+            // Prefer clamping the field being edited; fallback to issuedOut
+            if (last === 'quantity_reissued') clampField(rEl);
+            else if (last === 'quantity_disposed') clampField(dEl);
+            else clampField(iEl);
+            // Recompute after clamping
+            issuedOut = parseInt(iEl?.value) || 0;
+            reissued  = parseInt(rEl?.value) || 0;
+            disposed  = parseInt(dEl?.value) || 0;
+            total = issuedOut + reissued + disposed;
+        }
+
+        const balance = quantity - total;
+        if (bEl) bEl.value = Math.max(0, balance);
+
+        // If balance hits 0 during this session (and previous balance wasn't zero), lock further increases at current values
+        if (!locked) {
+            const atZero = Math.max(0, balance) === 0;
+            [iEl, rEl, dEl].forEach(el => {
+                if (!el) return;
+                if (atZero) {
+                    const cur = parseInt(el.value) || 0;
+                    el.max = String(cur); // lock at current value; allows decreases only
+                    el.title = 'Balance is 0: cannot increase further; reduce values to change.';
+                } else {
+                    el.removeAttribute('max');
+                    el.removeAttribute('title');
+                }
+            });
+        }
     }
 
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
-    const quantityFields = ['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
-        
+        const quantityFields = ['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
         quantityFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {

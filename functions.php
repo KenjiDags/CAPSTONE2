@@ -115,6 +115,42 @@ function ensure_semi_expendable_amount_columns($conn) {
     ensure_semi_expendable_history($conn);
 }
 
+/**
+ * Check if a column exists on a given table in the current database
+ *
+ * @param mysqli $conn
+ * @param string $table Table name (without schema)
+ * @param string $column Column name
+ * @return bool True if column exists, false otherwise
+ */
+if (!function_exists('columnExists')) {
+    function columnExists($conn, $table, $column) {
+        if (!$conn || !$table || !$column) { return false; }
+        try {
+            $sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) { return false; }
+            $stmt->bind_param("ss", $table, $column);
+            $stmt->execute();
+            $stmt->store_result();
+            $exists = $stmt->num_rows > 0;
+            $stmt->close();
+            return $exists;
+        } catch (Throwable $e) {
+            // Fallback using SHOW COLUMNS (escape identifiers safely)
+            $tableEsc = "`" . str_replace("`", "``", $table) . "`";
+            $colVal = $conn->real_escape_string($column);
+            $res = @$conn->query("SHOW COLUMNS FROM $tableEsc LIKE '$colVal'");
+            if ($res) {
+                $has = $res->num_rows > 0;
+                $res->close();
+                return $has;
+            }
+            return false;
+        }
+    }
+}
+
 
 function logItemHistory($conn, $item_id, ?int $quantity_change = null, string $change_type = 'update', ?int $ris_id = null) {
     // Fetch current item info
@@ -149,12 +185,14 @@ function logItemHistory($conn, $item_id, ?int $quantity_change = null, string $c
         $quantity_change = $current_quantity - $previous_quantity;
     }
 
-    // Determine change direction
-    $change_direction = match(true) {
-        $quantity_change > 0 => 'increase',
-        $quantity_change < 0 => 'decrease',
-        default              => 'no_change'
-    };
+    // Determine change direction (PHP 7.4 compatible)
+    if ($quantity_change > 0) {
+        $change_direction = 'increase';
+    } elseif ($quantity_change < 0) {
+        $change_direction = 'decrease';
+    } else {
+        $change_direction = 'no_change';
+    }
 
     // Insert into history, including ris_id if available
     $insert = $conn->prepare("

@@ -200,7 +200,10 @@ $conn->close();
                     $h_qtyIssued = (int)($hr['quantity'] ?? ($hr['quantity_issued'] ?? 0));
                     $h_amount = (float)($hr['amount_total'] ?? 0.0);
                     $h_unit = isset($hr['amount']) && $hr['amount'] !== null ? (float)$hr['amount'] : ($h_qtyIssued > 0 ? $h_amount / $h_qtyIssued : 0);
-                    $h_issue = (int)($hr['quantity_issued'] ?? 0) + (int)($hr['quantity_disposed'] ?? 0);
+        // Issue/Transfer/Disposal should include issued + reissued + disposed
+        $h_issue = (int)($hr['quantity_issued'] ?? 0)
+          + (int)($hr['quantity_reissued'] ?? 0)
+          + (int)($hr['quantity_disposed'] ?? 0);
           ?>
               <tr>
                 <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
@@ -242,7 +245,10 @@ $conn->close();
                 $qtyIssued = (int)($item['quantity'] ?? ($item['quantity_issued'] ?? 0));
                 $amountTotal = (float)($item['amount_total'] ?? 0);
                 $unitCost = isset($item['amount']) && $item['amount'] !== null ? (float)$item['amount'] : ($qtyIssued > 0 ? $amountTotal / $qtyIssued : 0);
-                $issue_qty = (int)($item['quantity_issued'] ?? 0) + (int)($item['quantity_disposed'] ?? 0);
+                // Include reissued in Issue/Transfer/Disposal summary
+                $issue_qty = (int)($item['quantity_issued'] ?? 0)
+                           + (int)($item['quantity_reissued'] ?? 0)
+                           + (int)($item['quantity_disposed'] ?? 0);
           ?>
           <tr>
             <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
