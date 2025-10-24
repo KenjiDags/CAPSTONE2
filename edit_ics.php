@@ -201,9 +201,16 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
         .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
         .form-grid .form-group { display:flex; flex-direction:column; }
         @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
-        .table-frame { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-        .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; }
-        #itemsTable thead th { position: sticky; top: 0; z-index: 1; }
+    /* Frame: remove top border, flatten top corners (avoid white arc) */
+    .table-frame { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
+    /* Viewport: gradient behind sticky header */
+    .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; scrollbar-gutter: stable; background: var(--white); }
+    /* Prevent sticky header clipping */
+    #itemsTable { overflow: visible !important; width: 100%; border-collapse: collapse; background: transparent !important; border-radius: 0 !important; margin-top: 0 !important; }
+    /* Sticky header inside viewport */
+    #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
+    /* Flatten top radius across elements */
+    .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
     </style>
     </head>
 <body>

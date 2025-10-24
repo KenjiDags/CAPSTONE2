@@ -343,9 +343,16 @@ function generateICSNumberSimple($conn) {
         @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
         .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
         /* Scrollable items table, preserve existing theme/colors */
-    .table-frame { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-        .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; }
-        #itemsTable thead th { position: sticky; top: 0; z-index: 1; }
+    /* Frame: remove top border and flatten top corners to avoid a visible white strip */
+    .table-frame { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
+    /* Viewport: use the same gradient as header behind the sticky thead */
+    .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; scrollbar-gutter: stable; background: var(--white); }
+    /* Override global table overflow so sticky headers aren't clipped */
+    #itemsTable { overflow: visible !important; width: 100%; border-collapse: collapse; background: transparent !important; border-radius: 0 !important; margin-top: 0 !important; }
+    /* Make header stick within the scrolling viewport */
+    #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
+    /* Ensure any top corners are flat across container/viewport/table */
+    .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
     </style>
 </head>
 <body>
