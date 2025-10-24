@@ -133,6 +133,7 @@ if (!$has_history || count($rows) === 0) {
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <link rel="stylesheet" href="css/fixed_head.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/regspi_script.js" defer></script>
     <style>
         /* Make the main REGSPI table scrollable */
         .rsep-table-container { margin-top: 0; }
