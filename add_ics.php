@@ -359,6 +359,8 @@ function generateICSNumberSimple($conn) {
     <div class="edit-ics-page content edit-ris-page">
         <h2><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></h2>
 
+        
+
         <form method="post" action="">
             <?php if ($is_editing): ?>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
@@ -416,9 +418,11 @@ function generateICSNumberSimple($conn) {
                             <th>Stock No.</th>
                             <th>Item</th>
                             <th>Description</th>
+                            <th>Item No.</th>
                             <th>Unit</th>
                             <th>Quantity on Hand</th>
                             <th>Unit Cost</th>
+                            <th>Total Cost</th>
                             <th>Issued Qty</th>
                             <th>Estimated Useful Life</th>
                             <th>Serial Number</th>
@@ -447,20 +451,24 @@ function generateICSNumberSimple($conn) {
                                 $displayDesc = $existingDesc !== '' ? $existingDesc : (($remarks !== '' ? $remarks : $row['item_description']));
 
                                 $catVal = isset($row['category']) ? $row['category'] : '';
-                                echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="-" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
+                                echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="-" data-category="' . htmlspecialchars(strtolower($catVal)) . '" data-unit-cost="' . htmlspecialchars(number_format($unitCost,2,'.','')) . '">';
                                 echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
                                 echo '<td>' . htmlspecialchars($row['item_description']) . '</td>';
                                 echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
+                                echo '<td>'  . htmlspecialchars($stock_number) . '</td>';
                                 echo '<td>-</td>';
                                 echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
                                 echo '<td>₱' . number_format($unitCost, 2) . '</td>';
-                                echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1"></td>';
+                                $initialQty = $existing_item ? (float)$existing_item['quantity'] : 0;
+                                $initialTotal = $unitCost * $initialQty;
+                                echo '<td class="cell-total-cost">₱' . number_format($initialTotal, 2) . '</td>';
+                                echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1" class="issued-qty"></td>';
                                 echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
                                 echo '<td><input type="text" name="serial_number[]" value="' . ($existing_item ? htmlspecialchars($existing_item['serial_number']) : '') . '" placeholder="Serial No."></td>';
                                 echo '</tr>';
                             }
                         } else {
-                            echo '<tr id="no-items-row"><td colspan="9">No semi-expendable items found.</td></tr>';
+                            echo '<tr id="no-items-row"><td colspan="11">No semi-expendable items found.</td></tr>';
                         }
                         ?>
                     </tbody>
@@ -581,11 +589,11 @@ function generateICSNumberSimple($conn) {
                 if (match) visibleRows++;
             });
 
-            const noItemsRow = document.getElementById('no-items-row');
+                    const noItemsRow = document.getElementById('no-items-row');
             if (noItemsRow) {
                 noItemsRow.style.display = visibleRows === 0 ? 'table-row' : 'none';
                 if (visibleRows === 0) {
-                    noItemsRow.innerHTML = '<td colspan="9">No items match your search criteria.</td>';
+                    noItemsRow.innerHTML = '<td colspan="11">No items match your search criteria.</td>';
                 }
             }
         }
@@ -621,6 +629,21 @@ function generateICSNumberSimple($conn) {
                 // Jump to the items table after reload
                 url.hash = 'itemsTable';
                 window.location.href = url.toString();
+            });
+            
+            // Initialize total cost cells and attach live updates for issued qty
+            document.querySelectorAll('.item-row').forEach(function(row){
+                const unit = parseFloat(row.getAttribute('data-unit-cost') || '0');
+                const qtyInput = row.querySelector('input.issued-qty');
+                const totalCell = row.querySelector('.cell-total-cost');
+                const recalc = function(){
+                    const q = parseFloat(qtyInput && qtyInput.value ? qtyInput.value : '0') || 0;
+                    const total = unit * q;
+                    if (totalCell) totalCell.textContent = '₱' + total.toFixed(2);
+                };
+                recalc();
+                if (qtyInput) qtyInput.addEventListener('input', recalc);
+                if (qtyInput) qtyInput.addEventListener('blur', recalc);
             });
         });
     </script>

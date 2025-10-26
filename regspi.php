@@ -90,7 +90,7 @@ if (!$has_history || count($rows) === 0) {
             0 AS disposed_qty2,
             GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
             COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-            'Derived from ICS' AS remarks
+            '' AS remarks
         FROM ics i
         INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
         LEFT JOIN semi_expendable_property sep 
@@ -103,7 +103,7 @@ if (!$has_history || count($rows) === 0) {
         $binds2[] = $selected_category;
         $types2 .= 's';
     }
-    $sql .= " ORDER BY i.date_issued DESC, ii.id DESC";
+    $sql .= " ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
 
     if (!empty($binds2)) {
         if ($stmt = $conn->prepare($sql)) {
@@ -121,6 +121,17 @@ if (!$has_history || count($rows) === 0) {
             $res->close();
         }
     }
+}
+
+// Final pass: scrub boilerplate remarks like "Initial Receipt/Report"
+if (!empty($rows)) {
+    foreach ($rows as &$__r) {
+        $rm = isset($__r['remarks']) ? trim((string)$__r['remarks']) : '';
+        if ($rm !== '' && preg_match('/initial\s+(receipt|report)/i', $rm)) {
+            $__r['remarks'] = '';
+        }
+    }
+    unset($__r);
 }
 ?>
 

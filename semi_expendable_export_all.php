@@ -204,6 +204,19 @@ $conn->close();
         $h_issue = (int)($hr['quantity_issued'] ?? 0)
           + (int)($hr['quantity_reissued'] ?? 0)
           + (int)($hr['quantity_disposed'] ?? 0);
+        // Determine officer for this history row ahead of rendering
+        $rtext = strtolower(trim($hr['remarks'] ?? ''));
+        $h_officer = '';
+        if (strpos($rtext, 'returned') !== false || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0)) {
+          $h_officer = $hr['office_officer_returned'] ?? '';
+        } elseif (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
+          $h_officer = $hr['office_officer_reissued'] ?? '';
+        } elseif (strpos($rtext, 'issued') !== false || (isset($hr['quantity_issued']) && (int)$hr['quantity_issued'] > 0)) {
+          $h_officer = $hr['office_officer_issued'] ?? '';
+        } else {
+          $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
+        }
+        $showItemNo = ($h_issue > 0) && (trim($h_officer) !== '');
           ?>
               <tr>
                 <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
@@ -211,23 +224,9 @@ $conn->close();
                 <td><?php echo $h_qtyIssued ?: ''; ?></td>
                 <td><?php echo $h_qtyIssued ? number_format($h_unit, 2) : ''; ?></td>
                 <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
-                <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
+                <td><?php echo $showItemNo ? htmlspecialchars($item['semi_expendable_property_no'] ?? '') : ''; ?></td>
                 <td><?php echo $h_issue ?: ''; ?></td>
-        <td><?php 
-            // Choose the correct Office/Officer based on action for this history row
-            $rtext = strtolower(trim($hr['remarks'] ?? ''));
-            $h_officer = '';
-            if (strpos($rtext, 'returned') !== false || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0)) {
-              $h_officer = $hr['office_officer_returned'] ?? '';
-            } elseif (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
-              $h_officer = $hr['office_officer_reissued'] ?? '';
-            } elseif (strpos($rtext, 'issued') !== false || (isset($hr['quantity_issued']) && (int)$hr['quantity_issued'] > 0)) {
-              $h_officer = $hr['office_officer_issued'] ?? '';
-            } else {
-              $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
-            }
-            echo htmlspecialchars($h_officer);
-          ?></td>
+        <td><?php echo htmlspecialchars($h_officer); ?></td>
                 <td><?php echo htmlspecialchars($hr['quantity_balance'] ?? ''); ?></td>
                 <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
                 <td><?php 
@@ -249,6 +248,16 @@ $conn->close();
                 $issue_qty = (int)($item['quantity_issued'] ?? 0)
                            + (int)($item['quantity_reissued'] ?? 0)
                            + (int)($item['quantity_disposed'] ?? 0);
+                // Determine officer for snapshot ahead of rendering
+                $c_officer = '';
+                if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
+                  $c_officer = $item['office_officer_returned'] ?? '';
+                } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+                  $c_officer = $item['office_officer_reissued'] ?? '';
+                } else {
+                  $c_officer = $item['office_officer_issued'] ?? '';
+                }
+                $showItemNoSnap = ($issue_qty > 0) && (trim($c_officer) !== '');
           ?>
           <tr>
             <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
@@ -256,20 +265,9 @@ $conn->close();
             <td><?php echo $qtyIssued ?: ''; ?></td>
             <td><?php echo $qtyIssued ? number_format($unitCost, 2) : ''; ?></td>
             <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
-            <td><?php echo htmlspecialchars($item['semi_expendable_property_no'] ?? ''); ?></td>
+            <td><?php echo $showItemNoSnap ? htmlspecialchars($item['semi_expendable_property_no'] ?? '') : ''; ?></td>
             <td><?php echo $issue_qty ?: ''; ?></td>
-      <td><?php 
-          // Choose appropriate Office/Officer for current snapshot (no history)
-          $c_officer = '';
-          if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
-            $c_officer = $item['office_officer_returned'] ?? '';
-          } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
-            $c_officer = $item['office_officer_reissued'] ?? '';
-          } else {
-            $c_officer = $item['office_officer_issued'] ?? '';
-          }
-          echo htmlspecialchars($c_officer);
-        ?></td>
+      <td><?php echo htmlspecialchars($c_officer); ?></td>
             <td><?php echo htmlspecialchars($item['quantity_balance'] ?? ''); ?></td>
             <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
             <td><?php 
