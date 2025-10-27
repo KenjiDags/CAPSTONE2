@@ -1,10 +1,33 @@
 <?php
+// Ensure no output has been sent yet
+if (ob_get_level()) ob_end_clean();
+
+// Error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Define TCPDF path using __DIR__
+$tcpdfPath = __DIR__ . '/tcpdf/tcpdf.php';
+
+// Check TCPDF installation
+if (!file_exists($tcpdfPath)) {
+    die('TCPDF not found at: ' . $tcpdfPath . '. Please install TCPDF in the tcpdf directory.');
+}
+
+// Include TCPDF
+require_once($tcpdfPath);
+
 require 'config.php';
 require_once 'functions.php';
 
-// Set headers for PDF download
-header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="RegSPI_Export_' . date('Y-m-d') . '.pdf"');
+// Error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Verify TCPDF is available
+if (!class_exists('TCPDF')) {
+    die('TCPDF class not found. Please ensure Composer dependencies are installed correctly.');
+}
 
 // Get category filter if provided
 $selected_category = isset($_POST['category']) ? trim($_POST['category']) : '';
@@ -126,8 +149,37 @@ if (!$has_history || count($rows) === 0) {
 // Generate PDF using TCPDF or similar library
 require_once('tcpdf/tcpdf.php');
 
-// Create new PDF document
-$pdf = new TCPDF('L', PDF_UNIT, 'LEGAL', true, 'UTF-8', false);
+class REGSPI_PDF extends TCPDF {
+    public function Header() {
+        // No default header
+    }
+    
+    public function Footer() {
+        // Position at 15 mm from bottom
+        $this->SetY(-15);
+        // Set font
+        $this->SetFont('helvetica', 'I', 8);
+        // Page number
+        $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0);
+    }
+}
+
+// Create new PDF document (Landscape, mm, Legal)
+$pdf = new REGSPI_PDF('L', 'mm', 'LEGAL', true, 'UTF-8', false);
+
+// Set document properties
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('TESDA-CAR');
+$pdf->SetTitle('Registry of Semi-Expendable Property Issued');
+
+// Set default monospaced font
+$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+// Set margins
+$pdf->SetMargins(15, 15, 15);
+
+// Set auto page breaks
+$pdf->SetAutoPageBreak(TRUE, 15);
 
 // Set document information
 $pdf->SetCreator('TESDA Inventory System');
@@ -141,11 +193,19 @@ $pdf->setPrintFooter(false);
 // Set margins
 $pdf->SetMargins(10, 10, 10);
 
-// Add a page
-$pdf->AddPage();
+// Add a page (Landscape Legal)
+$pdf->AddPage('L', 'LEGAL');
 
-// Set font
-$pdf->SetFont('helvetica', '', 8);
+// Set font for title
+$pdf->SetFont('helvetica', 'B', 12);
+
+// Add logo if exists
+if (file_exists('images/tesda_logo.png')) {
+    $pdf->Image('images/tesda_logo.png', 15, 10, 20);
+}
+
+// Move to the right for title
+$pdf->Cell(20); // Space after logo
 
 // Title
 $pdf->SetFont('helvetica', 'B', 12);
@@ -175,35 +235,125 @@ $headers = array(
     'Remarks'
 );
 
-// Calculate column widths (adjust as needed)
-$w = array(20, 25, 30, 50, 15, 15, 25, 15, 25, 15, 25, 15, 15, 20, 30);
+// Get page width excluding margins
+$pageWidth = $pdf->getPageWidth() - 30; // 15mm margins on each side
 
-// Print header
+// Calculate column widths as percentages of available width
+$widths = array(
+    'Date' => 0.08,           // 8%
+    'ICS/RRSP No.' => 0.08,   // 8%
+    'Property No.' => 0.1,     // 10%
+    'Description' => 0.15,     // 15%
+    'Life' => 0.05,           // 5%
+    'Issued Qty' => 0.05,     // 5%
+    'Issued To' => 0.08,      // 8%
+    'Ret. Qty' => 0.05,       // 5%
+    'Ret. From' => 0.08,      // 8%
+    'Reissued Qty' => 0.05,   // 5%
+    'Reissued To' => 0.08,    // 8%
+    'Disp. Qty' => 0.05,      // 5%
+    'Balance' => 0.05,        // 5%
+    'Amount' => 0.07,         // 7%
+    'Remarks' => 0.08         // 8%
+);
+
+// Convert percentages to actual widths
+$w = array();
+foreach ($widths as $col => $percentage) {
+    $w[] = $pageWidth * $percentage;
+}
+
+// Print header with background color
+$pdf->SetFillColor(51, 122, 183); // Bootstrap primary blue
+$pdf->SetTextColor(255);  // White text
 foreach($headers as $i => $header) {
-    $pdf->Cell($w[$i], 7, $header, 1, 0, 'C');
+    $pdf->Cell($w[$i], 8, $header, 1, 0, 'C', true);
 }
 $pdf->Ln();
 
-// Print rows
+// Reset text color to black for data
+$pdf->SetTextColor(0);
+
+// Print rows with alternate background
 $pdf->SetFont('helvetica', '', 8);
+$fill = false;
+$total_amount = 0;
+
 foreach($rows as $row) {
-    $pdf->Cell($w[0], 6, date('m/d/Y', strtotime($row['date'])), 1);
-    $pdf->Cell($w[1], 6, $row['ics_rrsp_no'], 1);
-    $pdf->Cell($w[2], 6, $row['property_no'], 1);
-    $pdf->Cell($w[3], 6, $row['item_description'], 1);
-    $pdf->Cell($w[4], 6, $row['useful_life'], 1);
-    $pdf->Cell($w[5], 6, $row['issued_qty'], 1, 0, 'R');
-    $pdf->Cell($w[6], 6, $row['issued_office'], 1);
-    $pdf->Cell($w[7], 6, $row['returned_qty'], 1, 0, 'R');
-    $pdf->Cell($w[8], 6, $row['returned_office'], 1);
-    $pdf->Cell($w[9], 6, $row['reissued_qty'], 1, 0, 'R');
-    $pdf->Cell($w[10], 6, $row['reissued_office'], 1);
-    $pdf->Cell($w[11], 6, $row['disposed_qty1'], 1, 0, 'R');
-    $pdf->Cell($w[12], 6, $row['balance_qty'], 1, 0, 'R');
-    $pdf->Cell($w[13], 6, number_format($row['amount_total'], 2), 1, 0, 'R');
-    $pdf->Cell($w[14], 6, $row['remarks'], 1);
+    // Set alternative row background
+    $pdf->SetFillColor($fill ? 245 : 255, $fill ? 245 : 255, $fill ? 245 : 255);
+    
+    // Handle potential date formatting errors
+    $date = $row['date'] ? date('m/d/Y', strtotime($row['date'])) : '';
+    
+    // Print cells with proper alignment and overflow handling
+    $pdf->Cell($w[0], 6, $date, 1, 0, 'C', $fill);
+    $pdf->Cell($w[1], 6, $row['ics_rrsp_no'], 1, 0, 'L', $fill);
+    $pdf->Cell($w[2], 6, $row['property_no'], 1, 0, 'L', $fill);
+    
+    // Multi-line description if needed
+    $desc_height = $pdf->getStringHeight($w[3], $row['item_description']);
+    $pdf->MultiCell($w[3], max(6, $desc_height), $row['item_description'], 1, 'L', $fill, 0);
+    
+    $pdf->Cell($w[4], 6, $row['useful_life'], 1, 0, 'C', $fill);
+    $pdf->Cell($w[5], 6, number_format($row['issued_qty']), 1, 0, 'R', $fill);
+    $pdf->Cell($w[6], 6, $row['issued_office'], 1, 0, 'L', $fill);
+    $pdf->Cell($w[7], 6, number_format($row['returned_qty']), 1, 0, 'R', $fill);
+    $pdf->Cell($w[8], 6, $row['returned_office'], 1, 0, 'L', $fill);
+    $pdf->Cell($w[9], 6, number_format($row['reissued_qty']), 1, 0, 'R', $fill);
+    $pdf->Cell($w[10], 6, $row['reissued_office'], 1, 0, 'L', $fill);
+    $pdf->Cell($w[11], 6, number_format($row['disposed_qty1']), 1, 0, 'R', $fill);
+    $pdf->Cell($w[12], 6, number_format($row['balance_qty']), 1, 0, 'R', $fill);
+    $pdf->Cell($w[13], 6, '₱ ' . number_format($row['amount_total'], 2), 1, 0, 'R', $fill);
+    $pdf->Cell($w[14], 6, $row['remarks'], 1, 0, 'L', $fill);
     $pdf->Ln();
+    
+    $fill = !$fill; // Toggle fill for next row
+    $total_amount += floatval($row['amount_total']);
 }
 
+// Print total row
+$pdf->SetFont('helvetica', 'B', 8);
+$pdf->SetFillColor(230, 230, 230);
+$pdf->Cell(array_sum(array_slice($w, 0, 13)), 6, 'TOTAL', 1, 0, 'R', true);
+$pdf->Cell($w[13], 6, '₱ ' . number_format($total_amount, 2), 1, 0, 'R', true);
+$pdf->Cell($w[14], 6, '', 1, 0, 'L', true);
+$pdf->Ln();
+
+// Add signature fields at the bottom
+$pdf->Ln(20);
+$pdf->SetFont('helvetica', '', 10);
+
+// Prepared by
+$pdf->Cell(120, 5, 'Prepared by:', 0, 0, 'L');
+// Certified Correct by
+$pdf->Cell(120, 5, 'Certified Correct:', 0, 0, 'L');
+// Approved by
+$pdf->Cell(120, 5, 'Approved by:', 0, 1, 'L');
+
+$pdf->Ln(15);
+
+$pdf->SetFont('helvetica', 'B', 10);
+// Add name lines
+$pdf->Cell(120, 5, '___________________________', 0, 0, 'L');
+$pdf->Cell(120, 5, '___________________________', 0, 0, 'L');
+$pdf->Cell(120, 5, '___________________________', 0, 1, 'L');
+
+// Add position/title lines
+$pdf->SetFont('helvetica', '', 8);
+$pdf->Cell(120, 5, 'Property Officer', 0, 0, 'L');
+$pdf->Cell(120, 5, 'Supply Officer', 0, 0, 'L');
+$pdf->Cell(120, 5, 'Head of Office', 0, 1, 'L');
+
+// Clean any output buffers
+while (ob_get_level()) ob_end_clean();
+
 // Output the PDF
-$pdf->Output('RegSPI_Export_' . date('Y-m-d') . '.pdf', 'D');
+try {
+    $pdf->Output('RegSPI_Export_' . date('Y-m-d') . '.pdf', 'D');
+} catch (Exception $e) {
+    // Log error and display user-friendly message
+    error_log('PDF Generation Error: ' . $e->getMessage());
+    echo 'Error generating PDF. Please try again or contact support.';
+    exit;
+}

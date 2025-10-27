@@ -275,36 +275,39 @@ $ris = ['entity_name' => 'TESDA'];
         </tr>
       </thead>
       <tbody>
-        <?php if (count($history_rows) > 0): ?>
-          <?php foreach ($history_rows as $h):
+        <?php
+        if (count($history_rows) > 0): 
+          foreach ($history_rows as $h):
             $date = date('M d, Y', strtotime($h['changed_at']));
-
-            // temporary (fix this shit)
             $reference = !empty($h['ris_no']) ? htmlspecialchars($h['ris_no']) : htmlspecialchars($items['iar']);
-
             $receipt_qty = $h['quantity_change'] > 0 ? htmlspecialchars($h['quantity_change']) : '';
             $issue_qty = $h['quantity_change'] < 0 ? abs(htmlspecialchars($h['quantity_change'])) : '';
             $office = ''; // fill if you have office info
             $balance = htmlspecialchars($h['quantity_on_hand']);
             $days = '--'; // placeholder
-          ?>
+        ?>
             <tr>
               <td><?php echo $date; ?></td>
-
-              <!-- Temporary (ris_no) -->
               <td><?php echo $reference; ?></td>
-
               <td><?php echo $receipt_qty; ?></td>
               <td><?php echo $issue_qty; ?></td>
               <td><?php echo $office; ?></td>
               <td><?php echo $balance; ?></td>
               <td><?php echo $days; ?></td>
             </tr>
-          <?php endforeach; ?>
-        <?php else: ?>
-          <tr>
-            <td colspan="7" class="no-history">No history available for this item.</td>
-          </tr>
+          <?php endforeach;
+        else:
+        // Show default row with dashes when no history exists
+        ?>
+            <tr>
+              <td>--</td>
+              <td>--</td>
+              <td>0</td>
+              <td>0</td>
+              <td>--</td>
+              <td>0</td>
+              <td>--</td>
+            </tr>
         <?php endif; ?>
         <!-- fill blank rows to emulate the template if desired -->
         <?php for ($i = 0; $i < max(0, 20 - count($history_rows)); $i++): ?>
