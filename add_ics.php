@@ -359,8 +359,6 @@ function generateICSNumberSimple($conn) {
     <div class="edit-ics-page content edit-ris-page">
         <h2><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></h2>
 
-        
-
         <form method="post" action="">
             <?php if ($is_editing): ?>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
@@ -630,7 +628,6 @@ function generateICSNumberSimple($conn) {
                 url.hash = 'itemsTable';
                 window.location.href = url.toString();
             });
-            
             // Initialize total cost cells and attach live updates for issued qty
             document.querySelectorAll('.item-row').forEach(function(row){
                 const unit = parseFloat(row.getAttribute('data-unit-cost') || '0');

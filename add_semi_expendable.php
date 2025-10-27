@@ -7,6 +7,30 @@ require_once 'sidebar.php'; // Add sidebar requirement
 // Ensure required columns exist (idempotent)
 ensure_semi_expendable_amount_columns($conn);
 
+// Local helper: generate a simple ICS number like ICS-YYYY/MM/0001
+if (!function_exists('generateICSNumberSimple')) {
+    function generateICSNumberSimple($conn) {
+        $current_year = (int)date('Y');
+        $current_month = (int)date('m');
+        $prefix = 'ICS-' . date('Y') . '/' . date('m') . '/';
+        $next_increment = 1;
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM ics WHERE YEAR(date_issued) = ? AND MONTH(date_issued) = ?");
+        if ($stmt) {
+            $stmt->bind_param('ii', $current_year, $current_month);
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                if ($res) {
+                    $row = $res->fetch_assoc();
+                    $next_increment = ((int)($row['count'] ?? 0)) + 1;
+                }
+            }
+            $stmt->close();
+        }
+        $formatted = str_pad((string)$next_increment, 4, '0', STR_PAD_LEFT);
+        return $prefix . $formatted;
+    }
+}
+
 $error = '';
 $success = '';
 
@@ -117,6 +141,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     @ $h->execute();
                     $h->close();
+                }
+
+                // If user provided Quantity Issued (issued-out movement), auto-create a minimal ICS entry
+                if ($quantity_issued_out > 0) {
+                    // Create ICS header
+                    $auto_ics_no = generateICSNumberSimple($conn);
+                    $entity_name = 'TESDA Regional Office';
+                    $received_by = $office_officer_issued ?: 'N/A';
+                    $received_by_position = '(auto)';
+                    $received_from = 'Property Custodian';
+                    $received_from_position = '(auto)';
+
+                    if ($icsHdr = $conn->prepare("INSERT INTO ics (ics_no, entity_name, fund_cluster, date_issued, received_by, received_by_position, received_from, received_from_position) VALUES (?,?,?,?,?,?,?,?)")) {
+                        $icsHdr->bind_param("ssssssss", $auto_ics_no, $entity_name, $fund_cluster, $date, $received_by, $received_by_position, $received_from, $received_from_position);
+                        if ($icsHdr->execute()) {
+                            $new_ics_id = $icsHdr->insert_id;
+                            $icsHdr->close();
+
+                            // Insert ICS item mapped from the just-added semi-expendable
+                            $stock_no = $semi_expendable_property_no;
+                            $issued_qty = (float)$quantity_issued_out;
+                            $unit_cost = (float)$unit_amount;
+                            $total_cost = $issued_qty * $unit_cost;
+                            $descVal = ($remarks !== '') ? $remarks : $item_description;
+                            $unitVal = '';
+                            $useful_life_val = (string)$estimated_useful_life;
+                            $serial_no = '';
+
+                            if ($icsItem = $conn->prepare("INSERT INTO ics_items (ics_id, stock_number, quantity, unit, unit_cost, total_cost, description, inventory_item_no, estimated_useful_life, serial_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                $icsItem->bind_param("isdsddssss", $new_ics_id, $stock_no, $issued_qty, $unitVal, $unit_cost, $total_cost, $descVal, $stock_no, $useful_life_val, $serial_no);
+                                @ $icsItem->execute();
+                                $icsItem->close();
+                            }
+
+                            // Update semi-expendable with ICS No. reference
+                            if ($u2 = $conn->prepare("UPDATE semi_expendable_property SET ics_rrsp_no = ? WHERE id = ?")) {
+                                $u2->bind_param("si", $auto_ics_no, $new_id);
+                                @ $u2->execute();
+                                $u2->close();
+                            }
+
+                            // Add issuance snapshot to history similar to manual ICS issuance
+                            $amount_total_curr = round($unit_amount * $quantity_issued, 2);
+                            if ($h2 = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                $remarks2 = 'ICS Issued';
+                                $h2->bind_param("issiiiiisdds", $new_id, $date, $auto_ics_no, $quantity_issued, $quantity_issued_out, $quantity_reissued, $quantity_disposed, $quantity_balance, $received_by, $unit_amount, $amount_total_curr, $remarks2);
+                                @ $h2->execute();
+                                $h2->close();
+                            }
+                        } else {
+                            $icsHdr->close();
+                        }
+                    }
                 }
                 // Redirect back to listing with category filter
                 $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';

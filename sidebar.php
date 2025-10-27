@@ -49,6 +49,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Supply List</a>
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📇 PC</a>
                             <a href="regspi.php" class="<?= $currentPage == 'regspi.php' ? 'active' : '' ?>">📦 RegSPI</a>
+                            <a href="rspi.php" class="<?= $currentPage == 'rspi.php' ? 'active' : '' ?>">📦 RSPI</a>
                             <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
                             <a href="ict_registry.php" class="<?= $currentPage == 'ict_registry.php' ? 'active' : '' ?>">📦 ICT</a>
