@@ -1,359 +1,252 @@
 <?php
-// Ensure no output has been sent yet
-if (ob_get_level()) ob_end_clean();
-
-// Error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Define TCPDF path using __DIR__
-$tcpdfPath = __DIR__ . '/tcpdf/tcpdf.php';
-
-// Check TCPDF installation
-if (!file_exists($tcpdfPath)) {
-    die('TCPDF not found at: ' . $tcpdfPath . '. Please install TCPDF in the tcpdf directory.');
-}
-
-// Include TCPDF
-require_once($tcpdfPath);
-
 require 'config.php';
 require_once 'functions.php';
 
-// Error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Verify TCPDF is available
-if (!class_exists('TCPDF')) {
-    die('TCPDF class not found. Please ensure Composer dependencies are installed correctly.');
-}
-
-// Get category filter if provided
-$selected_category = isset($_POST['category']) ? trim($_POST['category']) : '';
+// Get category filter (from POST or GET); treat "All" as none
+$selected_category = isset($_POST['category']) ? trim($_POST['category']) : (isset($_GET['category']) ? trim($_GET['category']) : '');
 if ($selected_category === 'All') { $selected_category = ''; }
 
-// Fetch data using the same logic as the main page
+// Build ICS-only dataset (mirrors regspi.php)
 $rows = [];
-$has_history = false;
+$sql = "
+    SELECT
+        i.date_issued AS date,
+        i.ics_no AS ics_rrsp_no,
+        ii.stock_number AS property_no,
+        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
+        COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
+        ii.quantity AS issued_qty,
+        i.received_by AS issued_office,
+        0 AS returned_qty,
+        '' AS returned_office,
+        0 AS reissued_qty,
+        '' AS reissued_office,
+        0 AS disposed_qty1,
+        0 AS disposed_qty2,
+        COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
+        '' AS remarks
+    FROM ics i
+    INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
+    LEFT JOIN semi_expendable_property sep 
+        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
+    WHERE ii.quantity > 0";
 
-try {
-    $chk = $conn->query("SHOW TABLES LIKE 'semi_expendable_history'");
-    $has_history = $chk && $chk->num_rows > 0;
-    if ($chk) { $chk->close(); }
-} catch (Throwable $e) { $has_history = false; }
+$binds = [];
+$types = '';
+if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
+    $sql .= " AND sep.category = ?";
+    $binds[] = $selected_category;
+    $types .= 's';
+}
+$sql .= " ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
 
-if ($has_history) {
-    $sql = "
-        SELECT 
-            h.date,
-            h.ics_rrsp_no,
-            sep.semi_expendable_property_no AS property_no,
-            COALESCE(NULLIF(sep.remarks, ''), sep.item_description) AS item_description,
-            COALESCE(sep.estimated_useful_life, '') AS useful_life,
-            h.quantity_issued AS issued_qty,
-            h.office_officer_issued AS issued_office,
-            h.quantity_returned AS returned_qty,
-            h.office_officer_returned AS returned_office,
-            h.quantity_reissued AS reissued_qty,
-            h.office_officer_reissued AS reissued_office,
-            h.quantity_disposed AS disposed_qty1,
-            0 AS disposed_qty2,
-            h.quantity_balance AS balance_qty,
-            COALESCE(h.amount_total, ROUND(COALESCE(sep.amount, h.amount) * h.quantity, 2)) AS amount_total,
-            h.remarks
-        FROM semi_expendable_history h
-        INNER JOIN semi_expendable_property sep ON sep.id = h.semi_id
-        WHERE 1=1";
-    
-    $binds = [];
-    $types = '';
-    if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-        $sql .= " AND sep.category = ?";
-        $binds[] = $selected_category;
-        $types .= 's';
-    }
-    $sql .= " ORDER BY h.date DESC, h.id DESC";
-
-    if (!empty($binds)) {
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param($types, ...$binds);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-                $res->close();
-            }
-            $stmt->close();
-        }
-    } else {
-        if ($res = $conn->query($sql)) {
+if (!empty($binds)) {
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param($types, ...$binds);
+        if ($stmt->execute()) {
+            $res = $stmt->get_result();
             while ($r = $res->fetch_assoc()) { $rows[] = $r; }
             $res->close();
         }
+        $stmt->close();
+    }
+} else {
+    if ($res = $conn->query($sql)) {
+        while ($r = $res->fetch_assoc()) { $rows[] = $r; }
+        $res->close();
     }
 }
 
-// Fallback: derive from ICS rows if no history rows found
-if (!$has_history || count($rows) === 0) {
-    $sql = "
-        SELECT
-            i.date_issued AS date,
-            i.ics_no AS ics_rrsp_no,
-            ii.stock_number AS property_no,
-            COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
-            COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
-            ii.quantity AS issued_qty,
-            i.received_by AS issued_office,
-            0 AS returned_qty,
-            '' AS returned_office,
-            0 AS reissued_qty,
-            '' AS reissued_office,
-            0 AS disposed_qty1,
-            0 AS disposed_qty2,
-            GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
-            COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-            'Derived from ICS' AS remarks
-        FROM ics i
-        INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
-        LEFT JOIN semi_expendable_property sep 
-            ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
-        WHERE ii.quantity > 0";
-        
-    $binds2 = [];
-    $types2 = '';
-    if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-        $sql .= " AND sep.category = ?";
-        $binds2[] = $selected_category;
-        $types2 .= 's';
-    }
-    $sql .= " ORDER BY i.date_issued DESC, ii.id DESC";
+// Helper: safe html
+function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+$categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
+?>
 
-    if (!empty($binds2)) {
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param($types2, ...$binds2);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-                $res->close();
-            }
-            $stmt->close();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registry of Semi-Expendable Property Issued - Export</title>
+    <style>
+        /* Force print orientation to landscape */
+        @page {
+            size: landscape;
+            margin: 10mm;
         }
-    } else {
-        if ($res = $conn->query($sql)) {
-            while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-            $res->close();
+        @media print {
+            body { margin: 0; padding: 0; font-size: 11px; }
+            .no-print { display: none; }
+            table, tr { page-break-inside: avoid; }
+            .form-container { border: 2px solid black; }
         }
-    }
-}
+        body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; background-color: #f5f5f5; }
+        .export-instructions { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
+        .export-instructions h3 { margin: 0 0 10px 0; color: #856404; }
+        .export-instructions ol { margin: 10px 0; padding-left: 20px; }
+        .export-instructions p { margin: 10px 0 0 0; font-weight: bold; color: #856404; }
+        .button-container { margin: 20px 0; display: flex; gap: 10px; }
+        .print-btn { background: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .back-btn { background: #6c757d; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .print-btn:hover { background: #0056b3; }
+        .back-btn:hover { background: #545b62; }
+        .form-container { background: #fff; border: 2px solid #000; padding: 0; }
+        .annex-reference { text-align: right; font-weight: bold; font-size: 12px; padding: 10px 15px 5px 0; margin: 0; }
+        .form-title { text-align: center; font-weight: bold; margin: 10px 0 15px 0; font-size: 14px; text-transform: uppercase; }
+        .form-header { border-collapse: collapse; width: 100%; margin-bottom: 0; }
+        .form-header td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+        .form-header .label { font-weight: bold; width: 140px; background: #fff; }
+        .form-header .value { width: 200px; }
+        .main-table { width: 100%; border-collapse: collapse; border-top: none; }
+        .main-table th, .main-table td { border: 1px solid #000; padding: 4px; text-align: center; vertical-align: middle; font-size: 11px; }
+        .main-table th { background: #fff; font-weight: bold; }
+        .main-table .text-left { text-align: left; }
+        .main-table .text-right { text-align: right; }
+        /* Column widths mirroring ict_export */
+        .date-col{width:70px;} .ics-col{width:70px;} .property-col{width:80px;} .item-col{width:280px;}
+        .life-col{width:60px;} .issued-qty-col{width:50px;} .officer-col{width:140px;}
+        .returned-qty-col{width:50px;} .returned-officer-col{width:140px;}
+        .reissued-qty-col{width:50px;} .reissued-officer-col{width:140px;}
+        .disposed-qty-col{width:50px;}
+        .amount-col{width:80px;} .remarks-col{width:80px;}
+    </style>
+<?php /* keep head clean */ ?>
+</head>
+<body>
+    <div class="no-print">
+        <div class="export-instructions">
+            <h3>Export Instructions</h3>
+            <strong>To save as PDF:</strong>
+            <ol>
+                <li>Click the "Print/Save as PDF" button below</li>
+                <li>In the print dialog, select "Save as PDF" or "Microsoft Print to PDF"</li>
+                <li>Choose your destination and click "Save"</li>
+            </ol>
+            <p>For best results: Use Chrome or Edge for optimal PDF formatting.</p>
+        </div>
+        <div class="button-container">
+            <button class="print-btn" onclick="window.print()">🖨️ Print/Save as PDF</button>
+            <button class="back-btn" onclick="history.back()">← Back to Registry</button>
+        </div>
+    </div>
 
-// Generate PDF using TCPDF or similar library
-require_once('tcpdf/tcpdf.php');
+    <div class="form-container">
+        <div class="annex-reference">Annex A.4</div>
+        <div class="form-title">REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED</div>
+        <table class="form-header">
+            <tr>
+                <td class="label">Entity Name:</td>
+                <td class="value" contenteditable="true">TESDA-CAR</td>
+                <td style="width: 100px;"></td>
+                <td class="label">Fund Cluster :</td>
+                <td class="value" style="width: 80px;" contenteditable="true">101</td>
+            </tr>
+        </table>
+        <table class="form-header" style="margin-top:0;">
+            <tr>
+                <td class="label">Semi-Expendable Property:</td>
+                <td class="value" contenteditable="true"><?php echo h($categoryLabel); ?></td>
+                <td colspan="3"></td>
+            </tr>
+        </table>
 
-class REGSPI_PDF extends TCPDF {
-    public function Header() {
-        // No default header
-    }
-    
-    public function Footer() {
-        // Position at 15 mm from bottom
-        $this->SetY(-15);
-        // Set font
-        $this->SetFont('helvetica', 'I', 8);
-        // Page number
-        $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0);
-    }
-}
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="date-col">Date</th>
+                    <th colspan="2">Reference</th>
+                    <th rowspan="2" class="item-col">Item Description</th>
+                    <th rowspan="2" class="life-col">Estimated Useful Life</th>
+                    <th colspan="2">Issued</th>
+                    <th colspan="2">Returned</th>
+                    <th colspan="2">Re-issued</th>
+                    <th colspan="1">Disposed</th>
+                    <th rowspan="2" class="amount-col">Amount (TOTAL)</th>
+                    <th rowspan="2" class="remarks-col">Remarks</th>
+                </tr>
+                <tr>
+                    <th class="ics-col">ICS/RRSP No.</th>
+                    <th class="property-col">Semi-Expendable Property No.</th>
+                    <th class="issued-qty-col">Qty.</th>
+                    <th class="officer-col">Office/Officer</th>
+                    <th class="returned-qty-col">Qty.</th>
+                    <th class="returned-officer-col">Office/Officer</th>
+                    <th class="reissued-qty-col">Qty.</th>
+                    <th class="reissued-officer-col">Office/Officer</th>
+                    <th class="disposed-qty-col">Qty.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($rows)): ?>
+                    <?php foreach ($rows as $r): ?>
+                        <tr>
+                            <td contenteditable="true"><?php echo h($r['date'] ? date('n/j/Y', strtotime($r['date'])) : ''); ?></td>
+                            <td contenteditable="true"><?php echo h($r['ics_rrsp_no']); ?></td>
+                            <td contenteditable="true"><?php echo h($r['property_no']); ?></td>
+                            <td class="text-left" contenteditable="true"><?php echo h($r['item_description']); ?></td>
+                            <td contenteditable="true"><?php echo h($r['useful_life']); ?></td>
+                            <td contenteditable="true"><?php echo number_format((float)$r['issued_qty']); ?></td>
+                            <td class="text-left" contenteditable="true"><?php echo h($r['issued_office']); ?></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td class="text-right" contenteditable="true"><?php echo number_format((float)$r['amount_total'], 2); ?></td>
+                            <td contenteditable="true"></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="14" style="text-align:center;">No records found.</td>
+                    </tr>
+                <?php endif; ?>
+                <!-- Extra blank rows for manual edits -->
+                <?php for ($i=0; $i<2; $i++): ?>
+                <tr>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td class="text-left" contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td class="text-left" contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td class="text-right" contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                </tr>
+                <?php endfor; ?>
+            </tbody>
+        </table>
+    </div>
 
-// Create new PDF document (Landscape, mm, Legal)
-$pdf = new REGSPI_PDF('L', 'mm', 'LEGAL', true, 'UTF-8', false);
-
-// Set document properties
-$pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('TESDA-CAR');
-$pdf->SetTitle('Registry of Semi-Expendable Property Issued');
-
-// Set default monospaced font
-$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-
-// Set margins
-$pdf->SetMargins(15, 15, 15);
-
-// Set auto page breaks
-$pdf->SetAutoPageBreak(TRUE, 15);
-
-// Set document information
-$pdf->SetCreator('TESDA Inventory System');
-$pdf->SetAuthor('TESDA-CAR');
-$pdf->SetTitle('Registry of Semi-Expendable Property Issued');
-
-// Remove default header/footer
-$pdf->setPrintHeader(false);
-$pdf->setPrintFooter(false);
-
-// Set margins
-$pdf->SetMargins(10, 10, 10);
-
-// Add a page (Landscape Legal)
-$pdf->AddPage('L', 'LEGAL');
-
-// Set font for title
-$pdf->SetFont('helvetica', 'B', 12);
-
-// Add logo if exists
-if (file_exists('images/tesda_logo.png')) {
-    $pdf->Image('images/tesda_logo.png', 15, 10, 20);
-}
-
-// Move to the right for title
-$pdf->Cell(20); // Space after logo
-
-// Title
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 10, 'Registry of Semi-Expendable Property Issued', 0, 1, 'C');
-$pdf->SetFont('helvetica', '', 10);
-$pdf->Cell(0, 5, 'TESDA-CAR', 0, 1, 'C');
-$pdf->Cell(0, 5, 'As of ' . date('F d, Y'), 0, 1, 'C');
-$pdf->Ln(5);
-
-// Table headers
-$pdf->SetFont('helvetica', 'B', 8);
-$headers = array(
-    'Date',
-    'ICS/RRSP No.',
-    'Property No.',
-    'Description',
-    'Life',
-    'Issued Qty',
-    'Issued To',
-    'Ret. Qty',
-    'Ret. From',
-    'Reissued Qty',
-    'Reissued To',
-    'Disp. Qty',
-    'Balance',
-    'Amount',
-    'Remarks'
-);
-
-// Get page width excluding margins
-$pageWidth = $pdf->getPageWidth() - 30; // 15mm margins on each side
-
-// Calculate column widths as percentages of available width
-$widths = array(
-    'Date' => 0.08,           // 8%
-    'ICS/RRSP No.' => 0.08,   // 8%
-    'Property No.' => 0.1,     // 10%
-    'Description' => 0.15,     // 15%
-    'Life' => 0.05,           // 5%
-    'Issued Qty' => 0.05,     // 5%
-    'Issued To' => 0.08,      // 8%
-    'Ret. Qty' => 0.05,       // 5%
-    'Ret. From' => 0.08,      // 8%
-    'Reissued Qty' => 0.05,   // 5%
-    'Reissued To' => 0.08,    // 8%
-    'Disp. Qty' => 0.05,      // 5%
-    'Balance' => 0.05,        // 5%
-    'Amount' => 0.07,         // 7%
-    'Remarks' => 0.08         // 8%
-);
-
-// Convert percentages to actual widths
-$w = array();
-foreach ($widths as $col => $percentage) {
-    $w[] = $pageWidth * $percentage;
-}
-
-// Print header with background color
-$pdf->SetFillColor(51, 122, 183); // Bootstrap primary blue
-$pdf->SetTextColor(255);  // White text
-foreach($headers as $i => $header) {
-    $pdf->Cell($w[$i], 8, $header, 1, 0, 'C', true);
-}
-$pdf->Ln();
-
-// Reset text color to black for data
-$pdf->SetTextColor(0);
-
-// Print rows with alternate background
-$pdf->SetFont('helvetica', '', 8);
-$fill = false;
-$total_amount = 0;
-
-foreach($rows as $row) {
-    // Set alternative row background
-    $pdf->SetFillColor($fill ? 245 : 255, $fill ? 245 : 255, $fill ? 245 : 255);
-    
-    // Handle potential date formatting errors
-    $date = $row['date'] ? date('m/d/Y', strtotime($row['date'])) : '';
-    
-    // Print cells with proper alignment and overflow handling
-    $pdf->Cell($w[0], 6, $date, 1, 0, 'C', $fill);
-    $pdf->Cell($w[1], 6, $row['ics_rrsp_no'], 1, 0, 'L', $fill);
-    $pdf->Cell($w[2], 6, $row['property_no'], 1, 0, 'L', $fill);
-    
-    // Multi-line description if needed
-    $desc_height = $pdf->getStringHeight($w[3], $row['item_description']);
-    $pdf->MultiCell($w[3], max(6, $desc_height), $row['item_description'], 1, 'L', $fill, 0);
-    
-    $pdf->Cell($w[4], 6, $row['useful_life'], 1, 0, 'C', $fill);
-    $pdf->Cell($w[5], 6, number_format($row['issued_qty']), 1, 0, 'R', $fill);
-    $pdf->Cell($w[6], 6, $row['issued_office'], 1, 0, 'L', $fill);
-    $pdf->Cell($w[7], 6, number_format($row['returned_qty']), 1, 0, 'R', $fill);
-    $pdf->Cell($w[8], 6, $row['returned_office'], 1, 0, 'L', $fill);
-    $pdf->Cell($w[9], 6, number_format($row['reissued_qty']), 1, 0, 'R', $fill);
-    $pdf->Cell($w[10], 6, $row['reissued_office'], 1, 0, 'L', $fill);
-    $pdf->Cell($w[11], 6, number_format($row['disposed_qty1']), 1, 0, 'R', $fill);
-    $pdf->Cell($w[12], 6, number_format($row['balance_qty']), 1, 0, 'R', $fill);
-    $pdf->Cell($w[13], 6, '₱ ' . number_format($row['amount_total'], 2), 1, 0, 'R', $fill);
-    $pdf->Cell($w[14], 6, $row['remarks'], 1, 0, 'L', $fill);
-    $pdf->Ln();
-    
-    $fill = !$fill; // Toggle fill for next row
-    $total_amount += floatval($row['amount_total']);
-}
-
-// Print total row
-$pdf->SetFont('helvetica', 'B', 8);
-$pdf->SetFillColor(230, 230, 230);
-$pdf->Cell(array_sum(array_slice($w, 0, 13)), 6, 'TOTAL', 1, 0, 'R', true);
-$pdf->Cell($w[13], 6, '₱ ' . number_format($total_amount, 2), 1, 0, 'R', true);
-$pdf->Cell($w[14], 6, '', 1, 0, 'L', true);
-$pdf->Ln();
-
-// Add signature fields at the bottom
-$pdf->Ln(20);
-$pdf->SetFont('helvetica', '', 10);
-
-// Prepared by
-$pdf->Cell(120, 5, 'Prepared by:', 0, 0, 'L');
-// Certified Correct by
-$pdf->Cell(120, 5, 'Certified Correct:', 0, 0, 'L');
-// Approved by
-$pdf->Cell(120, 5, 'Approved by:', 0, 1, 'L');
-
-$pdf->Ln(15);
-
-$pdf->SetFont('helvetica', 'B', 10);
-// Add name lines
-$pdf->Cell(120, 5, '___________________________', 0, 0, 'L');
-$pdf->Cell(120, 5, '___________________________', 0, 0, 'L');
-$pdf->Cell(120, 5, '___________________________', 0, 1, 'L');
-
-// Add position/title lines
-$pdf->SetFont('helvetica', '', 8);
-$pdf->Cell(120, 5, 'Property Officer', 0, 0, 'L');
-$pdf->Cell(120, 5, 'Supply Officer', 0, 0, 'L');
-$pdf->Cell(120, 5, 'Head of Office', 0, 1, 'L');
-
-// Clean any output buffers
-while (ob_get_level()) ob_end_clean();
-
-// Output the PDF
-try {
-    $pdf->Output('RegSPI_Export_' . date('Y-m-d') . '.pdf', 'D');
-} catch (Exception $e) {
-    // Log error and display user-friendly message
-    error_log('PDF Generation Error: ' . $e->getMessage());
-    echo 'Error generating PDF. Please try again or contact support.';
-    exit;
-}
+    <script>
+        // Optional helper to add rows via Ctrl+Enter (same as ICT)
+        function addRow() {
+            const tbody = document.querySelector('.main-table tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td class="text-left" contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td class="text-left" contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td class="text-right" contenteditable="true"></td>
+                <td contenteditable="true"></td>`;
+            tbody.appendChild(tr);
+        }
+        document.addEventListener('keydown', function(e){ if (e.ctrlKey && e.key === 'Enter') addRow(); });
+    </script>
+</body>
+</html>

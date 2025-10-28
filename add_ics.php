@@ -241,87 +241,74 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
 }
 
 // Function to generate the next ICS number (only for new ICS)
-// Fixed version of the generateICSNumber function with error handling
+// New format: "NN-YY" where NN is a 2+ digit serial (zero-padded to 2) and YY is the last two digits of the year
 function generateICSNumber($conn) {
-    $current_year = date('Y');
-    $current_month = date('m');
-    $prefix = 'ICS-' . $current_year . '/' . $current_month . '/';
-    
-    // Get the highest ICS number for current month/year
-    $query = "SELECT ics_no FROM ics WHERE ics_no LIKE ? ORDER BY ics_no DESC LIMIT 1";
+    $yy = date('y'); // last two digits of the current year
+
+    // Find the latest new-format ICS no for this year: must match ^[0-9]+-[0-9]{2}$ and end with current YY
+    $query = "SELECT ics_no 
+              FROM ics 
+              WHERE ics_no REGEXP '^[0-9]+-[0-9]{2}$' AND RIGHT(ics_no, 2) = ? 
+              ORDER BY CAST(SUBSTRING_INDEX(ics_no, '-', 1) AS UNSIGNED) DESC 
+              LIMIT 1";
     $stmt = $conn->prepare($query);
-    
-    // Add error handling for prepare
     if (!$stmt) {
-        // If prepare fails, log the error and return a basic format
         error_log("MySQL prepare error in generateICSNumber: " . $conn->error);
-        return $prefix . '0001';
+        // Fallback to first serial of the year
+        return '01-' . $yy;
     }
-    
-    $search_pattern = $prefix . '%';
-    $stmt->bind_param('s', $search_pattern);
-    
+
+    $stmt->bind_param('s', $yy);
     if (!$stmt->execute()) {
-        // If execute fails, close statement and return basic format
         error_log("MySQL execute error in generateICSNumber: " . $stmt->error);
         $stmt->close();
-        return $prefix . '0001';
+        return '01-' . $yy;
     }
-    
+
     $result = $stmt->get_result();
-    
+    $next_serial = 1;
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        $last_ics = $row['ics_no'];
-        
-        // Extract the incremental part (last 4 digits)
-        $last_increment = (int)substr($last_ics, -4);
-        $next_increment = $last_increment + 1;
-    } else {
-        // First ICS for this month/year
-        $next_increment = 1;
+        // Extract the part before '-' and increment
+        $last_serial_str = explode('-', $row['ics_no'])[0];
+        $last_serial = (int)$last_serial_str;
+        $next_serial = $last_serial + 1;
     }
-    
     $stmt->close();
-    
-    // Format the increment with leading zeros (4 digits)
-    $formatted_increment = str_pad($next_increment, 4, '0', STR_PAD_LEFT);
-    
-    return $prefix . $formatted_increment;
+
+    // Zero-pad to 2 digits, but allow >99 naturally (e.g., 100-YY)
+    $serial_formatted = str_pad((string)$next_serial, 2, '0', STR_PAD_LEFT);
+    return $serial_formatted . '-' . $yy;
 }
 
-// Alternative simpler version if you're still having issues
+// Alternative simpler version as a fallback
+// Uses count of ICS in the current year and formats as NN-YY
 function generateICSNumberSimple($conn) {
-    $current_year = date('Y');
-    $current_month = date('m');
-    $prefix = 'ICS-' . $current_year . '/' . $current_month . '/';
-    
-    // Use a simpler query without LIKE
-    $query = "SELECT COUNT(*) as count FROM ics WHERE YEAR(date_issued) = ? AND MONTH(date_issued) = ?";
+    $year = (int)date('Y');
+    $yy = date('y');
+
+    $query = "SELECT COUNT(*) AS count FROM ics WHERE YEAR(date_issued) = ?";
     $stmt = $conn->prepare($query);
-    
     if (!$stmt) {
-        error_log("MySQL prepare error: " . $conn->error);
-        return $prefix . '0001';
+        error_log("MySQL prepare error in generateICSNumberSimple: " . $conn->error);
+        return '01-' . $yy;
     }
-    
-    $stmt->bind_param('ii', $current_year, $current_month);
-    
+
+    $stmt->bind_param('i', $year);
     if (!$stmt->execute()) {
-        error_log("MySQL execute error: " . $stmt->error);
+        error_log("MySQL execute error in generateICSNumberSimple: " . $stmt->error);
         $stmt->close();
-        return $prefix . '0001';
+        return '01-' . $yy;
     }
-    
+
     $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $count = $row['count'];
+    $row = $result ? $result->fetch_assoc() : null;
     $stmt->close();
-    
-    $next_increment = $count + 1;
-    $formatted_increment = str_pad($next_increment, 4, '0', STR_PAD_LEFT);
-    
-    return $prefix . $formatted_increment;
+
+    $count = $row && isset($row['count']) ? (int)$row['count'] : 0;
+    $next_serial = $count + 1;
+    $serial_formatted = str_pad((string)$next_serial, 2, '0', STR_PAD_LEFT);
+    return $serial_formatted . '-' . $yy;
 }
 
 // columnExists helper is provided in functions.php

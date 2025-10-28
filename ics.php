@@ -2,6 +2,24 @@
 require 'config.php';
 require 'functions.php';
 
+// Normalize ICS number for display to the new format "NN-YY"
+// - If already in NN-YY, return as is
+// - If in old format "ICS-YYYY/MM/####", convert to "NN-YY" where NN is serial (min 2 digits) and YY is last two digits of year
+function formatICSNo($ics_no) {
+    if (preg_match('/^\d+-\d{2}$/', $ics_no)) {
+        return $ics_no; // already new format
+    }
+    if (preg_match('/^ICS-(\d{4})\/\d{2}\/(\d{1,})$/', $ics_no, $m)) {
+        $yy = substr($m[1], -2);
+        $serial = ltrim($m[2], '0');
+        if ($serial === '') { $serial = '0'; }
+        if (strlen($serial) < 2) { $serial = str_pad($serial, 2, '0', STR_PAD_LEFT); }
+        return $serial . '-' . $yy;
+    }
+    // Fallback: return original if we can't confidently parse
+    return $ics_no;
+}
+
 // DELETE LOGIC
 if (isset($_GET['delete_ics_id'])) {
     $ics_id = (int)$_GET['delete_ics_id'];
@@ -21,7 +39,16 @@ $order_clause = '';
 
 switch ($sort_by) {
     case 'ics_no':
-        $order_clause = "ORDER BY ics_no ASC";
+        // Sort by year (YY) then serial, handling both new (NN-YY) and old (ICS-YYYY/MM/####) formats
+        $order_clause = "ORDER BY 
+            CAST(CASE 
+                WHEN ics_no REGEXP '^[0-9]+-[0-9]{2}$' THEN RIGHT(ics_no, 2)
+                WHEN ics_no LIKE 'ICS-%' THEN RIGHT(SUBSTRING_INDEX(ics_no, '/', 1), 2)
+                ELSE 0 END AS UNSIGNED) ASC,
+            CAST(CASE 
+                WHEN ics_no REGEXP '^[0-9]+-[0-9]{2}$' THEN SUBSTRING_INDEX(ics_no, '-', 1)
+                WHEN ics_no LIKE 'ICS-%' THEN RIGHT(ics_no, 4)
+                ELSE 0 END AS UNSIGNED) ASC";
         break;
     case 'date_oldest':
         $order_clause = "ORDER BY date_issued ASC";
@@ -126,7 +153,7 @@ switch ($sort_by) {
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
                     echo '<tr>';
-                    echo '<td><strong>' . htmlspecialchars($row['ics_no']) . '</strong></td>';
+                    echo '<td><strong>' . htmlspecialchars(formatICSNo($row['ics_no'])) . '</strong></td>';
                     echo '<td>' . date('M d, Y', strtotime($row['date_issued'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';

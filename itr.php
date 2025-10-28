@@ -66,12 +66,57 @@ require 'functions.php';
             </tr>
         </thead>
         <tbody>
-            <!-- Placeholder: No data yet. Wire this to your ITR table when ready. -->
-            <tr>
-                <td colspan="6" style="text-align:center; padding:16px;">
-                    <i class="fas fa-inbox"></i> No ITR records found.
-                </td>
-            </tr>
+            <?php
+            // Check if tables exist
+            $hasItr = false;
+            try {
+                $res = $conn->query("SHOW TABLES LIKE 'itr'");
+                $hasItr = $res && $res->num_rows > 0;
+                if ($res) { $res->close(); }
+            } catch (Throwable $e) { $hasItr = false; }
+
+            if ($hasItr) {
+                $sort = $_GET['sort'] ?? 'date_newest';
+                $order = 'i.itr_date DESC, i.itr_id DESC';
+                if ($sort === 'date_oldest') $order = 'i.itr_date ASC, i.itr_id ASC';
+                if ($sort === 'itr_no') $order = 'i.itr_no ASC';
+                // amount sorting computed after join
+                $orderAmount = '';
+                if ($sort === 'amount_highest') $orderAmount = ' ORDER BY total_amount DESC';
+                if ($sort === 'amount_lowest') $orderAmount = ' ORDER BY total_amount ASC';
+
+                $sql = "SELECT i.*, IFNULL(SUM(it.amount),0) AS total_amount
+                        FROM itr i
+                        LEFT JOIN itr_items it ON it.itr_id = i.itr_id
+                        GROUP BY i.itr_id
+                        ";
+                // Default order by date unless amount-specific requested
+                if ($orderAmount) {
+                    $sql .= $orderAmount;
+                } else {
+                    $sql .= " ORDER BY $order";
+                }
+
+                $rs = $conn->query($sql);
+                if ($rs && $rs->num_rows > 0) {
+                    while ($row = $rs->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($row['itr_no']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['itr_date']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['from_accountable']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
+                        echo '<td>₱' . number_format((float)$row['total_amount'], 2) . '</td>';
+                        echo '<td>—</td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="6" style="text-align:center; padding:16px;"><i class="fas fa-inbox"></i> No ITR records found.</td></tr>';
+                }
+                if ($rs) { $rs->close(); }
+            } else {
+                echo '<tr><td colspan="6" style="text-align:center; padding:16px;"><i class="fas fa-inbox"></i> No ITR records found.</td></tr>';
+            }
+            ?>
         </tbody>
     </table>
 </div>

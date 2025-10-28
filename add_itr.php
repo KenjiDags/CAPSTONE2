@@ -1,6 +1,40 @@
 <?php
 require 'config.php';
 require 'functions.php';
+
+// Compute initial next ITR serial on the server to ensure the page shows the correct next number even if JS fetch is blocked/cached
+$todayY = date('Y');
+$todayM = date('m');
+$initial_serial = '0001';
+try {
+  $stmt = $conn->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(itr_no, '-', 1) AS UNSIGNED)) AS max_serial FROM itr WHERE itr_no LIKE CONCAT('%-', ?, '-', ?)");
+  if ($stmt) {
+    $stmt->bind_param('ss', $todayM, $todayY);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $max = 0;
+    if ($res) { $row = $res->fetch_assoc(); $max = isset($row['max_serial']) ? (int)$row['max_serial'] : 0; }
+    $stmt->close();
+    if ($max > 0) { $initial_serial = str_pad((string)($max + 1), 4, '0', STR_PAD_LEFT); }
+  }
+  if ($initial_serial === '0001') {
+    $suffix = '-' . $todayM . '-' . $todayY;
+    $stmt2 = $conn->prepare("SELECT itr_no FROM itr WHERE itr_no LIKE CONCAT('%', ?) ORDER BY itr_no DESC LIMIT 1");
+    if ($stmt2) {
+      $stmt2->bind_param('s', $suffix);
+      $stmt2->execute();
+      $r2 = $stmt2->get_result();
+      if ($r2 && $r2->num_rows > 0) {
+        $row2 = $r2->fetch_assoc();
+        if (preg_match('/^(\\d{1,4})-/', $row2['itr_no'], $m)) {
+          $cand = (int)$m[1];
+          if ($cand > 0) { $initial_serial = str_pad((string)($cand + 1), 4, '0', STR_PAD_LEFT); }
+        }
+      }
+      $stmt2->close();
+    }
+  }
+} catch (Throwable $e) { /* ignore */ }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +60,12 @@ require 'functions.php';
     #itemsTable td, #itemsTable th { border:1px solid #e5e7eb; padding:6px 8px; }
 
     .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
+
+    /* Validation visuals similar to Add Semi behavior */
+    .field-error { color:#b91c1c; font-size:0.85rem; margin-top:6px; }
+    .has-error input,
+    .has-error textarea,
+    .has-error select { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
   </style>
 </head>
 <body>
@@ -83,13 +123,13 @@ require 'functions.php';
         <div class="form-group">
           <label>ITR No. (Serial-Month-Year):</label>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <input type="number" id="itr_serial" min="1" step="1" value="1" style="max-width:110px;" oninput="formatSerial()" />
+            <input type="text" id="itr_serial" value="<?= htmlspecialchars($initial_serial) ?>" style="max-width:110px;" readonly />
             <span>-</span>
             <input type="text" id="itr_month" value="<?= date('m'); ?>" style="max-width:70px;" readonly />
             <span>-</span>
             <input type="text" id="itr_year" value="<?= date('Y'); ?>" style="max-width:90px;" readonly />
           </div>
-          <small style="display:block;color:#6b7280;margin-top:6px;">Preview: <code id="itr_no_preview">0001-<?= date('m') ?>-<?= date('Y') ?></code></small>
+          <small style="display:block;color:#6b7280;margin-top:6px;">Preview: <code id="itr_no_preview"><?= $initial_serial ?>-<?= date('m') ?>-<?= date('Y') ?></code></small>
           <input type="hidden" id="itr_no" />
         </div>
         <div class="form-group">
@@ -197,8 +237,8 @@ require 'functions.php';
     </div>
 
     <div class="actions">
-      <button type="button" onclick="previewITR()"><i class="fas fa-eye"></i> Preview/Print</button>
-      <button type="button" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft (Local)</button>
+      <button type="button" onclick="submitITR()"><i class="fas fa-paper-plane"></i> Submit ITR</button>
+      <button type="button" onclick="cancelITR()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
 
@@ -299,7 +339,13 @@ require 'functions.php';
       }
     }
 
-    function pad4(n){ n = parseInt(n||'0',10); if (isNaN(n) || n < 1) n = 1; return String(n).padStart(4,'0'); }
+    function pad4(n){
+      // Accept numeric string or number; output four digits with leading zeros
+      if (n === null || n === undefined) return '0001';
+      const num = parseInt(String(n).replace(/[^0-9]/g,''), 10);
+      const safe = (!isNaN(num) && num > 0) ? num : 1;
+      return String(safe).padStart(4, '0');
+    }
     function updateItrNoPreview(){
       const serial = pad4(document.getElementById('itr_serial').value);
       const d = document.getElementById('itr_date').value || '<?= date('Y-m-d'); ?>';
@@ -312,10 +358,150 @@ require 'functions.php';
       document.getElementById('itr_no_preview').textContent = composite;
       document.getElementById('itr_no').value = composite;
     }
+    async function refreshSerialForCurrentDate(){
+      try {
+        const d = document.getElementById('itr_date').value || '<?= date('Y-m-d'); ?>';
+        const dt = new Date(d.replace(/-/g,'/'));
+        const mm = String((dt.getMonth()+1)||<?= (int)date('m') ?>).padStart(2,'0');
+        const yy = String(dt.getFullYear()||<?= (int)date('Y') ?>);
+        const resp = await fetch(`get_next_itr_serial.php?month=${mm}&year=${yy}&t=${Date.now()}`); // Fetch the next serial
+        const json = await resp.json().catch(()=>({success:false}));
+        if (json && json.success && json.next_serial) {
+          document.getElementById('itr_serial').value = pad4(json.next_serial);
+        } else {
+          document.getElementById('itr_serial').value = pad4(document.getElementById('itr_serial').value||'0001');
+        }
+      } catch(e) {
+        document.getElementById('itr_serial').value = pad4(document.getElementById('itr_serial').value||'0001');
+      } finally {
+        updateItrNoPreview();
+      }
+    }
     function formatSerial(){
       const inp = document.getElementById('itr_serial');
-      if (!inp) return; inp.value = inp.value.replace(/[^0-9]/g,'');
+      if (!inp) return;
+      // Keep as two-digit string if ever changed programmatically
+      inp.value = pad4(inp.value);
       updateItrNoPreview();
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.field-error').forEach(el => el.remove());
+      document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
+    }
+
+    function showError(input, message) {
+      if (!input) return;
+      const group = input.closest('.form-group') || input.parentElement || input;
+      group.classList.add('has-error');
+      // Avoid duplicating the same error
+      if (!group.querySelector('.field-error')) {
+        const div = document.createElement('div');
+        div.className = 'field-error';
+        div.textContent = message;
+        group.appendChild(div);
+      }
+    }
+
+    function validateITR() {
+      clearErrors();
+      let firstInvalid = null;
+
+      // Required basics
+      const fromEl = document.getElementById('from_accountable');
+      const toEl = document.getElementById('to_accountable');
+      const dateEl = document.getElementById('itr_date');
+      if (!fromEl.value.trim()) { showError(fromEl, 'This field is required.'); firstInvalid = firstInvalid || fromEl; }
+      if (!toEl.value.trim()) { showError(toEl, 'This field is required.'); firstInvalid = firstInvalid || toEl; }
+      if (!dateEl.value) { showError(dateEl, 'Please choose a date.'); firstInvalid = firstInvalid || dateEl; }
+
+      // Transfer type required; if Others, require specify
+      const selectedType = document.querySelector('input[name="transfer_type"]:checked');
+      if (!selectedType) {
+        const anyRadio = document.querySelector('input[name="transfer_type"]');
+        showError(anyRadio, 'Please select a transfer type.');
+        firstInvalid = firstInvalid || anyRadio;
+      } else if (selectedType.value === 'Others') {
+        const other = document.getElementById('transfer_other');
+        if (!other.value.trim()) {
+          showError(other, 'Please specify the transfer type.');
+          firstInvalid = firstInvalid || other;
+        }
+      }
+
+      // At least one item selected
+      const rows = Array.from(document.querySelectorAll('#itemsTable tbody tr.ics-row'));
+      const selectedRows = rows.filter(r => r.querySelector('.chk-include')?.checked);
+      if (selectedRows.length === 0) {
+        const anyChk = document.querySelector('#itemsTable .chk-include');
+        // Place the error on the table frame for visibility
+        const tableFrame = document.querySelector('.table-frame');
+        if (tableFrame && !tableFrame.querySelector('.field-error')) {
+          const warn = document.createElement('div');
+          warn.className = 'field-error';
+          warn.style.margin = '8px 12px';
+          warn.textContent = 'Please select at least one item to transfer.';
+          tableFrame.appendChild(warn);
+        }
+        firstInvalid = firstInvalid || anyChk || document.getElementById('itemSearch');
+      } else {
+        // For each selected, require condition
+        for (const r of selectedRows) {
+          const cond = r.querySelector('.cond-input');
+          if (!cond || !cond.value.trim()) {
+            showError(cond, 'Please provide the inventory condition.');
+            firstInvalid = firstInvalid || cond;
+            break;
+          }
+        }
+      }
+
+      if (firstInvalid) {
+        // Ensure ITR No. is updated before stop
+        updateItrNoPreview();
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        try { firstInvalid.focus({ preventScroll: true }); } catch(e) { try { firstInvalid.focus(); } catch(_){} }
+        return false;
+      }
+      return true;
+    }
+
+    async function submitITR(didRetry=false) {
+      // Validate required fields similar to Add Semi behavior
+      if (!validateITR()) {
+        return; // focus/scroll handled in validateITR
+      }
+      const data = collectForm();
+      if (!data.itr_no) { updateItrNoPreview(); data.itr_no = document.getElementById('itr_no').value; }
+      try {
+        const res = await fetch('submit_itr.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json().catch(()=>({success:false,message:'Invalid server response'}));
+        if (!res.ok || !json.success) {
+          // Handle duplicate ITR No.: refresh serial and retry once automatically
+          const msg = (json && json.message) ? String(json.message) : '';
+          if (!didRetry && (res.status === 409 || /already exists/i.test(msg))) {
+            await refreshSerialForCurrentDate();
+            return submitITR(true);
+          }
+          throw new Error(msg || ('Request failed with status ' + res.status));
+        }
+        try { localStorage.removeItem('itr_draft'); } catch(e){}
+        // No notification on success; just redirect to ITR list
+        window.location.href = 'itr.php';
+      } catch (err) {
+        alert('Failed to submit ITR: ' + (err.message || err));
+      }
+    }
+
+    function cancelITR() {
+      if (confirm('Discard changes and leave this page?')) {
+        try { localStorage.removeItem('itr_draft'); } catch(e){}
+        window.location.href = 'itr.php';
+      }
     }
 
     // Restore draft if available
@@ -330,10 +516,10 @@ require 'functions.php';
         document.getElementById('from_accountable').value = d.from_accountable || '';
         document.getElementById('to_accountable').value = d.to_accountable || '';
         if (d.itr_no) {
-          // Try to split saved ITR No. into parts
-          const m = String(d.itr_no).match(/^(\d{4})-(\d{2})-(\d{4})$/);
+          // Try to split saved ITR No. into parts (1 to 4-digit serial)
+          const m = String(d.itr_no).match(/^(\d{1,4})-(\d{2})-(\d{4})$/);
           if (m) {
-            document.getElementById('itr_serial').value = parseInt(m[1],10);
+            document.getElementById('itr_serial').value = pad4(m[1]);
             document.getElementById('itr_month').value = m[2];
             document.getElementById('itr_year').value = m[3];
           }
@@ -360,14 +546,14 @@ require 'functions.php';
         document.getElementById('received_date').value = d.received?.date || '';
       } catch(e){}
 
-      // Initialize ITR number preview
-      updateItrNoPreview();
+      // Initialize serial and ITR number preview from server
+      refreshSerialForCurrentDate();
 
-      // Recompute ITR No on date change
+      // On date change, get next serial for that month/year then update preview
       const dt = document.getElementById('itr_date');
-      if (dt) dt.addEventListener('change', updateItrNoPreview);
-      const ser = document.getElementById('itr_serial');
-      if (ser) ser.addEventListener('input', formatSerial);
+      if (dt) dt.addEventListener('change', () => { refreshSerialForCurrentDate(); });
+      // Serial is read-only; keep value normalized just in case
+      formatSerial();
     });
   </script>
 </body>

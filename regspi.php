@@ -3,9 +3,8 @@ require 'config.php';
 require_once 'functions.php';
 include 'sidebar.php';
 
-// Load data for Registry of Semi-Expendable Property Issued (REGSPI)
-// Primary source: semi_expendable_history (captures issued/returned/reissued/disposed)
-// Fallback: ICS items joined to semi_expendable_property when history is not available
+// REGSPI data source: ICS only (as requested)
+// We derive rows from ICS headers/items, enriching with semi_expendable_property when available
 
 $rows = [];
 
@@ -13,113 +12,53 @@ $rows = [];
 $selected_category = isset($_GET['category']) ? trim($_GET['category']) : '';
 if ($selected_category === 'All') { $selected_category = ''; }
 
-// Prefer history if the table exists
-$has_history = false;
-try {
-    $chk = $conn->query("SHOW TABLES LIKE 'semi_expendable_history'");
-    $has_history = $chk && $chk->num_rows > 0;
-    if ($chk) { $chk->close(); }
-} catch (Throwable $e) { $has_history = false; }
+// Build ICS-based dataset
+$sql = "
+    SELECT
+        i.date_issued AS date,
+        i.ics_no AS ics_rrsp_no,
+        ii.stock_number AS property_no,
+        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
+        COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
+        ii.quantity AS issued_qty,
+        i.received_by AS issued_office,
+        0 AS returned_qty,
+        '' AS returned_office,
+        0 AS reissued_qty,
+        '' AS reissued_office,
+        0 AS disposed_qty,
+        GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
+        COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
+        '' AS remarks
+    FROM ics i
+    INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
+    LEFT JOIN semi_expendable_property sep 
+        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
+    WHERE ii.quantity > 0";
 
-if ($has_history) {
-    $sql = "
-        SELECT 
-            h.date,
-            h.ics_rrsp_no,
-            sep.semi_expendable_property_no AS property_no,
-            COALESCE(NULLIF(sep.remarks, ''), sep.item_description) AS item_description,
-            COALESCE(sep.estimated_useful_life, '') AS useful_life,
-            h.quantity_issued AS issued_qty,
-            h.office_officer_issued AS issued_office,
-            h.quantity_returned AS returned_qty,
-            h.office_officer_returned AS returned_office,
-            h.quantity_reissued AS reissued_qty,
-            h.office_officer_reissued AS reissued_office,
-            h.quantity_disposed AS disposed_qty1,
-            0 AS disposed_qty2,
-            h.quantity_balance AS balance_qty,
-            COALESCE(h.amount_total, ROUND(COALESCE(sep.amount, h.amount) * h.quantity, 2)) AS amount_total,
-            h.remarks
-        FROM semi_expendable_history h
-        INNER JOIN semi_expendable_property sep ON sep.id = h.semi_id
-        WHERE 1=1";
-    // Apply category filter if column exists and a category is selected
-    $binds = [];
-    $types = '';
-    if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-        $sql .= " AND sep.category = ?";
-        $binds[] = $selected_category;
-        $types .= 's';
-    }
-    $sql .= " ORDER BY h.date DESC, h.id DESC";
-
-    if (!empty($binds)) {
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param($types, ...$binds);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-                $res->close();
-            }
-            $stmt->close();
-        }
-    } else {
-        if ($res = $conn->query($sql)) {
-            while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-            $res->close();
-        }
-    }
+$binds = [];
+$types = '';
+if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
+    $sql .= " AND sep.category = ?";
+    $binds[] = $selected_category;
+    $types .= 's';
 }
+$sql .= " ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
 
-// Fallback: derive from ICS rows if no history rows found
-if (!$has_history || count($rows) === 0) {
-    $sql = "
-        SELECT
-            i.date_issued AS date,
-            i.ics_no AS ics_rrsp_no,
-            ii.stock_number AS property_no,
-            COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
-            COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
-            ii.quantity AS issued_qty,
-            i.received_by AS issued_office,
-            0 AS returned_qty,
-            '' AS returned_office,
-            0 AS reissued_qty,
-            '' AS reissued_office,
-            0 AS disposed_qty1,
-            0 AS disposed_qty2,
-            GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
-            COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-            '' AS remarks
-        FROM ics i
-        INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
-        LEFT JOIN semi_expendable_property sep 
-            ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
-        WHERE ii.quantity > 0";
-    $binds2 = [];
-    $types2 = '';
-    if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-        $sql .= " AND sep.category = ?";
-        $binds2[] = $selected_category;
-        $types2 .= 's';
-    }
-    $sql .= " ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
-
-    if (!empty($binds2)) {
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param($types2, ...$binds2);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-                $res->close();
-            }
-            $stmt->close();
-        }
-    } else {
-        if ($res = $conn->query($sql)) {
+if (!empty($binds)) {
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param($types, ...$binds);
+        if ($stmt->execute()) {
+            $res = $stmt->get_result();
             while ($r = $res->fetch_assoc()) { $rows[] = $r; }
             $res->close();
         }
+        $stmt->close();
+    }
+} else {
+    if ($res = $conn->query($sql)) {
+        while ($r = $res->fetch_assoc()) { $rows[] = $r; }
+        $res->close();
     }
 }
 
@@ -267,7 +206,7 @@ if (!empty($rows)) {
                                 <th colspan="2">Issued</th>
                                 <th colspan="2">Returned</th>
                                 <th colspan="2">Re-issued</th>
-                                <th colspan="2">Disposed</th>
+                                <th colspan="1">Disposed</th>
                                 <th rowspan="3">Balance Qty.</th>
                                 <th rowspan="3">Amount (TOTAL)</th>
                                 <th rowspan="3">Remarks</th>
@@ -281,7 +220,6 @@ if (!empty($rows)) {
                                 <th rowspan="2">Office/Officer</th>
                                 <th rowspan="2">Qty.</th>
                                 <th rowspan="2">Office/Officer</th>
-                                <th rowspan="2">Qty.</th>
                                 <th rowspan="2">Qty.</th>
                             </tr>
                             <tr>
@@ -304,14 +242,13 @@ if (!empty($rows)) {
                                             <td><?php echo (int)($row['reissued_qty'] ?? 0); ?></td>
                                             <td><?php echo htmlspecialchars($row['reissued_office'] ?? '-'); ?></td>
                                             <td><?php echo (int)($row['disposed_qty1'] ?? 0); ?></td>
-                                            <td><?php echo (int)($row['disposed_qty2'] ?? 0); ?></td>
                                             <td><?php echo (int)($row['balance_qty'] ?? 0); ?></td>
                                             <td><?php echo '₱' . number_format((float)($row['amount_total'] ?? 0), 2); ?></td>
                                             <td><?php echo htmlspecialchars($row['remarks'] ?? '-'); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr><td colspan="16" style="text-align:center;">No records found.</td></tr>
+                                    <tr><td colspan="15" style="text-align:center;">No records found.</td></tr>
                                 <?php endif; ?>
                         </tbody>
                     </table>
@@ -388,13 +325,8 @@ if (!empty($rows)) {
                     </div>
                     
                     <div class="modal-field">
-                        <label for="disposedQty1">Disposed Quantity 1:</label>
-                        <input type="number" id="disposedQty1" name="disposed_qty1" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="disposedQty2">Disposed Quantity 2:</label>
-                        <input type="number" id="disposedQty2" name="disposed_qty2" placeholder="0" min="0" value="0">
+                        <label for="disposedQty">Disposed Quantity:</label>
+                        <input type="number" id="disposedQty" name="disposed_qty" placeholder="0" min="0" value="0">
                     </div>
                     
                     <div class="modal-field">
@@ -462,15 +394,14 @@ if (!empty($rows)) {
             const issued = parseInt(document.getElementById('issuedQty').value) || 0;
             const returned = parseInt(document.getElementById('returnedQty').value) || 0;
             const reissued = parseInt(document.getElementById('reissuedQty').value) || 0;
-            const disposed1 = parseInt(document.getElementById('disposedQty1').value) || 0;
-            const disposed2 = parseInt(document.getElementById('disposedQty2').value) || 0;
+            const disposed = parseInt(document.getElementById('disposedQty').value) || 0;
             
-            const balance = issued - returned - reissued - disposed1 - disposed2;
+            const balance = issued - returned - reissued - disposed;
             document.getElementById('balanceQty').value = Math.max(0, balance);
         }
 
         // Add event listeners for auto-calculation
-        ['issuedQty', 'returnedQty', 'reissuedQty', 'disposedQty1', 'disposedQty2'].forEach(id => {
+        ['issuedQty', 'returnedQty', 'reissuedQty', 'disposedQty'].forEach(id => {
             document.getElementById(id).addEventListener('input', calculateBalance);
         });
 
@@ -502,8 +433,7 @@ if (!empty($rows)) {
                 <td>${data.returned_office || '-'}</td>
                 <td>${data.reissued_qty || '0'}</td>
                 <td>${data.reissued_office || '-'}</td>
-                <td>${data.disposed_qty1 || '0'}</td>
-                <td>${data.disposed_qty2 || '0'}</td>
+                <td>${data.disposed_qty || '0'}</td>
                 <td>${data.balance_qty || '0'}</td>
                 <td>${data.amount || '-'}</td>
                 <td>${data.remarks || '-'}</td>
