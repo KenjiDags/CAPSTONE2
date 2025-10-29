@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Development environment
 .vscode/
 .idea/
@@ -23,3 +24,7 @@ composer.phar
 /tcpdf1/
 tcpdf_temp.zip
 config.php
+=======
+/vendor/
+/composer.lock
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e

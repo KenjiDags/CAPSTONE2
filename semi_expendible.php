@@ -118,7 +118,11 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         }
         .table-container {
             background: white;
+<<<<<<< HEAD
             border-radius: 8px;
+=======
+            border-radius: 12px; /* slightly more rounded corners */
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -150,7 +154,13 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             gap: 10px;
         }
         .search-input {
+<<<<<<< HEAD
             width: 300px;
+=======
+            width: 500px;      
+            min-width: 0;       
+            max-width: 100%;     
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;

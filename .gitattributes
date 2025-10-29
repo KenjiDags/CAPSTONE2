@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Default: normalize text with LF in repo
 * text=auto eol=lf
 
@@ -7,10 +8,46 @@
 *.css  text eol=lf
 *.html text eol=lf
 *.sql  text eol=lf
+=======
+## Normalize text files and set explicit EOLs
+* text=auto
+
+# Source files use LF in repo
+*.php   text eol=lf
+*.js    text eol=lf
+*.ts    text eol=lf
+*.css   text eol=lf
+*.scss  text eol=lf
+*.html  text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sql   text eol=lf
+*.xml   text eol=lf
+
+# Windows scripts keep CRLF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
 
 # Binary
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
+<<<<<<< HEAD
 *.ico binary
+=======
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz  binary
+*.7z  binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e

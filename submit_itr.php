@@ -2,6 +2,12 @@
 require 'config.php';
 require 'functions.php'; // for columnExists helper if needed
 header('Content-Type: application/json');
+<<<<<<< HEAD
+=======
+// Per request: permanently disable any automatic ICS creation from ITR submissions.
+// The ITR flow must NOT write to the ICS tables anymore.
+$ENABLE_ITR_TO_ICS = false; // kept for clarity; ICS block below removed
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -64,6 +70,10 @@ $createItr = "CREATE TABLE IF NOT EXISTS itr (
   transfer_type VARCHAR(50) NULL,
   transfer_other VARCHAR(255) NULL,
   reason TEXT NULL,
+<<<<<<< HEAD
+=======
+    remarks TEXT NULL,
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
   approved_name VARCHAR(255) NULL,
   approved_designation VARCHAR(255) NULL,
   approved_date DATE NULL,
@@ -99,11 +109,23 @@ try {
             if (!columnExists($conn, 'itr', 'created_ics_no')) {
                 $conn->query("ALTER TABLE itr ADD COLUMN created_ics_no VARCHAR(64) NULL");
             }
+<<<<<<< HEAD
+=======
+            if (!columnExists($conn, 'itr', 'remarks')) {
+                $conn->query("ALTER TABLE itr ADD COLUMN remarks TEXT NULL AFTER reason");
+            }
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
         } else {
             // Fallback: probe INFORMATION_SCHEMA manually
             $res = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'itr' AND COLUMN_NAME = 'created_ics_no' LIMIT 1");
             $exists = $res && $res->num_rows > 0; if ($res) { $res->close(); }
             if (!$exists) { $conn->query("ALTER TABLE itr ADD COLUMN created_ics_no VARCHAR(64) NULL"); }
+<<<<<<< HEAD
+=======
+            $res2 = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'itr' AND COLUMN_NAME = 'remarks' LIMIT 1");
+            $exists2 = $res2 && $res2->num_rows > 0; if ($res2) { $res2->close(); }
+            if (!$exists2) { $conn->query("ALTER TABLE itr ADD COLUMN remarks TEXT NULL AFTER reason"); }
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
         }
     } catch (Throwable $e) { /* ignore non-fatal */ }
     $conn->query($createItrItems);
@@ -113,6 +135,7 @@ try {
     exit;
 }
 
+<<<<<<< HEAD
 // Helpers for ICS number aligned with add_ics.php: new format "NN-YY"
 function generateICSNumber($conn) {
     $yy = date('y');
@@ -159,24 +182,39 @@ function generateICSNumberSimple($conn) {
     $serial_formatted = str_pad((string)$next, 2, '0', STR_PAD_LEFT);
     return $serial_formatted . '-' . $yy;
 }
+=======
+// Note: ICS-number helper functions removed because ITR no longer creates ICS.
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
 
 // Insert header and create ICS within a transaction
 try {
     if (method_exists($conn, 'begin_transaction')) { $conn->begin_transaction(); }
     $stmt = $conn->prepare("INSERT INTO itr (
         itr_no, itr_date, entity_name, fund_cluster, from_accountable, to_accountable,
+<<<<<<< HEAD
         transfer_type, transfer_other, reason,
+=======
+        transfer_type, transfer_other, reason, remarks,
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
         approved_name, approved_designation, approved_date,
         released_name, released_designation, released_date,
         received_name, received_designation, received_date,
         created_ics_no
+<<<<<<< HEAD
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+=======
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
     // Prepare bound variables to avoid by-reference errors
     $entity_name_val = $data['entity_name'] ?? null;
     $fund_cluster_val = $data['fund_cluster'] ?? null;
     $transfer_type_val = $data['transfer_type'] ?? null;
     $transfer_other_val = $data['transfer_other'] ?? null;
     $reason_val = $data['reason'] ?? null;
+<<<<<<< HEAD
+=======
+    $remarks_val = $data['remarks'] ?? null;
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
     $approved_name_val = $data['approved']['name'] ?? null;
     $approved_designation_val = $data['approved']['designation'] ?? null;
     $approved_date_val = ($data['approved']['date'] ?? null) ? toDate($data['approved']['date']) : null;
@@ -190,7 +228,11 @@ try {
     $created_ics_no_placeholder = null;
 
     $stmt->bind_param(
+<<<<<<< HEAD
         'sssssssssssssssssss',
+=======
+        'ssssssssssssssssssss',
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
         $itr_no,
         $itr_date,
         $entity_name_val,
@@ -200,6 +242,10 @@ try {
         $transfer_type_val,
         $transfer_other_val,
         $reason_val,
+<<<<<<< HEAD
+=======
+        $remarks_val,
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
         $approved_name_val,
         $approved_designation_val,
         $approved_date_val,
@@ -232,6 +278,7 @@ try {
     }
     $it->close();
 
+<<<<<<< HEAD
     // Create ICS header and items representing this transfer
     // Compute ICS No with retry-on-duplicate once for safety
     $ics_no = generateICSNumber($conn);
@@ -370,6 +417,14 @@ try {
     if (method_exists($conn, 'commit')) { $conn->commit(); }
 
     echo json_encode(['success' => true, 'itr_id' => $itr_id, 'ics_no' => $ics_no]);
+=======
+    // ICS integration removed: no ICS header/items will be created from ITR.
+
+    if (method_exists($conn, 'commit')) { $conn->commit(); }
+
+    $response = ['success' => true, 'itr_id' => $itr_id];
+    echo json_encode($response);
+>>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
 } catch (Throwable $e) {
     if (method_exists($conn, 'rollback')) { $conn->rollback(); }
     http_response_code(500);
