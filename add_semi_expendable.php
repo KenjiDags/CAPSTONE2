@@ -6,6 +6,12 @@ require_once 'functions.php';
 require_once 'sidebar.php'; // Add sidebar requirement
 // Ensure required columns exist (idempotent)
 ensure_semi_expendable_amount_columns($conn);
+// Ensure 'unit' column exists on semi_expendable_property (idempotent)
+try {
+    if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {
+        @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");
+    }
+} catch (Throwable $e) { /* no-op */ }
 
 // Local helper: generate a simple ICS number like ICS-YYYY/MM/0001
 if (!function_exists('generateICSNumberSimple')) {
@@ -44,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ics_rrsp_no = $_POST['ics_rrsp_no'];
     $semi_expendable_property_no = $_POST['semi_expendable_property_no'];
     $item_description = $_POST['item_description'];
+    $unit = isset($_POST['unit']) ? trim($_POST['unit']) : '';
     $estimated_useful_life = intval($_POST['estimated_useful_life']);
     // Base Quantity (receipt)
     $quantity_issued = intval($_POST['quantity_issued']);
@@ -78,21 +85,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check_stmt->close();
         $stmt = $conn->prepare("
             INSERT INTO semi_expendable_property 
-            (date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, 
+            (date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, 
              quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, 
              quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, 
              amount, amount_total, category, fund_cluster, remarks) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         if (!$stmt) {
             $error = "Prepare failed: " . $conn->error;
         } else {
             $stmt->bind_param(
-                "ssssiiisisisiiddsss",
+                "sssssiiisisisiiddsss",
                 $date,
                 $ics_rrsp_no,
                 $semi_expendable_property_no,
                 $item_description,
+                $unit,
                 $estimated_useful_life,
                 $quantity_issued,      // quantity (base)
                 $quantity_issued_out,  // quantity_issued (issued-out movement)
@@ -165,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $unit_cost = (float)$unit_amount;
                             $total_cost = $issued_qty * $unit_cost;
                             $descVal = ($remarks !== '') ? $remarks : $item_description;
-                            $unitVal = '';
+                            $unitVal = $unit;
                             $useful_life_val = (string)$estimated_useful_life;
                             $serial_no = '';
 
@@ -361,6 +369,15 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <input type="number" id="amount" name="amount" step="0.01" min="0"
                                value="<?php echo $_POST['amount'] ?? ''; ?>" 
                                placeholder="Unit amount (per item)" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="unit">Unit</label>
+                        <input type="text" id="unit" name="unit" 
+                               value="<?php echo isset($_POST['unit']) ? htmlspecialchars($_POST['unit']) : ''; ?>" 
+                               placeholder="e.g., pc, box, set">
                     </div>
                 </div>
 

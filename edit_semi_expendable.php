@@ -5,6 +5,12 @@ ob_start();
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'sidebar.php'; // Add sidebar requirement
+// Ensure 'unit' column exists on semi_expendable_property (idempotent)
+try {
+    if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {
+        @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");
+    }
+} catch (Throwable $e) { /* no-op */ }
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $item = null;
@@ -76,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 ics_rrsp_no = ?, 
                 semi_expendable_property_no = ?, 
                 item_description = ?, 
+                unit = ?, 
                 estimated_useful_life = ?, 
                 quantity = ?,
                 quantity_issued = ?, 
@@ -101,8 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         $p_date = $_POST['date'];
         $p_ics_rrsp_no = $_POST['ics_rrsp_no'];
         $p_property_no = $_POST['semi_expendable_property_no'];
-        $p_item_desc = $_POST['item_description'];
-        $p_useful_life = isset($_POST['estimated_useful_life']) ? (int)$_POST['estimated_useful_life'] : 0;
+    $p_item_desc = $_POST['item_description'];
+    $p_unit = isset($_POST['unit']) ? trim($_POST['unit']) : '';
+    $p_useful_life = isset($_POST['estimated_useful_life']) ? (int)$_POST['estimated_useful_life'] : 0;
     $p_qty_issued = isset($_POST['quantity_issued']) ? (int)$_POST['quantity_issued'] : 0; // base quantity
     $p_qty_issued_out = isset($_POST['quantity_issued_out']) ? (int)$_POST['quantity_issued_out'] : 0; // optional issued qty for balance
         $p_officer_issued = $_POST['office_officer_issued'] ?? '';
@@ -144,11 +152,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         }
 
         $stmt->bind_param(
-            "ssssiiisisisiiddssi",
+            "sssssiiisisisiiddssi",
             $p_date,
             $p_ics_rrsp_no,
             $p_property_no,
             $p_item_desc,
+            $p_unit,
             $p_useful_life,
             $p_qty_issued, // quantity (base)
             $p_qty_issued_out,
@@ -214,6 +223,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                     $u2->bind_param("ssss", $newPropNo, $newPropNo, $oldPropNo, $oldPropNo);
                     @ $u2->execute();
                     $u2->close();
+                }
+            }
+
+            // 3) Update ICS item unit to stay consistent with semi-expendable (optional)
+            if ($p_unit !== '') {
+                if ($u3 = $conn->prepare("UPDATE ics_items SET unit = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
+                    $u3->bind_param("sss", $p_unit, $newPropNo, $newPropNo);
+                    @ $u3->execute();
+                    $u3->close();
                 }
             }
 
@@ -412,6 +430,14 @@ if (!$item && empty($error)) {
                             ?>
                             <input type="number" id="amount" name="amount" step="0.01" min="0"
                                    value="<?php echo htmlspecialchars(number_format((float)$unitAmount, 2, '.', '')); ?>" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unit">Unit</label>
+                            <input type="text" id="unit" name="unit"
+                                   value="<?php echo htmlspecialchars(isset($_POST['unit']) ? $_POST['unit'] : ($item['unit'] ?? '')); ?>"
+                                   placeholder="e.g., pc, box, set">
                         </div>
                     </div>
 

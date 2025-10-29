@@ -4,6 +4,18 @@
 <?php
 require 'functions.php';
 
+// Ensure required columns exist at runtime (idempotent)
+try {
+    if (function_exists('columnExists')) {
+        if (!columnExists($conn, 'semi_expendable_property', 'unit')) {
+            @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");
+        }
+        if (!columnExists($conn, 'ics_items', 'unit')) {
+            @$conn->query("ALTER TABLE ics_items ADD COLUMN unit VARCHAR(64) NULL AFTER quantity");
+        }
+    }
+} catch (Throwable $e) { /* non-fatal safeguard */ }
+
 // Handle form submission (Edit only)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (method_exists($conn, 'begin_transaction')) { $conn->begin_transaction(); }
@@ -90,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $serial_no = $serial_numbers[$i];
 
             if ($issued_qty > 0) {
-                $stmt = $conn->prepare("SELECT id, item_description, remarks, estimated_useful_life, amount, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
+                $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
                 $stmt->bind_param("s", $stock_no);
                 if (!$stmt->execute()) { throw new Exception('Failed to fetch item data: ' . $stmt->error); }
                 $result = $stmt->get_result();
@@ -106,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $stmt = $conn->prepare("INSERT INTO ics_items (ics_id, stock_number, quantity, unit, unit_cost, total_cost, description, inventory_item_no, estimated_useful_life, serial_number)
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $unitVal = '';
+                    $unitVal = isset($item_data['unit']) && $item_data['unit'] !== '' ? (string)$item_data['unit'] : '';
                     $descVal = isset($item_data['remarks']) && $item_data['remarks'] !== '' ? $item_data['remarks'] : $item_data['item_description'];
                     $usefulVal = (string)($item_data['estimated_useful_life'] ?? $useful_life);
                     $stmt->bind_param("isdsddssss", $ics_id, $stock_no, $issued_qty, $unitVal, $unit_cost, $total_cost, $descVal, $stock_no, $usefulVal, $serial_no);
@@ -304,11 +316,14 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
                                         $displayDesc = $existingDesc !== '' ? $existingDesc : (($remarks !== '' ? $remarks : $row['item_description']));
 
                                         $catVal = isset($row['category']) ? $row['category'] : '';
-                                        echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="-" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
+                                        $unitDisp = isset($ics_items[$stock_number]['unit']) && $ics_items[$stock_number]['unit'] !== ''
+                                            ? $ics_items[$stock_number]['unit']
+                                            : (isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-');
+                                        echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
                                         echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
                                         echo '<td>' . htmlspecialchars($row['item_description']) . '</td>';
                                         echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
-                                        echo '<td>-</td>';
+                                        echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
                                         echo '<td>' . htmlspecialchars($displayQtyOnHand) . '</td>';
                                         echo '<td>₱' . number_format($unitCost, 2) . '</td>';
                                         echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($displayQtyOnHand) . '" step="1"></td>';
