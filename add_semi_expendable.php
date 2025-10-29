@@ -172,7 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $issued_qty = (float)$quantity_issued_out;
                             $unit_cost = (float)$unit_amount;
                             $total_cost = $issued_qty * $unit_cost;
-                            $descVal = ($remarks !== '') ? $remarks : $item_description;
+                            // Per request: do not use remarks as description; always use item_description
+                            $descVal = $item_description;
                             $unitVal = $unit;
                             $useful_life_val = (string)$estimated_useful_life;
                             $serial_no = '';

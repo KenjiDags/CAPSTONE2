@@ -35,11 +35,7 @@
         }
     </style>
 </head>
-<<<<<<< HEAD
-<body>
-=======
 <body class="rsmi-page">
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
     <?php include 'sidebar.php'; ?>
 
     <div class="content">

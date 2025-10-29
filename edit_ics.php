@@ -119,7 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare("INSERT INTO ics_items (ics_id, stock_number, quantity, unit, unit_cost, total_cost, description, inventory_item_no, estimated_useful_life, serial_number)
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $unitVal = isset($item_data['unit']) && $item_data['unit'] !== '' ? (string)$item_data['unit'] : '';
-                    $descVal = isset($item_data['remarks']) && $item_data['remarks'] !== '' ? $item_data['remarks'] : $item_data['item_description'];
+                    // Per request: do not use remarks as description; always use item_description
+                    $descVal = $item_data['item_description'];
                     $usefulVal = (string)($item_data['estimated_useful_life'] ?? $useful_life);
                     $stmt->bind_param("isdsddssss", $ics_id, $stock_no, $issued_qty, $unitVal, $unit_cost, $total_cost, $descVal, $stock_no, $usefulVal, $serial_no);
                     if (!$stmt->execute()) { throw new Exception('Failed to insert ICS item: ' . $stmt->error); }
@@ -313,7 +314,8 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
                                         $unitCost = (float)($row['amount'] ?? 0);
                                         $remarks = $row['remarks'] ?? '';
                                         $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
-                                        $displayDesc = $existingDesc !== '' ? $existingDesc : (($remarks !== '' ? $remarks : $row['item_description']));
+                                        // Per request: do not use remarks in display; prefer existing description or item_description
+                                        $displayDesc = $existingDesc !== '' ? $existingDesc : $row['item_description'];
 
                                         $catVal = isset($row['category']) ? $row['category'] : '';
                                         $unitDisp = isset($ics_items[$stock_number]['unit']) && $ics_items[$stock_number]['unit'] !== ''

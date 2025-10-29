@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-# Default: normalize text with LF in repo
-* text=auto eol=lf
-
-# Explicit common types
-*.php  text eol=lf
-*.js   text eol=lf
-*.css  text eol=lf
-*.html text eol=lf
-*.sql  text eol=lf
-=======
 ## Normalize text files and set explicit EOLs
 * text=auto
 
@@ -26,20 +15,21 @@
 *.sql   text eol=lf
 *.xml   text eol=lf
 
+# Ensure these config files themselves keep LF
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+.editorconfig  text eol=lf
+
 # Windows scripts keep CRLF
 *.bat   text eol=crlf
 *.cmd   text eol=crlf
 *.ps1   text eol=crlf
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
 
 # Binary
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
-<<<<<<< HEAD
-*.ico binary
-=======
 *.webp binary
 *.pdf binary
 *.zip binary
@@ -50,4 +40,3 @@
 *.otf binary
 *.woff binary
 *.woff2 binary
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
