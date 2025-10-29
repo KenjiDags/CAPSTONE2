@@ -169,7 +169,6 @@ try {
         $transfer_other_val,
         $reason_val,
         $remarks_val,
-    $remarks_val,
         $approved_name_val,
         $approved_designation_val,
         $approved_date_val,
