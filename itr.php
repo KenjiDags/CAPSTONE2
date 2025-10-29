@@ -23,12 +23,26 @@ require 'functions.php';
     .sort-select:focus { border-color:#60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
     .sort-select-chevron { position:absolute; right:8px; top:50%; transform: translateY(-50%); pointer-events:none; color:#64748b; font-size:12px; }
     }
+    
     </style>
 </head>
 <body class="itr-page">
 <?php include 'sidebar.php'; ?>
 <div class="content">
     <h2>Inventory Transfer Report (ITR)</h2>
+
+    <?php
+    // DELETE LOGIC (mirror ICS structure): allow deleting an ITR and its items
+    if (isset($_GET['delete_itr_id'])) {
+        $del_id = (int)$_GET['delete_itr_id'];
+        // Delete items first due to FK, then header
+        $conn->query("DELETE FROM itr_items WHERE itr_id = $del_id");
+        $conn->query("DELETE FROM itr WHERE itr_id = $del_id");
+        $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
+        header("Location: itr.php" . $sortParam);
+        exit();
+    }
+    ?>
 
     <div class="header-controls">
         <button onclick="window.location.href='add_itr.php'">
@@ -106,7 +120,14 @@ require 'functions.php';
                         echo '<td>' . htmlspecialchars($row['from_accountable']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
                         echo '<td>₱' . number_format((float)$row['total_amount'], 2) . '</td>';
-                        echo '<td>—</td>';
+                        echo '<td>';
+                        // Actions: Edit, Export, Delete (copied pattern from ICS)
+                        echo '<a href="add_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
+                        echo '<a href="export_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Export ITR"><i class="fas fa-download"></i> Export</a> ';
+                        echo '<a href="itr.php?delete_itr_id=' . (int)$row['itr_id'] . (isset($_GET['sort']) ? ('&sort=' . urlencode($_GET['sort'])) : '') . '" ' .
+                             'onclick="return confirm(\'Are you sure you want to delete this ITR?\')" ' .
+                             'title="Delete ITR"><i class="fas fa-trash"></i> Delete</a>';
+                        echo '</td>';
                         echo '</tr>';
                     }
                 } else {
