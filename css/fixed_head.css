@@ -1,0 +1,39 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 56, 168, 0.1);
+    margin-bottom: 30px;
+}
+
+th {
+    background: linear-gradient(135deg, #0038a8 0%, #4a90e2 100%);
+    color: white;
+    padding: 20px 15px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    border-bottom: 3px solid #002d80;
+    position: sticky;
+    top: 0;
+}
+
+td {
+    padding: 18px 15px;
+    border-bottom: 1px solid #e8f0fe;
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+tr:nth-child(even) {
+    background-color: #f8fbff;
+}
+
+tr:hover {
+    background-color: #e8f0fe;
+    transition: background-color 0.3s ease;
+}

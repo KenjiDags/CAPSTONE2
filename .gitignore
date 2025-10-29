@@ -1,0 +1,25 @@
+# Development environment
+.vscode/
+.idea/
+.env
+.env.local
+.DS_Store
+
+# Dependencies
+/vendor/
+/node_modules/
+composer.lock
+composer.phar
+
+# Project specific
+*.log
+*.zip
+*.sql
+*.sqlite
+/db/
+/images/
+/uploads/
+/www/cache/
+/tcpdf1/
+tcpdf_temp.zip
+config.php
