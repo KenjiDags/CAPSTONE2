@@ -162,11 +162,14 @@ try {
           <table id="itemsTable">
             <thead>
               <tr>
-                <th>Select</th>
                 <th>Date Acquired</th>
                 <th>Item No.</th>
                 <th>ICS No./Date</th>
                 <th>Description</th>
+                <th>Unit Cost</th>
+                <th>Qty on Hand</th>
+                <th>Transfer Qty</th>
+                <th>Balance</th>
                 <th>Amount</th>
                 <th>Condition of Inventory</th>
               </tr>
@@ -185,22 +188,38 @@ try {
                       $item_no = $row['inventory_item_no'] ?? $row['stock_number'] ?? '';
                       $ics_info = ($row['ics_no'] ?? '') . (isset($row['date_issued']) ? (' / ' . $row['date_issued']) : '');
                       $desc = $row['description'] ?? '';
-                      $amount = isset($row['total_cost']) ? (float)$row['total_cost'] : ((isset($row['unit_cost']) ? (float)$row['unit_cost'] : 0));
-                      echo '<tr class="ics-row" data-text="' . htmlspecialchars(strtolower($item_no . ' ' . $ics_info . ' ' . $desc)) . '">';
-                      echo '<td><input type="checkbox" class="chk-include"></td>';
-                      echo '<td>' . htmlspecialchars($date_acquired) . '</td>';
-                      echo '<td>' . htmlspecialchars($item_no) . '</td>';
-                      echo '<td>' . htmlspecialchars($ics_info) . '</td>';
-                      echo '<td>' . htmlspecialchars($desc) . '</td>';
-                      echo '<td>₱' . number_format($amount, 2) . '</td>';
-                      echo '<td><input type="text" class="cond-input" placeholder="e.g., Good, For repair" /></td>';
+                      $unit_cost = isset($row['unit_cost']) ? (float)$row['unit_cost'] : 0.0;
+                      // Fallback: if unit_cost missing but total_cost and quantity present
+                      if ($unit_cost <= 0 && isset($row['total_cost']) && isset($row['quantity']) && (float)$row['quantity'] > 0) {
+                        $unit_cost = ((float)$row['total_cost']) / max(1, (float)$row['quantity']);
+                      }
+                      $qty_on_hand = isset($row['quantity']) ? (float)$row['quantity'] : 1;
+                      $rowText = strtolower(($item_no ?: '') . ' ' . ($ics_info ?: '') . ' ' . ($desc ?: ''));
+                      echo '<tr class="ics-row" data-text="' . htmlspecialchars($rowText) . '" data-unit-cost="' . htmlspecialchars(number_format($unit_cost,2,'.','')) . '" data-qty-on-hand="' . htmlspecialchars((string)$qty_on_hand) . '" data-ics-id="' . (int)$row['ics_id'] . '" data-ics-item-id="' . (int)$row['ics_item_id'] . '" data-stock-number="' . htmlspecialchars($row['stock_number'] ?? $item_no) . '">';
+                      echo '<td class="date-cell">' . htmlspecialchars($date_acquired) . '</td>';
+                      echo '<td class="itemno-cell">' . htmlspecialchars($item_no) . '</td>';
+                      echo '<td class="icsinfo-cell">' . htmlspecialchars($ics_info) . '</td>';
+                      echo '<td class="desc-cell">' . htmlspecialchars($desc) . '</td>';
+                      echo '<td class="unitcost-cell">₱' . number_format($unit_cost, 2) . '</td>';
+                      echo '<td class="qtyonhand-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
+                      echo '<td class="transferqty-cell"><input type="number" class="qty-input" value="" min="0" max="' . htmlspecialchars((string)$qty_on_hand) . '" step="1" placeholder="0"></td>';
+                      echo '<td class="balance-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
+                      echo '<td class="amount-cell">₱0.00</td>';
+                      echo '<td class="cond-cell"><input type="text" class="cond-input" placeholder="e.g., Good, For repair" /></td>';
                       echo '</tr>';
                   }
               } else {
-                  echo '<tr id="no-items-row"><td colspan="7">No ICS items found.</td></tr>';
+                  echo '<tr id="no-items-row"><td colspan="10">No ICS items found.</td></tr>';
               }
               ?>
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="8" style="text-align:right; font-weight:600;">Total Amount:</td>
+                <td id="itr-total-amount" style="font-weight:700;">₱0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -261,15 +280,25 @@ try {
       const transferType = document.querySelector('input[name="transfer_type"]:checked');
       const items = [];
       document.querySelectorAll('#itemsTable tbody tr.ics-row').forEach(r => {
-        const chk = r.querySelector('.chk-include');
-        if (chk && chk.checked) {
+        const qty = parseFloat(r.querySelector('.qty-input')?.value || '0') || 0;
+        if (qty > 0) {
+          const dateCell = r.querySelector('.date-cell');
+          const itemNoCell = r.querySelector('.itemno-cell');
+          const icsInfoCell = r.querySelector('.icsinfo-cell');
+          const descCell = r.querySelector('.desc-cell');
+          const amtCell = r.querySelector('.amount-cell');
           items.push({
-            date_acquired: r.children[1].textContent.trim(),
-            item_no: r.children[2].textContent.trim(),
-            ics_info: r.children[3].textContent.trim(),
-            description: r.children[4].textContent.trim(),
-            amount: r.children[5].textContent.trim(),
-            condition: r.querySelector('.cond-input')?.value || ''
+            date_acquired: (dateCell?.textContent || '').trim(),
+            item_no: (itemNoCell?.textContent || '').trim(),
+            ics_info: (icsInfoCell?.textContent || '').trim(),
+            description: (descCell?.textContent || '').trim(),
+            amount: (amtCell?.textContent || '').trim(),
+            condition: r.querySelector('.cond-input')?.value || '',
+            transfer_qty: qty,
+            unit_cost: parseFloat(r.getAttribute('data-unit-cost') || '0') || 0,
+            stock_number: r.getAttribute('data-stock-number') || (itemNoCell?.textContent || '').trim(),
+            ics_id: parseInt(r.getAttribute('data-ics-id') || '0', 10) || 0,
+            ics_item_id: parseInt(r.getAttribute('data-ics-item-id') || '0', 10) || 0
           });
         }
       });
@@ -431,9 +460,9 @@ try {
 
       // At least one item selected
       const rows = Array.from(document.querySelectorAll('#itemsTable tbody tr.ics-row'));
-      const selectedRows = rows.filter(r => r.querySelector('.chk-include')?.checked);
+      const selectedRows = rows.filter(r => (parseFloat(r.querySelector('.qty-input')?.value || '0') || 0) > 0);
       if (selectedRows.length === 0) {
-        const anyChk = document.querySelector('#itemsTable .chk-include');
+        const anyQty = document.querySelector('#itemsTable .qty-input');
         // Place the error on the table frame for visibility
         const tableFrame = document.querySelector('.table-frame');
         if (tableFrame && !tableFrame.querySelector('.field-error')) {
@@ -443,10 +472,24 @@ try {
           warn.textContent = 'Please select at least one item to transfer.';
           tableFrame.appendChild(warn);
         }
-        firstInvalid = firstInvalid || anyChk || document.getElementById('itemSearch');
+        firstInvalid = firstInvalid || anyQty || document.getElementById('itemSearch');
       } else {
-        // For each selected, require condition
+        // For each selected: require transfer qty > 0 and condition
         for (const r of selectedRows) {
+          const qtyInput = r.querySelector('.qty-input');
+          const max = parseFloat(qtyInput?.getAttribute('max') || '0');
+          let val = parseFloat(qtyInput?.value || '');
+          if (isNaN(val) || val <= 0) {
+            showError(qtyInput, 'Enter a transfer quantity greater than 0.');
+            firstInvalid = firstInvalid || qtyInput;
+            break;
+          }
+          if (val > max) {
+            qtyInput.value = String(max);
+            showError(qtyInput, 'Transfer quantity exceeds available balance. Clamped to max.');
+            firstInvalid = firstInvalid || qtyInput;
+            break;
+          }
           const cond = r.querySelector('.cond-input');
           if (!cond || !cond.value.trim()) {
             showError(cond, 'Please provide the inventory condition.');
@@ -505,45 +548,86 @@ try {
     }
 
     // Restore draft if available
+    function attachQtyHandlers() {
+      const recomputeGrandTotal = () => {
+        let sum = 0;
+        document.querySelectorAll('#itemsTable tbody tr.ics-row .amount-cell').forEach(cell => {
+          const txt = (cell.textContent || '').replace(/[^0-9.\-]/g, '');
+          const val = parseFloat(txt || '0') || 0;
+          sum += val;
+        });
+        const totalEl = document.getElementById('itr-total-amount');
+        if (totalEl) totalEl.textContent = '₱' + sum.toFixed(2);
+      };
+      const rows = document.querySelectorAll('#itemsTable tbody tr.ics-row');
+      rows.forEach(r => {
+        const qtyInput = r.querySelector('.qty-input');
+        const amountCell = r.querySelector('.amount-cell');
+        const balanceCell = r.querySelector('.balance-cell');
+        const unitCost = parseFloat(r.getAttribute('data-unit-cost') || '0');
+        const onHand = parseFloat(r.getAttribute('data-qty-on-hand') || '0');
+        if (!qtyInput) return;
+        const recalc = () => {
+          let v = parseFloat(qtyInput.value || '');
+          if (isNaN(v) || v < 0) v = 0;
+          const max = parseFloat(qtyInput.getAttribute('max') || '0');
+          if (max > 0 && v > max) v = max;
+          // Update UI
+          if (amountCell) amountCell.textContent = '₱' + (unitCost * v).toFixed(2);
+          if (balanceCell) balanceCell.textContent = String(Math.max(0, onHand - v));
+          recomputeGrandTotal();
+        };
+        qtyInput.addEventListener('input', recalc);
+        qtyInput.addEventListener('blur', recalc);
+        // Initialize
+        recalc();
+      });
+      // Initial grand total in case there are prefilled values
+      setTimeout(recomputeGrandTotal, 0);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      // Try to restore draft, but do NOT exit early if none
       try {
         const raw = localStorage.getItem('itr_draft');
-        if (!raw) return;
-        const d = JSON.parse(raw);
-        if (!d) return;
-        document.getElementById('entity_name').value = d.entity_name || '';
-        document.getElementById('fund_cluster').value = d.fund_cluster || '';
-        document.getElementById('from_accountable').value = d.from_accountable || '';
-        document.getElementById('to_accountable').value = d.to_accountable || '';
-        if (d.itr_no) {
-          // Try to split saved ITR No. into parts (1 to 4-digit serial)
-          const m = String(d.itr_no).match(/^(\d{1,4})-(\d{2})-(\d{4})$/);
-          if (m) {
-            document.getElementById('itr_serial').value = pad4(m[1]);
-            document.getElementById('itr_month').value = m[2];
-            document.getElementById('itr_year').value = m[3];
-          }
-          document.getElementById('itr_no').value = d.itr_no;
-          document.getElementById('itr_no_preview').textContent = d.itr_no;
-        }
-        document.getElementById('itr_date').value = d.itr_date || document.getElementById('itr_date').value;
-        if (d.transfer_type) {
-          const r = document.querySelector('input[name="transfer_type"][value="' + d.transfer_type + '"]');
-          if (r) r.checked = true;
-        }
-        document.getElementById('transfer_other').value = d.transfer_other || '';
-        document.getElementById('reason').value = d.reason || '';
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d) {
+            document.getElementById('entity_name').value = d.entity_name || '';
+            document.getElementById('fund_cluster').value = d.fund_cluster || '';
+            document.getElementById('from_accountable').value = d.from_accountable || '';
+            document.getElementById('to_accountable').value = d.to_accountable || '';
+            if (d.itr_no) {
+              // Try to split saved ITR No. into parts (1 to 4-digit serial)
+              const m = String(d.itr_no).match(/^(\d{1,4})-(\d{2})-(\d{4})$/);
+              if (m) {
+                document.getElementById('itr_serial').value = pad4(m[1]);
+                document.getElementById('itr_month').value = m[2];
+                document.getElementById('itr_year').value = m[3];
+              }
+              document.getElementById('itr_no').value = d.itr_no;
+              document.getElementById('itr_no_preview').textContent = d.itr_no;
+            }
+            document.getElementById('itr_date').value = d.itr_date || document.getElementById('itr_date').value;
+            if (d.transfer_type) {
+              const r = document.querySelector('input[name="transfer_type"][value="' + d.transfer_type + '"]');
+              if (r) r.checked = true;
+            }
+            document.getElementById('transfer_other').value = d.transfer_other || '';
+            document.getElementById('reason').value = d.reason || '';
 
-        // Signatories
-        document.getElementById('approved_name').value = d.approved?.name || '';
-        document.getElementById('approved_designation').value = d.approved?.designation || '';
-        document.getElementById('approved_date').value = d.approved?.date || '';
-        document.getElementById('released_name').value = d.released?.name || '';
-        document.getElementById('released_designation').value = d.released?.designation || '';
-        document.getElementById('released_date').value = d.released?.date || '';
-        document.getElementById('received_name').value = d.received?.name || '';
-        document.getElementById('received_designation').value = d.received?.designation || '';
-        document.getElementById('received_date').value = d.received?.date || '';
+            // Signatories
+            document.getElementById('approved_name').value = d.approved?.name || '';
+            document.getElementById('approved_designation').value = d.approved?.designation || '';
+            document.getElementById('approved_date').value = d.approved?.date || '';
+            document.getElementById('released_name').value = d.released?.name || '';
+            document.getElementById('released_designation').value = d.released?.designation || '';
+            document.getElementById('released_date').value = d.released?.date || '';
+            document.getElementById('received_name').value = d.received?.name || '';
+            document.getElementById('received_designation').value = d.received?.designation || '';
+            document.getElementById('received_date').value = d.received?.date || '';
+          }
+        }
       } catch(e){}
 
       // Initialize serial and ITR number preview from server
@@ -554,6 +638,8 @@ try {
       if (dt) dt.addEventListener('change', () => { refreshSerialForCurrentDate(); });
       // Serial is read-only; keep value normalized just in case
       formatSerial();
+      // Setup qty handlers for dynamic amount/balance like ICS
+      attachQtyHandlers();
     });
   </script>
 </body>

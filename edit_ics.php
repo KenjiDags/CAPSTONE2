@@ -92,14 +92,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock_numbers = $_POST['stock_number'];
         $issued_quantities = $_POST['issued_quantity'];
         $estimated_useful_lives = $_POST['estimated_useful_life'];
-        $serial_numbers = $_POST['serial_number'];
+    // Serial numbers column removed from form; keep server-side optional
+    $serial_numbers = isset($_POST['serial_number']) ? $_POST['serial_number'] : [];
 
         // Re-insert current items and update semi balances
         for ($i = 0; $i < count($stock_numbers); $i++) {
             $stock_no = $stock_numbers[$i];
             $issued_qty = (float)$issued_quantities[$i];
             $useful_life = $estimated_useful_lives[$i];
-            $serial_no = $serial_numbers[$i];
+            $serial_no = isset($serial_numbers[$i]) ? $serial_numbers[$i] : '';
 
             if ($issued_qty > 0) {
                 $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
@@ -224,6 +225,11 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
     #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
     /* Flatten top radius across elements */
     .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+    /* Spacing improvements */
+    #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
+    #itemsTable thead th { height: 44px; }
+    .search-container { margin: 8px 0 12px !important; }
+    .form-grid .form-group input, .form-grid .form-group select, .form-grid .form-group textarea { padding: 8px 10px; }
     </style>
     </head>
 <body>
@@ -281,15 +287,13 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
                         <table id="itemsTable" tabindex="-1">
                             <thead>
                                 <tr>
-                                    <th>Stock No.</th>
-                                    <th>Item</th>
+                                    <th>Item No.</th>
                                     <th>Description</th>
                                     <th>Unit</th>
                                     <th>Quantity on Hand</th>
                                     <th>Unit Cost</th>
                                     <th>Issued Qty</th>
                                     <th>Estimated Useful Life</th>
-                                    <th>Serial Number</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -322,19 +326,17 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
                                             ? $ics_items[$stock_number]['unit']
                                             : (isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-');
                                         echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
-                                        echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
-                                        echo '<td>' . htmlspecialchars($row['item_description']) . '</td>';
+                                        echo '<td>' . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
                                         echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
                                         echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
                                         echo '<td>' . htmlspecialchars($displayQtyOnHand) . '</td>';
                                         echo '<td>₱' . number_format($unitCost, 2) . '</td>';
                                         echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($displayQtyOnHand) . '" step="1"></td>';
                                         echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
-                                        echo '<td><input type="text" name="serial_number[]" value="' . ($existing_item ? htmlspecialchars($existing_item['serial_number']) : '') . '" placeholder="Serial No."></td>';
                                         echo '</tr>';
                                     }
                                 } else {
-                                    echo '<tr id="no-items-row"><td colspan="9">No semi-expendable items found.</td></tr>';
+                                    echo '<tr id="no-items-row"><td colspan="7">No semi-expendable items found.</td></tr>';
                                 }
                                 ?>
                             </tbody>
@@ -388,8 +390,7 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
             rows.forEach(row => {
                 const qtyInput = row.querySelector('input[name="issued_quantity[]"]');
                 if (!qtyInput) return;
-                const stockCell = row.querySelector('td');
-                const stockNo = stockCell ? stockCell.innerText.trim() : '(unknown)';
+                const stockNo = (row.getAttribute('data-stock') || (row.querySelector('td')?.innerText || '(unknown)')).trim();
                 const handleClamp = () => {
                     const max = parseFloat(qtyInput.max || '0');
                     let val = parseFloat(qtyInput.value);

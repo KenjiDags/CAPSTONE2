@@ -1,6 +1,21 @@
 <?php
 require 'config.php';
 require 'functions.php';
+
+// Handle delete BEFORE any output so redirects work
+if (isset($_GET['delete_itr_id'])) {
+    $del_id = (int)$_GET['delete_itr_id'];
+    try {
+        // Ensure tables exist defensively
+        @$conn->query("DELETE FROM itr_items WHERE itr_id = $del_id");
+        @$conn->query("DELETE FROM itr WHERE itr_id = $del_id");
+    } catch (Throwable $e) {
+        // swallow errors to avoid breaking UI; deletion attempt made
+    }
+    $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
+    header('Location: itr.php' . $sortParam);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,18 +46,7 @@ require 'functions.php';
 <div class="content">
     <h2>Inventory Transfer Report (ITR)</h2>
 
-    <?php
-    // DELETE LOGIC (mirror ICS structure): allow deleting an ITR and its items
-    if (isset($_GET['delete_itr_id'])) {
-        $del_id = (int)$_GET['delete_itr_id'];
-        // Delete items first due to FK, then header
-        $conn->query("DELETE FROM itr_items WHERE itr_id = $del_id");
-        $conn->query("DELETE FROM itr WHERE itr_id = $del_id");
-        $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
-        header("Location: itr.php" . $sortParam);
-        exit();
-    }
-    ?>
+    <?php // (delete handled before output) ?>
 
     <div class="header-controls">
         <button onclick="window.location.href='add_itr.php'">

@@ -113,14 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stock_numbers = $_POST['stock_number'];
     $issued_quantities = $_POST['issued_quantity'];
     $estimated_useful_lives = $_POST['estimated_useful_life'];
-    $serial_numbers = $_POST['serial_number'];
+    // Serial numbers column removed from form; keep server-side optional
+    $serial_numbers = isset($_POST['serial_number']) ? $_POST['serial_number'] : [];
 
     // Insert new items and update inventory
     for ($i = 0; $i < count($stock_numbers); $i++) {
         $stock_no = $stock_numbers[$i];
         $issued_qty = (float)$issued_quantities[$i];
         $useful_life = $estimated_useful_lives[$i];
-        $serial_no = $serial_numbers[$i];
+    $serial_no = isset($serial_numbers[$i]) ? $serial_numbers[$i] : '';
 
         // Only insert if there's an issued quantity
         if ($issued_qty > 0) {
@@ -171,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Insert history snapshot post-issuance
                 $amount_total = round($item_data['amount'] * $qty, 2);
                 $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $remarks = 'ICS Issued';
+                $remarks = '';
                 $h->bind_param("issiiiiisdds", $semi_id, $date_issued, $ics_no, $qty, $issued, $reissued, $disposed, $balance, $received_by, $unit_cost, $amount_total, $remarks);
                 @ $h->execute();
                 $h->close();
@@ -353,6 +354,11 @@ function generateICSNumberSimple($conn) {
     #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
     /* Ensure any top corners are flat across container/viewport/table */
     .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+    /* Spacing improvements */
+    #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
+    #itemsTable thead th { height: 44px; }
+    .search-container { margin: 8px 0 12px !important; }
+    .form-grid .form-group input, .form-grid .form-group select, .form-grid .form-group textarea { padding: 8px 10px; }
     </style>
 </head>
 <body>
@@ -413,17 +419,14 @@ function generateICSNumberSimple($conn) {
                     <table id="itemsTable" tabindex="-1">
                     <thead>
                         <tr>
-                            <th>Stock No.</th>
-                            <th>Item</th>
-                            <th>Description</th>
                             <th>Item No.</th>
+                            <th>Description</th>
                             <th>Unit</th>
                             <th>Quantity on Hand</th>
                             <th>Unit Cost</th>
                             <th>Total Cost</th>
                             <th>Issued Qty</th>
                             <th>Estimated Useful Life</th>
-                            <th>Serial Number</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -452,10 +455,9 @@ function generateICSNumberSimple($conn) {
                                 $catVal = isset($row['category']) ? $row['category'] : '';
                                 $unitDisp = isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-';
                                 echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '" data-unit-cost="' . htmlspecialchars(number_format($unitCost,2,'.','')) . '">';
-                                echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
-                                echo '<td>' . htmlspecialchars($row['item_description']) . '</td>';
+                                // First column is Item No. (stock number) and hidden input for submission
+                                echo '<td>'  . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
                                 echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
-                                echo '<td>'  . htmlspecialchars($stock_number) . '</td>';
                                 echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
                                 echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
                                 echo '<td>₱' . number_format($unitCost, 2) . '</td>';
@@ -464,11 +466,10 @@ function generateICSNumberSimple($conn) {
                                 echo '<td class="cell-total-cost">₱' . number_format($initialTotal, 2) . '</td>';
                                 echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1" class="issued-qty"></td>';
                                 echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
-                                echo '<td><input type="text" name="serial_number[]" value="' . ($existing_item ? htmlspecialchars($existing_item['serial_number']) : '') . '" placeholder="Serial No."></td>';
                                 echo '</tr>';
                             }
                         } else {
-                            echo '<tr id="no-items-row"><td colspan="11">No semi-expendable items found.</td></tr>';
+                            echo '<tr id="no-items-row"><td colspan="8">No semi-expendable items found.</td></tr>';
                         }
                         ?>
                     </tbody>
@@ -527,8 +528,7 @@ function generateICSNumberSimple($conn) {
             rows.forEach(row => {
                 const qtyInput = row.querySelector('input[name="issued_quantity[]"]');
                 if (!qtyInput) return;
-                const stockCell = row.querySelector('td');
-                const stockNo = stockCell ? stockCell.innerText.trim() : '(unknown)';
+                const stockNo = (row.getAttribute('data-stock') || (row.querySelector('td:first-child')?.innerText || '(unknown)')).trim();
 
                 const handleClamp = () => {
                     const max = parseFloat(qtyInput.max || '0');

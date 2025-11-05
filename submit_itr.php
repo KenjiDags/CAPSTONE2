@@ -126,7 +126,7 @@ try {
 // Note: ICS-number helper functions removed because ITR no longer creates ICS.
 // Note: ICS-number helper functions removed because ITR no longer creates ICS.
 
-// Insert header and create ICS within a transaction
+// Insert header and then apply ICS/Semi/REGSPI updates within a transaction
 try {
     if (method_exists($conn, 'begin_transaction')) { $conn->begin_transaction(); }
     $stmt = $conn->prepare("INSERT INTO itr (
@@ -200,6 +200,133 @@ try {
         }
     }
     $it->close();
+
+    // Ensure REGSPI tables exist (idempotent)
+    try {
+        $conn->query("CREATE TABLE IF NOT EXISTS regspi (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  entity_name VARCHAR(255) NOT NULL,\n  fund_cluster VARCHAR(100) NULL,\n  semi_expendable_property VARCHAR(100) NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        $conn->query("CREATE TABLE IF NOT EXISTS regspi_entries (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  regspi_id INT NOT NULL,\n  `date` DATE NOT NULL,\n  ics_rrsp_no VARCHAR(100) NOT NULL,\n  property_no VARCHAR(100) NOT NULL,\n  item_description TEXT NOT NULL,\n  useful_life VARCHAR(100) NOT NULL,\n  issued_qty INT NOT NULL DEFAULT 0,\n  issued_office VARCHAR(255) NULL,\n  returned_qty INT NOT NULL DEFAULT 0,\n  returned_office VARCHAR(255) NULL,\n  reissued_qty INT NOT NULL DEFAULT 0,\n  reissued_office VARCHAR(255) NULL,\n  disposed_qty1 INT NOT NULL DEFAULT 0,\n  disposed_qty2 INT NOT NULL DEFAULT 0,\n  balance_qty INT NOT NULL DEFAULT 0,\n  amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,\n  remarks TEXT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,\n  INDEX idx_regspi_id (regspi_id),\n  INDEX idx_date (`date`),\n  INDEX idx_ics_rrsp_no (ics_rrsp_no),\n  INDEX idx_property_no (property_no),\n  CONSTRAINT fk_regspi_entries_header FOREIGN KEY (regspi_id)\n    REFERENCES regspi(id) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    } catch (Throwable $e) { /* ignore; next inserts may fail and be caught */ }
+
+    // Ensure history table exists
+    if (function_exists('ensure_semi_expendable_history')) { ensure_semi_expendable_history($conn); }
+
+    // Apply ICS quantity deduction, SEMI reissue increment, and REGSPI entry per item
+    foreach ($items as $row) {
+        $transfer_qty = (int)($row['transfer_qty'] ?? 0);
+        if ($transfer_qty <= 0) { continue; }
+        $unit_cost = toNumber($row['unit_cost'] ?? 0);
+        $stock_no = $row['stock_number'] ?? ($row['item_no'] ?? null);
+        $ics_item_id = isset($row['ics_item_id']) ? (int)$row['ics_item_id'] : 0;
+        $ics_id_in = isset($row['ics_id']) ? (int)$row['ics_id'] : 0;
+        if (!$stock_no) { continue; }
+
+        // 1) Deduct from ICS item quantity
+        $current_qty = null; $current_uc = null; $target_ics_item_id = null;
+        if ($ics_item_id > 0) {
+            $q = $conn->prepare("SELECT ics_item_id, ics_id, stock_number, quantity, unit_cost FROM ics_items WHERE ics_item_id = ? LIMIT 1");
+            $q->bind_param('i', $ics_item_id);
+            $q->execute();
+            $res = $q->get_result();
+            if ($res && $res->num_rows > 0) {
+                $r = $res->fetch_assoc();
+                $target_ics_item_id = (int)$r['ics_item_id'];
+                $current_qty = (float)$r['quantity'];
+                $current_uc = (float)$r['unit_cost'];
+            }
+            $q->close();
+        }
+        if ($target_ics_item_id === null && $ics_id_in > 0) {
+            $q = $conn->prepare("SELECT ics_item_id, quantity, unit_cost FROM ics_items WHERE ics_id = ? AND stock_number = ? ORDER BY ics_item_id DESC LIMIT 1");
+            $q->bind_param('is', $ics_id_in, $stock_no);
+            $q->execute();
+            $res = $q->get_result();
+            if ($res && $res->num_rows > 0) {
+                $r = $res->fetch_assoc();
+                $target_ics_item_id = (int)$r['ics_item_id'];
+                $current_qty = (float)$r['quantity'];
+                $current_uc = (float)$r['unit_cost'];
+            }
+            $q->close();
+        }
+        if ($target_ics_item_id !== null && $current_qty !== null) {
+            $uc = ($unit_cost > 0) ? $unit_cost : ($current_uc ?? 0);
+            $effective = min((float)$transfer_qty, max(0.0, (float)$current_qty));
+            $new_qty = max(0.0, (float)$current_qty - $effective);
+            $new_total = $uc * $new_qty;
+            $u = $conn->prepare("UPDATE ics_items SET quantity = ?, total_cost = ? WHERE ics_item_id = ?");
+            $u->bind_param('ddi', $new_qty, $new_total, $target_ics_item_id);
+            if (!$u->execute()) { $u->close(); throw new Exception('Failed to update ICS item: ' . $u->error); }
+            $u->close();
+            // Use effective qty for downstream updates
+            $transfer_qty = (int)round($effective);
+        }
+
+        // 2) Update Semi-Expendable: increment reissued and recalc balance
+    $semi = $conn->prepare("SELECT id, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, amount, estimated_useful_life, item_description FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+        $semi->bind_param('s', $stock_no);
+        $semi->execute();
+        $semiRes = $semi->get_result();
+        $semiRow = $semiRes && $semiRes->num_rows > 0 ? $semiRes->fetch_assoc() : null;
+        $semi->close();
+        $updatedBalance = null;
+        if ($semiRow) {
+            $semi_id = (int)$semiRow['id'];
+            $qty = (int)$semiRow['quantity'];
+            // Move quantity from issued to reissued so remaining ICS is reflected correctly in semi
+            $issued = max(0, (int)$semiRow['quantity_issued'] - (int)$transfer_qty);
+            $reissued = (int)$semiRow['quantity_reissued'] + (int)$transfer_qty;
+            $disposed = (int)$semiRow['quantity_disposed'];
+            $balance = max(0, $qty - ($issued + $reissued + $disposed));
+            $updatedBalance = $balance;
+            $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_reissued = ?, quantity_balance = ? WHERE id = ?");
+            $u->bind_param('iiii', $issued, $reissued, $balance, $semi_id);
+            if (!$u->execute()) { $u->close(); throw new Exception('Failed to update semi-expendable reissue: ' . $u->error); }
+            $u->close();
+
+            // History snapshot for reissue
+            try {
+                $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_reissued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $unit_amount = ($semiRow['amount'] !== null) ? (float)$semiRow['amount'] : ($unit_cost ?: 0);
+                $amount_total = round($unit_amount * $qty, 2);
+                $remarks = 'Reissued via ITR';
+                $h->bind_param('issiiiiisdds', $semi_id, $itr_date, $itr_no, $qty, $issued, $reissued, $disposed, $balance, $to_accountable, $unit_amount, $amount_total, $remarks);
+                @$h->execute();
+                $h->close();
+            } catch (Throwable $e) { /* ignore non-fatal */ }
+        }
+
+        // 3) Insert REGSPI entry
+        try {
+            // Find or create header
+            $regspi_id = null;
+            $find = $conn->prepare("SELECT id FROM regspi WHERE entity_name = ? AND (fund_cluster <=> ?) LIMIT 1");
+            $find->bind_param('ss', $entity_name_val, $fund_cluster_val);
+            $find->execute();
+            $fr = $find->get_result();
+            if ($fr && $fr->num_rows > 0) { $regspi_id = (int)$fr->fetch_assoc()['id']; }
+            $find->close();
+            if (!$regspi_id) {
+                $ins = $conn->prepare("INSERT INTO regspi (entity_name, fund_cluster, semi_expendable_property) VALUES (?, ?, ?)");
+                $sep = null; // unknown category here
+                $ins->bind_param('sss', $entity_name_val, $fund_cluster_val, $sep);
+                if ($ins->execute()) { $regspi_id = $ins->insert_id; }
+                $ins->close();
+            }
+            if ($regspi_id) {
+                $desc = $semiRow['item_description'] ?? ($row['description'] ?? '');
+                $useful = $semiRow['estimated_useful_life'] ?? '';
+                $reissued_office = $to_accountable ?: null;
+                $issued_office = $from_accountable ?: null;
+                $amt = ($unit_cost ?: ($semiRow['amount'] ?? 0)) * (int)$transfer_qty;
+                $balance_qty = $updatedBalance ?? 0;
+                $insE = $conn->prepare("INSERT INTO regspi_entries (regspi_id, `date`, ics_rrsp_no, property_no, item_description, useful_life, issued_qty, issued_office, returned_qty, returned_office, reissued_qty, reissued_office, disposed_qty1, disposed_qty2, balance_qty, amount, remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                $disposed1 = 0; $disposed2 = 0; $issuedQty = 0; $returnedQty = 0; $returnedOffice = null; $remarks = '';
+                $insE->bind_param('isssssisisisiiids', $regspi_id, $itr_date, $itr_no, $stock_no, $desc, $useful, $issuedQty, $issued_office, $returnedQty, $returnedOffice, $transfer_qty, $reissued_office, $disposed1, $disposed2, $balance_qty, $amt, $remarks);
+                @$insE->execute();
+                $insE->close();
+            }
+        } catch (Throwable $e) { /* ignore non-fatal */ }
+    }
 
     // ICS integration removed: no ICS header/items will be created from ITR.
 
