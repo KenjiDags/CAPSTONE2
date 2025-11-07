@@ -1,294 +1,195 @@
-<?php
-ob_start();
-require_once 'config.php';
-
-session_start();
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// Fetch all RSPI reports with their items
-$query = "
-    SELECT 
-        r.id,
-        r.serial_no,
-        r.entity_name,
-        r.fund_cluster,
-        r.report_date,
-        r.custodian_name,
-        r.posted_by,
-        r.created_at,
-        COUNT(i.id) as item_count,
-        SUM(i.quantity_issued) as total_quantity,
-        SUM(i.amount) as total_amount
-    FROM rspi_reports r
-    LEFT JOIN rspi_items i ON r.id = i.rspi_id
-    GROUP BY r.id
-    ORDER BY r.created_at DESC
-";
-
-$result = $conn->query($query);
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSPI Reports - Inventory Management System</title>
-
-    
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- App styles (load last so our rules override Bootstrap on this page only) -->
+    <title>RSPI - Report of Semi-Expendable Property Issued</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    
-    
     <style>
-        .actions-column {
-            white-space: nowrap;
-            width: 120px;
+        .export-section { margin-bottom: 20px; border-radius: 5px; }
+        .export-btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; text-decoration: none; display: inline-block; font-weight: bold; margin-right: 10px; cursor: pointer; }
+        .export-btn:hover { background-color: #218838; color: white; text-decoration: none; }
+        .export-btn i { margin-right: 5px; }
+        /* Themed month filter bar */
+        .rspi-filters {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--white);
+            padding: 8px 16px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px var(--shadow-blue);
+            border: 2px solid var(--border-gray);
+            transition: all 0.3s ease;
         }
-        .dataTables_filter {
-            margin-bottom: 5px;
+        .rspi-filters:hover { box-shadow: 0 6px 20px var(--shadow-blue-hover); border-color: var(--primary-blue); }
+        .rspi-filters label { font-weight: 600; color: var(--primary-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+        .rspi-filters input[type="month"] {
+            padding: 8px 15px;
+            border: 2px solid var(--border-gray);
+            border-radius: 10px;
+            background: var(--light-gray);
+            font-size: 1rem;
+            color: var(--text-gray);
+            min-width: 180px;
+            transition: all 0.3s ease;
         }
-        .btn-action {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-        .status-badge {
-            font-size: 0.875rem;
-        }
-        .table-hover tbody tr:hover {
-            background-color: rgba(0,0,0,.075);
-        }
-        @media (max-width: 768px) {
-            .actions-column {
-                width: auto;
-            }
-            .btn-action {
-                padding: 0.375rem 0.75rem;
-            }
-        }
+        .rspi-filters input[type="month"]:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(0, 56, 168, 0.1); background-color: var(--white); }
+        .rspi-filters .clear-link { color: var(--text-gray); text-decoration: none; font-size: 0.9rem; padding: 6px 10px; border-radius: 14px; border: 1px solid var(--border-gray); background: var(--light-gray); }
+        .rspi-filters .clear-link:hover { color: var(--primary-blue); border-color: var(--primary-blue); background: var(--white); }
     </style>
 </head>
 <body class="rspi-page">
     <?php include 'sidebar.php'; ?>
 
     <div class="content">
-    <div class="container-fluid mt-4">
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h2>RSPI Reports</h2>
-            </div>
-            <div class="col-md-6 text-end">
-                <a href="add_rspi.php" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add New RSPI
-                </a>
-            </div>
+        <h2>Report of Semi-Expendable Property Issued (RSPI)</h2>
+
+        <?php
+            // Determine selected month (YYYY-MM); default to current month
+            $selectedMonth = isset($_GET['month']) && preg_match('/^\d{4}-\d{2}$/', $_GET['month']) ? $_GET['month'] : date('Y-m');
+            $periodStart = $selectedMonth . '-01';
+            $periodEnd = date('Y-m-t', strtotime($periodStart));
+        ?>
+        <!-- Filters & Export -->
+        <div class="export-section">
+            <form method="get" class="rspi-filters">
+                <label for="month">Month</label>
+                <input type="month" id="month" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" />
+                <?php if (!empty($_GET['month'])): ?>
+                    <a class="clear-link" href="rspi.php">Clear</a>
+                <?php endif; ?>
+            </form>
+            <a href="export_rspi.php?month=<?= urlencode($selectedMonth) ?>" class="export-btn" target="_blank">📄 Export to PDF</a>
         </div>
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="rspiTable" class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>RSPI No.</th>
-                                <th>Entity Name</th>
-                                <th>Fund Cluster</th>
-                                <th>Date</th>
-                                <th>Items</th>
-                                <th>Total Qty</th>
-                                <th>Total Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['serial_no']); ?></td>
-                                <td><?php echo htmlspecialchars($row['entity_name']); ?></td>
-                                <td><?php echo htmlspecialchars($row['fund_cluster']); ?></td>
-                                <td><?php echo date('M d, Y', strtotime($row['report_date'])); ?></td>
-                                <td><?php echo $row['item_count']; ?></td>
-                                <td><?php echo number_format($row['total_quantity']); ?></td>
-                                <td>₱<?php echo number_format($row['total_amount'], 2); ?></td>
-                                <td>
-                                    <span class="badge bg-success">Posted</span>
-                                </td>
-                                <td class="actions-column">
-                                    <button class="btn btn-info btn-action btn-sm" 
-                                            onclick="viewRSPI(<?php echo $row['id']; ?>)" 
-                                            title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-warning btn-action btn-sm" 
-                                            onclick="editRSPI(<?php echo $row['id']; ?>)" 
-                                            title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-danger btn-action btn-sm" 
-                                            onclick="deleteRSPI(<?php echo $row['id']; ?>)" 
-                                            title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>ICS No.</th>
+                    <th>Property No.</th>
+                    <th>Item</th>
+                    <th>Unit</th>
+                    <th>Quantity Issued</th>
+                    <th>Unit Cost</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                require 'config.php';
+                $sql = "
+                    SELECT 
+                        i.date_issued AS date,
+                        i.ics_no AS ics_no,
+                        ii.stock_number AS property_no,
+                        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
+                        COALESCE(ii.unit, '') AS unit,
+                        ii.quantity AS issued_qty,
+                        COALESCE(sep.amount, ii.unit_cost) AS unit_cost,
+                        COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total
+                    FROM ics i
+                    INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
+                    LEFT JOIN semi_expendable_property sep 
+                        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
+                    WHERE ii.quantity > 0 AND i.date_issued BETWEEN ? AND ?
+                    ORDER BY i.date_issued DESC, ii.ics_item_id DESC
+                ";
 
-    <!-- View Modal -->
-    <div class="modal fade" id="viewModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">RSPI Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="viewModalBody">
-                    <!-- Content will be loaded dynamically -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="printRSPI()">Print</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                // Submit month filter automatically on change
+                echo '<script>document.getElementById("month").addEventListener("change", function(){ this.form.submit(); });</script>';
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to delete this RSPI report?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                $stmt = $conn->prepare($sql);
+                $result = null;
+                if ($stmt) {
+                    $stmt->bind_param('ss', $periodStart, $periodEnd);
+                    if ($stmt->execute()) {
+                        $result = $stmt->get_result();
+                    }
+                }
+                if ($result && $result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($row['date']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['ics_no']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['property_no']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['item_description']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['unit']) . '</td>';
+                        echo '<td>' . htmlspecialchars((string)(float)$row['issued_qty']) . '</td>';
+                        echo '<td class="currency">₱ ' . number_format((float)$row['unit_cost'], 2) . '</td>';
+                        echo '<td class="currency">₱ ' . number_format((float)$row['amount_total'], 2) . '</td>';
+                        echo '</tr>';
+                    }
+                    if ($stmt) { $stmt->close(); }
+                } else {
+                    echo '<tr><td colspan="8">No RSPI entries found.</td></tr>';
+                }
+                ?>
+            </tbody>
+        </table>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <h2>Recapitulation</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Property No.</th>
+                    <th>Total Quantity Issued</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $recapSql = " 
+                    SELECT 
+                        ii.stock_number AS property_no,
+                        SUM(ii.quantity) AS total_issued,
+                        SUM(COALESCE(sep.amount, ii.unit_cost) * ii.quantity) AS total_amount
+                    FROM ics_items ii
+                    LEFT JOIN ics i ON ii.ics_id = i.ics_id
+                    LEFT JOIN semi_expendable_property sep 
+                        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
+                    WHERE ii.quantity > 0 AND i.date_issued BETWEEN ? AND ?
+                    GROUP BY ii.stock_number
+                    ORDER BY ii.stock_number DESC
+                ";
+                $recapStmt = $conn->prepare($recapSql);
+                $recap = null;
+                if ($recapStmt) {
+                    $recapStmt->bind_param('ss', $periodStart, $periodEnd);
+                    if ($recapStmt->execute()) {
+                        $recap = $recapStmt->get_result();
+                    }
+                }
+
+                if ($recap && $recap->num_rows > 0) {
+                    while ($row = $recap->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($row['property_no']) . '</td>';
+                        echo '<td>' . htmlspecialchars((string)(float)$row['total_issued']) . '</td>';
+                        echo '<td class="currency">₱ ' . number_format((float)$row['total_amount'], 2) . '</td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="3">No recapitulation data found.</td></tr>';
+                }
+                if ($recapStmt) { $recapStmt->close(); }
+                $conn->close();
+                ?>
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        $(document).ready(function() {
-            $('#rspiTable').DataTable({
-                responsive: true,
-                order: [[3, 'desc']], // Sort by date descending
-                columnDefs: [
-                    { targets: -1, orderable: false }, // Disable sorting on actions column
-                    { responsivePriority: 1, targets: [0, 3, -1] }, // Keep these columns visible on mobile
-                    { responsivePriority: 2, targets: [4, 5, 6] }
-                ],
-                language: {
-                    search: "Search RSPI reports:",
-                    lengthMenu: "Show _MENU_ reports per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ RSPI reports"
-                }
-            });
+        // Optional: sidebar toggle for mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.querySelector('.menu-button');
+            if (menuButton) menuButton.addEventListener('click', toggleSidebar);
         });
-
-        function viewRSPI(id) {
-            // Load RSPI details via AJAX
-            fetch(`get_rspi_details.php?id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        document.getElementById('viewModalBody').innerHTML = data.html;
-                        new bootstrap.Modal(document.getElementById('viewModal')).show();
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    Swal.fire('Error', 'Failed to load RSPI details', 'error');
-                });
-        }
-
-        function editRSPI(id) {
-            window.location.href = `edit_rspi.php?id=${id}`;
-        }
-
-        function deleteRSPI(id) {
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-            
-            document.getElementById('confirmDelete').onclick = function() {
-                fetch(`delete_rspi.php?id=${id}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    modal.hide();
-                    if (data.status === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: 'RSPI report deleted successfully'
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    modal.hide();
-                    Swal.fire('Error', 'Failed to delete RSPI report', 'error');
-                });
-            };
-        }
-
-        function printRSPI() {
-            const modalContent = document.getElementById('viewModalBody').innerHTML;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>RSPI Report</title>
-                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-                        <style>
-                            @media print {
-                                .no-print { display: none; }
-                                @page { margin: 1cm; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container mt-4">
-                            ${modalContent}
-                        </div>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
     </script>
 </body>
 </html>

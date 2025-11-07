@@ -125,8 +125,9 @@ if (isset($_GET['delete_itr_id'])) {
                         echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
                     echo '<td>₱' . number_format((float)$row['total_amount'], 2) . '</td>';
                     echo '<td>';
-                    // Actions: Edit, Export, Delete (copied pattern from ICS)
-                    echo '<a href="add_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
+                    // Actions: View, Edit, Export, Delete (View added)
+                    echo '<a href="view_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="View ITR"><i class="fas fa-eye"></i> View</a> ';
+                    echo '<a href="edit_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
                     echo '<a href="export_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Export ITR"><i class="fas fa-download"></i> Export</a> ';
                     echo '<a href="itr.php?delete_itr_id=' . (int)$row['itr_id'] . (isset($_GET['sort']) ? ('&sort=' . urlencode($_GET['sort'])) : '') . '" ' .
                         'onclick="return confirm(\'Are you sure you want to delete this ITR?\')" ' .
