@@ -21,7 +21,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
             <?php
                      $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php']);
-                         $expendablesDropdownActive = in_array($currentPage, ['semi_expendible.php', 'PC.php', 'PC_semi.php', 'ics.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php']);
+                         $expendablesDropdownActive = in_array($currentPage, ['semi_expendible.php', 'PC.php', 'PC_semi.php', 'ics.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php']);
                 $ppeDropdownActive = in_array($currentPage, ['ppe_item1.php', 'ppe_item2.php']);
 
                 ?>
@@ -50,6 +50,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📇 PC</a>
                             <a href="regspi.php" class="<?= $currentPage == 'regspi.php' ? 'active' : '' ?>">📦 RegSPI</a>
                             <a href="rspi.php" class="<?= $currentPage == 'rspi.php' ? 'active' : '' ?>">📦 RSPI</a>
+                            <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>">⚙️ RPCSP</a>
                             <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
                             <a href="ict_registry.php" class="<?= $currentPage == 'ict_registry.php' ? 'active' : '' ?>">📦 ICT</a>
