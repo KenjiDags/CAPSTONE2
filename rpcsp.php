@@ -22,22 +22,6 @@ if ($result) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RPCSP - Report on the Physical Count of Semi-Expendable Property</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <style>
-        .rpcsp-page .content { padding: 16px; }
-        .rpcsp-form { background: var(--white); border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px var(--shadow-blue); }
-        .rpcsp-header h2 { margin: 0 0 6px; }
-        .rpcsp-meta { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 10px; margin-top: 8px; }
-        .rpcsp-meta label { font-weight: 600; margin-right: 6px; }
-        .rpcsp-meta input[type="text"], .rpcsp-meta input[type="date"] { padding: 8px 10px; border: 1px solid var(--border-gray); border-radius: 8px; width: 100%; }
-        .rpcsp-table-wrapper { overflow: auto; border: 1px solid var(--border-gray); border-radius: 10px; max-height: 520px; }
-        .rpcsp-table { width: 100%; border-collapse: collapse; }
-        .rpcsp-table th, .rpcsp-table td { border-bottom: 1px solid #e5e7eb; padding: 10px; text-align: center; }
-        .rpcsp-table thead th { position: sticky; top: 0; background: #f8fafc; z-index: 2; }
-        .currency { text-align: right; }
-        .table-controls, .search-container { display:flex; align-items:center; gap:8px; margin: 10px 0; }
-        .search-input-rpcsp { flex:1; padding: 10px; border:1px solid var(--border-gray); border-radius: 8px; }
-        .export-btn { background: #2563eb; color: #fff; border: none; padding: 10px 14px; border-radius: 8px; cursor:pointer; }
-    </style>
     <script>
         function openExport() {
             const params = new URLSearchParams({
@@ -52,49 +36,57 @@ if ($result) {
         }
     </script>
 </head>
-<body class="rpcsp-page">
+<body class="rpci-page">
     <div class="content">
-        <div class="rpcsp-form">
-            <div class="rpcsp-header">
+        <div class="rpci-form">
+            <div class="rpci-header">
                 <h2>Report on the Physical Count of Semi-Expendable Property</h2>
                 <div class="form-subtitle">(Semi-Expendable Property)</div>
-                <div class="rpcsp-meta">
-                    <div>
+
+                <div class="rpci-meta">
+                    <div class="rpci-meta-row">
                         <label for="report_date">As at:</label>
                         <input type="date" id="report_date" name="report_date" value="<?= date('Y-m-d') ?>">
                     </div>
-                    <div>
-                        <label for="fund_cluster">Fund Cluster</label>
-                        <input type="text" id="fund_cluster" name="fund_cluster" placeholder="Enter Fund Cluster">
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label>For which 
-                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer">, 
-                            <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation">, 
-                            <input type="text" id="entity_name" name="entity_name" placeholder="Entity Name">
-                            is accountable, having assumed such accountability on 
-                            <input type="date" id="assumption_date" name="assumption_date">.
-                        </label>
-                    </div>
                 </div>
             </div>
+            
+            <form method="POST" action="">
+                <div class="form-fields">
+                    <div class="field-group">
+                        <label for="fund_cluster">Fund Cluster:
+                            <input type="text" id="fund_cluster" name="fund_cluster" placeholder="Enter Fund Cluster">
+                        </label>
+                        
+                    </div>
 
-            <div class="table-controls">
-                <label for="row_limit">Show:</label>
-                <select id="row_limit" aria-label="Rows to display">
-                    <option value="5">5</option>
-                    <option value="10" selected>10</option>
-                    <option value="25">25</option>
-                    <option value="all">All</option>
-                </select>
-            </div>
+                    <div class="field-group" style="grid-column: 1 / -1;">
+                        <label>For which: 
+                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer">,    
+                            <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation">,
+                            <input type="text" id="entity_name" name="entity_name" placeholder="Entity Name">
+                            is accountable, having assumed such accountability on
+                            <input type="date" id="assumption_date" name="assumption_date">
+                            .
+                            </label>
+                    </div>
+                </div>
+                <div class="table-controls" style="margin: 12px 0; display:flex; gap:8px; align-items:center;">
+                    <label for="row_limit">Show:</label>
+                    <select id="row_limit" aria-label="Rows to display">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="all">All</option>
+                    </select>
+                </div>
 
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input-rpcsp" placeholder="Search by property no., category, or description...">
-            </div>
+                    <div class="search-container">
+                                <input type="text" id="searchInput" class="search-input-rpci" placeholder="Search by property no., category, or description...">
+                    </div>
 
-            <div class="rpcsp-table-wrapper">
-                <table class="rpcsp-table" id="rpcsp-table">
+            <div class="rpci-table-wrapper">
+                <table class="rpci-table" id="rpci-table">
                     <thead>
                         <tr>
                             <th rowspan="2">Article</th>
@@ -158,14 +150,15 @@ if ($result) {
             <div style="text-align:center; margin-top: 18px;">
                 <button type="button" class="export-btn" onclick="openExport()">📄 Export to PDF</button>
             </div>
+            </form>
         </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const limitSelect = document.getElementById('row_limit');
-        const wrapper = document.querySelector('.rpcsp-table-wrapper');
-        const table = document.getElementById('rpcsp-table');
+        const wrapper = document.querySelector('.rpci-table-wrapper');
+        const table = document.querySelector('.rpci-table');
         const thead = table.querySelector('thead');
 
         function applyLimit() {
@@ -181,20 +174,21 @@ if ($result) {
         limitSelect.addEventListener('change', applyLimit);
         applyLimit();
         window.addEventListener('resize', applyLimit);
+    });
 
-        // Searchbar
-        document.getElementById('searchInput').addEventListener('keyup', function () {
-            const q = this.value.toLowerCase();
-            const rows = table.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const category = (row.cells[1]?.textContent || '').toLowerCase();
-                const desc = (row.cells[2]?.textContent || '').toLowerCase();
-                const propno = (row.cells[3]?.textContent || '').toLowerCase();
-                const unit = (row.cells[4]?.textContent || '').toLowerCase();
-                const match = category.includes(q) || desc.includes(q) || propno.includes(q) || unit.includes(q);
-                row.style.display = match ? '' : 'none';
-            });
-            applyLimit();
+    // Searchbar JS (matches rpci behavior)
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#rpci-table tbody tr');
+
+        rows.forEach(row => {
+            const category = (row.cells[1]?.textContent || '').toLowerCase();
+            const desc = (row.cells[2]?.textContent || '').toLowerCase();
+            const propno = (row.cells[3]?.textContent || '').toLowerCase();
+            const unit = (row.cells[4]?.textContent || '').toLowerCase();
+
+            const match = category.includes(filter) || desc.includes(filter) || propno.includes(filter) || unit.includes(filter);
+            row.style.display = match ? '' : 'none';
         });
     });
     </script>
