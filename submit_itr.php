@@ -83,16 +83,21 @@ $createItr = "CREATE TABLE IF NOT EXISTS itr (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 $createItrItems = "CREATE TABLE IF NOT EXISTS itr_items (
-  itr_item_id INT AUTO_INCREMENT PRIMARY KEY,
-  itr_id INT NOT NULL,
-  date_acquired DATE NULL,
-  item_no VARCHAR(255) NULL,
-  ics_info VARCHAR(255) NULL,
-  description TEXT NULL,
-  amount DECIMAL(15,2) DEFAULT 0,
-  cond VARCHAR(255) NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_itr_items_itr FOREIGN KEY (itr_id) REFERENCES itr(itr_id) ON DELETE CASCADE
+    itr_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    itr_id INT NOT NULL,
+    date_acquired DATE NULL,
+    item_no VARCHAR(255) NULL,
+    ics_info VARCHAR(255) NULL,
+    description TEXT NULL,
+    amount DECIMAL(15,2) DEFAULT 0,
+    transfer_qty INT NOT NULL DEFAULT 0,
+    ics_id INT NULL,
+    ics_item_id INT NULL,
+    cond VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_itr_items_ics_item (ics_item_id),
+    INDEX idx_itr_items_ics (ics_id),
+    CONSTRAINT fk_itr_items_itr FOREIGN KEY (itr_id) REFERENCES itr(itr_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 try {
@@ -117,6 +122,21 @@ try {
         }
     } catch (Throwable $e) { /* ignore non-fatal */ }
     $conn->query($createItrItems);
+    // Ensure new columns exist on older databases
+    try {
+        $res = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='itr_items' AND COLUMN_NAME='ics_id' LIMIT 1");
+        $hasIcsId = $res && $res->num_rows > 0; if ($res) { $res->close(); }
+        if (!$hasIcsId) { $conn->query("ALTER TABLE itr_items ADD COLUMN ics_id INT NULL AFTER transfer_qty"); }
+        $res2 = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='itr_items' AND COLUMN_NAME='ics_item_id' LIMIT 1");
+        $hasIcsItem = $res2 && $res2->num_rows > 0; if ($res2) { $res2->close(); }
+        if (!$hasIcsItem) { $conn->query("ALTER TABLE itr_items ADD COLUMN ics_item_id INT NULL AFTER ics_id"); }
+    } catch (Throwable $e) { /* ignore */ }
+    // Ensure transfer_qty exists on older databases
+    try {
+        $res = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='itr_items' AND COLUMN_NAME='transfer_qty' LIMIT 1");
+        $has = $res && $res->num_rows > 0; if ($res) { $res->close(); }
+        if (!$has) { $conn->query("ALTER TABLE itr_items ADD COLUMN transfer_qty INT NOT NULL DEFAULT 0 AFTER amount"); }
+    } catch (Throwable $e) { /* ignore */ }
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Failed to ensure tables: ' . $e->getMessage()]);
@@ -185,16 +205,23 @@ try {
     $itr_id = $stmt->insert_id;
     $stmt->close();
 
-    // Insert items
-    $it = $conn->prepare("INSERT INTO itr_items (itr_id, date_acquired, item_no, ics_info, description, amount, cond) VALUES (?,?,?,?,?,?,?)");
+    // Insert items (persist transfer_qty for accurate edit prefill)
+    $it = $conn->prepare("INSERT INTO itr_items (itr_id, date_acquired, item_no, ics_info, description, amount, transfer_qty, ics_id, ics_item_id, cond) VALUES (?,?,?,?,?,?,?,?,?,?)");
     foreach ($items as $row) {
         $date_acq = toDate($row['date_acquired'] ?? null);
         $item_no = $row['item_no'] ?? null;
         $ics_info = $row['ics_info'] ?? null;
         $description = $row['description'] ?? null;
         $amount = toNumber($row['amount'] ?? 0);
+        $tq = (int)($row['transfer_qty'] ?? 0);
+        if ($tq <= 0) {
+            $unit_cost = toNumber($row['unit_cost'] ?? 0);
+            if ($unit_cost > 0) { $tq = (int)floor($amount / $unit_cost); }
+        }
         $cond = $row['condition'] ?? null;
-        $it->bind_param('issssds', $itr_id, $date_acq, $item_no, $ics_info, $description, $amount, $cond);
+        $ics_id_in = isset($row['ics_id']) ? (int)$row['ics_id'] : null;
+        $ics_item_id_in = isset($row['ics_item_id']) ? (int)$row['ics_item_id'] : null;
+        $it->bind_param('issssdiiss', $itr_id, $date_acq, $item_no, $ics_info, $description, $amount, $tq, $ics_id_in, $ics_item_id_in, $cond);
         if (!$it->execute()) {
             throw new Exception($it->error ?: 'Insert item failed');
         }
@@ -288,7 +315,7 @@ try {
                 $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_reissued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $unit_amount = ($semiRow['amount'] !== null) ? (float)$semiRow['amount'] : ($unit_cost ?: 0);
                 $amount_total = round($unit_amount * $qty, 2);
-                $remarks = 'Reissued via ITR';
+                $remarks = '';
                 $h->bind_param('issiiiiisdds', $semi_id, $itr_date, $itr_no, $qty, $issued, $reissued, $disposed, $balance, $to_accountable, $unit_amount, $amount_total, $remarks);
                 @$h->execute();
                 $h->close();
