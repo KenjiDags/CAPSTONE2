@@ -52,7 +52,7 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
   </div>
 
   <div class="container">
-    <div class="appendix">Appendix 66-A</div>
+    <div class="appendix">Appendix A.8</div>
     <div class="header">
       <h1 class="title">REPORT ON THE PHYSICAL COUNT OF SEMI-EXPENDABLE PROPERTY</h1>
       <p class="subtitle">(Semi-Expendable Property)</p>

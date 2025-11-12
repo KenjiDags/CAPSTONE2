@@ -136,8 +136,8 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
                 <th>ICS No./Date</th>
                 <th>Description</th>
                 <th>Unit Cost</th>
+                <th>Qty on Hand</th>
                 <th>Transfer Qty</th>
-                <th>Balance</th>
                 <th>Amount</th>
                 <th>Condition of Inventory</th>
               </tr>
@@ -203,12 +203,12 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
             echo '<td class="icsinfo-cell">' . htmlspecialchars($ics_info) . '</td>';
             echo '<td class="desc-cell">' . htmlspecialchars($desc) . '</td>';
             echo '<td class="unitcost-cell">₱' . number_format($unit_cost, 2) . '</td>';
-            $maxAttr = (int)max((float)$qty_on_hand, (float)($prefQty!==''?$prefQty:0));
+            // Display-only: show Qty on Hand + Transfer Qty (initial value); does not update dynamically
+            $initT = (int)($prefQty!=='' ? $prefQty : 0);
+            $displayOnHand = (int)$qty_on_hand + $initT;
+            echo '<td class="onhand-cell">' . htmlspecialchars((string)$displayOnHand) . '</td>';
+            $maxAttr = (int)max((float)$displayOnHand, (float)($prefQty!==''?$prefQty:0));
             echo '<td class="transferqty-cell"><input type="number" class="qty-input" value="' . htmlspecialchars($prefQty) . '" min="0" max="' . $maxAttr . '" step="1" placeholder="0"></td>';
-            // Balance should display Transfer Qty + Balance
-            $initT = (int)($prefQty!==''?$prefQty:0);
-            $initBal = max(0, (int)$qty_on_hand - $initT);
-            echo '<td class="balance-cell">' . htmlspecialchars((string)($initT + $initBal)) . '</td>';
             $initAmt = ($prefQty !== '' ? ($unit_cost * (int)$prefQty) : 0);
             echo '<td class="amount-cell">₱' . number_format($initAmt, 2) . '</td>';
             echo '<td class="cond-cell"><input type="text" class="cond-input" value="' . htmlspecialchars($prefCond) . '" placeholder="e.g., Good, For repair" /></td>';
@@ -287,10 +287,10 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     }
     function attachQtyHandlers(){
       // Recompute totals
-      const recomputeGrandTotal=()=>{ let sum=0; document.querySelectorAll('#itemsTable tbody tr.ics-row .amount-cell').forEach(cell=>{ const txt=(cell.textContent||'').replace(/[^0-9.\-]/g,''); const val=parseFloat(txt||'0')||0; sum+=val;}); document.getElementById('itr-total-amount').textContent='₱'+sum.toFixed(2); };
+  const recomputeGrandTotal=()=>{ let sum=0; document.querySelectorAll('#itemsTable tbody tr.ics-row .amount-cell').forEach(cell=>{ const txt=(cell.textContent||'').replace(/[^0-9.\-]/g,''); const val=parseFloat(txt||'0')||0; sum+=val;}); document.getElementById('itr-total-amount').textContent='₱'+sum.toFixed(2); };
       document.querySelectorAll('#itemsTable tbody tr.ics-row').forEach(r=>{
-        const qtyInput=r.querySelector('.qty-input'); const amountCell=r.querySelector('.amount-cell'); const balanceCell=r.querySelector('.balance-cell');
-        const unitCost=parseFloat(r.getAttribute('data-unit-cost')||'0'); const onHand=parseFloat(r.getAttribute('data-qty-on-hand')||'0');
+        const qtyInput=r.querySelector('.qty-input'); const amountCell=r.querySelector('.amount-cell');
+  const unitCost=parseFloat(r.getAttribute('data-unit-cost')||'0'); const onHand=parseFloat(r.getAttribute('data-qty-on-hand')||'0');
         if(!qtyInput) return;
         const recalc=()=>{
           let v=parseFloat(qtyInput.value||'');
@@ -298,11 +298,6 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
           const max=parseFloat(qtyInput.getAttribute('max')||'0');
           if(max>0&&v>max) v=max;
           if(amountCell) amountCell.textContent='₱'+(unitCost*v).toFixed(2);
-          if(balanceCell) {
-            // Balance should display Transfer Qty + Balance
-            const bal = Math.max(0, onHand - v);
-            balanceCell.textContent = String(v + bal);
-          }
           recomputeGrandTotal();
         };
         // Prevent accidental changes while scrolling the page over number inputs

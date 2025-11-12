@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $amount_total = round($item_data['amount'] * $qty, 2);
                     $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $remarks = 'ICS Issued';
+                    $remarks = '';
                     $h->bind_param("issiiiiisdds", $semi_id, $date_issued, $ics_no, $qty, $issued, $reissued, $disposed, $balance, $received_by, $unit_cost, $amount_total, $remarks);
                     @ $h->execute();
                     $h->close();

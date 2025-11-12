@@ -164,18 +164,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $disposed = (int)$item_data['quantity_disposed'];
                 $balance = max(0, $qty - ($issued + $reissued + $disposed));
                 // Also reflect ICS reference and receiver in semi-expendable table
-                $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ?, ics_rrsp_no = ?, office_officer_issued = ?, fund_cluster = ? WHERE id = ?");
-                $u->bind_param("iisssi", $issued, $balance, $ics_no, $received_by, $fund_cluster, $semi_id);
+                // Append new ICS number to existing ics_rrsp_no (comma-separated) so multiple ICS references are preserved
+                $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ?, ics_rrsp_no = CASE WHEN COALESCE(ics_rrsp_no, '') = '' THEN ? ELSE CONCAT(ics_rrsp_no, ',', ?) END, office_officer_issued = ?, fund_cluster = ? WHERE id = ?");
+                $u->bind_param("iissssi", $issued, $balance, $ics_no, $ics_no, $received_by, $fund_cluster, $semi_id);
                 if (!$u->execute()) { $u->close(); throw new Exception('Failed to update semi-expendable stock: ' . $u->error); }
                 $u->close();
 
-                // Insert history snapshot post-issuance
+                // Insert history snapshot post-issuance; avoid duplicate row for same ICS + semi if already recorded.
                 $amount_total = round($item_data['amount'] * $qty, 2);
-                $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $remarks = '';
-                $h->bind_param("issiiiiisdds", $semi_id, $date_issued, $ics_no, $qty, $issued, $reissued, $disposed, $balance, $received_by, $unit_cost, $amount_total, $remarks);
-                @ $h->execute();
-                $h->close();
+                if ($chk = $conn->prepare("SELECT 1 FROM semi_expendable_history WHERE semi_id = ? AND ics_rrsp_no = ? LIMIT 1")) {
+                    $chk->bind_param('is', $semi_id, $ics_no);
+                    if ($chk->execute()) {
+                        $existsRes = $chk->get_result();
+                        $exists = $existsRes && $existsRes->num_rows > 0;
+                    } else { $exists = false; }
+                    $chk->close();
+                } else { $exists = false; }
+                if (!$exists) {
+                    if ($h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        $remarks = '';
+                        $h->bind_param("issiiiiisdds", $semi_id, $date_issued, $ics_no, $qty, $issued, $reissued, $disposed, $balance, $received_by, $unit_cost, $amount_total, $remarks);
+                        @ $h->execute();
+                        $h->close();
+                    }
+                }
             }
         }
     }

@@ -283,7 +283,8 @@ try {
             $h = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_reissued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             if ($h) {
                 $amount_total = round(($unitAmt ?: 0) * $qty, 2);
-                $remarks = 'Adjusted via ITR edit';
+                // Removed explicit remark per request; leave blank to avoid auto-tagging history entries
+                $remarks = '';
                 $h->bind_param('issiiiiisdds', $semi_id, $itr_date, $itr_no, $qty, $newIssued, $newReissued, $disposed, $balance, $to_accountable, $unitAmt, $amount_total, $remarks);
                 @$h->execute();
                 $h->close();

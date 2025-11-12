@@ -194,7 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Add issuance snapshot to history similar to manual ICS issuance
                             $amount_total_curr = round($unit_amount * $quantity_issued, 2);
                             if ($h2 = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-                                $remarks2 = 'ICS Issued';
+                                    // Do not set an automatic remark here; leave blank to avoid extra tags
+                                    $remarks2 = '';
                                 $h2->bind_param("issiiiiisdds", $new_id, $date, $auto_ics_no, $quantity_issued, $quantity_issued_out, $quantity_reissued, $quantity_disposed, $quantity_balance, $received_by, $unit_amount, $amount_total_curr, $remarks2);
                                 @ $h2->execute();
                                 $h2->close();

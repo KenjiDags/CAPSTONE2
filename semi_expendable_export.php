@@ -181,7 +181,8 @@ $stmt->close();
                     // Fallback to any available value
                     $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
                   }
-                  $show_item_no = ($h_issue > 0) && (trim($h_officer) !== '');
+                  // Always show Item No. when there is any issuance activity, regardless of officer field
+                  $show_item_no = ($h_issue > 0);
         ?>
             <tr>
               <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
@@ -222,7 +223,8 @@ $stmt->close();
               } else {
                 $c_officer = $item['office_officer_issued'] ?? '';
               }
-              $show_item_no_c = ($qtyIssueTransfer > 0) && (trim($c_officer) !== '');
+              // Likewise for the snapshot row: show Item No. whenever there's issuance activity
+              $show_item_no_c = ($qtyIssueTransfer > 0);
         ?>
               <tr>
                 <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
