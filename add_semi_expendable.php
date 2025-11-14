@@ -47,7 +47,7 @@ $valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communic
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assign POST values to variables
     $date = $_POST['date'];
-    $ics_rrsp_no = $_POST['ics_rrsp_no'];
+    $ics_rrsp_no = ''; // Default empty value since field is removed
     $semi_expendable_property_no = $_POST['semi_expendable_property_no'];
     $item_description = $_POST['item_description'];
     $unit = isset($_POST['unit']) ? trim($_POST['unit']) : '';
@@ -328,19 +328,14 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <input type="date" id="date" name="date" value="<?php echo $_POST['date'] ?? date('Y-m-d'); ?>" required>
                     </div>
                     <div class="form-group">
-                        <label for="ics_rrsp_no">ICS/RRSP No. <span class="required">*</span></label>
-                        <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" value="<?php echo $_POST['ics_rrsp_no'] ?? ''; ?>" 
-                               placeholder="e.g., 22-01" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
                         <label for="semi_expendable_property_no">Semi-Expendable Property No. <span class="required">*</span></label>
                         <input type="text" id="semi_expendable_property_no" name="semi_expendable_property_no" 
                                value="<?php echo $_POST['semi_expendable_property_no'] ?? ''; ?>" 
                                placeholder="e.g., HV-22-101-01" required>
                     </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label for="category">Category <span class="required">*</span></label>
                         <select id="category" name="category" required>
@@ -381,6 +376,11 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                                value="<?php echo isset($_POST['unit']) ? htmlspecialchars($_POST['unit']) : ''; ?>" 
                                placeholder="e.g., pc, box, set">
                     </div>
+                    <div class="form-group">
+                        <label for="quantity_issued">Quantity <span class="required">*</span></label>
+                        <input type="number" id="quantity_issued" name="quantity_issued" min="0"
+                               value="<?php echo $_POST['quantity_issued'] ?? '1'; ?>" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -388,16 +388,6 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                     <input type="text" id="fund_cluster" name="fund_cluster" 
                            value="<?php echo $_POST['fund_cluster'] ?? '101'; ?>" 
                            placeholder="101">
-                </div>
-
-                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Quantity</h3>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="quantity_issued">Quantity <span class="required">*</span></label>
-                        <input type="number" id="quantity_issued" name="quantity_issued" min="0"
-                               value="<?php echo $_POST['quantity_issued'] ?? '1'; ?>" required>
-                    </div>
                 </div>
 
                 <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns, Issued & Reissued (Optional)</h3>
@@ -451,7 +441,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <label for="quantity_balance">Quantity Balance <span class="required">*</span></label>
                         <input type="number" id="quantity_balance" name="quantity_balance" min="0"
                                value="<?php echo $_POST['quantity_balance'] ?? '1'; ?>" required readonly>
-                        <small style="color: #6b7280;">Auto-calculated: Quantity - (Quantity Issued + Quantity Re-issued + Quantity Disposed)</small>
+                    
                     </div>
                 </div>
 

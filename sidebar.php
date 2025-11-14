@@ -53,9 +53,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>">⚙️ RPCSP</a>
                             <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
-                            <a href="ict_registry.php" class="<?= $currentPage == 'ict_registry.php' ? 'active' : '' ?>">📦 ICT</a>
-                            <a href="rrsp.php" class="<?= $currentPage == 'rrsp.php' ? 'active' : '' ?>">📄 RRSP</a>
-                            <a href="iirusp.php" class="<?= $currentPage == 'iirusp.php' ? 'active' : '' ?>">📄 IIRUSP</a>
+                            <a href="rrsp.php" class="<?= $currentPage == 'rrsp.php' ? 'active' : '' ?>">📄 RRSP (structure only)</a>
+                            <a href="iirusp.php" class="<?= $currentPage == 'iirusp.php' ? 'active' : '' ?>">📄 IIRUSP (structure only)</a>
                         </div>
                     </div>
 

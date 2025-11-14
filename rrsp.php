@@ -1,180 +1,130 @@
 <?php
 require 'config.php';
-include 'sidebar.php';
+require 'functions.php';
 
-// Fetch semi-expendable items from database
-$items = [];
-$sql = "SELECT category, item_description, semi_expendable_property_no, unit, amount, quantity_balance, remarks FROM semi_expendable_property ORDER BY item_description";
-$result = $conn->query($sql);
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $items[] = $row;
-    }
-} else {
-    error_log('RRSP DB error: ' . $conn->error);
+// RRSP listing page (mirrors ICS listing). If deletion requested, process first.
+if (isset($_GET['delete_rrsp_id'])) {
+    $del_id = (int)$_GET['delete_rrsp_id'];
+    $conn->query("DELETE FROM rrsp_items WHERE rrsp_id = $del_id");
+    $conn->query("DELETE FROM rrsp WHERE rrsp_id = $del_id");
+    $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
+    header("Location: rrsp.php" . $sortParam);
+    exit();
 }
-?>
-    <script>
-    function openExport() {
-        // Collect all form values
-        const params = new URLSearchParams({
-            entity_name: document.getElementById('entity_name').value,
-            rrsp_date: document.getElementById('rrsp_date').value,
-            rrsp_no: document.getElementById('rrsp_no').value,
-            returned_by: document.querySelector('input[name="returned_by"]').value,
-            returned_date: document.querySelector('input[name="returned_date"]').value,
-            received_by: document.querySelector('input[name="received_by"]').value,
-            received_date: document.querySelector('input[name="received_date"]').value
-        });
-        window.location.href = './rrsp_export.php?' + params.toString();
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const limitSelect = document.getElementById('row_limit');
-        if (limitSelect) {
-            const wrapper = document.querySelector('.rpci-table-wrapper');
-            const table = document.querySelector('.rpci-table');
-            const thead = table.querySelector('thead');
-            function applyLimit() {
-                const val = limitSelect.value;
-                const sampleRow = table.querySelector('tbody tr:not([style*="display: none"])');
-                if (!wrapper || !thead || !sampleRow) return;
-                const headerHeight = thead.getBoundingClientRect().height;
-                const rowHeight = sampleRow.getBoundingClientRect().height;
-                if (val === 'all') { wrapper.style.maxHeight = 'none'; }
-                else { wrapper.style.maxHeight = `${headerHeight + rowHeight * parseInt(val,10)}px`; }
-            }
-            limitSelect.addEventListener('change', applyLimit);
-            applyLimit();
-            window.addEventListener('resize', applyLimit);
-        }
-        // Searchbar JS (matches rpci behavior)
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function () {
-                const filter = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#rpci-table tbody tr');
-                rows.forEach(row => {
-                    const desc = (row.cells[0]?.textContent || '').toLowerCase();
-                    const qty = (row.cells[1]?.textContent || '').toLowerCase();
-                    const ics = (row.cells[2]?.textContent || '').toLowerCase();
-                    const enduser = (row.cells[3]?.textContent || '').toLowerCase();
-                    const remarks = (row.cells[4]?.textContent || '').toLowerCase();
-                    const match = desc.includes(filter) || qty.includes(filter) || ics.includes(filter) || enduser.includes(filter) || remarks.includes(filter);
-                    row.style.display = match ? '' : 'none';
-                });
-            });
-        }
-    });
-    </script>
-                    <li>Entity Name – the name of the agency/entity</li>
-                    <li>Date – date of preparation of the RRSP</li>
-                    <li>RRSP No. – shall be numbered by the Property and/or Supply Division/Unit as follows: <br>
-                        <span style="font-family:monospace;">0000 - 00 - 000</span> (Serial number - Month - Year)
-                    </li>
-                    <li>Item Description – brief description of the returned semi-expendable property</li>
-                    <li>Quantity – quantity of the returned semi-expendable property</li>
-                    <li>ICS No. – Inventory Custodian Slip (ICS) number of the returned semi-expendable property</li>
-                    <li>End-user – name of accountable officer/end-user returning the property</li>
-                    <li>Remarks – comments (e.g. reason for the return, cancelled ICS, and other info)</li>
-                    <li>Returned by – signature over printed name of the accountable officer/end-user</li>
-                    <li>Received by – signature over printed name of the designated Head, Property and/or Supply Division/Unit</li>
-                </ol>
+// Sorting logic similar to ICS
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'date_newest';
+switch ($sort_by) {
+    case 'rrsp_no':
+        $order_clause = "ORDER BY rrsp_no ASC"; break;
+    case 'date_oldest':
+        $order_clause = "ORDER BY date_prepared ASC"; break;
+    case 'amount_highest':
+        $order_clause = "ORDER BY total_amount DESC"; break;
+    case 'amount_lowest':
+        $order_clause = "ORDER BY total_amount ASC"; break;
+    case 'date_newest':
+    default:
+        $order_clause = "ORDER BY date_prepared DESC"; break;
+}
+
+// Fetch RRSP forms with computed total (sum of quantities * optional unit_cost if stored)
+$result = $conn->query("SELECT r.*, (
+    SELECT COALESCE(SUM(ri.quantity * ri.unit_cost),0) FROM rrsp_items ri WHERE ri.rrsp_id = r.rrsp_id
+) AS total_amount FROM rrsp r $order_clause");
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RRSP - TESDA Inventory System</title>
+    <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+    @media screen {
+        .header-controls { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
+        .sort-container { display:flex; align-items:center; }
+        .sort-pill { display:inline-flex; align-items:center; gap:10px; background:#f3f7ff; border:1px solid #dbeafe; border-radius:9999px; padding:6px 12px; box-shadow:0 4px 12px rgba(2,6,23,0.06), inset 0 1px 1px rgba(0,0,0,0.03); height:44px; }
+        .rrsp-page .header-controls > button { display:inline-flex; align-items:center; gap:8px; height:44px; padding:0 16px; }
+        .sort-select-container { position:relative; }
+        .sort-select { height:36px; line-height:36px; padding:0 28px 0 10px; appearance:none; background:#fff; border:1px solid #dbeafe; border-radius:12px; font-size:14px; min-width:210px; }
+        .sort-select:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+        .sort-select-chevron { position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:#64748b; font-size:12px; }
+    }
+    table.rrsp-table { width:100%; border-collapse:collapse; }
+    table.rrsp-table th, table.rrsp-table td { border:1px solid #e5e7eb; padding:6px 8px; }
+    table.rrsp-table thead th { background: var(--blue-gradient); color:#fff; position:sticky; top:0; }
+    .rrsp-table-wrapper { max-height:420px; overflow:auto; scrollbar-gutter:stable; background:#fff; border:1px solid #e5e7eb; border-radius:8px; }
+    .form-inline { display:flex; gap:20px; flex-wrap:wrap; margin-bottom:18px; }
+    .form-inline .form-group { display:flex; flex-direction:column; }
+    </style>
+</head>
+<body class="rrsp-page">
+<?php include 'sidebar.php'; ?>
+<div class="content">
+    <h2>Receipt of Returned Semi-Expendable Property (RRSP)</h2>
+    <div class="header-controls">
+        <button onclick="window.location.href='add_rrsp.php'"><i class="fas fa-plus"></i> Add RRSP Form</button>
+        <div class="sort-container">
+            <div class="sort-pill">
+                <label for="sort-select"><i class="fas fa-sort" style="color:#0b4abf"></i><span>Sort by:</span></label>
+                <div class="sort-select-container">
+                    <select id="sort-select" class="sort-select" onchange="sortRRSP(this.value)">
+                        <option value="date_newest" <?= ($sort_by==='date_newest')?'selected':''; ?>>Date (Newest First)</option>
+                        <option value="date_oldest" <?= ($sort_by==='date_oldest')?'selected':''; ?>>Date (Oldest First)</option>
+                        <option value="rrsp_no" <?= ($sort_by==='rrsp_no')?'selected':''; ?>>RRSP No. (A-Z)</option>
+                        <option value="amount_highest" <?= ($sort_by==='amount_highest')?'selected':''; ?>>Total Amount (Highest)</option>
+                        <option value="amount_lowest" <?= ($sort_by==='amount_lowest')?'selected':''; ?>>Total Amount (Lowest)</option>
+                    </select>
+                    <span class="sort-select-chevron"><i class="fas fa-chevron-down"></i></span>
+                </div>
             </div>
-            <form method="POST" action="">
-                <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:12px;">
-                    <div>
-                        <label for="entity_name"><strong>Entity Name:</strong></label><br>
-                        <input type="text" id="entity_name" name="entity_name" style="width:220px;">
-                    </div>
-                    <div>
-                        <label for="rrsp_date"><strong>Date:</strong></label><br>
-                        <input type="date" id="rrsp_date" name="rrsp_date" value="<?= date('Y-m-d') ?>">
-                    </div>
-                    <div>
-                        <label for="rrsp_no"><strong>RRSP No.:</strong></label><br>
-                        <input type="text" id="rrsp_no" name="rrsp_no" style="width:140px;" placeholder="0000-00-000">
-                    </div>
-                </div>
-                <div class="rpci-table-wrapper">
-                    <table class="rpci-table" id="rrsp-table">
-                        <thead>
-                            <tr>
-                                <th>Item Description</th>
-                                <th>Quantity</th>
-                                <th>ICS No.</th>
-                                <th>End-user</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($items)): ?>
-                                <tr><td colspan="5" style="text-align:center; padding: 32px; color: var(--text-gray); font-style: italic;">No returned semi-expendable items found</td></tr>
-                            <?php else: ?>
-                                <?php foreach ($items as $row): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($row['item_description'] ?? '') ?></td>
-                                        <td><?= htmlspecialchars((string)($row['quantity_balance'] ?? '')) ?></td>
-                                        <td><?= htmlspecialchars($row['semi_expendable_property_no'] ?? '') ?></td>
-                                        <td></td>
-                                        <td><?= htmlspecialchars($row['remarks'] ?? '') ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <div style="display:flex; gap:32px; margin-top:24px; flex-wrap:wrap;">
-                    <div>
-                        <label><strong>Returned by:</strong></label><br>
-                        <input type="text" name="returned_by" style="width:220px;">
-                        <div>End User</div>
-                        <input type="date" name="returned_date" style="width:140px;">
-                    </div>
-                    <div>
-                        <label><strong>Received by:</strong></label><br>
-                        <input type="text" name="received_by" style="width:220px;">
-                        <div>Head, Property and/or Supply Division/Unit</div>
-                        <input type="date" name="received_date" style="width:140px;">
-                    </div>
-                </div>
-                <div style="text-align:center; margin-top: 18px;">
-                    <button type="button" class="export-btn" onclick="openExport()">📄 Export to PDF</button>
-                </div>
-            </form>
+        </div>
+        <div style="flex:1; min-width:240px;">
+            <input type="text" id="searchInput" placeholder="Search RRSP..." style="width:100%; padding:10px 12px; border:1px solid #dbeafe; border-radius:8px;">
         </div>
     </div>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const limitSelect = document.getElementById('row_limit');
-        const wrapper = document.querySelector('.rpci-table-wrapper');
-        const table = document.querySelector('.rpci-table');
-        const thead = table.querySelector('thead');
-        function applyLimit() {
-            const val = limitSelect.value;
-            const sampleRow = table.querySelector('tbody tr:not([style*="display: none"])');
-            if (!wrapper || !thead || !sampleRow) return;
-            const headerHeight = thead.getBoundingClientRect().height;
-            const rowHeight = sampleRow.getBoundingClientRect().height;
-            if (val === 'all') { wrapper.style.maxHeight = 'none'; }
-            else { wrapper.style.maxHeight = `${headerHeight + rowHeight * parseInt(val,10)}px`; }
-        }
-        limitSelect.addEventListener('change', applyLimit);
-        applyLimit();
-        window.addEventListener('resize', applyLimit);
-    });
-    document.getElementById('searchInput').addEventListener('keyup', function () {
-        const filter = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#rpci-table tbody tr');
-        rows.forEach(row => {
-            const category = (row.cells[1]?.textContent || '').toLowerCase();
-            const desc = (row.cells[2]?.textContent || '').toLowerCase();
-            const propno = (row.cells[3]?.textContent || '').toLowerCase();
-            const unit = (row.cells[4]?.textContent || '').toLowerCase();
-            const match = category.includes(filter) || desc.includes(filter) || propno.includes(filter) || unit.includes(filter);
-            row.style.display = match ? '' : 'none';
-        });
-    });
-    </script>
+    <table class="rrsp-table" id="rrsp-list">
+        <thead>
+            <tr>
+                <th><i class="fas fa-hashtag"></i> RRSP No.</th>
+                <th><i class="fas fa-calendar"></i> Date Prepared</th>
+                <th><i class="fas fa-user"></i> Returned By</th>
+                <th><i class="fas fa-user-check"></i> Received By</th>
+                <th><i class="fas fa-building"></i> Fund Cluster</th>
+                <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                <th><i class="fas fa-cogs"></i> Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if($result && $result->num_rows>0): while($row=$result->fetch_assoc()): ?>
+            <tr data-text="<?= htmlspecialchars(strtolower(($row['rrsp_no']??'').' '.($row['returned_by']??'').' '.($row['received_by']??''))) ?>">
+                <td><strong><?= htmlspecialchars($row['rrsp_no']) ?></strong></td>
+                <td><?= htmlspecialchars(date('M d, Y', strtotime($row['date_prepared']))) ?></td>
+                <td><?= htmlspecialchars($row['returned_by']) ?></td>
+                <td><?= htmlspecialchars($row['received_by']) ?></td>
+                <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
+                <td>₱<?= number_format($row['total_amount'],2) ?></td>
+                <td>
+                    <a href="view_rrsp.php?rrsp_id=<?= (int)$row['rrsp_id'] ?>"><i class="fas fa-eye"></i> View</a>
+                    <a href="edit_rrsp.php?rrsp_id=<?= (int)$row['rrsp_id'] ?>"><i class="fas fa-edit"></i> Edit</a>
+                    <a href="export_rrsp.php?rrsp_id=<?= (int)$row['rrsp_id'] ?>"><i class="fas fa-download"></i> Export</a>
+                    <a href="rrsp.php?delete_rrsp_id=<?= (int)$row['rrsp_id'] ?>" onclick="return confirm('Delete this RRSP form?')"><i class="fas fa-trash"></i> Delete</a>
+                </td>
+            </tr>
+        <?php endwhile; else: ?>
+            <tr><td colspan="7" style="text-align:center; padding:32px; font-style:italic; color:#64748b;">No RRSP forms found.</td></tr>
+        <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+<script>
+function sortRRSP(val){ const url=new URL(window.location); url.searchParams.set('sort',val); window.location.href=url.toString(); }
+document.getElementById('searchInput').addEventListener('input', function(){
+    const q=this.value.toLowerCase();
+    document.querySelectorAll('#rrsp-list tbody tr').forEach(r=>{ const txt=(r.getAttribute('data-text')||'').toLowerCase(); r.style.display=(q===''||txt.includes(q))?'':'none'; });
+});
+</script>
 </body>
 </html>

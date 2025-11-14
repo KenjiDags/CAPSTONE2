@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
         
         // Prepare variables (must be variables for bind_param references)
         $p_date = $_POST['date'];
-        $p_ics_rrsp_no = $_POST['ics_rrsp_no'];
+        $p_ics_rrsp_no = ''; // Default empty value since field is removed
         $p_property_no = $_POST['semi_expendable_property_no'];
     $p_item_desc = $_POST['item_description'];
     $p_unit = isset($_POST['unit']) ? trim($_POST['unit']) : '';
@@ -382,17 +382,13 @@ if (!$item && empty($error)) {
                             <input type="date" id="date" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? $item['date']); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label for="ics_rrsp_no">ICS/RRSP No.</label>
-                            <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" value="<?php echo htmlspecialchars($_POST['ics_rrsp_no'] ?? $item['ics_rrsp_no']); ?>" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
                             <label for="semi_expendable_property_no">Semi-Expendable Property No.</label>
                             <input type="text" id="semi_expendable_property_no" name="semi_expendable_property_no" 
                                    value="<?php echo htmlspecialchars($_POST['semi_expendable_property_no'] ?? $item['semi_expendable_property_no']); ?>" required>
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="category">Category</label>
                             <select id="category" name="category" required>
@@ -439,11 +435,6 @@ if (!$item && empty($error)) {
                                    value="<?php echo htmlspecialchars(isset($_POST['unit']) ? $_POST['unit'] : ($item['unit'] ?? '')); ?>"
                                    placeholder="e.g., pc, box, set">
                         </div>
-                    </div>
-
-                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Quantity</h3>
-                    
-                    <div class="form-row">
                         <div class="form-group">
                             <label for="quantity_issued">Quantity</label>
                 <input type="number" id="quantity_issued" name="quantity_issued" min="0"
@@ -500,8 +491,7 @@ if (!$item && empty($error)) {
                         <div class="form-group">
                             <label for="quantity_balance">Quantity Balance</label>
                             <input type="number" id="quantity_balance" name="quantity_balance" min="0"
-                                   value="<?php echo htmlspecialchars($_POST['quantity_balance'] ?? $item['quantity_balance']); ?>" required>
-                            <small style="color:#6b7280;">Auto-calculated: Quantity - (Quantity Issued + Quantity Re-issued + Quantity Disposed)</small>
+                                   value="<?php echo htmlspecialchars($_POST['quantity_balance'] ?? $item['quantity_balance']); ?>" required>                   
                         </div>
                     </div>
 
