@@ -16,6 +16,9 @@ if (isset($_GET['delete_itr_id'])) {
     header('Location: itr.php' . $sortParam);
     exit();
 }
+
+// SEARCH FILTER
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,19 +29,53 @@ if (isset($_GET['delete_itr_id'])) {
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-    @media screen {
-    .header-controls { display:flex; gap:16px; align-items:center; justify-content: flex-start; flex-wrap: wrap; }
-    .sort-container { display:flex; align-items:center; margin-left:0; margin-bottom:32px;}
-    .sort-pill { display:inline-flex; align-items:center; gap:10px; background:#f3f7ff; border:1px solid #dbeafe; border-radius:9999px; padding:6px 12px; box-shadow: 0 4px 12px rgba(2, 6, 23, 0.06), inset 0 1px 1px rgba(0,0,0,0.03); height:44px; position:relative; top:2px; }
-    .itr-page .header-controls > button { display:inline-flex; align-items:center; gap:8px; height:44px; padding:0 16px; line-height: 1; }
-    .sort-select-container { display:flex; align-items:center; position:relative; }
-    .sort-select { height: 36px; line-height: 36px; padding: 0 28px 0 10px; }
-    .sort-pill label { margin:0; display:flex; align-items:center; gap:8px; color:#0b4abf; font-weight:600; }
-    .sort-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background:#ffffff; border:1px solid #dbeafe; border-radius:12px; font-size:14px; color:#0f172a; box-shadow: 0 1px 1px rgba(0,0,0,0.04); outline: none; min-width: 220px; }
-    .sort-select:focus { border-color:#60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
-    .sort-select-chevron { position:absolute; right:8px; top:50%; transform: translateY(-50%); pointer-events:none; color:#64748b; font-size:12px; }
+  .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
+  .filters .control { display:flex; align-items:center; gap:10px; }
+  .filters select, .filters input {
+    height: 38px;
+    padding: 8px 14px;
+    border-radius: 9999px;
+    border: 1px solid #cbd5e1;
+    background-color: #f8fafc;
+    color: #111827;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+  .filters input::placeholder { color: #9ca3af; }
+  .filters select:hover, .filters input:hover { background-color: #ffffff; }
+  .filters select:focus, .filters input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    background-color: #ffffff;
+  }
+  .filters select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding-right: 38px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px 18px;
+  }
+  .filters .pill-btn { height: 38px; padding: 0 16px; }
+  .filters #searchInput { width: 400px; max-width: 65vw; }
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      text-decoration: none;
+      cursor: pointer;
     }
-    
+    .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
+    .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
+    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
     </style>
 </head>
 <body class="itr-page">
@@ -48,29 +85,30 @@ if (isset($_GET['delete_itr_id'])) {
 
     <?php // (delete handled before output) ?>
 
-    <div class="header-controls">
-        <button onclick="window.location.href='add_itr.php'">
-            <i class="fas fa-plus"></i> Add ITR Form
-        </button>
-        <div class="sort-container">
-            <div class="sort-pill">
-                <label for="sort-select">
-                    <i class="fas fa-sort" style="color:#0b4abf;"></i>
-                    <span>Sort by:</span>
-                </label>
-                <div class="sort-select-container">
-                    <select id="sort-select" class="sort-select" onchange="sortTable(this.value)">
-                        <option value="date_newest">Date (Newest First)</option>
-                        <option value="date_oldest">Date (Oldest First)</option>
-                        <option value="itr_no">ITR No. (A-Z)</option>
-                        <option value="amount_highest">Total Amount (Highest)</option>
-                        <option value="amount_lowest">Total Amount (Lowest)</option>
-                    </select>
-                    <span class="sort-select-chevron"><i class="fas fa-chevron-down"></i></span>
-                </div>
-            </div>
-        </div>
-    </div>
+  <form id="itr-filters" method="get" class="filters">
+      <div class="control">
+        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-sort"></i> Sort by:
+        </label>
+        <select id="sort-select" name="sort" onchange="this.form.submit()">
+          <?php $sort = $_GET['sort'] ?? 'date_newest'; ?>
+          <option value="date_newest" <?= ($sort == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+          <option value="date_oldest" <?= ($sort == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+          <option value="itr_no" <?= ($sort == 'itr_no') ? 'selected' : '' ?>>ITR No. (A-Z)</option>
+          <option value="amount_highest" <?= ($sort == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
+          <option value="amount_lowest" <?= ($sort == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-search"></i> Search:
+        </label>
+        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ITR no..." />
+        <a href="add_itr.php" class="pill-btn pill-add">
+          <i class="fas fa-plus"></i> Add ITR Form
+        </a>
+      </div>
+    </form>
 
     <table>
         <thead>
@@ -103,9 +141,16 @@ if (isset($_GET['delete_itr_id'])) {
                 if ($sort === 'amount_highest') $orderAmount = ' ORDER BY total_amount DESC';
                 if ($sort === 'amount_lowest') $orderAmount = ' ORDER BY total_amount ASC';
 
+                $whereClause = '';
+                if ($search !== '') {
+                    $esc = $conn->real_escape_string($search);
+                    $whereClause = " WHERE (i.itr_no LIKE '%$esc%' OR i.from_accountable LIKE '%$esc%' OR i.to_accountable LIKE '%$esc%')";
+                }
+
                 $sql = "SELECT i.*, IFNULL(SUM(it.amount),0) AS total_amount
                         FROM itr i
                         LEFT JOIN itr_items it ON it.itr_id = i.itr_id
+                        $whereClause
                         GROUP BY i.itr_id
                         ";
                 // Default order by date unless amount-specific requested
@@ -148,11 +193,7 @@ if (isset($_GET['delete_itr_id'])) {
 </div>
 
 <script>
-function sortTable(sortBy) {
-    const url = new URL(window.location);
-    url.searchParams.set('sort', sortBy);
-    window.location.href = url.toString();
-}
+// Form auto-submits on sort change via onchange event
 </script>
 
 </body>

@@ -184,14 +184,12 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         <table id="itemsTable" tabindex="-1">
           <thead>
             <tr>
-              <th>Date Issued</th>
               <th>Item No.</th>
               <th>ICS No./Date</th>
               <th>Description</th>
               <th>Unit Cost</th>
               <th>Qty on Hand</th>
               <th>Return Qty</th>
-              <th>Balance</th>
               <th>Amount</th>
               <th>End-user</th>
               <th>Remarks</th>
@@ -226,28 +224,26 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
                    'data-ics-id="' . (int)$row['ics_id'] . '" ' .
                    'data-ics-item-id="' . (int)$row['ics_item_id'] . '" ' .
                    'data-stock-number="' . htmlspecialchars($row['stock_number'] ?? $item_no) . '">';
-              echo '<td class="date-cell">' . htmlspecialchars($date_issued) . '</td>';
               echo '<td class="itemno-cell">' . htmlspecialchars($item_no) . '</td>';
               echo '<td class="icsinfo-cell">' . htmlspecialchars($ics_info) . '</td>';
               echo '<td class="desc-cell">' . htmlspecialchars($desc) . '</td>';
               echo '<td class="unitcost-cell">₱' . number_format($unit_cost, 2) . '</td>';
               echo '<td class="qtyonhand-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
               echo '<td class="returnqty-cell"><input type="number" class="qty-input" value="" min="0" max="' . htmlspecialchars((string)$qty_on_hand) . '" step="1" placeholder="0"></td>';
-              echo '<td class="balance-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
               echo '<td class="amount-cell">₱0.00</td>';
               echo '<td class="enduser-cell"><input type="text" class="enduser-input" placeholder="End-user" /></td>';
               echo '<td class="remarks-cell"><input type="text" class="remarks-input" placeholder="Remarks" /></td>';
               echo '</tr>';
             }
           } else {
-            echo '<tr id="no-items-row"><td colspan="11">No ICS items found.</td></tr>';
+            echo '<tr id="no-items-row"><td colspan="9">No ICS items found.</td></tr>';
           }
           if ($resICS) { $resICS->close(); }
           ?>
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="8" style="text-align:right;font-weight:600;">Grand Total:</td>
+              <td colspan="6" style="text-align:right;font-weight:600;">Grand Total:</td>
               <td id="grand_total" style="font-weight:700;">₱0.00</td>
               <td colspan="2"></td>
             </tr>

@@ -129,6 +129,20 @@ if (!empty($rows)) {
         }
         /* reduce visual gap between head and body */
         .rsep-table-wrapper .rsep-table tbody tr:first-child td { border-top: 2px solid #002d80; }
+
+        /* Match ICS Add button style for the Export button */
+        .search-container .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 44px;
+            padding: 0 16px;
+            line-height: 1;
+        }
+            /* Pull the button and table closer together */
+            .search-container { margin-bottom: -20px; }
+            .content > .container { margin-top: 0; }
+            .rsep-form { margin-top: 0; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -136,10 +150,6 @@ if (!empty($rows)) {
         <h2>Registry of Semi-Expendable Property Issued</h2>
         
         <div class="search-container">
-        <button class="add-btn" id="addItemsBtn">
-                <i class="fas fa-plus"></i> Add new Item
-            </button>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, description, or unit...">
             <button type="button" class="export-btn" onclick="openExport()" style="margin-left: auto;">
                 <i class="fas fa-file-pdf"></i> Export to PDF
             </button>
@@ -366,12 +376,14 @@ if (!empty($rows)) {
         const itemForm = document.getElementById('itemForm');
         const tableBody = document.getElementById('tableBody');
 
-        // Open modal
-        addItemsBtn.addEventListener('click', function() {
-            modal.classList.add('show');
-            // Set today's date as default
-            document.getElementById('itemDate').valueAsDate = new Date();
-        });
+        // Open modal (only if Add button exists)
+        if (addItemsBtn) {
+            addItemsBtn.addEventListener('click', function() {
+                modal.classList.add('show');
+                // Set today's date as default
+                document.getElementById('itemDate').valueAsDate = new Date();
+            });
+        }
 
         // Close modal functions
         function closeModalFunc() {

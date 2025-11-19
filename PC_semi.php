@@ -10,27 +10,13 @@ require_once 'config.php';
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .page-header { display:flex; justify-content:center; align-items:center; margin-bottom:16px; text-align:center; }
     .page-header h2 { margin:0; }
     .export-section { display:flex; gap:10px; }
     .btn { padding:8px 12px; border:none; border-radius:4px; text-decoration:none; cursor:pointer; display:inline-block; }
     .btn-primary { background:#2563eb; color:#fff; }
     .btn-secondary { background:#6b7280; color:#fff; }
-    .table-wrapper { overflow-x:auto; background:#fff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.08); }
-    /* Copy table look from PC.php */
-    .table th {
-      background-color: #f8f9fa;
-      font-weight: bold;
-      border: 1px solid #dee2e6;
-      padding: 8px;
-      text-align: center;
-      font-size: 12px;
-    }
-    .table td {
-      border: 1px solid #dee2e6;
-      padding: 6px;
-      font-size: 12px;
-    }
+    .table-wrapper { overflow-x:auto; background:transparent; border-radius:8px; box-shadow:none; }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .currency { text-align: right; }
@@ -66,7 +52,7 @@ require_once 'config.php';
   }
   .filters .pill-btn { height: 38px; padding: 0 16px; }
   /* Make search box a bit longer */
-  .filters #searchInput { width: 420px; max-width: 65vw; }
+  .filters #searchInput { width: 400px; max-width: 65vw; }
     /* Pill-style action buttons matching the sample */
     .pill-btn {
       display: inline-flex;
@@ -86,7 +72,7 @@ require_once 'config.php';
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
     /* Wider Actions column */
   .actions-col { width: 1%; white-space: nowrap; }
-  .table th.actions-col, .table td.actions-col { padding-left: 4px; padding-right: 4px; }
+  table th.actions-col, table td.actions-col { padding-left: 4px; padding-right: 4px; }
     /* Stack action buttons vertically */
   .action-stack { display: inline-flex; flex-direction: column; gap: 8px; align-items: center; }
     /* Amount column sizing to fit full currency text */
@@ -129,7 +115,7 @@ require_once 'config.php';
     </form>
 
     <div class="table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>Description</th>

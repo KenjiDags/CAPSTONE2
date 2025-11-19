@@ -82,7 +82,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($category); ?> - Semi-Expendable Property</title>
-    <!-- Add your existing CSS links here -->
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Minimal styling - use your existing styles */
@@ -117,29 +117,10 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .table-container {
-            background: white;
-<<<<<<< HEAD
-            border-radius: 8px;
-=======
-            border-radius: 12px; /* slightly more rounded corners */
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
+            background: transparent;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .table th, .table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
-        .table th {
-            background: #2563eb;
-            color: white;
-            font-weight: 600;
+            box-shadow: none;
         }
         .search-add-container {
             display: flex;
@@ -154,13 +135,9 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             gap: 10px;
         }
         .search-input {
-<<<<<<< HEAD
-            width: 300px;
-=======
             width: 500px;      
             min-width: 0;       
             max-width: 100%;     
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -303,8 +280,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 <body>
     <div class="container">
         <header>
-            <h1><?php echo htmlspecialchars($category); ?></h1>
-            <p>TESDA-CAR Semi-Expendable Property Registry</p>
+            <h2>Semi-Expendable Property — <?php echo htmlspecialchars($category); ?></h2>
         </header>
 
         <!-- Category Tabs -->
@@ -372,14 +348,13 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 
         <!-- Items Table -->
         <div class="table-container">
-            <table class="table">
+            <table>
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>ICS/RRSP No.</th>
                         <th>Property No.</th>
                         <th>Item Description</th>
-                        <th>Useful Life</th>
                         <th>Quantity</th>
                         <th>Office/Officer</th>
                         <th>Balance</th>
@@ -390,7 +365,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                 <tbody>
                     <?php if (empty($items)): ?>
                         <tr>
-                            <td colspan="10" style="text-align: center; padding: 40px;">
+                            <td colspan="9" style="text-align: center; padding: 40px;">
                                 <?php if (!empty($search)): ?>
                                     <p>No items found matching your search criteria.</p>
                                     <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-success">
@@ -415,7 +390,6 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                         substr($item['item_description'], 0, 50) . '...' : 
                                         $item['item_description']); ?>
                                 </td>
-                                <td><?php echo $item['estimated_useful_life']; ?> years</td>
                                 <td><?php echo number_format(isset($item['quantity']) ? $item['quantity'] : 0); ?></td>
                                 <?php 
                                     // Determine label and value dynamically per row
