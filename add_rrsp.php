@@ -2,23 +2,66 @@
 require 'config.php';
 require 'functions.php';
 
+// Helper: compute next RRSP number for a given prepared date (YYYY-MM-SSSS)
+function get_next_rrsp_no(mysqli $conn, string $date_prepared): string {
+  $ts = strtotime($date_prepared ?: date('Y-m-d'));
+  $ym = date('Y-m', $ts);
+  $nextSerial = 1;
+  if ($stmt = $conn->prepare("SELECT MAX(rrsp_no) AS max_no FROM rrsp WHERE rrsp_no LIKE CONCAT(?, '-%')")) {
+    $stmt->bind_param('s', $ym);
+    if ($stmt->execute()) {
+      $res = $stmt->get_result();
+      if ($res && ($row = $res->fetch_assoc())) {
+        $maxNo = (string)($row['max_no'] ?? '');
+        if ($maxNo !== '' && preg_match('/^'.preg_quote($ym, '/').'-(\d{4})$/', $maxNo, $m)) {
+          $nextSerial = (int)$m[1] + 1;
+        }
+      }
+      if ($res) { $res->close(); }
+    }
+    $stmt->close();
+  }
+  $serialStr = str_pad((string)$nextSerial, 4, '0', STR_PAD_LEFT);
+  return $ym . '-' . $serialStr;
+}
+
+// Lightweight endpoint to fetch next rrsp_no via AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'next_rrsp_no') {
+  header('Content-Type: application/json');
+  $dateParam = isset($_GET['date']) ? (string)$_GET['date'] : date('Y-m-d');
+  $next = get_next_rrsp_no($conn, $dateParam);
+  echo json_encode(['next_rrsp_no' => $next]);
+  exit;
+}
+
 // Handle submission (standard form POST)
 if($_SERVER['REQUEST_METHOD']==='POST'){
+  if (ob_get_length()) { ob_clean(); } // Clear any output buffer if present
   header('Content-Type: application/json');
-  $rrsp_no = trim($_POST['rrsp_no'] ?? '');
-  // Generate RRSP number in format YYYY-MM-SSSS if not provided
-  if($rrsp_no==='') { $rrsp_no = date('Y') . '-' . date('m') . '-' . '0001'; }
-  $entity = trim($_POST['entity_name'] ?? '');
-  $fund = trim($_POST['fund_cluster'] ?? '');
-  $date_prepared = $_POST['date_prepared'] ?? date('Y-m-d');
-  $returned_by = trim($_POST['returned_by'] ?? '');
-  $returned_date = $_POST['returned_date'] ?? null;
-  $received_by = trim($_POST['received_by'] ?? '');
-  $received_date = $_POST['received_date'] ?? null;
-  $remarks = trim($_POST['remarks'] ?? '');
-  $items_json = $_POST['items_json'] ?? '[]';
-  $items = json_decode($items_json,true) ?: [];
-  if($rrsp_no===''){ echo json_encode(['success'=>false,'message'=>'RRSP number required']); exit; }
+  try {
+    $rrsp_no = trim($_POST['rrsp_no'] ?? '');
+    // Generate RRSP number in format YYYY-MM-SSSS if not provided
+    $date_prepared = $_POST['date_prepared'] ?? date('Y-m-d');
+    if ($rrsp_no === '') {
+      $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
+    } else {
+      // Ensure prefix matches selected month/year; if not, recompute
+      $ymFromDate = date('Y-m', strtotime($date_prepared));
+      if (strpos($rrsp_no, $ymFromDate . '-') !== 0) {
+        $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
+      }
+    }
+    $entity = trim($_POST['entity_name'] ?? '');
+    $fund = trim($_POST['fund_cluster'] ?? '');
+    $returned_by = trim($_POST['returned_by'] ?? '');
+    $returned_date = $_POST['returned_date'] ?? null;
+    $received_by = trim($_POST['received_by'] ?? '');
+    $received_date = $_POST['received_date'] ?? null;
+    $remarks = trim($_POST['remarks'] ?? '');
+    $items_json = $_POST['items_json'] ?? '[]';
+    $items = json_decode($items_json,true) ?: [];
+    if($rrsp_no===''){ echo json_encode(['success'=>false,'message'=>'RRSP number required']); exit; }
+  ensure_rrsp_history($conn); // make sure history table exists
   if($stmt=$conn->prepare("INSERT INTO rrsp (rrsp_no,date_prepared,entity_name,fund_cluster,returned_by,received_by,returned_date,received_date,remarks) VALUES (?,?,?,?,?,?,?,?,?)")){
     $stmt->bind_param('sssssssss',$rrsp_no,$date_prepared,$entity,$fund,$returned_by,$received_by,$returned_date,$received_date,$remarks);
     if(!$stmt->execute()){ echo json_encode(['success'=>false,'message'=>'Failed to save RRSP header']); exit; }
@@ -33,13 +76,25 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           $iremarks=trim($it['remarks']??'');
           $uc=(float)($it['unit_cost']??0); $tot=$qty*$uc;
           $ist->bind_param('isisssdd',$rrsp_id,$desc,$qty,$ics,$end,$iremarks,$uc,$tot);
-          $ist->execute();
+          if($ist->execute()){
+            $rrsp_item_id = $ist->insert_id;
+            // Log to rrsp_history
+            $hStmt = $conn->prepare("INSERT INTO rrsp_history (rrsp_id, rrsp_item_id, ics_no, item_description, quantity, unit_cost, total_amount, end_user, item_remarks) VALUES (?,?,?,?,?,?,?,?,?)");
+            if($hStmt){
+              $hStmt->bind_param('iissiddds',$rrsp_id,$rrsp_item_id,$ics,$desc,$qty,$uc,$tot,$end,$iremarks);
+              $hStmt->execute();
+              $hStmt->close();
+            }
+          }
         }
         $ist->close();
       }
     }
     echo json_encode(['success'=>true,'rrsp_id'=>$rrsp_id]); exit;
   } else { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
+  } catch(Exception $e) {
+    echo json_encode(['success'=>false,'message'=>'Error: '.$e->getMessage()]); exit;
+  }
 }
 
 // Build semi-expendable quick list for ICS numbers
@@ -119,48 +174,82 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 
   <div class="section-card">
     <h3>RRSP Items</h3>
-    
     <!-- Search Container -->
     <div class="search-container">
-      <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterPicker()">
+      <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items by stock number, description, or item no..." onkeyup="filterItems()">
     </div>
-    
-    <div class="picker">
-      <select id="semi_select">
-        <option value="">Select item...</option>
-        <?php foreach($semi as $s): ?>
-          <option value="<?= htmlspecialchars($s['semi_expendable_property_no']) ?>" data-desc="<?= htmlspecialchars($s['item_description']) ?>" data-ics="<?= htmlspecialchars($s['semi_expendable_property_no']) ?>" data-cost="<?= htmlspecialchars($s['amount']) ?>" data-end="<?= htmlspecialchars($s['office_officer_issued']) ?>">
-            <?= htmlspecialchars($s['item_description']) ?> (<?= htmlspecialchars($s['semi_expendable_property_no']) ?>)
-          </option>
-        <?php endforeach; ?>
-      </select>
-      <input type="number" id="qty_input" placeholder="Qty" min="1" />
-      <input type="text" id="end_user_input" placeholder="End-user" />
-      <input type="text" id="remarks_input" placeholder="Item remarks" />
-      <button type="button" onclick="addItemRow()"><i class="fas fa-plus"></i> Add Item</button>
-    </div>
-    
+
     <div class="table-frame">
       <div class="table-viewport">
         <table id="itemsTable" tabindex="-1">
           <thead>
             <tr>
+              <th>Date Issued</th>
+              <th>Item No.</th>
+              <th>ICS No./Date</th>
               <th>Description</th>
-              <th>Quantity</th>
-              <th>ICS No.</th>
+              <th>Unit Cost</th>
+              <th>Qty on Hand</th>
+              <th>Return Qty</th>
+              <th>Balance</th>
+              <th>Amount</th>
               <th>End-user</th>
               <th>Remarks</th>
-              <th>Unit Cost</th>
-              <th>Total</th>
-              <th>Remove</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+          <?php
+          // List ICS items similar to ITR page
+          $sql = "SELECT ii.*, i.ics_no, i.date_issued
+                    FROM ics_items ii
+                    INNER JOIN ics i ON i.ics_id = ii.ics_id
+                    WHERE ii.quantity > 0
+                    ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
+          $resICS = $conn->query($sql);
+          if ($resICS && $resICS->num_rows > 0) {
+            while ($row = $resICS->fetch_assoc()) {
+              $date_issued = $row['date_issued'] ?? '';
+              $item_no = $row['inventory_item_no'] ?? ($row['stock_number'] ?? '');
+              $ics_info = ($row['ics_no'] ?? '') . (isset($row['date_issued']) ? (' / ' . $row['date_issued']) : '');
+              $desc = $row['description'] ?? '';
+              $unit_cost = isset($row['unit_cost']) ? (float)$row['unit_cost'] : 0.0;
+              if ($unit_cost <= 0 && isset($row['total_cost']) && isset($row['quantity']) && (float)$row['quantity'] > 0) {
+                $unit_cost = ((float)$row['total_cost']) / max(1, (float)$row['quantity']);
+              }
+              $qty_on_hand = isset($row['quantity']) ? (float)$row['quantity'] : 0;
+              $rowText = strtolower(($item_no ?: '') . ' ' . ($ics_info ?: '') . ' ' . ($desc ?: ''));
+              echo '<tr class="ics-row" ' .
+                   'data-text="' . htmlspecialchars($rowText) . '" ' .
+                   'data-unit-cost="' . htmlspecialchars(number_format($unit_cost,2,'.','')) . '" ' .
+                   'data-qty-on-hand="' . htmlspecialchars((string)$qty_on_hand) . '" ' .
+                   'data-ics-no="' . htmlspecialchars($row['ics_no'] ?? '') . '" ' .
+                   'data-ics-id="' . (int)$row['ics_id'] . '" ' .
+                   'data-ics-item-id="' . (int)$row['ics_item_id'] . '" ' .
+                   'data-stock-number="' . htmlspecialchars($row['stock_number'] ?? $item_no) . '">';
+              echo '<td class="date-cell">' . htmlspecialchars($date_issued) . '</td>';
+              echo '<td class="itemno-cell">' . htmlspecialchars($item_no) . '</td>';
+              echo '<td class="icsinfo-cell">' . htmlspecialchars($ics_info) . '</td>';
+              echo '<td class="desc-cell">' . htmlspecialchars($desc) . '</td>';
+              echo '<td class="unitcost-cell">₱' . number_format($unit_cost, 2) . '</td>';
+              echo '<td class="qtyonhand-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
+              echo '<td class="returnqty-cell"><input type="number" class="qty-input" value="" min="0" max="' . htmlspecialchars((string)$qty_on_hand) . '" step="1" placeholder="0"></td>';
+              echo '<td class="balance-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
+              echo '<td class="amount-cell">₱0.00</td>';
+              echo '<td class="enduser-cell"><input type="text" class="enduser-input" placeholder="End-user" /></td>';
+              echo '<td class="remarks-cell"><input type="text" class="remarks-input" placeholder="Remarks" /></td>';
+              echo '</tr>';
+            }
+          } else {
+            echo '<tr id="no-items-row"><td colspan="11">No ICS items found.</td></tr>';
+          }
+          if ($resICS) { $resICS->close(); }
+          ?>
+          </tbody>
           <tfoot>
             <tr>
-              <td colspan="6" style="text-align:right;font-weight:600;">Grand Total:</td>
+              <td colspan="8" style="text-align:right;font-weight:600;">Grand Total:</td>
               <td id="grand_total" style="font-weight:700;">₱0.00</td>
-              <td></td>
+              <td colspan="2"></td>
             </tr>
           </tfoot>
         </table>
@@ -198,33 +287,85 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
   </a>
 </div>
 <script>
-// Auto-generate RRSP number in format YYYY-MM-SSSS
-function generateRRSPNo(){
+// Fetch next RRSP number from server based on selected date
+async function generateRRSPNo(){
+  try {
+    const dateEl = document.getElementById('date_prepared');
+    const dateVal = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().slice(0,10);
+    const res = await fetch('add_rrsp.php?action=next_rrsp_no&date=' + encodeURIComponent(dateVal));
+    const j = await res.json();
+    if (j && j.next_rrsp_no) {
+      document.getElementById('rrsp_no').value = j.next_rrsp_no;
+      return;
+    }
+  } catch (e) {
+    // fall back to simple default if endpoint fails
+  }
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
-  const s = '0001'; // Default serial, will be auto-incremented by backend if needed
-  document.getElementById('rrsp_no').value = `${y}-${m}-${s}`;
+  document.getElementById('rrsp_no').value = `${y}-${m}-0001`;
 }
 generateRRSPNo();
-function filterPicker(){ const q=(document.getElementById('itemSearch').value||'').toLowerCase(); const sel=document.getElementById('semi_select'); [...sel.options].forEach(o=>{ if(o.value==='') return; const t=o.textContent.toLowerCase(); o.style.display=t.includes(q)?'':'none'; }); }
-function formatMoney(v){ return '₱'+v.toFixed(2); }
-function recomputeTotal(){ let sum=0; document.querySelectorAll('#itemsTable tbody tr').forEach(r=>{ sum+=parseFloat(r.getAttribute('data-total')||'0'); }); document.getElementById('grand_total').textContent=formatMoney(sum); }
-function addItemRow(){
-  const sel=document.getElementById('semi_select'); const opt=sel.options[sel.selectedIndex]; if(!opt||!opt.value){ alert('Select item'); return; }
-  const qty=parseInt(document.getElementById('qty_input').value||'0',10); if(!qty||qty<1){ alert('Enter quantity'); return; }
-  const endUser=document.getElementById('end_user_input').value.trim()||opt.getAttribute('data-end')||'';
-  const remarks=document.getElementById('remarks_input').value.trim();
-  const desc=opt.getAttribute('data-desc'); const ics=opt.getAttribute('data-ics'); const unitCost=parseFloat(opt.getAttribute('data-cost')||'0'); const total=qty*unitCost;
-  const tr=document.createElement('tr'); tr.setAttribute('data-total', total.toString());
-  tr.innerHTML=`<td>${desc}</td><td style='text-align:right;'>${qty}</td><td>${ics}</td><td>${endUser}</td><td>${remarks}</td><td style='text-align:right;'>${formatMoney(unitCost)}</td><td style='text-align:right;font-weight:600;'>${formatMoney(total)}</td><td><button type='button' onclick='this.closest("tr").remove(); recomputeTotal();'>✖</button></td>`;
-  document.querySelector('#itemsTable tbody').appendChild(tr); recomputeTotal(); document.getElementById('qty_input').value=''; document.getElementById('remarks_input').value=''; sel.selectedIndex=0;
+
+// Recalculate RRSP no when date changes
+document.getElementById('date_prepared').addEventListener('change', generateRRSPNo);
+function filterItems(){
+  const q=(document.getElementById('itemSearch').value||'').toLowerCase().trim();
+  const rows=document.querySelectorAll('#itemsTable tbody tr.ics-row');
+  let visible=0;
+  rows.forEach(r=>{ const t=(r.getAttribute('data-text')||'').toLowerCase(); const show = q==='' || t.includes(q); r.style.display = show ? '' : 'none'; if (show) visible++; });
+  const none=document.getElementById('no-items-row'); if (none) none.style.display = (visible===0) ? 'table-row' : 'none';
 }
-function collectItems(){ const arr=[]; document.querySelectorAll('#itemsTable tbody tr').forEach(r=>{ const c=r.children; arr.push({ description:c[0].textContent.trim(), quantity:parseInt(c[1].textContent.trim(),10)||0, ics_no:c[2].textContent.trim(), end_user:c[3].textContent.trim(), remarks:c[4].textContent.trim(), unit_cost: parseFloat(c[5].textContent.replace(/[^0-9.\-]/g,'')||'0') }); }); return arr; }
+function formatMoney(v){ return '₱'+Number(v||0).toFixed(2); }
+function attachQtyHandlersRRSP(){
+  const recomputeGrand=()=>{
+    let sum=0;
+    document.querySelectorAll('#itemsTable tbody tr.ics-row .amount-cell').forEach(cell=>{
+      const val=parseFloat((cell.textContent||'').replace(/[^0-9.\-]/g,'')||'0')||0; sum+=val;
+    });
+    const gt=document.getElementById('grand_total'); if (gt) gt.textContent = formatMoney(sum);
+  };
+  document.querySelectorAll('#itemsTable tbody tr.ics-row').forEach(r=>{
+    const qtyInput=r.querySelector('.qty-input');
+    const amtCell=r.querySelector('.amount-cell');
+    const balCell=r.querySelector('.balance-cell');
+    const unitCost=parseFloat(r.getAttribute('data-unit-cost')||'0')||0;
+    const onHand=parseFloat(r.getAttribute('data-qty-on-hand')||'0')||0;
+    if (!qtyInput) return;
+    const recalc=()=>{
+      let v=parseFloat(qtyInput.value||''); if (isNaN(v)||v<0) v=0; const max=parseFloat(qtyInput.getAttribute('max')||'0'); if (max>0 && v>max) v=max;
+      if (amtCell) amtCell.textContent = formatMoney(unitCost * v);
+      if (balCell) balCell.textContent = String(Math.max(0, onHand - v));
+      recomputeGrand();
+    };
+    qtyInput.addEventListener('input', recalc);
+    qtyInput.addEventListener('blur', recalc);
+    recalc();
+  });
+  setTimeout(recomputeGrand,0);
+}
+function collectItems(){
+  const arr=[];
+  document.querySelectorAll('#itemsTable tbody tr.ics-row').forEach(r=>{
+    const qty = parseInt(r.querySelector('.qty-input')?.value||'0',10) || 0;
+    if (qty>0){
+      const desc = (r.querySelector('.desc-cell')?.textContent||'').trim();
+      const icsNo = r.getAttribute('data-ics-no') || (r.querySelector('.icsinfo-cell')?.textContent||'').trim();
+      const endUser = r.querySelector('.enduser-input')?.value || '';
+      const remarks = r.querySelector('.remarks-input')?.value || '';
+      const unitCost = parseFloat(r.getAttribute('data-unit-cost')||'0')||0;
+      arr.push({ description: desc, quantity: qty, ics_no: icsNo, end_user: endUser, remarks: remarks, unit_cost: unitCost });
+    }
+  });
+  return arr;
+}
 async function submitRRSP(){
   const fd=new FormData(); fd.append('rrsp_no', document.getElementById('rrsp_no').value); fd.append('entity_name', document.getElementById('entity_name').value); fd.append('fund_cluster', document.getElementById('fund_cluster').value); fd.append('date_prepared', document.getElementById('date_prepared').value); fd.append('returned_by', document.getElementById('returned_by').value); fd.append('returned_date', document.getElementById('returned_date').value); fd.append('received_by', document.getElementById('received_by').value); fd.append('received_date', document.getElementById('received_date').value); fd.append('remarks', document.getElementById('remarks').value); fd.append('items_json', JSON.stringify(collectItems()));
   try { const res=await fetch('add_rrsp.php',{method:'POST', body:fd}); const j=await res.json(); if(!j.success){ alert(j.message||'Save failed'); return; } window.location.href='rrsp.php'; } catch(e){ alert('Error: '+e.message); }
 }
+// Initialize qty handlers for dynamic totals
+document.addEventListener('DOMContentLoaded', attachQtyHandlersRRSP);
 </script>
 </body>
 </html>

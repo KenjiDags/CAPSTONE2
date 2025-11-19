@@ -48,11 +48,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div class="dropdown-menu">
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Supply List</a>
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📇 PC</a>
+                            <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="regspi.php" class="<?= $currentPage == 'regspi.php' ? 'active' : '' ?>">📦 RegSPI</a>
+                            <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
                             <a href="rspi.php" class="<?= $currentPage == 'rspi.php' ? 'active' : '' ?>">📦 RSPI</a>
                             <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>">⚙️ RPCSP</a>
-                            <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
-                            <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
                             <a href="rrsp.php" class="<?= $currentPage == 'rrsp.php' ? 'active' : '' ?>">📄 RRSP (structure only)</a>
                             <a href="iirusp.php" class="<?= $currentPage == 'iirusp.php' ? 'active' : '' ?>">📄 IIRUSP (structure only)</a>
                         </div>

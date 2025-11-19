@@ -132,25 +132,15 @@ require_once 'config.php';
       <table class="table">
         <thead>
           <tr>
-            <th rowspan="2">Entity Name</th>
-            <th rowspan="2">Fund Cluster</th>
-            <th rowspan="2">Property, Plant & Equipment</th>
-            <th rowspan="2">Description</th>
-            <th rowspan="2">Property Number</th>
-            <th rowspan="2">Date</th>
-            <th rowspan="2">Reference/PAR No.</th>
-            <th>Receipt</th>
-            <th colspan="2">Issue/Transfer/Disposal</th>
-            <th>Balance</th>
-            <th rowspan="2" class="amount-col">Amount</th>
-            <th rowspan="2">Remarks</th>
-            <th rowspan="2" class="actions-col">Actions</th>
-          </tr>
-          <tr>
-            <th>Qty.</th>
-            <th>Qty.</th>
-            <th>Office/Officer</th>
-            <th>Qty.</th>
+            <th>Description</th>
+            <th>Property Number</th>
+            <th>Date</th>
+            <th>Reference/PAR No.</th>
+            <th>Receipt Qty.</th>
+            <th>Issue Qty.</th>
+            <th>Balance Qty.</th>
+            <th class="amount-col">Amount</th>
+            <th class="actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -179,9 +169,6 @@ require_once 'config.php';
 
             if ($result && $result->num_rows > 0) {
               while ($row = $result->fetch_assoc()) {
-                $entityName = 'TESDA';
-                $fundCluster = $row['fund_cluster'] ?? '';
-                $propertyType = $row['category'] ?? '';
                 $description = $row['item_description'] ?? '';
                 $propertyNo = $row['semi_expendable_property_no'] ?? '';
                 $txDate = $row['date'] ?? '';
@@ -189,24 +176,17 @@ require_once 'config.php';
                 $receiptQty = (int)($row['quantity_issued'] ?? 0);
                 // Issue/Transfer/Disposal quantity: mirror PPE PC concept; for semi use reissued + disposed
                 $issueQty = (int)($row['quantity_reissued'] ?? 0) + (int)($row['quantity_disposed'] ?? 0);
-                $officeOfficer = $row['office_officer_reissued'] ?: ($row['office_officer_issued'] ?? '');
                 $balanceQty = (int)($row['quantity_balance'] ?? 0);
                 $amount = (float)($row['amount_total'] ?? 0);
-                $remarks = $row['remarks'] ?? '';
                 echo '<tr>';
-                echo '<td>' . htmlspecialchars($entityName) . '</td>';
-                echo '<td>' . htmlspecialchars($fundCluster) . '</td>';
-                echo '<td>' . htmlspecialchars($propertyType) . '</td>';
                 echo '<td>' . htmlspecialchars($description) . '</td>';
                 echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
                 echo '<td>' . htmlspecialchars($txDate) . '</td>';
                 echo '<td>' . htmlspecialchars($referenceNo) . '</td>';
                 echo '<td class="text-center">' . ($receiptQty ?: '') . '</td>';
                 echo '<td class="text-center">' . ($issueQty ?: '') . '</td>';
-                echo '<td>' . htmlspecialchars($officeOfficer) . '</td>';
                 echo '<td class="text-center">' . ($balanceQty ?: '') . '</td>';
                 echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
-                echo '<td>' . htmlspecialchars($remarks) . '</td>';
                 // Build return URL to come back to this PC_semi view with current filters
                 $returnUrl = 'PC_semi.php';
                 $qs = [];
@@ -222,7 +202,7 @@ require_once 'config.php';
                 echo '</tr>';
               }
             } else {
-              echo '<tr><td colspan="14" class="text-center">No Semi-Expendable entries found.</td></tr>';
+              echo '<tr><td colspan="9" class="text-center">No Semi-Expendable entries found.</td></tr>';
             }
           ?>
         </tbody>

@@ -159,7 +159,7 @@ switch ($sort_by) {
                     echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
                     echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
-                        <a href="view_ics2.php?ics_id=' . $row["ics_id"] . '" title="View ICS">
+                        <a href="view_ics.php?ics_id=' . $row["ics_id"] . '" title="View ICS">
                             <i class="fas fa-eye"></i> View
                         </a>
                         <a href="edit_ics.php?ics_id=' . $row["ics_id"] . '" title="Edit ICS">

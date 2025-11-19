@@ -115,6 +115,114 @@ function ensure_semi_expendable_amount_columns($conn) {
     ensure_semi_expendable_history($conn);
 }
 
+function ensure_ics_history($conn) {
+    if (!$conn) { return; }
+    $sql = "CREATE TABLE IF NOT EXISTS ics_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ics_id INT NOT NULL,
+        ics_item_id INT NULL,
+        stock_number VARCHAR(100) NULL,
+        description TEXT NULL,
+        unit VARCHAR(50) NULL,
+        quantity_before DECIMAL(15,4) NOT NULL DEFAULT 0,
+        quantity_after DECIMAL(15,4) NOT NULL DEFAULT 0,
+        quantity_change DECIMAL(15,4) NOT NULL DEFAULT 0,
+        unit_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        total_cost_before DECIMAL(15,2) NOT NULL DEFAULT 0,
+        total_cost_after DECIMAL(15,2) NOT NULL DEFAULT 0,
+        reference_type VARCHAR(50) NULL,
+        reference_id INT NULL,
+        reference_no VARCHAR(100) NULL,
+        reference_details TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_ics_id (ics_id),
+        INDEX idx_ics_item_id (ics_item_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+}
+
+// Ensure itr_history table exists (idempotent)
+function ensure_itr_history($conn) {
+    if (!$conn) { return; }
+    $sql = "CREATE TABLE IF NOT EXISTS itr_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        itr_id INT NOT NULL,
+        itr_item_id INT NULL,
+        ics_id INT NULL,
+        ics_item_id INT NULL,
+        item_no VARCHAR(255) NULL,
+        stock_number VARCHAR(100) NULL,
+        description TEXT NULL,
+        unit VARCHAR(50) NULL,
+        transfer_qty DECIMAL(15,4) NOT NULL DEFAULT 0,
+        unit_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        from_accountable VARCHAR(255) NULL,
+        to_accountable VARCHAR(255) NULL,
+        transfer_type VARCHAR(50) NULL,
+        transfer_other VARCHAR(255) NULL,
+        reference_no VARCHAR(100) NULL,
+        reference_date DATE NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_itr_id (itr_id),
+        INDEX idx_itr_item_id (itr_item_id),
+        INDEX idx_ics_item_id (ics_item_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+}
+
+// Ensure rrsp_history table exists (idempotent)
+function ensure_rrsp_history($conn) {
+    if (!$conn) { return; }
+    $sql = "CREATE TABLE IF NOT EXISTS rrsp_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        rrsp_id INT NOT NULL,
+        rrsp_item_id INT NULL,
+        ics_no VARCHAR(100) NULL,
+        item_description TEXT NULL,
+        quantity DECIMAL(15,4) NOT NULL DEFAULT 0,
+        unit_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        end_user VARCHAR(255) NULL,
+        item_remarks TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_rrsp_id (rrsp_id),
+        INDEX idx_rrsp_item_id (rrsp_item_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+}
+
+// Ensure iirusp_history table exists (idempotent)
+function ensure_iirusp_history($conn) {
+    if (!$conn) { return; }
+    $sql = "CREATE TABLE IF NOT EXISTS iirusp_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        iirusp_id INT NOT NULL,
+        iirusp_item_id INT NULL,
+        semi_expendable_property_no VARCHAR(100) NULL,
+        particulars TEXT NULL,
+        quantity DECIMAL(15,4) NOT NULL DEFAULT 0,
+        unit VARCHAR(50) NULL,
+        unit_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        total_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        accumulated_impairment DECIMAL(15,2) NOT NULL DEFAULT 0,
+        carrying_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        remarks TEXT NULL,
+        disposal_sale DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_transfer DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_destruction DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_others TEXT NULL,
+        disposal_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+        appraised_value DECIMAL(15,2) NOT NULL DEFAULT 0,
+        or_no VARCHAR(100) NULL,
+        sales_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_iirusp_id (iirusp_id),
+        INDEX idx_iirusp_item_id (iirusp_item_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+}
+
 /**
  * Check if a column exists on a given table in the current database
  *

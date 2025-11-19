@@ -207,7 +207,8 @@ try {
 
     // Insert items (persist transfer_qty for accurate edit prefill)
     $it = $conn->prepare("INSERT INTO itr_items (itr_id, date_acquired, item_no, ics_info, description, amount, transfer_qty, ics_id, ics_item_id, cond) VALUES (?,?,?,?,?,?,?,?,?,?)");
-    foreach ($items as $row) {
+    $insertedItrItemIds = [];
+    foreach ($items as $idx => $row) {
         $date_acq = toDate($row['date_acquired'] ?? null);
         $item_no = $row['item_no'] ?? null;
         $ics_info = $row['ics_info'] ?? null;
@@ -225,6 +226,7 @@ try {
         if (!$it->execute()) {
             throw new Exception($it->error ?: 'Insert item failed');
         }
+        $insertedItrItemIds[$idx] = $it->insert_id;
     }
     $it->close();
 
@@ -234,11 +236,15 @@ try {
         $conn->query("CREATE TABLE IF NOT EXISTS regspi_entries (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  regspi_id INT NOT NULL,\n  `date` DATE NOT NULL,\n  ics_rrsp_no VARCHAR(100) NOT NULL,\n  property_no VARCHAR(100) NOT NULL,\n  item_description TEXT NOT NULL,\n  useful_life VARCHAR(100) NOT NULL,\n  issued_qty INT NOT NULL DEFAULT 0,\n  issued_office VARCHAR(255) NULL,\n  returned_qty INT NOT NULL DEFAULT 0,\n  returned_office VARCHAR(255) NULL,\n  reissued_qty INT NOT NULL DEFAULT 0,\n  reissued_office VARCHAR(255) NULL,\n  disposed_qty1 INT NOT NULL DEFAULT 0,\n  disposed_qty2 INT NOT NULL DEFAULT 0,\n  balance_qty INT NOT NULL DEFAULT 0,\n  amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,\n  remarks TEXT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,\n  INDEX idx_regspi_id (regspi_id),\n  INDEX idx_date (`date`),\n  INDEX idx_ics_rrsp_no (ics_rrsp_no),\n  INDEX idx_property_no (property_no),\n  CONSTRAINT fk_regspi_entries_header FOREIGN KEY (regspi_id)\n    REFERENCES regspi(id) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     } catch (Throwable $e) { /* ignore; next inserts may fail and be caught */ }
 
-    // Ensure history table exists
+    // Ensure history tables exist
     if (function_exists('ensure_semi_expendable_history')) { ensure_semi_expendable_history($conn); }
+    if (function_exists('ensure_ics_history')) { ensure_ics_history($conn); }
+    if (function_exists('ensure_itr_history')) { ensure_itr_history($conn); }
+
+    $icsHistoryInsertSql = "INSERT INTO ics_history (ics_id, ics_item_id, stock_number, description, unit, quantity_before, quantity_after, quantity_change, unit_cost, total_cost_before, total_cost_after, reference_type, reference_id, reference_no, reference_details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     // Apply ICS quantity deduction, SEMI reissue increment, and REGSPI entry per item
-    foreach ($items as $row) {
+    foreach ($items as $idx => $row) {
         $transfer_qty = (int)($row['transfer_qty'] ?? 0);
         if ($transfer_qty <= 0) { continue; }
         $unit_cost = toNumber($row['unit_cost'] ?? 0);
@@ -248,44 +254,154 @@ try {
         if (!$stock_no) { continue; }
 
         // 1) Deduct from ICS item quantity
-        $current_qty = null; $current_uc = null; $target_ics_item_id = null;
+        $current_qty = null;
+        $current_uc = null;
+        $current_total_cost = null;
+        $current_unit = null;
+        $current_description = null;
+        $current_stock_number = $stock_no;
+        $current_ics_id_val = ($ics_id_in > 0) ? $ics_id_in : null;
+        $target_ics_item_id = null;
+        $icsRow = null;
+
         if ($ics_item_id > 0) {
-            $q = $conn->prepare("SELECT ics_item_id, ics_id, stock_number, quantity, unit_cost FROM ics_items WHERE ics_item_id = ? LIMIT 1");
+            $q = $conn->prepare("SELECT ics_item_id, ics_id, stock_number, quantity, unit_cost, total_cost, unit, description FROM ics_items WHERE ics_item_id = ? LIMIT 1");
             $q->bind_param('i', $ics_item_id);
             $q->execute();
             $res = $q->get_result();
             if ($res && $res->num_rows > 0) {
-                $r = $res->fetch_assoc();
-                $target_ics_item_id = (int)$r['ics_item_id'];
-                $current_qty = (float)$r['quantity'];
-                $current_uc = (float)$r['unit_cost'];
+                $icsRow = $res->fetch_assoc();
             }
+            if ($res) { $res->free(); }
             $q->close();
         }
-        if ($target_ics_item_id === null && $ics_id_in > 0) {
-            $q = $conn->prepare("SELECT ics_item_id, quantity, unit_cost FROM ics_items WHERE ics_id = ? AND stock_number = ? ORDER BY ics_item_id DESC LIMIT 1");
+        if (!$icsRow && $ics_id_in > 0) {
+            $q = $conn->prepare("SELECT ics_item_id, ics_id, stock_number, quantity, unit_cost, total_cost, unit, description FROM ics_items WHERE ics_id = ? AND stock_number = ? ORDER BY ics_item_id DESC LIMIT 1");
             $q->bind_param('is', $ics_id_in, $stock_no);
             $q->execute();
             $res = $q->get_result();
             if ($res && $res->num_rows > 0) {
-                $r = $res->fetch_assoc();
-                $target_ics_item_id = (int)$r['ics_item_id'];
-                $current_qty = (float)$r['quantity'];
-                $current_uc = (float)$r['unit_cost'];
+                $icsRow = $res->fetch_assoc();
             }
+            if ($res) { $res->free(); }
             $q->close();
         }
+
+        if ($icsRow) {
+            $target_ics_item_id = (int)$icsRow['ics_item_id'];
+            $current_qty = isset($icsRow['quantity']) ? (float)$icsRow['quantity'] : null;
+            $current_uc = isset($icsRow['unit_cost']) ? (float)$icsRow['unit_cost'] : null;
+            $current_total_cost = isset($icsRow['total_cost']) ? (float)$icsRow['total_cost'] : null;
+            $current_unit = $icsRow['unit'] ?? null;
+            $current_description = $icsRow['description'] ?? null;
+            $current_stock_number = $icsRow['stock_number'] ?? $current_stock_number;
+            $current_ics_id_val = isset($icsRow['ics_id']) ? (int)$icsRow['ics_id'] : $current_ics_id_val;
+        }
+
         if ($target_ics_item_id !== null && $current_qty !== null) {
-            $uc = ($unit_cost > 0) ? $unit_cost : ($current_uc ?? 0);
+            $unitCostBase = ($unit_cost > 0) ? $unit_cost : ($current_uc ?? 0);
             $effective = min((float)$transfer_qty, max(0.0, (float)$current_qty));
             $new_qty = max(0.0, (float)$current_qty - $effective);
-            $new_total = $uc * $new_qty;
+            $new_total = $unitCostBase * $new_qty;
             $u = $conn->prepare("UPDATE ics_items SET quantity = ?, total_cost = ? WHERE ics_item_id = ?");
             $u->bind_param('ddi', $new_qty, $new_total, $target_ics_item_id);
-            if (!$u->execute()) { $u->close(); throw new Exception('Failed to update ICS item: ' . $u->error); }
+            if (!$u->execute()) {
+                $err = $u->error;
+                $u->close();
+                throw new Exception('Failed to update ICS item: ' . $err);
+            }
             $u->close();
+
+            if (!empty($icsHistoryInsertSql)) {
+                $historyStmt = $conn->prepare($icsHistoryInsertSql);
+                if (!$historyStmt) {
+                    throw new Exception('Failed to prepare ICS history insert: ' . $conn->error);
+                }
+                    $quantity_before = (float)$current_qty;
+                    $quantity_after = (float)$new_qty;
+                    $quantity_change = $quantity_after - $quantity_before;
+                    $unit_cost_history = ($unitCostBase > 0) ? $unitCostBase : 0.0;
+                    $total_cost_before = ($current_total_cost !== null) ? (float)$current_total_cost : ($quantity_before * $unit_cost_history);
+                    $total_cost_after = (float)$new_total;
+                    $reference_type = 'ITR';
+                    $reference_id = (int)$itr_id;
+                    $reference_no = $itr_no;
+                    $detailParts = [];
+                    $effectiveText = (fmod($effective, 1.0) == 0.0) ? (string)(int)$effective : rtrim(rtrim(number_format($effective, 4, '.', ''), '0'), '.');
+                    $detailParts[] = 'Transfer Qty: ' . $effectiveText;
+                    if (!empty($transfer_type_val)) { $detailParts[] = 'Type: ' . $transfer_type_val; }
+                    if (!empty($transfer_other_val) && (empty($transfer_type_val) || strcasecmp($transfer_type_val, 'Others') === 0)) {
+                        $detailParts[] = 'Other: ' . $transfer_other_val;
+                    }
+                    if (!empty($to_accountable)) { $detailParts[] = 'To: ' . $to_accountable; }
+                    $reference_details = implode(' | ', array_filter($detailParts));
+
+                    $histIcsId = ($current_ics_id_val !== null) ? (int)$current_ics_id_val : 0;
+                    $histStock = (string)($current_stock_number ?? '');
+                    $histDesc = (string)($current_description ?? '');
+                    $histUnit = (string)($current_unit ?? '');
+
+                    $historyBindTypes = 'iisss' . str_repeat('d', 6) . 'siss';
+                    $historyStmt->bind_param(
+                        $historyBindTypes,
+                        $histIcsId,
+                        $target_ics_item_id,
+                        $histStock,
+                        $histDesc,
+                        $histUnit,
+                        $quantity_before,
+                        $quantity_after,
+                        $quantity_change,
+                        $unit_cost_history,
+                        $total_cost_before,
+                        $total_cost_after,
+                        $reference_type,
+                        $reference_id,
+                        $reference_no,
+                        $reference_details
+                    );
+                if (!$historyStmt->execute()) {
+                    $err = $historyStmt->error;
+                    $historyStmt->close();
+                    throw new Exception('Failed to record ICS history: ' . $err);
+                }
+                $historyStmt->close();
+            }
+
             // Use effective qty for downstream updates
             $transfer_qty = (int)round($effective);
+
+            // Record ITR history per item (actual executed transfer)
+            if (function_exists('ensure_itr_history')) { ensure_itr_history($conn); }
+            $itr_item_id_link = isset($insertedItrItemIds[$idx]) ? (int)$insertedItrItemIds[$idx] : null;
+            $histStmt = $conn->prepare("INSERT INTO itr_history (itr_id, itr_item_id, ics_id, ics_item_id, item_no, stock_number, description, unit, transfer_qty, unit_cost, amount, from_accountable, to_accountable, transfer_type, transfer_other, reference_no, reference_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $descHist = (string)($current_description ?? ($row['description'] ?? ''));
+            $unitHist = (string)($current_unit ?? '');
+            $itemNoHist = (string)($row['item_no'] ?? '');
+            $amountHist = (float)$unitCostBase * (int)$transfer_qty;
+            $refDate = toDate($itr_date);
+            $histStmt->bind_param(
+                'iiiiiissddsssssss',
+                $itr_id,
+                $itr_item_id_link,
+                $current_ics_id_val,
+                $target_ics_item_id,
+                $itemNoHist,
+                $current_stock_number,
+                $descHist,
+                $unitHist,
+                $transfer_qty,
+                $unitCostBase,
+                $amountHist,
+                $from_accountable,
+                $to_accountable,
+                $transfer_type_val,
+                $transfer_other_val,
+                $itr_no,
+                $refDate
+            );
+            @$histStmt->execute();
+            $histStmt->close();
         }
 
         // 2) Update Semi-Expendable: increment reissued and recalc balance

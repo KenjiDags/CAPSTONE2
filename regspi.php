@@ -140,6 +140,9 @@ if (!empty($rows)) {
                 <i class="fas fa-plus"></i> Add new Item
             </button>
             <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, description, or unit...">
+            <button type="button" class="export-btn" onclick="openExport()" style="margin-left: auto;">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </button>
         </div>
 
         <div class="container">
@@ -256,9 +259,6 @@ if (!empty($rows)) {
             </div>
         </div>
     </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <button type="button" class="export-btn" onclick="openExport()">📄 Export to PDF</button>
-                </div>
 
     <!-- Modal for Adding Items -->
     <div class="modal-overlay" id="itemModal">

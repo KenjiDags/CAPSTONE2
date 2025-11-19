@@ -13,6 +13,12 @@ if (!$itr) { echo '❌ ITR not found.'; exit; }
 $rs = $conn->query("SELECT * FROM itr_items WHERE itr_id = $itr_id");
 if ($rs) { while ($row = $rs->fetch_assoc()) { $itr_items[] = $row; } }
 
+// Ensure itr_history exists and load history entries for this ITR
+if (function_exists('ensure_itr_history')) { ensure_itr_history($conn); }
+$itr_history = [];
+$hr = $conn->query("SELECT * FROM itr_history WHERE itr_id = $itr_id ORDER BY created_at ASC, id ASC");
+if ($hr) { while ($hrow = $hr->fetch_assoc()) { $itr_history[] = $hrow; } }
+
 // Build quick lookup by item_no (case-insensitive)
 $prefill_map = [];
 foreach ($itr_items as $it) {

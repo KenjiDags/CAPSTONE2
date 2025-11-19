@@ -1,9 +1,9 @@
 <?php
-require 'config.php';
-require 'functions.php';
-
-// Handle submission
+// Handle submission FIRST before any output
 if($_SERVER['REQUEST_METHOD']==='POST'){
+  require 'config.php';
+  require 'functions.php';
+  
   header('Content-Type: application/json');
   $iirusp_no = trim($_POST['iirusp_no'] ?? '');
   if($iirusp_no==='') { $iirusp_no = date('Y') . '-' . date('m') . '-' . '0001'; }
@@ -23,6 +23,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   
   if($iirusp_no===''){ echo json_encode(['success'=>false,'message'=>'IIRUSP number required']); exit; }
   
+  ensure_iirusp_history($conn); // ensure history table exists
   if($stmt=$conn->prepare("INSERT INTO iirusp (iirusp_no,as_at,entity_name,fund_cluster,accountable_officer_name,accountable_officer_designation,accountable_officer_station,requested_by,approved_by,inspection_officer,witness) VALUES (?,?,?,?,?,?,?,?,?,?,?)")){
     $stmt->bind_param('sssssssssss',$iirusp_no,$as_at,$entity,$fund,$acc_officer_name,$acc_officer_designation,$acc_officer_station,$requested_by,$approved_by,$inspection_officer,$witness);
     if(!$stmt->execute()){ echo json_encode(['success'=>false,'message'=>'Failed to save IIRUSP header']); exit; }
@@ -51,7 +52,16 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           $sales_amt = (float)($it['sales_amount']??0);
           
           $ist->bind_param('isssissddssdddsdds',$iirusp_id,$date_acq,$particulars,$prop_no,$qty,$unit,$uc,$tc,$accum_imp,$carry_amt,$rem,$disp_sale,$disp_transfer,$disp_destruction,$disp_others,$disp_total,$appraised,$or_no,$sales_amt);
-          $ist->execute();
+          if($ist->execute()){
+            $iirusp_item_id = $ist->insert_id;
+            // Log to iirusp_history
+            $hStmt = $conn->prepare("INSERT INTO iirusp_history (iirusp_id,iirusp_item_id,semi_expendable_property_no,particulars,quantity,unit,unit_cost,total_cost,accumulated_impairment,carrying_amount,remarks,disposal_sale,disposal_transfer,disposal_destruction,disposal_others,disposal_total,appraised_value,or_no,sales_amount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            if($hStmt){
+              $hStmt->bind_param('iississddssdddsdds',$iirusp_id,$iirusp_item_id,$prop_no,$particulars,$qty,$unit,$uc,$tc,$accum_imp,$carry_amt,$rem,$disp_sale,$disp_transfer,$disp_destruction,$disp_others,$disp_total,$appraised,$or_no,$sales_amt);
+              $hStmt->execute();
+              $hStmt->close();
+            }
+          }
         }
         $ist->close();
       }
@@ -59,6 +69,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     echo json_encode(['success'=>true,'iirusp_id'=>$iirusp_id]); exit;
   } else { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
 }
+
+// If we reach here, it's a GET request to display the form
+require 'config.php';
+require 'functions.php';
 
 // Build semi-expendable list
 $semi=[]; $q=$conn->query("SELECT semi_expendable_property_no,item_description,amount,date,unit FROM semi_expendable_property ORDER BY item_description");

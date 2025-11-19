@@ -200,6 +200,19 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
     if ($catRes) { while ($r = $catRes->fetch_assoc()) { $category_options[] = $r['category']; } }
 }
 
+// Load ICS History entries for this ICS
+if (function_exists('ensure_ics_history')) { ensure_ics_history($conn); }
+$ics_history = [];
+try {
+    $hst = $conn->prepare("SELECT id, ics_item_id, stock_number, description, unit, quantity_before, quantity_after, quantity_change, unit_cost, total_cost_before, total_cost_after, reference_type, reference_id, reference_no, reference_details, created_at FROM ics_history WHERE ics_id = ? ORDER BY created_at ASC, id ASC");
+    $hst->bind_param('i', $ics_id);
+    if ($hst->execute()) {
+        $hres = $hst->get_result();
+        while ($row = $hres->fetch_assoc()) { $ics_history[] = $row; }
+    }
+    $hst->close();
+} catch (Throwable $e) { /* ignore non-fatal */ }
+
 ?>
 
 <!DOCTYPE html>

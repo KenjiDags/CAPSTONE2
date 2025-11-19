@@ -77,8 +77,10 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
         @media print {
             body { margin: 0; padding: 0; font-size: 11px; }
             .no-print { display: none; }
-            table, tr { page-break-inside: avoid; }
-            .form-container { border: 2px solid black; }
+            .form-container { border: none; page-break-after: always; }
+            .main-table { page-break-inside: auto; }
+            .main-table tr { page-break-inside: avoid; page-break-after: auto; }
+            .annex-reference { page-break-before: avoid; }
         }
         body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; background-color: #f5f5f5; }
         .export-instructions { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
@@ -90,25 +92,30 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
         .back-btn { background: #6c757d; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
         .print-btn:hover { background: #0056b3; }
         .back-btn:hover { background: #545b62; }
-        .form-container { background: #fff; border: 2px solid #000; padding: 0; }
-        .annex-reference { text-align: right; font-weight: bold; font-size: 12px; padding: 10px 15px 5px 0; margin: 0; }
-        .form-title { text-align: center; font-weight: bold; margin: 10px 0 15px 0; font-size: 14px; text-transform: uppercase; }
-        .form-header { border-collapse: collapse; width: 100%; margin-bottom: 0; }
-        .form-header td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-        .form-header .label { font-weight: bold; width: 140px; background: #fff; }
-        .form-header .value { width: 200px; }
-        .main-table { width: 100%; border-collapse: collapse; border-top: none; }
-        .main-table th, .main-table td { border: 1px solid #000; padding: 4px; text-align: center; vertical-align: middle; font-size: 11px; }
-        .main-table th { background: #fff; font-weight: bold; }
+        .form-container { background: #fff; border: none; padding: 15px; margin-bottom: 20px; }
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .header-left { flex: 1; }
+        .header-right { text-align: right; }
+        .annex-reference { font-style: italic; font-size: 11px; margin: 0; padding: 0; }
+        .sheet-number { font-weight: bold; font-size: 11px; margin: 0; padding: 0; }
+        .form-title { text-align: center; font-weight: bold; margin: 15px 0; font-size: 13px; text-transform: uppercase; }
+        .info-line { margin: 5px 0; font-size: 11px; }
+        .info-line span { display: inline-block; border-bottom: 1px solid #000; min-width: 200px; padding: 0 5px; }
+        .form-header { display: none; } /* Hide old header tables */
+        .main-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .main-table th, .main-table td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; font-size: 10px; }
+        .main-table td { font-size: 9px; }
+        .main-table th { background: #fff; font-weight: normal; }
         .main-table .text-left { text-align: left; }
         .main-table .text-right { text-align: right; }
-        /* Column widths mirroring ict_export */
-        .date-col{width:70px;} .ics-col{width:70px;} .property-col{width:80px;} .item-col{width:280px;}
-        .life-col{width:60px;} .issued-qty-col{width:50px;} .officer-col{width:140px;}
-        .returned-qty-col{width:50px;} .returned-officer-col{width:140px;}
-        .reissued-qty-col{width:50px;} .reissued-officer-col{width:140px;}
-        .disposed-qty-col{width:50px;}
-        .amount-col{width:80px;} .remarks-col{width:80px;}
+        /* Adjust column widths to match image */
+        .date-col{width:55px;} .ics-col{width:65px;} .property-col{width:70px;} .item-col{width:200px;}
+        .life-col{width:55px;} .issued-qty-col{width:40px;} .officer-col{width:110px;}
+        .returned-qty-col{width:40px;} .returned-officer-col{width:110px;}
+        .reissued-qty-col{width:40px;} .reissued-officer-col{width:110px;}
+        .disposed-qty-col{width:40px;} .balance-col{width:50px;}
+        .amount-col{width:70px;} .remarks-col{width:70px;}
+        
     </style>
 <?php /* keep head clean */ ?>
 </head>
@@ -126,13 +133,25 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
         </div>
         <div class="button-container">
             <button class="print-btn" onclick="window.print()">🖨️ Print/Save as PDF</button>
-            <button class="back-btn" onclick="history.back()">← Back to Registry</button>
+            <a href="regspi.php" class="back-btn">← Back to Registry</a>
         </div>
     </div>
 
     <div class="form-container">
-        <div class="annex-reference">Annex A.4</div>
+        <div class="annex-reference" style="text-align: right; font-style: italic; font-size: 11px; margin-bottom: 10px;">Annex A.4</div>
         <div class="form-title">REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED</div>
+        
+        <div class="header-row">
+            <div class="header-left">
+                <div class="info-line">Entity Name: <span contenteditable="true">TESDA-CAR</span></div>
+                <div class="info-line">Semi-expendable Property: <span contenteditable="true"><?php echo h($categoryLabel); ?></span></div>
+            </div>
+            <div class="header-right">
+                <div class="info-line">Fund Cluster: <span contenteditable="true" style="min: width 100px;px;">101</span></div>
+                <div class="info-line">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min: width 100px;px;">1</span></div>
+            </div>
+        </div>
+        
         <table class="form-header">
             <tr>
                 <td class="label">Entity Name:</td>
@@ -160,8 +179,9 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                     <th colspan="2">Issued</th>
                     <th colspan="2">Returned</th>
                     <th colspan="2">Re-issued</th>
-                    <th colspan="1">Disposed</th>
-                    <th rowspan="2" class="amount-col">Amount (TOTAL)</th>
+                    <th colspan="1" class="disposed-qty-col">Disposed</th>
+                    <th colspan="1" class="balance-col">Balance</th>
+                    <th rowspan="2" class="amount-col">Amount</th>
                     <th rowspan="2" class="remarks-col">Remarks</th>
                 </tr>
                 <tr>
@@ -174,6 +194,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                     <th class="reissued-qty-col">Qty.</th>
                     <th class="reissued-officer-col">Office/Officer</th>
                     <th class="disposed-qty-col">Qty.</th>
+                    <th class="balance-col">Qty.</th>
                 </tr>
             </thead>
             <tbody>
@@ -192,17 +213,18 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                             <td contenteditable="true"></td>
                             <td contenteditable="true"></td>
                             <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
                             <td class="text-right" contenteditable="true"><?php echo number_format((float)$r['amount_total'], 2); ?></td>
                             <td contenteditable="true"></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="14" style="text-align:center;">No records found.</td>
+                        <td colspan="15" style="text-align:center;">No records found.</td>
                     </tr>
                 <?php endif; ?>
                 <!-- Extra blank rows for manual edits -->
-                <?php for ($i=0; $i<2; $i++): ?>
+                <?php for ($i=0; $i<15; $i++): ?>
                 <tr>
                     <td contenteditable="true"></td>
                     <td contenteditable="true"></td>
@@ -211,6 +233,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                     <td contenteditable="true"></td>
                     <td contenteditable="true"></td>
                     <td class="text-left" contenteditable="true"></td>
+                    <td contenteditable="true"></td>
                     <td contenteditable="true"></td>
                     <td contenteditable="true"></td>
                     <td contenteditable="true"></td>
@@ -225,7 +248,18 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
     </div>
 
     <script>
-        // Optional helper to add rows via Ctrl+Enter (same as ICT)
+        // Auto-increment sheet number on new pages when printing
+        window.addEventListener('beforeprint', function() {
+            const containers = document.querySelectorAll('.form-container');
+            containers.forEach((container, index) => {
+                const sheetNum = container.querySelector('.sheet-number');
+                if (sheetNum) {
+                    sheetNum.textContent = index + 1;
+                }
+            });
+        });
+        
+        // Optional helper to add rows via Ctrl+Enter
         function addRow() {
             const tbody = document.querySelector('.main-table tbody');
             const tr = document.createElement('tr');
@@ -237,6 +271,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
                 <td class="text-left" contenteditable="true"></td>
+                <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
