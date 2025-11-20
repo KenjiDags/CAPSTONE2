@@ -22,14 +22,13 @@ require_once 'config.php';
     .currency { text-align: right; }
   .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
   .filters .control { display:flex; align-items:center; gap:10px; }
-  /* Themed fields (match site style) */
   .filters select, .filters input {
     height: 38px;
     padding: 8px 14px;
     border-radius: 9999px;
-    border: 1px solid #cbd5e1; /* slate-300 */
-    background-color: #f8fafc; /* slate-50 */
-    color: #111827; /* gray-900 */
+    border: 1px solid #cbd5e1;
+    background-color: #f8fafc;
+    color: #111827;
     font-size: 14px;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
@@ -37,30 +36,27 @@ require_once 'config.php';
   .filters input::placeholder { color: #9ca3af; }
   .filters select:hover, .filters input:hover { background-color: #ffffff; }
   .filters select:focus, .filters input:focus {
-    border-color: #3b82f6; /* primary */
+    border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59,130,246,.15);
     background-color: #ffffff;
   }
-  /* Custom arrow for select to fit theme */
   .filters select {
     appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    padding-right: 38px; /* room for arrow */
+    padding-right: 38px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 18px 18px;
   }
   .filters .pill-btn { height: 38px; padding: 0 16px; }
-  /* Make search box a bit longer */
   .filters #searchInput { width: 400px; max-width: 65vw; }
-    /* Pill-style action buttons matching the sample */
     .pill-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 8px 14px;
       border-radius: 9999px;
-      color: #fff;
+      color: #fff !important;
       font-weight: 600;
       border: none;
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
@@ -68,14 +64,11 @@ require_once 'config.php';
     }
     .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
     .pill-view { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
-    .pill-export { background: linear-gradient(135deg, #ffb347 0%, #f59e0b 50%, #f97316 100%); }
+    .pill-export { background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
-    /* Wider Actions column */
   .actions-col { width: 1%; white-space: nowrap; }
   table th.actions-col, table td.actions-col { padding-left: 4px; padding-right: 4px; }
-    /* Stack action buttons vertically */
   .action-stack { display: inline-flex; flex-direction: column; gap: 8px; align-items: center; }
-    /* Amount column sizing to fit full currency text */
     .amount-col { white-space: nowrap; min-width: 140px; }
   </style>
 </head>
@@ -93,7 +86,7 @@ require_once 'config.php';
         $valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communication Equipment', 'Furniture and Fixtures'];
       ?>
       <div class="control">
-        <label for="category-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="category-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
           <i class="fas fa-filter"></i> Category:
         </label>
         <select id="category-select" name="category" onchange="this.form.submit()">
@@ -104,7 +97,7 @@ require_once 'config.php';
         </select>
       </div>
       <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
           <i class="fas fa-search"></i> Search:
         </label>
         <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or property no..." />
@@ -121,7 +114,7 @@ require_once 'config.php';
             <th>Description</th>
             <th>Property Number</th>
             <th>Date</th>
-            <th>Reference/PAR No.</th>
+            <th>Reference/ICS No.</th>
             <th>Receipt Qty.</th>
             <th>Issue Qty.</th>
             <th>Balance Qty.</th>
@@ -160,7 +153,6 @@ require_once 'config.php';
                 $txDate = $row['date'] ?? '';
                 $referenceNo = $row['ics_rrsp_no'] ?? '';
                 $receiptQty = (int)($row['quantity_issued'] ?? 0);
-                // Issue/Transfer/Disposal quantity: mirror PPE PC concept; for semi use reissued + disposed
                 $issueQty = (int)($row['quantity_reissued'] ?? 0) + (int)($row['quantity_disposed'] ?? 0);
                 $balanceQty = (int)($row['quantity_balance'] ?? 0);
                 $amount = (float)($row['amount_total'] ?? 0);
@@ -173,7 +165,6 @@ require_once 'config.php';
                 echo '<td class="text-center">' . ($issueQty ?: '') . '</td>';
                 echo '<td class="text-center">' . ($balanceQty ?: '') . '</td>';
                 echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
-                // Build return URL to come back to this PC_semi view with current filters
                 $returnUrl = 'PC_semi.php';
                 $qs = [];
                 if ($category !== '') { $qs['category'] = $category; }

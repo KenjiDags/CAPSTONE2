@@ -106,7 +106,7 @@ $result = $conn->query("SELECT r.*, (
     
   <form id="rrsp-filters" method="get" class="filters">
       <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
           <i class="fas fa-sort"></i> Sort by:
         </label>
         <select id="sort-select" name="sort" onchange="this.form.submit()">
@@ -118,7 +118,7 @@ $result = $conn->query("SELECT r.*, (
         </select>
       </div>
       <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
           <i class="fas fa-search"></i> Search:
         </label>
         <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or RRSP no..." />

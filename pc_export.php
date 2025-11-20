@@ -238,7 +238,6 @@ if ($pc_result && $pc_result->num_rows > 0) {
     </style>
 </head>
 <body>
-    <!-- Export Instructions -->
     <div class="export-instructions">
         <h3>Export Instructions</h3>
         <p><strong>To save as PDF:</strong></p>
@@ -250,15 +249,12 @@ if ($pc_result && $pc_result->num_rows > 0) {
         <p class="note">For best results: Use Chrome or Edge browser for optimal PDF formatting. Recommended: Landscape orientation.</p>
     </div>
 
-    <!-- Buttons -->
     <div class="button-container">
         <button class="btn btn-primary" onclick="window.print()">📄 Print/Save as PDF</button>
         <a href="pc.php" class="btn btn-secondary">← Back to Property Card</a>
     </div>
 
-    <!-- Property Card Form -->
     <div class="form-container">
-        <!-- Form Title -->
         <div class="form-title">
             PROPERTY CARD
         </div>
@@ -329,7 +325,6 @@ if ($pc_result && $pc_result->num_rows > 0) {
                     }
                 }
                 
-                // Fill remaining rows with empty cells (up to 25 rows total)
                 for ($i = $row_count; $i < 25; $i++) {
                     echo '<tr>';
                     echo '<td>&nbsp;</td>';
@@ -368,16 +363,5 @@ if ($pc_result && $pc_result->num_rows > 0) {
             </div>
         </div>
     </div>
-
-    <script>
-        // Optional: Auto-focus print dialog on page load
-        // window.addEventListener('load', function() {
-        //     setTimeout(function() {
-        //         if (confirm('Would you like to print/save this Property Card as PDF?')) {
-        //             window.print();
-        //         }
-        //     }, 1000);
-        // });
-    </script>
 </body>
 </html>

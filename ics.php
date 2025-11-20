@@ -100,7 +100,7 @@ if ($search !== '') {
   .filters select:hover, .filters input:hover { background-color: #ffffff; }
   .filters select:focus, .filters input:focus {
     border-color: #3b82f6; /* primary */
-    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    box-shadow: 0 0 0 3px #3b82f626;
     background-color: #ffffff;
   }
   /* Custom arrow for select to fit theme */
@@ -142,7 +142,7 @@ if ($search !== '') {
 
   <form id="ics-filters" method="get" class="filters">
       <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
           <i class="fas fa-sort"></i> Sort by:
         </label>
         <select id="sort-select" name="sort" onchange="this.form.submit()">
@@ -154,7 +154,7 @@ if ($search !== '') {
         </select>
       </div>
       <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;">
+        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#111827;color:#001f80;">
           <i class="fas fa-search"></i> Search:
         </label>
         <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ICS no..." />
