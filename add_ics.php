@@ -269,62 +269,61 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
 // Function to generate the next ICS number (only for new ICS)
 // New format: "NN-YY" where NN is a 2+ digit serial (zero-padded to 2) and YY is the last two digits of the year
 function generateICSNumber($conn) {
-    $yy = date('y'); // last two digits of the current year
+    $yy = date('y'); // last two digits of the current year (e.g., '25' for 2025)
+    $current_year = (int)date('Y');
 
-    // Find the latest new-format ICS no for this year: must match ^[0-9]+-[0-9]{2}$ and end with current YY
-    $query = "SELECT ics_no 
-              FROM ics 
-              WHERE ics_no REGEXP '^[0-9]+-[0-9]{2}$' AND RIGHT(ics_no, 2) = ? 
-              ORDER BY CAST(SUBSTRING_INDEX(ics_no, '-', 1) AS UNSIGNED) DESC 
-              LIMIT 1";
+    // Find the latest ICS no for this year matching YY-NN pattern
+    $pattern = $yy . '-%';
+    $query = "SELECT ics_no FROM ics WHERE YEAR(date_issued) = ? AND ics_no LIKE ? ORDER BY ics_id DESC LIMIT 1";
     $stmt = $conn->prepare($query);
     if (!$stmt) {
         error_log("MySQL prepare error in generateICSNumber: " . $conn->error);
-        // Fallback to first serial of the year
-        return '01-' . $yy;
+        return $yy . '-01';
     }
 
-    $stmt->bind_param('s', $yy);
+    $stmt->bind_param('is', $current_year, $pattern);
     if (!$stmt->execute()) {
         error_log("MySQL execute error in generateICSNumber: " . $stmt->error);
         $stmt->close();
-        return '01-' . $yy;
+        return $yy . '-01';
     }
 
     $result = $stmt->get_result();
     $next_serial = 1;
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        // Extract the part before '-' and increment
-        $last_serial_str = explode('-', $row['ics_no'])[0];
-        $last_serial = (int)$last_serial_str;
-        $next_serial = $last_serial + 1;
+        $last_ics_no = $row['ics_no'];
+        // Extract the number part after the dash (format: YY-NN)
+        if (preg_match('/(\d+)-(\d+)/', $last_ics_no, $matches)) {
+            $next_serial = ((int)$matches[2]) + 1;
+        }
     }
     $stmt->close();
 
-    // Zero-pad to 2 digits, but allow >99 naturally (e.g., 100-YY)
+    // Zero-pad to 2 digits
     $serial_formatted = str_pad((string)$next_serial, 2, '0', STR_PAD_LEFT);
-    return $serial_formatted . '-' . $yy;
+    return $yy . '-' . $serial_formatted;
 }
 
 // Alternative simpler version as a fallback
-// Uses count of ICS in the current year and formats as NN-YY
+// Uses count of ICS in the current year and formats as YY-NN
 function generateICSNumberSimple($conn) {
     $year = (int)date('Y');
-    $yy = date('y');
+    $yy = date('y'); // last two digits of the current year
+    $pattern = $yy . '-%';
 
-    $query = "SELECT COUNT(*) AS count FROM ics WHERE YEAR(date_issued) = ?";
+    $query = "SELECT COUNT(*) AS count FROM ics WHERE YEAR(date_issued) = ? AND ics_no LIKE ?";
     $stmt = $conn->prepare($query);
     if (!$stmt) {
         error_log("MySQL prepare error in generateICSNumberSimple: " . $conn->error);
-        return '01-' . $yy;
+        return $yy . '-01';
     }
 
-    $stmt->bind_param('i', $year);
+    $stmt->bind_param('is', $year, $pattern);
     if (!$stmt->execute()) {
         error_log("MySQL execute error in generateICSNumberSimple: " . $stmt->error);
         $stmt->close();
-        return '01-' . $yy;
+        return $yy . '-01';
     }
 
     $result = $stmt->get_result();
@@ -334,7 +333,7 @@ function generateICSNumberSimple($conn) {
     $count = $row && isset($row['count']) ? (int)$row['count'] : 0;
     $next_serial = $count + 1;
     $serial_formatted = str_pad((string)$next_serial, 2, '0', STR_PAD_LEFT);
-    return $serial_formatted . '-' . $yy;
+    return $yy . '-' . $serial_formatted;
 }
 
 // columnExists helper is provided in functions.php

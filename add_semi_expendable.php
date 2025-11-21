@@ -13,27 +13,35 @@ try {
     }
 } catch (Throwable $e) { /* no-op */ }
 
-// Local helper: generate a simple ICS number like ICS-YYYY/MM/0001
+// Local helper: generate a simple ICS number like YY-NN (e.g., 25-01 for year 2025)
 if (!function_exists('generateICSNumberSimple')) {
     function generateICSNumberSimple($conn) {
+        $year_short = date('y'); // Last 2 digits of year (e.g., '25' for 2025)
         $current_year = (int)date('Y');
-        $current_month = (int)date('m');
-        $prefix = 'ICS-' . date('Y') . '/' . date('m') . '/';
+        
+        // Get the highest number used THIS YEAR ONLY - always starts at 01 for new year
+        $stmt = $conn->prepare("SELECT ics_no FROM ics WHERE YEAR(date_issued) = ? AND ics_no LIKE ? ORDER BY ics_id DESC LIMIT 1");
         $next_increment = 1;
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM ics WHERE YEAR(date_issued) = ? AND MONTH(date_issued) = ?");
         if ($stmt) {
-            $stmt->bind_param('ii', $current_year, $current_month);
+            $pattern = $year_short . '-%';
+            $stmt->bind_param('is', $current_year, $pattern);
             if ($stmt->execute()) {
                 $res = $stmt->get_result();
-                if ($res) {
+                if ($res && $res->num_rows > 0) {
                     $row = $res->fetch_assoc();
-                    $next_increment = ((int)($row['count'] ?? 0)) + 1;
+                    $last_ics_no = $row['ics_no'];
+                    // Try to extract the number part (format: YY-NN)
+                    if (preg_match('/(\d+)-(\d+)/', $last_ics_no, $matches)) {
+                        $next_increment = ((int)$matches[2]) + 1;
+                    }
                 }
+                // If no results found for current year pattern, next_increment stays at 1
             }
             $stmt->close();
         }
-        $formatted = str_pad((string)$next_increment, 4, '0', STR_PAD_LEFT);
-        return $prefix . $formatted;
+        
+        $formatted = str_pad((string)$next_increment, 2, '0', STR_PAD_LEFT);
+        return $year_short . '-' . $formatted;
     }
 }
 
@@ -47,7 +55,8 @@ $valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communic
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Assign POST values to variables
     $date = $_POST['date'];
-    $ics_rrsp_no = ''; // Default empty value since field is removed
+    $ics_rrsp_no_input = isset($_POST['ics_rrsp_no']) ? trim($_POST['ics_rrsp_no']) : '';
+    $ics_rrsp_no = ''; // Will be set based on logic below
     $semi_expendable_property_no = $_POST['semi_expendable_property_no'];
     $item_description = $_POST['item_description'];
     $unit = isset($_POST['unit']) ? trim($_POST['unit']) : '';
@@ -151,19 +160,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $h->close();
                 }
 
-                // If user provided Quantity Issued (issued-out movement), auto-create a minimal ICS entry
+                // If user provided Quantity Issued (issued-out movement), create ICS entry
                 if ($quantity_issued_out > 0) {
-                    // Create ICS header
-                    $auto_ics_no = generateICSNumberSimple($conn);
-                    $entity_name = 'TESDA Regional Office';
-                    $received_by = $office_officer_issued ?: 'N/A';
-                    $received_by_position = '(auto)';
-                    $received_from = 'Property Custodian';
-                    $received_from_position = '(auto)';
+                    // Determine ICS No: use user input if provided, otherwise generate
+                    $auto_ics_no = ($ics_rrsp_no_input !== '') ? $ics_rrsp_no_input : generateICSNumberSimple($conn);
+                    
+                    // Check if ICS No. already exists
+                    $checkIcs = $conn->prepare("SELECT ics_id FROM ics WHERE ics_no = ? LIMIT 1");
+                    $checkIcs->bind_param("s", $auto_ics_no);
+                    $checkIcs->execute();
+                    $checkIcsResult = $checkIcs->get_result();
+                    if ($checkIcsResult && $checkIcsResult->num_rows > 0) {
+                        $error = "A record with this ICS/RRSP No. already exists. Please use a different number.";
+                        $checkIcs->close();
+                        // Delete the semi-expendable record we just created
+                        $conn->query("DELETE FROM semi_expendable_property WHERE id = $new_id");
+                        // Don't close $stmt here - it was already closed after insert
+                    } else {
+                        $checkIcs->close();
+                        
+                        $entity_name = 'TESDA Regional Office';
+                        $received_by = $office_officer_issued ?: 'N/A';
+                        $received_by_position = '(auto)';
+                        $received_from = 'Property Custodian';
+                        $received_from_position = '(auto)';
 
-                    if ($icsHdr = $conn->prepare("INSERT INTO ics (ics_no, entity_name, fund_cluster, date_issued, received_by, received_by_position, received_from, received_from_position) VALUES (?,?,?,?,?,?,?,?)")) {
-                        $icsHdr->bind_param("ssssssss", $auto_ics_no, $entity_name, $fund_cluster, $date, $received_by, $received_by_position, $received_from, $received_from_position);
-                        if ($icsHdr->execute()) {
+                        if ($icsHdr = $conn->prepare("INSERT INTO ics (ics_no, entity_name, fund_cluster, date_issued, received_by, received_by_position, received_from, received_from_position) VALUES (?,?,?,?,?,?,?,?)")) {
+                            $icsHdr->bind_param("ssssssss", $auto_ics_no, $entity_name, $fund_cluster, $date, $received_by, $received_by_position, $received_from, $received_from_position);
+                            if ($icsHdr->execute()) {
                             $new_ics_id = $icsHdr->insert_id;
                             $icsHdr->close();
 
@@ -191,6 +215,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $u2->close();
                             }
 
+                            // Also add to regspi table (using same structure as submit_itr.php)
+                            try {
+                                // Find or create regspi header
+                                $regspi_id = null;
+                                $entity_name_val = 'TESDA Regional Office';
+                                $find = $conn->prepare("SELECT id FROM regspi WHERE entity_name = ? AND (fund_cluster <=> ?) LIMIT 1");
+                                $find->bind_param('ss', $entity_name_val, $fund_cluster);
+                                $find->execute();
+                                $fr = $find->get_result();
+                                if ($fr && $fr->num_rows > 0) { $regspi_id = (int)$fr->fetch_assoc()['id']; }
+                                $find->close();
+                                if (!$regspi_id) {
+                                    $ins = $conn->prepare("INSERT INTO regspi (entity_name, fund_cluster, semi_expendable_property) VALUES (?, ?, ?)");
+                                    $sep = $category;
+                                    $ins->bind_param('sss', $entity_name_val, $fund_cluster, $sep);
+                                    if ($ins->execute()) { $regspi_id = $ins->insert_id; }
+                                    $ins->close();
+                                }
+                                if ($regspi_id) {
+                                    $useful_life_val = (string)$estimated_useful_life;
+                                    $amt = $unit_cost * $issued_qty;
+                                    $disposed1 = 0; $disposed2 = 0; $returnedQty = 0; $returnedOffice = null; $reissued_office = null;
+                                    $insE = $conn->prepare("INSERT INTO regspi_entries (regspi_id, `date`, ics_rrsp_no, property_no, item_description, useful_life, issued_qty, issued_office, returned_qty, returned_office, reissued_qty, reissued_office, disposed_qty1, disposed_qty2, balance_qty, amount, remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                    $insE->bind_param('isssssisisisiiids', $regspi_id, $date, $auto_ics_no, $stock_no, $descVal, $useful_life_val, $issued_qty, $received_by, $returnedQty, $returnedOffice, $quantity_reissued, $reissued_office, $disposed1, $disposed2, $quantity_balance, $amt, $remarks);
+                                    @$insE->execute();
+                                    $insE->close();
+                                }
+                            } catch (Throwable $e) { /* ignore non-fatal */ }
+
                             // Add issuance snapshot to history similar to manual ICS issuance
                             $amount_total_curr = round($unit_amount * $quantity_issued, 2);
                             if ($h2 = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -200,16 +253,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 @ $h2->execute();
                                 $h2->close();
                             }
+                            
+                            // Redirect back to listing with category filter after successful ICS creation
+                            $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
+                            if (ob_get_level() > 0) { ob_end_clean(); }
+                            header('Location: semi_expendible.php' . $redirectCategory);
+                            exit();
                         } else {
                             $icsHdr->close();
                         }
+                        }
                     }
                 }
-                // Redirect back to listing with category filter
-                $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
-                if (ob_get_level() > 0) { ob_end_clean(); }
-                header('Location: semi_expendible.php' . $redirectCategory);
-                exit();
+                
+                // Only redirect if no error occurred and no ICS was needed
+                if (empty($error)) {
+                    $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
+                    if (ob_get_level() > 0) { ob_end_clean(); }
+                    header('Location: semi_expendible.php' . $redirectCategory);
+                    exit();
+                }
             } else {
                 $error = "Failed to add item: " . $stmt->error;
                 $stmt->close();
@@ -328,14 +391,21 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <input type="date" id="date" name="date" value="<?php echo $_POST['date'] ?? date('Y-m-d'); ?>" required>
                     </div>
                     <div class="form-group">
+                        <label for="ics_rrsp_no">ICS/RRSP No.</label>
+                        <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" 
+                               value="<?php echo $_POST['ics_rrsp_no'] ?? ''; ?>" 
+                               placeholder="e.g., 22-01 (optional, auto-generated if issued)">
+                        <small style="color:#6b7280; font-size:12px;">Optional. Will be auto-generated if Quantity Issued is filled and this is blank.</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="semi_expendable_property_no">Semi-Expendable Property No. <span class="required">*</span></label>
                         <input type="text" id="semi_expendable_property_no" name="semi_expendable_property_no" 
                                value="<?php echo $_POST['semi_expendable_property_no'] ?? ''; ?>" 
                                placeholder="e.g., HV-22-101-01" required>
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
                         <label for="category">Category <span class="required">*</span></label>
                         <select id="category" name="category" required>
