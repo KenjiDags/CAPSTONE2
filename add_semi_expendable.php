@@ -394,8 +394,8 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <label for="ics_rrsp_no">ICS/RRSP No.</label>
                         <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" 
                                value="<?php echo $_POST['ics_rrsp_no'] ?? ''; ?>" 
-                               placeholder="e.g., 22-01 (optional, auto-generated if issued)">
-                        <small style="color:#6b7280; font-size:12px;">Optional. Will be auto-generated if Quantity Issued is filled and this is blank.</small>
+                               placeholder="e.g., 22-01 (optional)">
+                        
                     </div>
                 </div>
 

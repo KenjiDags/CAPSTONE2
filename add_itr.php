@@ -381,7 +381,7 @@ try {
       const dt = new Date(d.replace(/-/g,'/'));
       const mm = String((dt.getMonth()+1)||<?= (int)date('m') ?>).padStart(2,'0');
       const yy = String(dt.getFullYear()||<?= (int)date('Y') ?>);
-      const composite = serial + '-' + mm + '-' + yy;
+      const composite = yy + '-' + mm + '-' + serial;
       document.getElementById('itr_month').value = mm;
       document.getElementById('itr_year').value = yy;
       document.getElementById('itr_no_preview').textContent = composite;

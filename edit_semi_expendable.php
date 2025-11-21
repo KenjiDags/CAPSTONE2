@@ -452,7 +452,7 @@ if (!$item && empty($error)) {
                         <div class="form-group">
                             <label for="office_officer_issued">Office/Officer Issued</label>
                             <input type="text" id="office_officer_issued" name="office_officer_issued" 
-                                   value="<?php echo htmlspecialchars($_POST['office_officer_issued'] ?? $item['office_officer_issued']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_issued'] ?? $item['office_officer_issued'] ?? ''); ?>">
                         </div>
                     </div>
                     
@@ -460,12 +460,12 @@ if (!$item && empty($error)) {
                         <div class="form-group">
                             <label for="quantity_returned">Quantity Returned</label>
                             <input type="number" id="quantity_returned" name="quantity_returned" min="0"
-                                   value="<?php echo htmlspecialchars($_POST['quantity_returned'] ?? $item['quantity_returned']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['quantity_returned'] ?? $item['quantity_returned'] ?? '0'); ?>">
                         </div>
                         <div class="form-group">
                             <label for="office_officer_returned">Office/Officer Returned</label>
                             <input type="text" id="office_officer_returned" name="office_officer_returned" 
-                                   value="<?php echo htmlspecialchars($_POST['office_officer_returned'] ?? $item['office_officer_returned']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_returned'] ?? $item['office_officer_returned'] ?? ''); ?>">
                         </div>
                     </div>
 
@@ -478,7 +478,7 @@ if (!$item && empty($error)) {
                         <div class="form-group">
                             <label for="office_officer_reissued">Office/Officer Re-issued</label>
                             <input type="text" id="office_officer_reissued" name="office_officer_reissued" 
-                                   value="<?php echo htmlspecialchars($_POST['office_officer_reissued'] ?? $item['office_officer_reissued']); ?>">
+                                   value="<?php echo htmlspecialchars($_POST['office_officer_reissued'] ?? $item['office_officer_reissued'] ?? ''); ?>">
                         </div>
                     </div>
 
@@ -497,7 +497,7 @@ if (!$item && empty($error)) {
 
                     <div class="form-group">
                         <label for="remarks">Remarks</label>
-                        <textarea id="remarks" name="remarks"><?php echo htmlspecialchars($_POST['remarks'] ?? $item['remarks']); ?></textarea>
+                        <textarea id="remarks" name="remarks"><?php echo htmlspecialchars($_POST['remarks'] ?? $item['remarks'] ?? ''); ?></textarea>
                     </div>
 
                     <div style="margin-top: 30px;">
