@@ -206,12 +206,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 $histPost->close();
             }
 
-            // 1) Update ICS item description and useful life for this property number
+            // 1) Update ICS item with ALL semi-expendable changes: description, useful life, quantity, unit_cost, total_cost, and unit
             $newPropNo = (string)$p_property_no;
             $newDesc = (string)$p_item_desc;
             $newLife = (string)$p_useful_life; // ics_items stores useful life as text
-            if ($u1 = $conn->prepare("UPDATE ics_items SET description = ?, estimated_useful_life = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
-                $u1->bind_param("ssss", $newDesc, $newLife, $newPropNo, $newPropNo);
+            $newUnit = (string)$p_unit;
+            $newQuantity = (float)$p_qty_issued_out; // Use the issued quantity
+            $newUnitCost = (float)$p_unit_amount;
+            $newTotalCost = round($newQuantity * $newUnitCost, 2);
+            
+            if ($u1 = $conn->prepare("UPDATE ics_items SET description = ?, estimated_useful_life = ?, unit = ?, quantity = ?, unit_cost = ?, total_cost = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
+                $u1->bind_param("sssdddss", $newDesc, $newLife, $newUnit, $newQuantity, $newUnitCost, $newTotalCost, $newPropNo, $newPropNo);
                 @ $u1->execute();
                 $u1->close();
             }
@@ -223,15 +228,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                     $u2->bind_param("ssss", $newPropNo, $newPropNo, $oldPropNo, $oldPropNo);
                     @ $u2->execute();
                     $u2->close();
-                }
-            }
-
-            // 3) Update ICS item unit to stay consistent with semi-expendable (optional)
-            if ($p_unit !== '') {
-                if ($u3 = $conn->prepare("UPDATE ics_items SET unit = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
-                    $u3->bind_param("sss", $p_unit, $newPropNo, $newPropNo);
-                    @ $u3->execute();
-                    $u3->close();
                 }
             }
 
@@ -519,17 +515,19 @@ if (!$item && empty($error)) {
         const iEl = document.getElementById('quantity_issued_out');
         const rEl = document.getElementById('quantity_reissued');
         const dEl = document.getElementById('quantity_disposed');
+        const retEl = document.getElementById('quantity_returned');
         const bEl = document.getElementById('quantity_balance');
 
         const quantity = parseInt(qEl?.value) || 0;
         let issuedOut = parseInt(iEl?.value) || 0;
         let reissued  = parseInt(rEl?.value) || 0;
         let disposed  = parseInt(dEl?.value) || 0;
+        let returned  = parseInt(retEl?.value) || 0;
 
         // Only enforce lock if the PREVIOUS (DB) balance was already zero
         const locked = !!window.PREV_BALANCE_ZERO;
         if (locked) {
-            [{el:iEl},{el:rEl},{el:dEl}].forEach(({el}) => {
+            [{el:iEl},{el:rEl},{el:dEl},{el:retEl}].forEach(({el}) => {
                 if (!el) return;
                 const maxVal = el.dataset.original ? parseInt(el.dataset.original) : null;
                 if (maxVal !== null && !Number.isNaN(maxVal)) {
@@ -543,12 +541,13 @@ if (!$item && empty($error)) {
             issuedOut = parseInt(iEl?.value) || 0;
             reissued  = parseInt(rEl?.value) || 0;
             disposed  = parseInt(dEl?.value) || 0;
+            returned  = parseInt(retEl?.value) || 0;
         } else {
             // No lock: ensure fields are free to change
-            [iEl, rEl, dEl].forEach(el => { if (el) { el.removeAttribute('max'); el.removeAttribute('title'); } });
+            [iEl, rEl, dEl, retEl].forEach(el => { if (el) { el.removeAttribute('max'); el.removeAttribute('title'); } });
         }
 
-        // Enforce that issuedOut + reissued + disposed cannot exceed quantity
+        // Enforce that issuedOut + reissued + disposed - returned cannot exceed quantity
         let total = issuedOut + reissued + disposed;
         if (!locked && total > quantity) {
             const last = ev && ev.target ? ev.target.id : '';
@@ -562,12 +561,14 @@ if (!$item && empty($error)) {
             // Prefer clamping the field being edited; fallback to issuedOut
             if (last === 'quantity_reissued') clampField(rEl);
             else if (last === 'quantity_disposed') clampField(dEl);
+            else if (last === 'quantity_returned') clampField(retEl);
             else clampField(iEl);
             // Recompute after clamping
             issuedOut = parseInt(iEl?.value) || 0;
             reissued  = parseInt(rEl?.value) || 0;
             disposed  = parseInt(dEl?.value) || 0;
-            total = issuedOut + reissued + disposed;
+            returned  = parseInt(retEl?.value) || 0;
+            total = issuedOut + reissued + disposed - returned;
         }
 
         const balance = quantity - total;
@@ -576,7 +577,7 @@ if (!$item && empty($error)) {
         // If balance hits 0 during this session (and previous balance wasn't zero), lock further increases at current values
         if (!locked) {
             const atZero = Math.max(0, balance) === 0;
-            [iEl, rEl, dEl].forEach(el => {
+            [iEl, rEl, dEl, retEl].forEach(el => {
                 if (!el) return;
                 if (atZero) {
                     const cur = parseInt(el.value) || 0;

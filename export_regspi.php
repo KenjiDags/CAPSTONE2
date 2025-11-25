@@ -24,12 +24,39 @@ $sql = "
         0 AS disposed_qty1,
         0 AS disposed_qty2,
         COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-        '' AS remarks
+        '' AS remarks,
+        0 AS row_type
     FROM ics i
     INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
     LEFT JOIN semi_expendable_property sep 
         ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
-    WHERE ii.quantity > 0";
+    WHERE ii.quantity > 0
+
+    UNION ALL
+
+    SELECT
+        r.date_prepared AS date,
+        r.rrsp_no AS ics_rrsp_no,
+        rii.ics_no AS property_no,
+        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, rii.item_description) AS item_description,
+        COALESCE(sep.estimated_useful_life, '') AS useful_life,
+        0 AS issued_qty,
+        '' AS issued_office,
+        rii.quantity AS returned_qty,
+        r.returned_by AS returned_office,
+        0 AS reissued_qty,
+        '' AS reissued_office,
+        0 AS disposed_qty1,
+        0 AS disposed_qty2,
+        COALESCE(sep.amount, rii.unit_cost) * rii.quantity AS amount_total,
+        r.remarks AS remarks,
+        1 AS row_type
+    FROM rrsp r
+    INNER JOIN rrsp_items rii ON rii.rrsp_id = r.rrsp_id
+    LEFT JOIN semi_expendable_property sep 
+        ON sep.semi_expendable_property_no = rii.ics_no COLLATE utf8mb4_general_ci
+    WHERE rii.quantity > 0
+";
 
 $binds = [];
 $types = '';
@@ -38,7 +65,7 @@ if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property',
     $binds[] = $selected_category;
     $types .= 's';
 }
-$sql .= " ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
+$sql .= " ORDER BY STR_TO_DATE(date, '%Y-%m-%d') ASC, row_type ASC, ics_rrsp_no ASC";
 
 if (!empty($binds)) {
     if ($stmt = $conn->prepare($sql)) {
@@ -206,16 +233,26 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                             <td contenteditable="true"><?php echo h($r['property_no']); ?></td>
                             <td class="text-left" contenteditable="true"><?php echo h($r['item_description']); ?></td>
                             <td contenteditable="true"><?php echo h($r['useful_life']); ?></td>
-                            <td contenteditable="true"><?php echo number_format((float)$r['issued_qty']); ?></td>
-                            <td class="text-left" contenteditable="true"><?php echo h($r['issued_office']); ?></td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true"></td>
+                            <?php if ((float)$r['issued_qty'] > 0): ?>
+                                <td contenteditable="true"><?php echo number_format((float)$r['issued_qty']); ?></td>
+                                <td class="text-left" contenteditable="true"><?php echo h($r['issued_office']); ?></td>
+                            <?php else: ?>
+                                <td contenteditable="true"></td>
+                                <td class="text-left" contenteditable="true"></td>
+                            <?php endif; ?>
+                            <?php if ((float)$r['returned_qty'] > 0): ?>
+                                <td contenteditable="true"><?php echo number_format((float)$r['returned_qty']); ?></td>
+                                <td class="text-left" contenteditable="true"><?php echo h($r['returned_office']); ?></td>
+                            <?php else: ?>
+                                <td contenteditable="true"></td>
+                                <td class="text-left" contenteditable="true"></td>
+                            <?php endif; ?>
                             <td contenteditable="true"></td>
                             <td contenteditable="true"></td>
                             <td contenteditable="true"></td>
                             <td contenteditable="true"></td>
                             <td class="text-right" contenteditable="true"><?php echo number_format((float)$r['amount_total'], 2); ?></td>
-                            <td contenteditable="true"></td>
+                            <td contenteditable="true"><?php echo h($r['remarks']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

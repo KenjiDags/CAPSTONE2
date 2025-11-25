@@ -36,16 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 
 // Handle submission (standard form POST)
 if($_SERVER['REQUEST_METHOD']==='POST'){
-  if (ob_get_length()) { ob_clean(); } // Clear any output buffer if present
+  if (ob_get_length()) { ob_clean(); }
   header('Content-Type: application/json');
   try {
     $rrsp_no = trim($_POST['rrsp_no'] ?? '');
-    // Generate RRSP number in format YYYY-MM-SSSS if not provided
     $date_prepared = $_POST['date_prepared'] ?? date('Y-m-d');
     if ($rrsp_no === '') {
       $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
     } else {
-      // Ensure prefix matches selected month/year; if not, recompute
       $ymFromDate = date('Y-m', strtotime($date_prepared));
       if (strpos($rrsp_no, $ymFromDate . '-') !== 0) {
         $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
@@ -61,37 +59,131 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $items_json = $_POST['items_json'] ?? '[]';
     $items = json_decode($items_json,true) ?: [];
     if($rrsp_no===''){ echo json_encode(['success'=>false,'message'=>'RRSP number required']); exit; }
-  ensure_rrsp_history($conn); // make sure history table exists
-  if($stmt=$conn->prepare("INSERT INTO rrsp (rrsp_no,date_prepared,entity_name,fund_cluster,returned_by,received_by,returned_date,received_date,remarks) VALUES (?,?,?,?,?,?,?,?,?)")){
-    $stmt->bind_param('sssssssss',$rrsp_no,$date_prepared,$entity,$fund,$returned_by,$received_by,$returned_date,$received_date,$remarks);
-    if(!$stmt->execute()){ echo json_encode(['success'=>false,'message'=>'Failed to save RRSP header']); exit; }
-    $rrsp_id = $stmt->insert_id; $stmt->close();
-    if(!empty($items)){
-      if($ist=$conn->prepare("INSERT INTO rrsp_items (rrsp_id,item_description,quantity,ics_no,end_user,item_remarks,unit_cost,total_amount) VALUES (?,?,?,?,?,?,?,?)")){
-        foreach($items as $it){
-          $desc=trim($it['description']??'');
-          $qty=(int)($it['quantity']??0);
-          $ics=trim($it['ics_no']??'');
-          $end=trim($it['end_user']??'');
-          $iremarks=trim($it['remarks']??'');
-          $uc=(float)($it['unit_cost']??0); $tot=$qty*$uc;
-          $ist->bind_param('isisssdd',$rrsp_id,$desc,$qty,$ics,$end,$iremarks,$uc,$tot);
-          if($ist->execute()){
-            $rrsp_item_id = $ist->insert_id;
-            // Log to rrsp_history
-            $hStmt = $conn->prepare("INSERT INTO rrsp_history (rrsp_id, rrsp_item_id, ics_no, item_description, quantity, unit_cost, total_amount, end_user, item_remarks) VALUES (?,?,?,?,?,?,?,?,?)");
-            if($hStmt){
-              $hStmt->bind_param('iissiddds',$rrsp_id,$rrsp_item_id,$ics,$desc,$qty,$uc,$tot,$end,$iremarks);
-              $hStmt->execute();
-              $hStmt->close();
+    ensure_rrsp_history($conn);
+    if($stmt=$conn->prepare("INSERT INTO rrsp (rrsp_no,date_prepared,entity_name,fund_cluster,returned_by,received_by,returned_date,received_date,remarks) VALUES (?,?,?,?,?,?,?,?,?)")){
+      $stmt->bind_param('sssssssss',$rrsp_no,$date_prepared,$entity,$fund,$returned_by,$received_by,$returned_date,$received_date,$remarks);
+      if(!$stmt->execute()){ echo json_encode(['success'=>false,'message'=>'Failed to save RRSP header']); exit; }
+      $rrsp_id = $stmt->insert_id; $stmt->close();
+      if(!empty($items)){
+        if($ist=$conn->prepare("INSERT INTO rrsp_items (rrsp_id,item_description,quantity,ics_no,end_user,item_remarks,unit_cost,total_amount) VALUES (?,?,?,?,?,?,?,?)")){
+          foreach($items as $it){
+            $desc=trim($it['description']??'');
+            $qty=(int)($it['quantity']??0);
+            $ics=trim($it['ics_no']??'');
+            $end=trim($it['end_user']??'');
+            $iremarks=trim($it['remarks']??'');
+            $uc=(float)($it['unit_cost']??0); $tot=$qty*$uc;
+            $ist->bind_param('isisssdd',$rrsp_id,$desc,$qty,$ics,$end,$iremarks,$uc,$tot);
+            if($ist->execute()){
+              $rrsp_item_id = $ist->insert_id;
+              // Log to rrsp_history
+              $hStmt = $conn->prepare("INSERT INTO rrsp_history (rrsp_id, rrsp_item_id, ics_no, item_description, quantity, unit_cost, total_amount, end_user, item_remarks) VALUES (?,?,?,?,?,?,?,?,?)");
+              if($hStmt){
+                $hStmt->bind_param('iissiddds',$rrsp_id,$rrsp_item_id,$ics,$desc,$qty,$uc,$tot,$end,$iremarks);
+                $hStmt->execute();
+                $hStmt->close();
+              } 
+              // --- ICS deduction and SEMI update logic (match ITR logic) ---
+              if ($ics !== '' && $qty > 0) {
+                // Deduct returned qty from ICS item (lookup by ics_no or stock_number)
+                $icsItemQ = $conn->prepare("SELECT ii.ics_item_id, ii.quantity, ii.stock_number FROM ics_items ii INNER JOIN ics i ON i.ics_id = ii.ics_id WHERE i.ics_no = ? OR ii.stock_number = ? LIMIT 1");
+                $icsItemQ->bind_param('ss', $ics, $ics);
+                $icsItemQ->execute();
+                $icsItemRes = $icsItemQ->get_result();
+                $icsItem = $icsItemRes && $icsItemRes->num_rows > 0 ? $icsItemRes->fetch_assoc() : null;
+                $icsItemQ->close();
+                if ($icsItem) {
+                  $ics_item_id = (int)$icsItem['ics_item_id'];
+                  $ics_qty = (float)$icsItem['quantity'];
+                    $new_qty = max(0, $ics_qty - $qty);
+                  $u = $conn->prepare("UPDATE ics_items SET quantity = ? WHERE ics_item_id = ?");
+                  $u->bind_param('di', $new_qty, $ics_item_id);
+                  $u->execute();
+                  $u->close();
+
+                  // Log to ics_history for ICS export (Returned)
+                  if (function_exists('ensure_ics_history')) { ensure_ics_history($conn); }
+                  $icsHistoryStmt = $conn->prepare("INSERT INTO ics_history (ics_id, ics_item_id, stock_number, description, unit, quantity_before, quantity_after, quantity_change, unit_cost, total_cost_before, total_cost_after, reference_type, reference_id, reference_no, reference_details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                  $ics_id_val = null;
+                  $unit = null;
+                  $desc = $desc ?? ($icsItem['description'] ?? '');
+                  // Fetch ics_id and unit if not present
+                  $icsMetaQ = $conn->prepare("SELECT ics_id, unit FROM ics_items WHERE ics_item_id = ? LIMIT 1");
+                  $icsMetaQ->bind_param('i', $ics_item_id);
+                  $icsMetaQ->execute();
+                  $icsMetaRes = $icsMetaQ->get_result();
+                  if ($icsMetaRes && $icsMetaRes->num_rows > 0) {
+                    $icsMeta = $icsMetaRes->fetch_assoc();
+                    $ics_id_val = (int)$icsMeta['ics_id'];
+                    $unit = $icsMeta['unit'] ?? '';
+                  } 
+                  $icsMetaQ->close();
+                  $quantity_before = $ics_qty;
+                  $quantity_after = $new_qty;
+                  $quantity_change = $quantity_after - $quantity_before;
+                  $unit_cost = $uc;
+                  $total_cost_before = $ics_qty * $uc;
+                  $total_cost_after = $new_qty * $uc;
+                  $reference_type = 'RRSP';
+                  $reference_id = $rrsp_id;
+                  $reference_no = $rrsp_no;
+                  $reference_details = json_encode(['returned_qty'=>$qty,'end_user'=>$end,'remarks'=>$iremarks]);
+                  $descReturned = $desc . ' ($Returned)';
+                  $icsHistoryStmt->bind_param(
+                    'iisssdddddsisss',
+                    $ics_id_val,
+                    $ics_item_id,
+                    $icsItem['stock_number'],
+                    $descReturned,
+                    $unit,
+                    $quantity_before,
+                    $quantity_after,
+                    $quantity_change,
+                    $unit_cost,
+                    $total_cost_before,
+                    $total_cost_after,
+                    $reference_type,
+                    $reference_id,
+                    $reference_no,
+                    $reference_details
+                  );
+                  $icsHistoryStmt->execute();
+                  $icsHistoryStmt->close();
+                  // Add returned qty to semi_expendable_property
+                  $semiQ = $conn->prepare("SELECT id, quantity_returned, quantity_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+                  $semiQ->bind_param('s', $icsItem['stock_number']);
+                  $semiQ->execute();
+                  $semiRes = $semiQ->get_result();
+                  $semi = $semiRes && $semiRes->num_rows > 0 ? $semiRes->fetch_assoc() : null;
+                  $semiQ->close();
+                  if ($semi) {
+                    $semi_id = (int)$semi['id'];
+                    $new_returned = (int)$semi['quantity_returned'] + $qty; // Increment returned
+                    $new_issued = max(0, (int)$semi['quantity_issued'] - $qty); // Decrement issued, never negative
+                    $u2 = $conn->prepare("UPDATE semi_expendable_property SET quantity_returned = ?, quantity_issued = ? WHERE id = ?");
+                    $u2->bind_param('iii', $new_returned,  $new_issued, $semi_id);
+                    $u2->execute();
+                    $u2->close();
+                    // Log to semi_expendable_history (include all relevant fields)
+                    if (function_exists('ensure_semi_expendable_history')) { ensure_semi_expendable_history($conn); }
+                    $office_officer_returned = $end;
+                    $amount = isset($uc) ? $uc : 0.0;
+                    $amount_total = $qty * $amount;
+                    $h2 = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity_returned, remarks, office_officer_returned, amount, amount_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                    $h2->bind_param('ississdd', $semi_id, $date_prepared, $rrsp_no, $qty, $iremarks, $office_officer_returned, $amount, $amount_total);
+                    $h2->execute();
+                    $h2->close();
+                  }
+                }
+              }
+              // --- END ICS/SEMI logic ---
             }
           }
+          $ist->close();
         }
-        $ist->close();
       }
-    }
-    echo json_encode(['success'=>true,'rrsp_id'=>$rrsp_id]); exit;
-  } else { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
+      echo json_encode(['success'=>true,'rrsp_id'=>$rrsp_id]); exit;
+    } else { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
   } catch(Exception $e) {
     echo json_encode(['success'=>false,'message'=>'Error: '.$e->getMessage()]); exit;
   }
@@ -365,3 +457,4 @@ document.addEventListener('DOMContentLoaded', attachQtyHandlersRRSP);
 </script>
 </body>
 </html>
+

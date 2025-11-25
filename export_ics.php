@@ -14,6 +14,10 @@ function formatItrTransferNote($transferQty, $toAccountable, $transferType, $tra
     if ($typeLabel === '' && $transferOther !== '') { $typeLabel = $transferOther; }
     if ($typeLabel !== '' && strcasecmp($typeLabel, 'Others') === 0 && $transferOther !== '') { $typeLabel = $transferOther; }
 
+    // If this is a return, use the new format
+   
+
+    // Otherwise, it's a transfer (remove '(Transferred)')
     $note = ($qty === 1) ? '1 unit transferred' : ($qty . ' units transferred');
     if ($toAccountable !== '') {
         $note .= ' to ' . $toAccountable;
@@ -537,8 +541,8 @@ if ($itrHistRes && $itrHistRes->num_rows > 0) {
                                         // If still empty, provide minimal note
                                         if ($noteText === '') {
                                             $noteText = ($expected == 1)
-                                                ? '1 unit transferred'
-                                                : (number_format($expected, (fmod($expected,1.0)==0.0?0:2)) . ' units transferred');
+                                                ? '1 unit returned'
+                                                : (number_format($expected, (fmod($expected,1.0)==0.0?0:2)) . ' units returned');
                                         }
                                     }
                                 }

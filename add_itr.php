@@ -2,39 +2,37 @@
 require 'config.php';
 require 'functions.php';
 
-// Compute initial next ITR serial on the server to ensure the page shows the correct next number even if JS fetch is blocked/cached
-$todayY = date('Y');
-$todayM = date('m');
-$initial_serial = '0001';
-try {
-  $stmt = $conn->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(itr_no, '-', 1) AS UNSIGNED)) AS max_serial FROM itr WHERE itr_no LIKE CONCAT('%-', ?, '-', ?)");
-  if ($stmt) {
-    $stmt->bind_param('ss', $todayM, $todayY);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $max = 0;
-    if ($res) { $row = $res->fetch_assoc(); $max = isset($row['max_serial']) ? (int)$row['max_serial'] : 0; }
-    $stmt->close();
-    if ($max > 0) { $initial_serial = str_pad((string)($max + 1), 4, '0', STR_PAD_LEFT); }
-  }
-  if ($initial_serial === '0001') {
-    $suffix = '-' . $todayM . '-' . $todayY;
-    $stmt2 = $conn->prepare("SELECT itr_no FROM itr WHERE itr_no LIKE CONCAT('%', ?) ORDER BY itr_no DESC LIMIT 1");
-    if ($stmt2) {
-      $stmt2->bind_param('s', $suffix);
-      $stmt2->execute();
-      $r2 = $stmt2->get_result();
-      if ($r2 && $r2->num_rows > 0) {
-        $row2 = $r2->fetch_assoc();
-        if (preg_match('/^(\\d{1,4})-/', $row2['itr_no'], $m)) {
-          $cand = (int)$m[1];
-          if ($cand > 0) { $initial_serial = str_pad((string)($cand + 1), 4, '0', STR_PAD_LEFT); }
+// Helper: compute next ITR number for a given prepared date (YYYY-MM-SSSS)
+function get_next_itr_no(mysqli $conn, string $date_prepared): string {
+  $ts = strtotime($date_prepared ?: date('Y-m-d'));
+  $ym = date('Y-m', $ts);
+  $nextSerial = 1;
+  if ($stmt = $conn->prepare("SELECT MAX(itr_no) AS max_no FROM itr WHERE itr_no LIKE CONCAT(?, '-%')")) {
+    $stmt->bind_param('s', $ym);
+    if ($stmt->execute()) {
+      $res = $stmt->get_result();
+      if ($res && ($row = $res->fetch_assoc())) {
+        $maxNo = (string)($row['max_no'] ?? '');
+        if ($maxNo !== '' && preg_match('/^'.preg_quote($ym, '/').'-(\\d{4})$/', $maxNo, $m)) {
+          $nextSerial = (int)$m[1] + 1;
         }
       }
-      $stmt2->close();
+      if ($res) { $res->close(); }
     }
+    $stmt->close();
   }
-} catch (Throwable $e) { /* ignore */ }
+  $serialStr = str_pad((string)$nextSerial, 4, '0', STR_PAD_LEFT);
+  return $ym . '-' . $serialStr;
+}
+
+// Lightweight endpoint to fetch next ITR no via AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'next_itr_no') {
+  header('Content-Type: application/json');
+  $dateParam = isset($_GET['date']) ? (string)$_GET['date'] : date('Y-m-d');
+  $next = get_next_itr_no($conn, $dateParam);
+  echo json_encode(['next_itr_no' => $next]);
+  exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -121,16 +119,12 @@ try {
       </div>
       <div class="form-grid">
         <div class="form-group">
-          <label>ITR No. (Serial-Month-Year):</label>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <input type="text" id="itr_serial" value="<?= htmlspecialchars($initial_serial) ?>" style="max-width:110px;" readonly />
-            <span>-</span>
-            <input type="text" id="itr_month" value="<?= date('m'); ?>" style="max-width:70px;" readonly />
-            <span>-</span>
-            <input type="text" id="itr_year" value="<?= date('Y'); ?>" style="max-width:90px;" readonly />
+      
+          <div class="form-group">
+            <label>ITR No.:</label>
+            <input type="text" id="itr_no" readonly style="background-color: #f5f5f5;">
+            <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
           </div>
-          <small style="display:block;color:#6b7280;margin-top:6px;">Preview: <code id="itr_no_preview"><?= $initial_serial ?>-<?= date('m') ?>-<?= date('Y') ?></code></small>
-          <input type="hidden" id="itr_no" />
         </div>
         <div class="form-group">
           <label>Date:</label>
@@ -256,7 +250,7 @@ try {
     </div>
 
     <div class="actions">
-      <button type="button" onclick="submitITR()"><i class="fas fa-paper-plane"></i> Submit ITR</button>
+      <button type="button" id="submitItrBtn"><i class="fas fa-paper-plane"></i> Submit ITR</button>
       <button type="button" onclick="cancelITR()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
@@ -368,43 +362,24 @@ try {
       }
     }
 
-    function pad4(n){
-      // Accept numeric string or number; output four digits with leading zeros
-      if (n === null || n === undefined) return '0001';
-      const num = parseInt(String(n).replace(/[^0-9]/g,''), 10);
-      const safe = (!isNaN(num) && num > 0) ? num : 1;
-      return String(safe).padStart(4, '0');
-    }
-    function updateItrNoPreview(){
-      const serial = pad4(document.getElementById('itr_serial').value);
-      const d = document.getElementById('itr_date').value || '<?= date('Y-m-d'); ?>';
-      const dt = new Date(d.replace(/-/g,'/'));
-      const mm = String((dt.getMonth()+1)||<?= (int)date('m') ?>).padStart(2,'0');
-      const yy = String(dt.getFullYear()||<?= (int)date('Y') ?>);
-      const composite = yy + '-' + mm + '-' + serial;
-      document.getElementById('itr_month').value = mm;
-      document.getElementById('itr_year').value = yy;
-      document.getElementById('itr_no_preview').textContent = composite;
-      document.getElementById('itr_no').value = composite;
-    }
-    async function refreshSerialForCurrentDate(){
+    // Fetch next ITR number from server based on selected date
+    async function generateITRNo(){
       try {
-        const d = document.getElementById('itr_date').value || '<?= date('Y-m-d'); ?>';
-        const dt = new Date(d.replace(/-/g,'/'));
-        const mm = String((dt.getMonth()+1)||<?= (int)date('m') ?>).padStart(2,'0');
-        const yy = String(dt.getFullYear()||<?= (int)date('Y') ?>);
-        const resp = await fetch(`get_next_itr_serial.php?month=${mm}&year=${yy}&t=${Date.now()}`); // Fetch the next serial
-        const json = await resp.json().catch(()=>({success:false}));
-        if (json && json.success && json.next_serial) {
-          document.getElementById('itr_serial').value = pad4(json.next_serial);
-        } else {
-          document.getElementById('itr_serial').value = pad4(document.getElementById('itr_serial').value||'0001');
+        const dateEl = document.getElementById('itr_date');
+        const dateVal = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().slice(0,10);
+        const res = await fetch('add_itr.php?action=next_itr_no&date=' + encodeURIComponent(dateVal));
+        const j = await res.json();
+        if (j && j.next_itr_no) {
+          document.getElementById('itr_no').value = j.next_itr_no;
+          return;
         }
-      } catch(e) {
-        document.getElementById('itr_serial').value = pad4(document.getElementById('itr_serial').value||'0001');
-      } finally {
-        updateItrNoPreview();
+      } catch (e) {
+        // fall back to simple default if endpoint fails
       }
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      document.getElementById('itr_no').value = `${y}-${m}-0001`;
     }
     function formatSerial(){
       const inp = document.getElementById('itr_serial');
@@ -515,7 +490,7 @@ try {
         return; // focus/scroll handled in validateITR
       }
       const data = collectForm();
-      if (!data.itr_no) { updateItrNoPreview(); data.itr_no = document.getElementById('itr_no').value; }
+      if (!data.itr_no) { data.itr_no = document.getElementById('itr_no').value; }
       try {
         const res = await fetch('submit_itr.php', {
           method: 'POST',
@@ -524,16 +499,16 @@ try {
         });
         const json = await res.json().catch(()=>({success:false,message:'Invalid server response'}));
         if (!res.ok || !json.success) {
-          // Handle duplicate ITR No.: refresh serial and retry once automatically
+          // Handle duplicate ITR No.: regenerate and retry once automatically
           const msg = (json && json.message) ? String(json.message) : '';
           if (!didRetry && (res.status === 409 || /already exists/i.test(msg))) {
-            await refreshSerialForCurrentDate();
+            await generateITRNo();
             return submitITR(true);
           }
           throw new Error(msg || ('Request failed with status ' + res.status));
         }
         try { localStorage.removeItem('itr_draft'); } catch(e){}
-        // No notification on success; just redirect to ITR list
+        // Redirect to ITR list after successful submission
         window.location.href = 'itr.php';
       } catch (err) {
         alert('Failed to submit ITR: ' + (err.message || err));
@@ -587,6 +562,14 @@ try {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Prevent default form submission if button is inside a form
+      const submitBtn = document.getElementById('submitItrBtn');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', function(event) {
+          event.preventDefault();
+          submitITR();
+        });
+      }
       // Try to restore draft, but do NOT exit early if none
       try {
         const raw = localStorage.getItem('itr_draft');
@@ -598,15 +581,7 @@ try {
             document.getElementById('from_accountable').value = d.from_accountable || '';
             document.getElementById('to_accountable').value = d.to_accountable || '';
             if (d.itr_no) {
-              // Try to split saved ITR No. into parts (1 to 4-digit serial)
-              const m = String(d.itr_no).match(/^(\d{1,4})-(\d{2})-(\d{4})$/);
-              if (m) {
-                document.getElementById('itr_serial').value = pad4(m[1]);
-                document.getElementById('itr_month').value = m[2];
-                document.getElementById('itr_year').value = m[3];
-              }
               document.getElementById('itr_no').value = d.itr_no;
-              document.getElementById('itr_no_preview').textContent = d.itr_no;
             }
             document.getElementById('itr_date').value = d.itr_date || document.getElementById('itr_date').value;
             if (d.transfer_type) {
@@ -630,14 +605,12 @@ try {
         }
       } catch(e){}
 
-      // Initialize serial and ITR number preview from server
-      refreshSerialForCurrentDate();
+      // Always fetch the latest ITR number on page load
+      generateITRNo();
 
-      // On date change, get next serial for that month/year then update preview
+      // On date change, get next ITR number for that date
       const dt = document.getElementById('itr_date');
-      if (dt) dt.addEventListener('change', () => { refreshSerialForCurrentDate(); });
-      // Serial is read-only; keep value normalized just in case
-      formatSerial();
+      if (dt) dt.addEventListener('change', () => { generateITRNo(); });
       // Setup qty handlers for dynamic amount/balance like ICS
       attachQtyHandlers();
     });
