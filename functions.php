@@ -223,6 +223,58 @@ function ensure_iirusp_history($conn) {
     try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
 }
 
+// Ensure iirusp and iirusp_items tables exist (idempotent)
+function ensure_iirusp_tables($conn) {
+    if (!$conn) { return; }
+    
+    // Create iirusp table
+    $sql = "CREATE TABLE IF NOT EXISTS iirusp (
+        iirusp_id INT AUTO_INCREMENT PRIMARY KEY,
+        iirusp_no VARCHAR(100) NOT NULL UNIQUE,
+        as_at DATE NULL,
+        entity_name VARCHAR(255) NULL,
+        fund_cluster VARCHAR(100) NULL,
+        accountable_officer_name VARCHAR(255) NULL,
+        accountable_officer_designation VARCHAR(255) NULL,
+        accountable_officer_station VARCHAR(255) NULL,
+        requested_by VARCHAR(255) NULL,
+        approved_by VARCHAR(255) NULL,
+        inspection_officer VARCHAR(255) NULL,
+        witness VARCHAR(255) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_iirusp_no (iirusp_no),
+        INDEX idx_as_at (as_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+    
+    // Create iirusp_items table
+    $sql = "CREATE TABLE IF NOT EXISTS iirusp_items (
+        iirusp_item_id INT AUTO_INCREMENT PRIMARY KEY,
+        iirusp_id INT NOT NULL,
+        date_acquired DATE NULL,
+        particulars TEXT NULL,
+        semi_expendable_property_no VARCHAR(100) NULL,
+        quantity DECIMAL(15,4) NOT NULL DEFAULT 0,
+        unit VARCHAR(50) NULL,
+        unit_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        total_cost DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_sale DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_transfer DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_destruction DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+        accumulated_impairment DECIMAL(15,2) NOT NULL DEFAULT 0,
+        carrying_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        remarks TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (iirusp_id) REFERENCES iirusp(iirusp_id) ON DELETE CASCADE,
+        INDEX idx_iirusp_id (iirusp_id),
+        INDEX idx_property_no (semi_expendable_property_no)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+}
+
 /**
  * Check if a column exists on a given table in the current database
  *

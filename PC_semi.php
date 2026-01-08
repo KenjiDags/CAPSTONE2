@@ -129,7 +129,7 @@ require_once 'config.php';
             $where = [];
             if ($category !== '') { $where[] = 'category = ?'; $params[] = $category; $types .= 's'; }
             if ($search !== '') { $where[] = '(item_description LIKE ? OR semi_expendable_property_no LIKE ? OR ics_rrsp_no LIKE ?)'; $like = "%$search%"; $params[] = $like; $params[] = $like; $params[] = $like; $types .= 'sss'; }
-            $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount_total, category, fund_cluster, remarks FROM semi_expendable_property";
+            $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount_total, category, fund_cluster, remarks FROM semi_expendable_property";
             if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
             $sql .= ' ORDER BY date DESC, id DESC';
 
@@ -152,8 +152,8 @@ require_once 'config.php';
                 $propertyNo = $row['semi_expendable_property_no'] ?? '';
                 $txDate = $row['date'] ?? '';
                 $referenceNo = $row['ics_rrsp_no'] ?? '';
-                $receiptQty = (int)($row['quantity_issued'] ?? 0);
-                $issueQty = (int)($row['quantity_reissued'] ?? 0) + (int)($row['quantity_disposed'] ?? 0);
+                $receiptQty = (int)($row['quantity'] ?? 0);
+                $issueQty = (int)($row['quantity_issued'] ?? 0);
                 $balanceQty = (int)($row['quantity_balance'] ?? 0);
                 $amount = (float)($row['amount_total'] ?? 0);
                 echo '<tr>';

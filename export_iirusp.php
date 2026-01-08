@@ -105,19 +105,19 @@ table th { background: #f0f0f0; font-weight: bold; }
         <?php $grandTotal = 0; foreach ($items as $item): $grandTotal += $item['total_cost']; ?>
         <tr>
             <td><?= $item['date_acquired'] ? date('m/d/Y', strtotime($item['date_acquired'])) : '-' ?></td>
-            <td class="text-left"><?= htmlspecialchars($item['particulars']) ?></td>
-            <td><?= htmlspecialchars($item['semi_expendable_property_no']) ?></td>
+            <td class="text-left"><?= htmlspecialchars($item['particulars'] ?? '') ?></td>
+            <td><?= htmlspecialchars($item['semi_expendable_property_no'] ?? '') ?></td>
             <td><?= $item['quantity'] ?></td>
-            <td><?= htmlspecialchars($item['unit']) ?></td>
+            <td><?= htmlspecialchars($item['unit'] ?? '') ?></td>
             <td class="text-right"><?= number_format($item['unit_cost'], 2) ?></td>
             <td class="text-right"><?= number_format($item['total_cost'], 2) ?></td>
             <td class="text-right"><?= number_format($item['accumulated_impairment'], 2) ?></td>
             <td class="text-right"><?= number_format($item['carrying_amount'], 2) ?></td>
-            <td class="text-left"><?= htmlspecialchars($item['remarks']) ?></td>
+            <td class="text-left"><?= htmlspecialchars($item['remarks'] ?? '') ?></td>
             <td class="text-right"><?= $item['disposal_sale'] > 0 ? number_format($item['disposal_sale'], 2) : '-' ?></td>
             <td class="text-right"><?= $item['disposal_transfer'] > 0 ? number_format($item['disposal_transfer'], 2) : '-' ?></td>
             <td class="text-right"><?= $item['disposal_destruction'] > 0 ? number_format($item['disposal_destruction'], 2) : '-' ?></td>
-            <td class="text-left"><?= htmlspecialchars($item['disposal_others']) ?></td>
+            <td class="text-left"><?= htmlspecialchars($item['disposal_others'] ?? '') ?></td>
             <td class="text-right"><?= number_format($item['disposal_total'], 2) ?></td>
         </tr>
         <?php endforeach; ?>
