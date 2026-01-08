@@ -115,10 +115,15 @@ $stmt->close();
       }
     // Remove only 'Pre-ICS Snapshot' rows from export rendering (show Initial Receipt as old data)
     if (!empty($hist_rows)) {
-      $hist_rows = array_values(array_filter($hist_rows, function($hr){
-        $remarks = isset($hr['remarks']) ? trim($hr['remarks']) : '';
-        return strcasecmp($remarks, 'Pre-ICS Snapshot') !== 0;
-      }));
+        $hist_rows = array_values(array_filter($hist_rows, function($hr){
+          $remarks = isset($hr['remarks']) ? trim(strtolower($hr['remarks'])) : '';
+          $ref = isset($hr['ics_rrsp_no']) ? strtolower($hr['ics_rrsp_no']) : '';
+          // Exclude Pre-ICS Snapshot and any RRSP-related rows (by reference, remarks, or typical RRSP fields)
+          $is_rrsp = strpos($ref, 'rrsp') !== false
+            || strpos($remarks, 'rrsp') !== false
+            || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0 && empty($hr['quantity_issued']) && empty($hr['quantity_disposed']) && empty($hr['quantity_reissued']));
+          return strcasecmp($remarks, 'pre-ics snapshot') !== 0 && !$is_rrsp;
+        }));
     }
     ?>
 
@@ -164,22 +169,26 @@ $stmt->close();
                   $h_qtyIssued = (int)($hr['quantity'] ?? ($hr['quantity_issued'] ?? 0));
                   $h_amount = (float)($hr['amount_total'] ?? 0.0);
                   $h_unit = isset($hr['amount']) && $hr['amount'] !== null ? (float)$hr['amount'] : ($h_qtyIssued > 0 ? $h_amount / $h_qtyIssued : 0);
-                  // Issue/Transfer/Disposal should include issued + reissued + disposed
-                  $h_issue = (int)($hr['quantity_issued'] ?? 0)
-                           + (int)($hr['quantity_reissued'] ?? 0)
-                           + (int)($hr['quantity_disposed'] ?? 0);
+                  // Issue/Transfer/Disposal should show only the first non-zero value (no addition)
+                  if ((int)($hr['quantity_disposed'] ?? 0) > 0) {
+                    $h_issue = (int)$hr['quantity_disposed'];
+                  } elseif ((int)($hr['quantity_reissued'] ?? 0) > 0) {
+                    $h_issue = (int)$hr['quantity_reissued'];
+                  } elseif ((int)($hr['quantity_issued'] ?? 0) > 0) {
+                    $h_issue = (int)$hr['quantity_issued'];
+                  } else {
+                    $h_issue = 0;
+                  }
                   // Determine the appropriate office/officer for this history line
                   $rtext = strtolower(trim($hr['remarks'] ?? ''));
                   $h_officer = '';
-                  if (strpos($rtext, 'returned') !== false || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0)) {
-                    $h_officer = $hr['office_officer_returned'] ?? '';
-                  } elseif (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
+                  if (strpos($rtext, 're-issue') !== false || strpos($rtext, 'reissued') !== false || (isset($hr['quantity_reissued']) && (int)$hr['quantity_reissued'] > 0)) {
                     $h_officer = $hr['office_officer_reissued'] ?? '';
                   } elseif (strpos($rtext, 'issued') !== false || (isset($hr['quantity_issued']) && (int)$hr['quantity_issued'] > 0)) {
                     $h_officer = $hr['office_officer_issued'] ?? '';
                   } else {
                     // Fallback to any available value
-                    $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_returned'] ?: ($hr['office_officer_reissued'] ?? ''));
+                    $h_officer = $hr['office_officer_issued'] ?: ($hr['office_officer_reissued'] ?? '');
                   }
                   // Always show Item No. when there is any issuance activity, regardless of officer field
                   $show_item_no = ($h_issue > 0);
@@ -187,14 +196,37 @@ $stmt->close();
             <tr>
               <td><?php echo htmlspecialchars($hr['date'] ?? ''); ?></td>
               <td><?php echo htmlspecialchars($hr['ics_rrsp_no'] ?? ''); ?></td>
-              <td><?php echo $h_qtyIssued ?: ''; ?></td>
-              <td><?php echo $h_qtyIssued ? number_format($h_unit, 2) : ''; ?></td>
-              <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
+              <td><?php echo ($h_issue > 0) ? '' : ($h_qtyIssued ?: ''); ?></td>
+              <td><?php echo ($h_issue > 0) ? '' : ($h_qtyIssued ? number_format($h_unit, 2) : ''); ?></td>
+              <td><?php echo ($h_issue > 0) ? '' : ($h_amount ? number_format($h_amount, 2) : ''); ?></td>
               <td><?php echo $show_item_no ? htmlspecialchars($item['semi_expendable_property_no'] ?? '') : ''; ?></td>
-              <td><?php echo $h_issue ?: ''; ?></td>
+              <td>
+                <?php
+                  // Show only the first non-zero action's quantity for this row (never sum, never add, never overwrite)
+$qty = '';
+if (isset($hr['quantity_issued']) && $hr['quantity_issued'] !== null && $hr['quantity_issued'] !== '' && (int)$hr['quantity_issued'] > 0) {
+  $qty = (int)$hr['quantity_issued'];
+}
+if (isset($hr['quantity_reissued']) && $hr['quantity_reissued'] !== null && $hr['quantity_reissued'] !== '' && (int)$hr['quantity_reissued'] > 0) {
+  $qty = (int)$hr['quantity_reissued'];
+}
+if (isset($hr['quantity_disposed']) && $hr['quantity_disposed'] !== null && $hr['quantity_disposed'] !== '' && (int)$hr['quantity_disposed'] > 0) {
+  $qty = (int)$hr['quantity_disposed'];
+}
+
+echo $qty;
+                ?>
+              </td>
         <td><?php echo htmlspecialchars($h_officer); ?></td>
               <td><?php echo htmlspecialchars($hr['quantity_balance'] ?? ''); ?></td>
-              <td><?php echo $h_amount ? number_format($h_amount, 2) : ''; ?></td>
+              <td>
+                <?php
+                  $balance_qty = isset($hr['quantity_balance']) ? (float)$hr['quantity_balance'] : 0;
+                  $unit_cost = isset($hr['amount']) ? (float)$hr['amount'] : 0;
+                  $amount = $balance_qty * $unit_cost;
+                  echo $amount ? number_format($amount, 2) : '';
+                ?>
+              </td>
               <td><?php 
                     $r = isset($hr['remarks']) ? trim($hr['remarks']) : ''; 
                     echo htmlspecialchars(strcasecmp($r, 'Initial Receipt') === 0 ? '' : $r); 
@@ -211,14 +243,10 @@ $stmt->close();
               $amountTotal = (float)($item['amount_total'] ?? 0);
               $unitCost = isset($item['amount']) && $item['amount'] !== null ? (float)$item['amount'] : ($qtyIssued > 0 ? $amountTotal / $qtyIssued : 0);
               // Include reissued in Issue/Transfer/Disposal summary
-              $qtyIssueTransfer = (int)($item['quantity_issued'] ?? 0)
-                                + (int)($item['quantity_reissued'] ?? 0)
-                                + (int)($item['quantity_disposed'] ?? 0);
+          
               // Choose officer for snapshot
               $c_officer = '';
-              if (!empty($item['office_officer_returned']) || ((int)($item['quantity_returned'] ?? 0)) > 0) {
-                $c_officer = $item['office_officer_returned'] ?? '';
-              } elseif (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
+              if (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
                 $c_officer = $item['office_officer_reissued'] ?? '';
               } else {
                 $c_officer = $item['office_officer_issued'] ?? '';
@@ -229,14 +257,36 @@ $stmt->close();
               <tr>
                 <td><?php echo htmlspecialchars($item['date'] ?? ''); ?></td>
                 <td><?php echo htmlspecialchars($item['ics_rrsp_no'] ?? ''); ?></td>
-                <td><?php echo $qtyIssued ?: ''; ?></td>
-                <td><?php echo $qtyIssued ? number_format($unitCost, 2) : ''; ?></td>
-                <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
+                <td><?php echo ($qtyIssueTransfer > 0) ? '' : ($qtyIssued ?: ''); ?></td>
+                <td><?php echo ($qtyIssueTransfer > 0) ? '' : ($qtyIssued ? number_format($unitCost, 2) : ''); ?></td>
+                <td><?php echo ($qtyIssueTransfer > 0) ? '' : ($amountTotal ? number_format($amountTotal, 2) : ''); ?></td>
                 <td><?php echo $show_item_no_c ? htmlspecialchars($item['semi_expendable_property_no'] ?? '') : ''; ?></td>
-                <td><?php echo $qtyIssueTransfer ?: ''; ?></td>
+                <td>
+                  <?php
+                    // Only show the raw value for the first non-zero field (no addition)
+                    if ((int)($item['quantity_issued'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_issued'];
+                    } elseif ((int)($item['quantity_reissued'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_reissued'];
+                    } elseif ((int)($item['quantity_disposed'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_disposed'];
+                  
+                    } else {
+                        $qtyIssueTransfer = 0;
+                    }
+                    echo $qtyIssueTransfer;
+                  ?>
+                </td>
         <td><?php echo htmlspecialchars($c_officer); ?></td>
                 <td><?php echo htmlspecialchars($item['quantity_balance'] ?? ''); ?></td>
-                <td><?php echo $amountTotal ? number_format($amountTotal, 2) : ''; ?></td>
+                <td>
+                  <?php
+                    $balance_qty = isset($item['quantity_balance']) ? (float)$item['quantity_balance'] : 0;
+                    $unit_cost = isset($item['amount']) ? (float)$item['amount'] : 0;
+                    $amount = $balance_qty * $unit_cost;
+                    echo $amount ? number_format($amount, 2) : '';
+                  ?>
+                </td>
                 <td><?php 
                       $r = isset($item['remarks']) ? trim($item['remarks']) : '';
                       echo htmlspecialchars(strcasecmp($r, 'Initial Receipt') === 0 ? '' : $r);

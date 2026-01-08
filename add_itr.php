@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
       
           <div class="form-group">
             <label>ITR No.:</label>
-            <input type="text" id="itr_no" readonly style="background-color: #f5f5f5;">
+            <input type="text" id="itr_no" required>
             <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
           </div>
         </div>

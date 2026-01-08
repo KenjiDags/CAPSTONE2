@@ -14,7 +14,7 @@ if ($rrsp_id) {
     $i->bind_param('i', $rrsp_id);
     $i->execute();
     $res = $i->get_result();
-    while ($r = $res->fetch_assoc()) { $items[] = $r; }
+    while ($r = $res->fetch_assoc()) { $items[] = $r; } 
     $i->close();
 }
 if (!$rrsp) { echo 'RRSP not found.'; exit; }
@@ -248,7 +248,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         <div class="form-grid">
           <div class="form-group">
             <label>RRSP No.:</label>
-            <input type="text" id="rrsp_no" name="rrsp_no" value="<?= htmlspecialchars($rrsp['rrsp_no']) ?>" readonly style="background-color: #f5f5f5;" />
+            <input type="text" id="rrsp_no" name="rrsp_no" value="<?= htmlspecialchars($rrsp['rrsp_no']) ?>" required />
           </div>
           <div class="form-group">
             <label>Date Prepared:</label>

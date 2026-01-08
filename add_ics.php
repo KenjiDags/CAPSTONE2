@@ -406,7 +406,7 @@ function generateICSNumberSimple($conn) {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>ICS No.:</label>
-                        <input type="text" name="ics_no" value="<?php echo htmlspecialchars($auto_ics_number); ?>" readonly style="background-color: #f5f5f5;">
+                        <input type="text" name="ics_no" value="<?php echo htmlspecialchars($auto_ics_number); ?>" required>
                     </div>
                     <div class="form-group">
                         <label>Date Issued:</label>

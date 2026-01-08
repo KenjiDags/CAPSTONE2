@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Reverse previous issuances in semi table
         foreach ($old_items as $stock_no => $old) {
-            $stmt = $conn->prepare("SELECT id, quantity, quantity_issued, quantity_reissued, quantity_disposed, amount FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+            $stmt = $conn->prepare("SELECT id, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, amount FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
             $stmt->bind_param("s", $stock_no);
             if (!$stmt->execute()) { throw new Exception('Failed to load semi-expendable for reversal: ' . $stmt->error); }
             $row = $stmt->get_result()->fetch_assoc();
@@ -76,10 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($row) {
                 $semi_id = (int)$row['id'];
                 $qty = (int)$row['quantity'];
+                $returned = (int)($row['quantity_returned'] ?? 0);
                 $issued = max(0, (int)$row['quantity_issued'] - (int)$old['qty']);
                 $reissued = (int)$row['quantity_reissued'];
                 $disposed = (int)$row['quantity_disposed'];
-                $balance = max(0, $qty - ($issued + $reissued + $disposed));
+                $balance = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
                 $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ? WHERE id = ?");
                 $u->bind_param("iii", $issued, $balance, $semi_id);
                 if (!$u->execute()) { $u->close(); throw new Exception('Failed to restore semi-expendable stock: ' . $u->error); }
@@ -103,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $serial_no = isset($serial_numbers[$i]) ? $serial_numbers[$i] : '';
 
             if ($issued_qty > 0) {
-                $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
+                $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
                 $stmt->bind_param("s", $stock_no);
                 if (!$stmt->execute()) { throw new Exception('Failed to fetch item data: ' . $stmt->error); }
                 $result = $stmt->get_result();
@@ -111,7 +112,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
 
                 if ($item_data) {
+                    $returned = (float)($item_data['quantity_returned'] ?? 0);
                     $available = (float)$item_data['quantity_balance'];
+                    // Recompute available using returned
+                    $qty = (float)$item_data['quantity'];
+                    $issued = (float)$item_data['quantity_issued'];
+                    $reissued = (float)$item_data['quantity_reissued'];
+                    $disposed = (float)$item_data['quantity_disposed'];
+                    $available = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
                     if ($issued_qty > $available) { $issued_qty = $available; }
                     if ($issued_qty <= 0) { continue; }
                     $unit_cost = (float)$item_data['amount'];
@@ -129,10 +137,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $semi_id = (int)$item_data['id'];
                     $qty = (int)$item_data['quantity'];
+                    $returned = (int)($item_data['quantity_returned'] ?? 0);
                     $issued = (int)$item_data['quantity_issued'] + (int)$issued_qty;
                     $reissued = (int)$item_data['quantity_reissued'];
                     $disposed = (int)$item_data['quantity_disposed'];
-                    $balance = max(0, $qty - ($issued + $reissued + $disposed));
+                    $balance = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
                     $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ?, ics_rrsp_no = ?, office_officer_issued = ?, fund_cluster = ? WHERE id = ?");
                     $u->bind_param("iisssi", $issued, $balance, $ics_no, $received_by, $fund_cluster, $semi_id);
                     if (!$u->execute()) { $u->close(); throw new Exception('Failed to update semi-expendable stock: ' . $u->error); }
@@ -268,7 +277,7 @@ try {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>ICS No.:</label>
-                        <input type="text" name="ics_no" value="<?php echo htmlspecialchars($ics_data['ics_no'] ?? ''); ?>" readonly style="background-color: #f5f5f5;">
+                        <input type="text" name="ics_no" value="<?php echo htmlspecialchars($ics_data['ics_no'] ?? ''); ?>" required>
                     </div>
                     <div class="form-group">
                         <label>Date Issued:</label>
@@ -325,9 +334,6 @@ try {
                                         $stock_number = $row['semi_expendable_property_no'];
                                         $existing_item = $ics_items[$stock_number] ?? null;
                                         $qtyOnHand = (int)$row['quantity_balance'];
-                                        // When editing, show available as current balance + already issued in this ICS
-                                        $issuedInThisIcs = $existing_item ? (int)$existing_item['quantity'] : 0;
-                                        $displayQtyOnHand = $qtyOnHand + $issuedInThisIcs;
                                         $unitCost = (float)($row['amount'] ?? 0);
                                         $remarks = $row['remarks'] ?? '';
                                         $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
@@ -342,9 +348,9 @@ try {
                                         echo '<td>' . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
                                         echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
                                         echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
-                                        echo '<td>' . htmlspecialchars($displayQtyOnHand) . '</td>';
+                                        echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
                                         echo '<td>₱' . number_format($unitCost, 2) . '</td>';
-                                        echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($displayQtyOnHand) . '" step="1"></td>';
+                                        echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1"></td>';
                                         echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
                                         echo '</tr>';
                                     }

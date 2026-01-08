@@ -248,7 +248,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     <div class="form-grid">
       <div class="form-group">
         <label>RRSP No.:</label>
-        <input type="text" id="rrsp_no" readonly style="background-color: #f5f5f5;">
+        <input type="text" id="rrsp_no" required>
         <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
       </div>
       <div class="form-group">
@@ -455,6 +455,4 @@ async function submitRRSP(){
 // Initialize qty handlers for dynamic totals
 document.addEventListener('DOMContentLoaded', attachQtyHandlersRRSP);
 </script>
-</body>
-</html>
-
+</b
