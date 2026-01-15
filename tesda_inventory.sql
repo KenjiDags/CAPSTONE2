@@ -2,17 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
-<<<<<<< HEAD
--- Host: 127.0.0.1
--- Generation Time: Aug 12, 2025 at 06:05 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
-=======
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 08, 2025 at 08:35 AM
+-- Generation Time: Nov 19, 2025 at 12:06 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.3.14
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -27,23 +20,11 @@ SET time_zone = "+00:00";
 --
 -- Database: `tesda_inventory`
 --
-
+CREATE DATABASE IF NOT EXISTS tesda_inventory DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE tesda_inventory;
 -- --------------------------------------------------------
 
 --
-<<<<<<< HEAD
--- Table structure for table `inventory_entries`
---
-
-CREATE TABLE `inventory_entries` (
-  `entry_id` int(11) NOT NULL,
-  `item_id` int(11) DEFAULT NULL,
-  `quantity` int(11) NOT NULL,
-  `unit_cost` decimal(10,2) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `is_active` tinyint(1) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 -- Table structure for table `ics`
 --
 
@@ -58,11 +39,42 @@ CREATE TABLE IF NOT EXISTS `ics` (
   `received_by_position` varchar(255) NOT NULL,
   `received_from` varchar(255) NOT NULL,
   `received_from_position` varchar(255) NOT NULL,
+  `remarks` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`ics_id`),
   UNIQUE KEY `unique_ics_no` (`ics_no`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ics_history`
+--
+
+DROP TABLE IF EXISTS `ics_history`;
+CREATE TABLE IF NOT EXISTS `ics_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `ics_id` int NOT NULL,
+  `ics_item_id` int DEFAULT NULL,
+  `stock_number` varchar(100) DEFAULT NULL,
+  `description` text,
+  `unit` varchar(50) DEFAULT NULL,
+  `quantity_before` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `quantity_after` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `quantity_change` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `unit_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_cost_before` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_cost_after` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `reference_type` varchar(50) DEFAULT NULL,
+  `reference_id` int DEFAULT NULL,
+  `reference_no` varchar(100) DEFAULT NULL,
+  `reference_details` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ics_id` (`ics_id`),
+  KEY `idx_ics_item_id` (`ics_item_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -86,7 +98,129 @@ CREATE TABLE IF NOT EXISTS `ics_items` (
   PRIMARY KEY (`ics_item_id`),
   KEY `ics_id` (`ics_id`),
   KEY `idx_stock_number` (`stock_number`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ict_registry`
+--
+
+DROP TABLE IF EXISTS `ict_registry`;
+CREATE TABLE IF NOT EXISTS `ict_registry` (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `date` date NOT NULL,
+  `reference_no` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `property_no` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `useful_life` int NOT NULL DEFAULT '0',
+  `issued_qty` int NOT NULL DEFAULT '0',
+  `issued_officer` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `returned_qty` int NOT NULL DEFAULT '0',
+  `returned_officer` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reissued_qty` int NOT NULL DEFAULT '0',
+  `reissued_officer` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `disposed_qty` int NOT NULL DEFAULT '0',
+  `balance_qty` int NOT NULL DEFAULT '0',
+  `total_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `remarks` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_date` (`date`),
+  KEY `idx_property_no` (`property_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `iirusp`
+--
+
+DROP TABLE IF EXISTS `iirusp`;
+CREATE TABLE IF NOT EXISTS `iirusp` (
+  `iirusp_id` int NOT NULL AUTO_INCREMENT,
+  `iirusp_no` varchar(50) NOT NULL,
+  `as_at` date NOT NULL,
+  `entity_name` varchar(255) NOT NULL,
+  `fund_cluster` varchar(100) DEFAULT NULL,
+  `accountable_officer_name` varchar(255) DEFAULT NULL,
+  `accountable_officer_designation` varchar(255) DEFAULT NULL,
+  `accountable_officer_station` varchar(255) DEFAULT NULL,
+  `requested_by` varchar(255) DEFAULT NULL,
+  `approved_by` varchar(255) DEFAULT NULL,
+  `inspection_officer` varchar(255) DEFAULT NULL,
+  `witness` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`iirusp_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `iirusp_history`
+--
+
+DROP TABLE IF EXISTS `iirusp_history`;
+CREATE TABLE IF NOT EXISTS `iirusp_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `iirusp_id` int NOT NULL,
+  `iirusp_item_id` int DEFAULT NULL,
+  `semi_expendable_property_no` varchar(100) DEFAULT NULL,
+  `particulars` text,
+  `quantity` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `unit` varchar(50) DEFAULT NULL,
+  `unit_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `accumulated_impairment` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `carrying_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `remarks` text,
+  `disposal_sale` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `disposal_transfer` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `disposal_destruction` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `disposal_others` text,
+  `disposal_total` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `appraised_value` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `or_no` varchar(100) DEFAULT NULL,
+  `sales_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_iirusp_id` (`iirusp_id`),
+  KEY `idx_iirusp_item_id` (`iirusp_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `iirusp_items`
+--
+
+DROP TABLE IF EXISTS `iirusp_items`;
+CREATE TABLE IF NOT EXISTS `iirusp_items` (
+  `iirusp_item_id` int NOT NULL AUTO_INCREMENT,
+  `iirusp_id` int NOT NULL,
+  `date_acquired` date DEFAULT NULL,
+  `particulars` text,
+  `semi_expendable_property_no` varchar(100) DEFAULT NULL,
+  `quantity` int DEFAULT '0',
+  `unit` varchar(50) DEFAULT NULL,
+  `unit_cost` decimal(15,2) DEFAULT '0.00',
+  `total_cost` decimal(15,2) DEFAULT '0.00',
+  `accumulated_impairment` decimal(15,2) DEFAULT '0.00',
+  `carrying_amount` decimal(15,2) DEFAULT '0.00',
+  `remarks` text,
+  `disposal_sale` decimal(15,2) DEFAULT '0.00',
+  `disposal_transfer` decimal(15,2) DEFAULT '0.00',
+  `disposal_destruction` decimal(15,2) DEFAULT '0.00',
+  `disposal_others` varchar(255) DEFAULT NULL,
+  `disposal_total` decimal(15,2) DEFAULT '0.00',
+  `appraised_value` decimal(15,2) DEFAULT '0.00',
+  `or_no` varchar(100) DEFAULT NULL,
+  `sales_amount` decimal(15,2) DEFAULT '0.00',
+  PRIMARY KEY (`iirusp_item_id`),
+  KEY `iirusp_id` (`iirusp_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -105,20 +239,13 @@ CREATE TABLE IF NOT EXISTS `inventory_entries` (
   PRIMARY KEY (`entry_id`),
   KEY `item_id` (`item_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=292 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 --
 -- Dumping data for table `inventory_entries`
 --
 
 INSERT INTO `inventory_entries` (`entry_id`, `item_id`, `quantity`, `unit_cost`, `created_at`, `is_active`) VALUES
-<<<<<<< HEAD
-(285, 210, 1, 30.00, '2025-08-12 15:31:34', 1),
-(286, 210, -5, 0.00, '2025-08-12 15:32:01', 1),
-(287, 210, 5, 21.00, '2025-08-12 15:32:49', 1);
-=======
 (291, 4, -1, 0.00, '2025-10-06 02:36:13', 1);
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 -- --------------------------------------------------------
 
@@ -126,24 +253,6 @@ INSERT INTO `inventory_entries` (`entry_id`, `item_id`, `quantity`, `unit_cost`,
 -- Table structure for table `items`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `items` (
-  `item_id` int(11) NOT NULL,
-  `stock_number` varchar(50) NOT NULL,
-  `item_name` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `unit` varchar(50) NOT NULL,
-  `reorder_point` int(11) DEFAULT NULL,
-  `parent_item_id` int(11) DEFAULT NULL,
-  `quantity_on_hand` int(11) DEFAULT 0,
-  `unit_cost` decimal(10,4) DEFAULT NULL,
-  `initial_quantity` int(11) DEFAULT 0,
-  `average_unit_cost` decimal(10,4) DEFAULT NULL,
-  `calculated_unit_cost` decimal(10,4) DEFAULT NULL,
-  `calculated_quantity` int(11) DEFAULT NULL,
-  `iar` varchar(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 DROP TABLE IF EXISTS `items`;
 CREATE TABLE IF NOT EXISTS `items` (
   `item_id` int NOT NULL AUTO_INCREMENT,
@@ -162,104 +271,12 @@ CREATE TABLE IF NOT EXISTS `items` (
   `iar` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`item_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=223 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 --
 -- Dumping data for table `items`
 --
 
 INSERT INTO `items` (`item_id`, `stock_number`, `item_name`, `description`, `unit`, `reorder_point`, `parent_item_id`, `quantity_on_hand`, `unit_cost`, `initial_quantity`, `average_unit_cost`, `calculated_unit_cost`, `calculated_quantity`, `iar`) VALUES
-<<<<<<< HEAD
-(1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 11, NULL, 11, 11.0000, 11, NULL, NULL, NULL, NULL),
-(2, 'A.02.a', 'AIR FRESHINER REFILL', 'Automatic Spray Refill(glade)', 'can', 0, NULL, 0, 10.0000, 0, NULL, NULL, NULL, NULL),
-(3, 'A.03.a', 'ALCOHOL', '70% ethy/isopropyl, with moisturizer, gallon', 'gallon', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(5, 'B.01.a', 'BATTERY', 'dry cell, AA, 4pcs/pack, 1.5V, heavy duty', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(6, 'B.01.b', 'BATTERY', 'dry cell, AAA, 4pcs/pack, 1.5V, heavy duty', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(7, 'B.01.c', 'BATTERY', 'dry cell, 9V1', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(8, 'B.01.d', 'BATTERY', 'Li-on for thermo scanner', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(9, 'B.02.a', 'BLEACH', 'Zonrox', 'gallon', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(10, 'C.01.a', 'CALCULATOR', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(11, 'C.02.a', 'CERTIFICATE HOLDER', 'A4', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(12, 'C.03.a', 'CLIP', 'backfold, large, 41mm, 12pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(13, 'C.03.b', 'CLIP', 'backfold, medium, 25mm, 12pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(14, 'C.03.c', 'CLIP', 'backfold, small, 19mm, 12pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(15, 'C.03.d', 'CLIP', 'backfold, extra small, 15mm, 12pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(16, 'C.04.a', 'CORRECTION TAPE', 'film based', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(17, 'C.05.a', 'CUTTER PAPER', 'blade/knife', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(18, 'C.06.a', 'CLING WRAP', '12inches x 300meters', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(19, 'D.01.a', 'DISHWASHING LIQUID', '500ml', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(20, 'D.02.a', 'DISINFECTANT SPRAY', 'aerosol type', 'can', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(21, 'D.03.a', 'DRAWER LOCK', 'set with key', 'set', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(22, 'E.01.a', 'ENVELOPE EXPANDABLE', 'brown, long', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(23, 'F.01.a', 'FASTENER', 'plastic', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(24, 'F.02.a', 'FOLDER', 'Tag Board, White, 100pcs/pack, Long', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(25, 'F.02.b', 'FOLDER EXPANDING', 'Long, pressboard 100pcs/pack, white & blue', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(26, 'F.03.a', 'FABRIC CONDITIONER', 'Softener', 'gallon', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(27, 'G.01.a', 'GLUE STICK', 'all purpose, 22 grams,', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(28, 'G.02.a', 'GLASS CLEANER', 'with Spray cap 500ml', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(29, 'H.01.a', 'HANDSOAP', 'Liquid, 500ml', 'btl', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(30, 'I.01.a', 'INDEX TAB', '', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(31, 'I.02.a', 'INK', 'Canon, GI 790, Magenta', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(32, 'I.02.b', 'INK', 'Canon, GI 790, Yellow', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(33, 'I.02.c', 'INK', 'Canon, GI 790, Black', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(34, 'I.02.d', 'INK', 'Canon, GI 790, Cyan', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(35, 'I.03.a', 'INK HP', '682, black', 'cart', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(36, 'I.03.b', 'INK HP', '682, colored', 'cart', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(37, 'I.04.a', 'INK', 'Canon, 810 Black', 'cart', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(38, 'I.04.b', 'INK', 'Canon, 811 Colored', 'cart', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(39, 'I.05.a', 'INK', 'Epson 003, Black', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(40, 'I.05.b', 'INK', 'Epson 003, Cyan', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(41, 'I.05.c', 'INK', 'Epson 003, Magenta', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(42, 'I.05.d', 'INK', 'Epson 003, Yellow', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(43, 'I.06.a', 'INSECTICIDE', 'Aerosol type, waterbased, 600ml/can', 'can', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(44, 'K.01.a', 'KITCHEN TOWEL', 'Paper Towel, roll, 2ply', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(45, 'L.01.a', 'LED BULB', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(46, 'N.01.a', 'NOTARIAL SEAL', '', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(47, 'N.02.a', 'NOTE PAD', 'stick on, 2\"x3\"', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(48, 'N.02.b', 'NOTE PAD', 'stick on, 3\"x3\"', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(49, 'N.02.c', 'NOTE PAD', 'stick on, 4\"x3\"', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(50, 'N.02.d', 'NOTE PAD', 'stick on, d3-4 (4\'s -1\"x3\")', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(51, 'P.01.a', 'PAPER', 'Board, A4, white, 180gsm, 100sheets/pack', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(52, 'P.01.b', 'PAPER', 'Board, A4, white, 200gsm, 100sheets/pack', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(53, 'P.01.c', 'PAPER', 'Board, Morocco, A4, 200gsm, 100sheets/pack', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(54, 'P.02.a', 'PAPER CLIP', '50mm, jumbo, vinyl coated', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(55, 'P.02.b', 'PAPER CLIP', '33mm, vinyl coated', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(56, 'P.03.a', 'PAPER', 'Multicopy, PPC, s20, 8.5\" x 13\"', 'ream', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(57, 'P.03.b', 'PAPER', 'Multicopy, PPC, s20, 8.5\" x 14\"', 'ream', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(58, 'P.03.c', 'PAPER', 'Multicopy, PPC, s20, A4', 'ream', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(59, 'P.03.d', 'PAPER', 'Multicopy, PPC, s20, Short', 'ream', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(60, 'P.04.a', 'PEN SIGN', 'gel or liquid ink, retractable, 0.7mm Black/ Blue, 12pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(61, 'p.04.b', 'PEN SIGN', 'Hi-tecpoint V10Grip, 1.0, 12pcs/box, Black/Blue', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(62, 'P.04.c', 'PEN', 'ballpoint, retractable, 0.7mm, Black/Blue', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(63, 'P.04.d', 'PEN', 'Fine, Retractable, 0.5mm', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(64, 'P.05.a', 'POST IT- Sticky Note', '\"Sign Here\", \"Please Sign\",', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(65, 'P.06.a', 'PUSH PINS', '100pcs/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(66, 'R.01.a', 'RECORD BOOK', 'Logbook, 300 pages', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(67, 'R.02.a', 'RULER', 'Steel, 12 inches', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(68, 'R.03.a', 'RAGS', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(69, 'S.01.a', 'STAPLER', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(70, 'S.01.b', 'STAPLE WIRE', 'Standard, 5000 staples/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(71, 'S.01.c', 'STAPLE WIRE', 'Bostitch, 5000 staples/box', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(72, 'S.01.d', 'STAPLER REMOVER', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(73, 'S.02.a', 'SCOURING PAD', 'Dishwashing sponge', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(74, 'T.01.a', 'TAPE', 'clear, 1inch', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(75, 'T.01.b', 'TAPE', 'Cloth, Duct tape', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(76, 'T.01.c', 'TAPE', 'double sided, 1inch', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(77, 'T.01.d', 'TAPE', 'Packing, 2\"', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(78, 'T.01.e', 'TAPE', 'transparent, 2\"', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(79, 'T.01.f', 'TAPE', 'transparent, 3\"', 'roll', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(80, 'T.02.a', 'TAPE', 'refill for Epson LW-K400 printer/label 12mm', 'pcs', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(81, 'T.03.a', 'TAPE DISPENSER', '', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(82, 'T.04.a', 'TOILET BOWL BRUSH', 'round headed brush', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(83, 'T.04.b', 'TOILET BOWL CLEANER', 'Liquid, 900ml', 'bottle', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(84, 'T.05.a', 'TISSUE BATHROOM', 'Green Tea, 180g, 10pcs/pack', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(85, 'T.05.b', 'TISSUE FACIAL', 'Econo Box, 2ply, 200-250pulls', 'box', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(86, 'T.05.c', 'TOILET TISSUE PAPER', '2ply, 12\'s per pack, 1000 sheets per roll', 'pack', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(87, 'U.01.a', 'USB', 'Flash Drive, 64GB', 'pc', NULL, NULL, 0, 0.0000, 0, 0.0000, NULL, NULL, NULL),
-(210, '123', '123', '123', '123', 1, NULL, 5, 21.0000, 4, 23.2500, 23.2500, 5, '1232'),
-(211, 'qweqw', 'qwewqe', 'qweqwe', 'qweqwe', 1, NULL, 10, 10.0000, 10, NULL, NULL, NULL, 'qwe');
-=======
 (3, 'A.03.a', 'ALCOHOL', '70% ethy/isopropyl, with moisturizer, gallon', 'gallon', 0, NULL, 1, 314.5000, 1, 0.0000, NULL, NULL, 'Beg Bal'),
 (4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', 0, NULL, 9, 55.6200, 10, 55.6200, 55.6200, 10, '25-06'),
 (5, 'B.01.a', 'BATTERY', 'dry cell, AA, 4pcs/pack, 1.5V, heavy duty', 'pack', 0, NULL, 7, 77.1500, 7, 0.0000, NULL, NULL, 'Beg Bal'),
@@ -351,7 +368,6 @@ INSERT INTO `items` (`item_id`, `stock_number`, `item_name`, `description`, `uni
 (218, 'S.03.a', 'SEAL', 'Notarial Seal, gold no. 24', 'pack', 0, NULL, 6, 39.0000, 6, 39.0000, 39.0000, 6, 'Beg Bal'),
 (220, 'A.2.a', 'DISINFECTANT ', 'Air Freshener', 'can', 0, NULL, 7, 162.0000, 7, 162.0000, 162.0000, 7, 'Beg Bal'),
 (221, 'A.01.a', 'ARCHFILE   ', 'Tagila Lock size 3\"x9\"x15 blue and black', 'pc', 0, NULL, 23, 129.0000, 23, 129.0000, 129.0000, 23, 'Beg Bal');
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 -- --------------------------------------------------------
 
@@ -359,24 +375,6 @@ INSERT INTO `items` (`item_id`, `stock_number`, `item_name`, `description`, `uni
 -- Table structure for table `item_history`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `item_history` (
-  `history_id` int(11) NOT NULL,
-  `item_id` int(11) NOT NULL,
-  `stock_number` varchar(255) DEFAULT NULL,
-  `item_name` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `unit` varchar(50) DEFAULT NULL,
-  `reorder_point` int(11) DEFAULT NULL,
-  `unit_cost` decimal(10,2) DEFAULT NULL,
-  `quantity_on_hand` int(11) DEFAULT NULL,
-  `quantity_change` int(11) DEFAULT NULL,
-  `change_direction` varchar(20) DEFAULT NULL,
-  `changed_at` datetime DEFAULT current_timestamp(),
-  `change_type` varchar(50) DEFAULT 'update',
-  `ris_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 DROP TABLE IF EXISTS `item_history`;
 CREATE TABLE IF NOT EXISTS `item_history` (
   `history_id` int NOT NULL AUTO_INCREMENT,
@@ -396,16 +394,13 @@ CREATE TABLE IF NOT EXISTS `item_history` (
   PRIMARY KEY (`history_id`),
   KEY `item_id` (`item_id`),
   KEY `fk_item_history_ris` (`ris_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=673 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
+) ENGINE=InnoDB AUTO_INCREMENT=675 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `item_history`
 --
 
 INSERT INTO `item_history` (`history_id`, `item_id`, `stock_number`, `item_name`, `description`, `unit`, `reorder_point`, `unit_cost`, `quantity_on_hand`, `quantity_change`, `change_direction`, `changed_at`, `change_type`, `ris_id`) VALUES
-<<<<<<< HEAD
-=======
 (599, 4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', 0, 0.00, 1, 1, 'increase', '2025-09-04 14:38:14', 'update', NULL),
 (600, 3, 'A.03.a', 'ALCOHOL', '70% ethy/isopropyl, with moisturizer, gallon', 'gallon', 0, 0.00, 1, 1, 'increase', '2025-09-04 14:38:53', 'update', NULL),
 (603, 214, 'B.03.a', 'Ballpen', 'Ballpen 0.5, fine, retractable', 'pc', 0, 28.00, 27, 27, 'increase', '2025-09-04 14:43:34', 'add', NULL),
@@ -465,10 +460,11 @@ INSERT INTO `item_history` (`history_id`, `item_id`, `stock_number`, `item_name`
 (657, 80, 'T.02.a', 'TAPE', 'refill for Epson LW-K400 printer/label 12mm', 'pcs', 0, 0.00, 18, 18, 'increase', '2025-09-04 15:33:47', 'update', NULL),
 (658, 82, 'T.04.a', 'TOILET BOWL BRUSH', 'round headed brush', 'pc', 0, 0.00, 4, 4, 'increase', '2025-09-04 15:34:14', 'update', NULL),
 (667, 220, 'A.2.a', 'DISINFECTANT ', 'Air Freshener', 'can', 0, 162.00, 7, 7, 'increase', '2025-09-04 16:11:44', 'add', NULL),
-(668, 221, 'A.01.a', 'ARCHFILE   ', 'Tagila Lock size 3\"x9\"x15 blue and black', 'pc', 0, 129.00, 23, 23, 'increase', '2025-09-04 16:14:34', 'add', NULL),
 (669, 45, 'L.01.a', 'LED BULB', 'LED 22-30 Watts', 'pc', 0, 0.00, 30, 30, 'increase', '2025-09-07 10:16:48', 'update', NULL),
 (670, 4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', 0, 0.00, 10, 10, 'increase', '2025-09-07 10:18:41', 'update', NULL),
-(671, 4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', 0, 0.00, 9, -1, 'decrease', '2025-10-06 10:36:13', 'issued', 31);
+(671, 4, 'A.03.b', 'ALCOHOL', '70% ethyl/isopropyl, 500ml', 'bottle', 0, 0.00, 9, -1, 'decrease', '2025-10-06 10:36:13', 'issued', 31),
+(673, 221, 'A.01.a', 'ARCHFILE   ', 'Tagila Lock size 3\"x9\"x15 blue and black', 'pc', 0, 129.00, 24, 24, 'increase', '2025-10-10 11:50:33', 'update', NULL),
+(674, 221, 'A.01.a', 'ARCHFILE   ', 'Tagila Lock size 3\"x9\"x15 blue and black', 'pc', 0, 129.00, 23, 23, 'increase', '2025-10-10 11:50:55', 'update', NULL);
 
 -- --------------------------------------------------------
 
@@ -494,14 +490,13 @@ CREATE TABLE IF NOT EXISTS `item_history_archive` (
   `reference_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`history_id`),
   KEY `item_id` (`item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=665 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=669 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `item_history_archive`
 --
 
 INSERT INTO `item_history_archive` (`history_id`, `item_id`, `stock_number`, `item_name`, `description`, `unit`, `reorder_point`, `unit_cost`, `quantity_on_hand`, `quantity_change`, `change_direction`, `changed_at`, `change_type`, `reference_id`) VALUES
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 (1, 1, 'A.01.a', NULL, 'Tagila Lock', 'pc', 10, 12.00, 20, 10, '0', '2025-08-05 14:33:26', 'entry', NULL),
 (2, 1, 'A.01.a', NULL, 'Tagila Lock', 'pc', 10, 12.00, 31, 11, '0', '2025-08-05 14:33:39', 'entry', NULL),
 (4, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 10, 12.00, 30, 10, 'increase', '2025-08-05 14:59:53', 'entry', NULL),
@@ -518,42 +513,6 @@ INSERT INTO `item_history_archive` (`history_id`, `item_id`, `stock_number`, `it
 (471, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 11, 11.09, 22, 0, 'no_change', '2025-08-07 00:06:33', 'cleared', NULL),
 (472, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 11, 10.00, 10, -12, 'decrease', '2025-08-07 00:06:45', 'selective_update', NULL),
 (490, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 11, 11.00, 11, 1, 'increase', '2025-08-07 00:38:56', 'selective_update', NULL),
-<<<<<<< HEAD
-(577, 210, '123', '123', '123', '123', 1, 21.00, 4, 4, 'increase', '2025-08-12 23:31:11', 'add', NULL),
-(578, 210, '123', '123', '123', '123', 1, 25.50, 5, 1, 'increase', '2025-08-12 23:31:34', 'entry', NULL),
-(579, 210, '123', '123', '123', '123', 1, 25.50, 0, -5, 'decrease', '2025-08-12 23:32:01', 'issued', 29),
-(580, 210, '123', '123', '123', '123', 1, 23.25, 5, 5, 'increase', '2025-08-12 23:32:49', 'entry', NULL),
-(581, 211, 'qwe', 'qwe', 'qwe', 'qwe', 1, 12.00, 12, 12, 'increase', '2025-08-12 23:33:33', 'add', NULL),
-(582, 211, 'qwe', 'qwe', 'qwe', 'qwe', 1, 12.50, 17, 5, 'increase', '2025-08-12 23:34:02', 'entry', NULL),
-(583, 211, 'qwe', 'qwe', 'qwe', 'qwe', 1, 12.50, 17, 0, 'no_change', '2025-08-12 23:34:15', 'cleared', NULL),
-(584, 211, 'qwe', 'qwe', 'qwe', 'qwe', 1, 10.00, 10, 10, 'increase', '2025-08-12 23:34:29', 'update', NULL),
-(585, 211, 'qwe', 'qwe', 'qwe', 'qwe', 1, 16.00, 12, 2, 'increase', '2025-08-12 23:34:44', 'entry', NULL),
-(587, 211, 'qweqw', 'qwewqe', 'qweqwe', 'qweqwe', 1, 10.00, 10, 10, 'increase', '2025-08-12 23:37:04', 'update', NULL),
-(588, 210, '123', '123', '123', '123', 1, 23.25, 5, 0, 'no_change', '2025-08-13 00:01:35', 'update', NULL);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `item_history_archive`
---
-
-CREATE TABLE `item_history_archive` (
-  `history_id` int(11) NOT NULL,
-  `item_id` int(11) NOT NULL,
-  `stock_number` varchar(255) DEFAULT NULL,
-  `item_name` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `unit` varchar(50) DEFAULT NULL,
-  `reorder_point` int(11) DEFAULT NULL,
-  `unit_cost` decimal(10,2) DEFAULT NULL,
-  `quantity_on_hand` int(11) DEFAULT NULL,
-  `quantity_change` int(11) DEFAULT NULL,
-  `change_direction` varchar(20) DEFAULT NULL,
-  `changed_at` datetime DEFAULT current_timestamp(),
-  `change_type` varchar(50) DEFAULT 'update',
-  `reference_id` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 (592, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock123123', 'pc', 11, 11.00, 11, 0, 'no_change', '2025-09-03 15:43:19', 'update', NULL),
 (593, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 11, 11.00, 11, 0, 'no_change', '2025-09-03 15:45:42', 'update', NULL),
 (595, 1, 'A.01.a', 'ARCHFILE FOLDER', 'Tagila Lock', 'pc', 0, 11.00, 11, 0, 'no_change', '2025-09-04 14:35:45', 'update', NULL),
@@ -565,8 +524,99 @@ CREATE TABLE `item_history_archive` (
 (661, 2, 'A.02.a', 'Disinfectant', 'Air Freshener', 'can', 0, 162.17, 8, 8, 'increase', '2025-09-04 15:46:28', 'update', NULL),
 (662, 2, 'A.02.a', 'Disinfectant', 'Air Freshener', 'can', 0, 162.17, 7, 7, 'increase', '2025-09-04 15:46:41', 'update', NULL),
 (663, 2, 'A.02.a', 'Disinfectant', 'Air Freshener', 'can', 0, 162.17, 0, 0, 'no_change', '2025-09-04 15:47:30', 'update', NULL),
-(664, 2, 'A.02.a', 'Disinfectant', 'Air Freshener', 'can', 0, 162.17, 7, 7, 'increase', '2025-09-04 15:47:40', 'update', NULL);
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
+(664, 2, 'A.02.a', 'Disinfectant', 'Air Freshener', 'can', 0, 162.17, 7, 7, 'increase', '2025-09-04 15:47:40', 'update', NULL),
+(668, 221, 'A.01.a', 'ARCHFILE   ', 'Tagila Lock size 3\"x9\"x15 blue and black', 'pc', 0, 129.00, 23, 23, 'increase', '2025-09-04 16:14:34', 'add', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `itr`
+--
+
+DROP TABLE IF EXISTS `itr`;
+CREATE TABLE IF NOT EXISTS `itr` (
+  `itr_id` int NOT NULL AUTO_INCREMENT,
+  `itr_no` varchar(32) NOT NULL,
+  `itr_date` date NOT NULL,
+  `entity_name` varchar(255) DEFAULT NULL,
+  `fund_cluster` varchar(255) DEFAULT NULL,
+  `from_accountable` varchar(255) DEFAULT NULL,
+  `to_accountable` varchar(255) DEFAULT NULL,
+  `transfer_type` varchar(50) DEFAULT NULL,
+  `transfer_other` varchar(255) DEFAULT NULL,
+  `reason` text,
+  `remarks` text,
+  `approved_name` varchar(255) DEFAULT NULL,
+  `approved_designation` varchar(255) DEFAULT NULL,
+  `approved_date` date DEFAULT NULL,
+  `released_name` varchar(255) DEFAULT NULL,
+  `released_designation` varchar(255) DEFAULT NULL,
+  `released_date` date DEFAULT NULL,
+  `received_name` varchar(255) DEFAULT NULL,
+  `received_designation` varchar(255) DEFAULT NULL,
+  `received_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_ics_no` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`itr_id`),
+  UNIQUE KEY `itr_no_unique` (`itr_no`)
+) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `itr_history`
+--
+
+DROP TABLE IF EXISTS `itr_history`;
+CREATE TABLE IF NOT EXISTS `itr_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `itr_id` int NOT NULL,
+  `itr_item_id` int DEFAULT NULL,
+  `ics_id` int DEFAULT NULL,
+  `ics_item_id` int DEFAULT NULL,
+  `item_no` varchar(255) DEFAULT NULL,
+  `stock_number` varchar(100) DEFAULT NULL,
+  `description` text,
+  `unit` varchar(50) DEFAULT NULL,
+  `transfer_qty` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `unit_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `from_accountable` varchar(255) DEFAULT NULL,
+  `to_accountable` varchar(255) DEFAULT NULL,
+  `transfer_type` varchar(50) DEFAULT NULL,
+  `transfer_other` varchar(255) DEFAULT NULL,
+  `reference_no` varchar(100) DEFAULT NULL,
+  `reference_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_itr_id` (`itr_id`),
+  KEY `idx_itr_item_id` (`itr_item_id`),
+  KEY `idx_ics_item_id` (`ics_item_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `itr_items`
+--
+
+DROP TABLE IF EXISTS `itr_items`;
+CREATE TABLE IF NOT EXISTS `itr_items` (
+  `itr_item_id` int NOT NULL AUTO_INCREMENT,
+  `itr_id` int NOT NULL,
+  `date_acquired` date DEFAULT NULL,
+  `item_no` varchar(255) DEFAULT NULL,
+  `ics_info` varchar(255) DEFAULT NULL,
+  `description` text,
+  `amount` decimal(15,2) DEFAULT '0.00',
+  `transfer_qty` int NOT NULL DEFAULT '0',
+  `ics_id` int DEFAULT NULL,
+  `ics_item_id` int DEFAULT NULL,
+  `cond` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`itr_item_id`),
+  KEY `fk_itr_items_itr` (`itr_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -574,27 +624,6 @@ CREATE TABLE `item_history_archive` (
 -- Table structure for table `property_cards`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `property_cards` (
-  `pc_id` int(11) NOT NULL,
-  `entity_name` varchar(255) NOT NULL,
-  `fund_cluster` varchar(50) NOT NULL,
-  `ppe_type` varchar(255) NOT NULL COMMENT 'Property, Plant and Equipment type',
-  `description` text NOT NULL COMMENT 'Description of the PPE (brand, size, color, serial no., etc.)',
-  `property_number` varchar(100) NOT NULL COMMENT 'Number assigned by Supply/Property Division',
-  `transaction_date` date NOT NULL COMMENT 'Date of acquisition/issue/transfer/disposal',
-  `reference_par_no` varchar(100) DEFAULT NULL COMMENT 'Reference document or PAR number',
-  `receipt_qty` decimal(10,2) DEFAULT 0.00 COMMENT 'Quantity received',
-  `issue_qty` decimal(10,2) DEFAULT 0.00 COMMENT 'Quantity issued/transferred/disposed',
-  `office_officer` varchar(255) DEFAULT NULL COMMENT 'Receiving office/officer name',
-  `amount` decimal(15,2) DEFAULT 0.00 COMMENT 'Amount of PPE',
-  `remarks` text DEFAULT NULL COMMENT 'Important information or comments',
-  `transaction_type` enum('receipt','issue','transfer','disposal') NOT NULL DEFAULT 'receipt',
-  `created_by` int(11) DEFAULT NULL,
-  `date_created` timestamp NOT NULL DEFAULT current_timestamp(),
-  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-=======
 DROP TABLE IF EXISTS `property_cards`;
 CREATE TABLE IF NOT EXISTS `property_cards` (
   `pc_id` int NOT NULL AUTO_INCREMENT,
@@ -621,7 +650,6 @@ CREATE TABLE IF NOT EXISTS `property_cards` (
   KEY `idx_transaction_date` (`transaction_date`),
   KEY `idx_pc_compound` (`entity_name`,`fund_cluster`,`ppe_type`,`transaction_date`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 --
 -- Dumping data for table `property_cards`
@@ -643,27 +671,105 @@ INSERT INTO `property_cards` (`pc_id`, `entity_name`, `fund_cluster`, `ppe_type`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `regspi`
+--
+
+DROP TABLE IF EXISTS `regspi`;
+CREATE TABLE IF NOT EXISTS `regspi` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `entity_name` varchar(255) NOT NULL,
+  `fund_cluster` varchar(100) DEFAULT NULL,
+  `semi_expendable_property` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `regspi`
+--
+
+INSERT INTO `regspi` (`id`, `entity_name`, `fund_cluster`, `semi_expendable_property`, `created_at`, `updated_at`) VALUES
+(19, 'TESDA Regional Office', 'b', NULL, '2025-11-07 06:38:28', NULL),
+(20, 'TESDA Regional Office', '', NULL, '2025-11-12 02:48:17', NULL),
+(21, 'TESDA Regional Office', 'qwe', NULL, '2025-11-12 02:57:38', NULL),
+(22, 'TESDA Regional Office', 'cv', NULL, '2025-11-12 03:07:22', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `regspi_entries`
+--
+
+DROP TABLE IF EXISTS `regspi_entries`;
+CREATE TABLE IF NOT EXISTS `regspi_entries` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `regspi_id` int NOT NULL,
+  `date` date NOT NULL,
+  `ics_rrsp_no` varchar(100) NOT NULL,
+  `property_no` varchar(100) NOT NULL,
+  `item_description` text NOT NULL,
+  `useful_life` varchar(100) NOT NULL,
+  `issued_qty` int NOT NULL DEFAULT '0',
+  `issued_office` varchar(255) DEFAULT NULL,
+  `returned_qty` int NOT NULL DEFAULT '0',
+  `returned_office` varchar(255) DEFAULT NULL,
+  `reissued_qty` int NOT NULL DEFAULT '0',
+  `reissued_office` varchar(255) DEFAULT NULL,
+  `disposed_qty1` int NOT NULL DEFAULT '0',
+  `disposed_qty2` int NOT NULL DEFAULT '0',
+  `balance_qty` int NOT NULL DEFAULT '0',
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_regspi_id` (`regspi_id`),
+  KEY `idx_date` (`date`),
+  KEY `idx_ics_rrsp_no` (`ics_rrsp_no`),
+  KEY `idx_property_no` (`property_no`)
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `regspi_entries`
+--
+
+INSERT INTO `regspi_entries` (`id`, `regspi_id`, `date`, `ics_rrsp_no`, `property_no`, `item_description`, `useful_life`, `issued_qty`, `issued_office`, `returned_qty`, `returned_office`, `reissued_qty`, `reissued_office`, `disposed_qty1`, `disposed_qty2`, `balance_qty`, `amount`, `remarks`, `created_at`, `updated_at`) VALUES
+(20, 19, '2025-11-07', '0001-11-2025', 'x', 'x', '5', 0, 'b', 0, NULL, 2, 'b', 0, 0, 7, 2000.00, '', '2025-11-07 06:38:28', NULL),
+(21, 20, '2025-11-12', '0002-11-2025', 'x', 'x', '5', 0, 'asd', 0, NULL, 2, 'dasd', 0, 0, 7, 2000.00, '', '2025-11-12 02:48:17', NULL),
+(22, 21, '2025-11-12', '0003-11-2025', 'x', 'x', '5', 0, 'qwe', 0, NULL, 2, 'qwe', 0, 0, 0, 2000.00, '', '2025-11-12 02:57:38', NULL),
+(23, 20, '2025-11-12', '0004-11-2025', 'ZXC', 'zxc', '5', 0, 'zxc', 0, NULL, 1, 'tyu', 0, 0, 4, 1000.00, '', '2025-11-12 03:02:47', NULL),
+(24, 22, '2025-11-12', '0005-11-2025', 'ZXC', 'zxc', '5', 0, 'cv', 0, NULL, 2, 'cv', 0, 0, 1, 2000.00, '', '2025-11-12 03:07:22', NULL),
+(25, 20, '2025-11-12', '0001-11-2025', 'asd', 'asd', '5', 0, 'bnm', 0, NULL, 3, 'bnm', 0, 0, 5, 3000.00, '', '2025-11-12 03:22:37', NULL),
+(26, 20, '2025-11-12', '0001-11-2025', '123', '123', '5', 0, '123', 0, NULL, 5, 'asd', 0, 0, 5, 5000.00, '', '2025-11-12 03:39:33', NULL),
+(27, 20, '2025-11-12', '0001-11-2025', '123', '123', '5', 0, NULL, 0, NULL, 3, NULL, 0, 0, 0, 3000.00, '', '2025-11-12 05:04:48', NULL),
+(28, 20, '2025-11-12', '0002-11-2025', '123', '123', '5', 0, '1', 0, NULL, 1, '1', 0, 0, 0, 1000.00, '', '2025-11-12 05:05:17', NULL),
+(29, 20, '2025-11-12', '0001-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'a', 0, NULL, 1, 'c', 0, 0, 4, 20000.00, '', '2025-11-12 05:33:45', NULL),
+(30, 20, '2025-11-12', '0002-11-2025', 'gasmon', 'laptop', '5', 0, 'qwee', 0, NULL, 1, 'qwe', 0, 0, 2, 10000.00, '', '2025-11-12 06:45:16', NULL),
+(31, 20, '2025-11-18', '0001-11-2025', 'HV-200-101-10', 'yeah\r\n', '5', 0, '123', 0, NULL, 2, '123', 0, 0, 6, 20.00, '', '2025-11-18 02:15:44', NULL),
+(32, 20, '2025-11-18', '0002-11-2025', 'HV-200-101-10', 'yeah\r\n', '5', 0, 'hjk', 0, NULL, 1, 'hjk', 0, 0, 6, 10.00, '', '2025-11-18 02:30:41', NULL),
+(33, 20, '2025-11-18', '0003-11-2025', 'HV-200-101-15', 'Laptop', '5', 0, '111', 0, NULL, 4, '111', 0, 0, 3, 40000.00, '', '2025-11-18 02:52:17', NULL),
+(34, 20, '2025-11-18', '0004-11-2025', 'HV-200-101-15', 'Laptop', '5', 0, 'asd', 0, NULL, 3, 'asd', 0, 0, 3, 30000.00, '', '2025-11-18 05:44:40', NULL),
+(35, 20, '2025-11-18', '0005-11-2025', 'HV-200-101-10', 'yeah\r\n', '5', 0, '1112', 0, NULL, 1, '1112', 0, 0, 6, 10.00, '', '2025-11-18 05:50:37', NULL),
+(36, 20, '2025-11-18', '0006-11-2025', '\\zxc', 'asd', '5', 0, 'aaa', 0, NULL, 1, 'aaa', 0, 0, 6, 1000.00, '', '2025-11-18 05:59:52', NULL),
+(37, 20, '2025-11-18', '0007-11-2025', '\\zxc', 'asd', '5', 0, 'ss', 0, NULL, 1, 'ss', 0, 0, 6, 1000.00, '', '2025-11-18 06:00:03', NULL),
+(38, 20, '2025-11-18', '0001-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'asd', 0, NULL, 3, 'zxc', 0, 0, 30, 3000.00, '', '2025-11-18 06:12:56', NULL),
+(39, 20, '2025-11-18', '0002-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'zxc', 0, NULL, 3, 'zxc', 0, 0, 30, 3000.00, '', '2025-11-18 06:13:49', NULL),
+(40, 20, '2025-11-18', '0003-11-2025', 'HV-200-101-11', 'asd', '5', 0, 'asd', 0, NULL, 2, 'asd', 0, 0, 8, 2246.00, '', '2025-11-18 06:14:41', NULL),
+(41, 20, '2025-11-18', '0001-11-2025', 'HV-200-101-11', 'asd', '5', 0, 'asd', 0, NULL, 1, 'asd', 0, 0, 8, 1123.00, '', '2025-11-18 06:18:53', NULL),
+(42, 20, '2025-11-18', '0001-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'zxc', 0, NULL, 3, 'zxc', 0, 0, 20, 3000.00, '', '2025-11-18 06:20:23', NULL),
+(43, 20, '2025-11-18', '0002-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'zxc', 0, NULL, 2, 'zxc', 0, 0, 20, 2000.00, '', '2025-11-18 06:20:45', NULL),
+(44, 20, '2025-11-18', '0003-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, '123', 0, NULL, 3, '123', 0, 0, 20, 3000.00, '', '2025-11-18 06:26:37', NULL),
+(45, 20, '2025-11-18', '0004-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'xzcc', 0, NULL, 2, 'zxczxcx', 0, 0, 20, 2000.00, '', '2025-11-18 06:39:53', NULL),
+(46, 20, '2025-11-18', '0005-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, '34', 0, NULL, 1, '2134', 0, 0, 20, 1000.00, '', '2025-11-18 06:41:02', NULL),
+(47, 20, '2025-11-18', '0006-11-2025', 'HV-200-101-14', 'Laptop', '5', 0, 'zxcz', 0, NULL, 3, 'zxczxczxc', 0, 0, 10, 3000.00, '', '2025-11-18 06:45:48', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ris`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `ris` (
-  `ris_id` int(11) NOT NULL,
-  `entity_name` varchar(255) DEFAULT NULL,
-  `fund_cluster` varchar(100) DEFAULT NULL,
-  `division` varchar(100) DEFAULT NULL,
-  `office` varchar(100) DEFAULT NULL,
-  `responsibility_center_code` varchar(100) DEFAULT NULL,
-  `ris_no` varchar(100) DEFAULT NULL,
-  `date_requested` date DEFAULT NULL,
-  `purpose` text DEFAULT NULL,
-  `requested_by` varchar(255) DEFAULT NULL,
-  `approved_by` varchar(255) DEFAULT NULL,
-  `issued_by` varchar(255) DEFAULT NULL,
-  `received_by` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 DROP TABLE IF EXISTS `ris`;
 CREATE TABLE IF NOT EXISTS `ris` (
   `ris_id` int NOT NULL AUTO_INCREMENT,
@@ -682,18 +788,13 @@ CREATE TABLE IF NOT EXISTS `ris` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ris_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 --
 -- Dumping data for table `ris`
 --
 
 INSERT INTO `ris` (`ris_id`, `entity_name`, `fund_cluster`, `division`, `office`, `responsibility_center_code`, `ris_no`, `date_requested`, `purpose`, `requested_by`, `approved_by`, `issued_by`, `received_by`, `created_at`) VALUES
-<<<<<<< HEAD
-(29, '123', '123', 'FASD', 'TESDA CAR', '123', '2025/08/0001', '2025-08-12', '123', '123', '123', '123', '123', '2025-08-12 15:32:01');
-=======
 (31, 'a', 'f', 'FASD', 'TESDA CAR', 'f', '2025/10/0001', '2025-10-06', 'd', 'a', 'a', 'a', 'a', '2025-10-06 02:36:13');
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 -- --------------------------------------------------------
 
@@ -701,16 +802,6 @@ INSERT INTO `ris` (`ris_id`, `entity_name`, `fund_cluster`, `division`, `office`
 -- Table structure for table `ris_items`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `ris_items` (
-  `item_id` int(11) NOT NULL,
-  `ris_id` int(11) DEFAULT NULL,
-  `stock_number` varchar(100) DEFAULT NULL,
-  `stock_available` varchar(10) DEFAULT NULL,
-  `issued_quantity` int(11) DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `unit_cost_at_issue` decimal(10,2) DEFAULT 0.00
-=======
 DROP TABLE IF EXISTS `ris_items`;
 CREATE TABLE IF NOT EXISTS `ris_items` (
   `item_id` int NOT NULL,
@@ -720,7 +811,6 @@ CREATE TABLE IF NOT EXISTS `ris_items` (
   `issued_quantity` int DEFAULT NULL,
   `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `unit_cost_at_issue` decimal(10,2) DEFAULT '0.00'
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -728,11 +818,7 @@ CREATE TABLE IF NOT EXISTS `ris_items` (
 --
 
 INSERT INTO `ris_items` (`item_id`, `ris_id`, `stock_number`, `stock_available`, `issued_quantity`, `remarks`, `unit_cost_at_issue`) VALUES
-<<<<<<< HEAD
-(0, 29, '123', 'Yes', 5, '213', 25.50);
-=======
 (0, 31, 'A.03.b', 'Yes', 1, '', 0.00);
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 -- --------------------------------------------------------
 
@@ -740,23 +826,6 @@ INSERT INTO `ris_items` (`item_id`, `ris_id`, `stock_number`, `stock_available`,
 -- Table structure for table `rpci`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `rpci` (
-  `rpci_id` int(11) NOT NULL,
-  `inventory_type` varchar(100) DEFAULT NULL,
-  `as_of_date` date DEFAULT NULL,
-  `fund_cluster` varchar(50) DEFAULT NULL,
-  `article` varchar(100) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `stock_number` varchar(50) DEFAULT NULL,
-  `unit` varchar(50) DEFAULT NULL,
-  `unit_value` decimal(10,2) DEFAULT NULL,
-  `balance_per_card` int(11) DEFAULT NULL,
-  `on_hand_per_count` int(11) DEFAULT NULL,
-  `shortage` int(11) DEFAULT 0,
-  `overage` int(11) DEFAULT 0,
-  `remarks` varchar(255) DEFAULT NULL
-=======
 DROP TABLE IF EXISTS `rpci`;
 CREATE TABLE IF NOT EXISTS `rpci` (
   `rpci_id` int NOT NULL,
@@ -773,8 +842,75 @@ CREATE TABLE IF NOT EXISTS `rpci` (
   `shortage` int DEFAULT '0',
   `overage` int DEFAULT '0',
   `remarks` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rrsp`
+--
+
+DROP TABLE IF EXISTS `rrsp`;
+CREATE TABLE IF NOT EXISTS `rrsp` (
+  `rrsp_id` int NOT NULL AUTO_INCREMENT,
+  `rrsp_no` varchar(50) DEFAULT NULL,
+  `date_prepared` date NOT NULL,
+  `entity_name` varchar(255) DEFAULT NULL,
+  `fund_cluster` varchar(120) DEFAULT NULL,
+  `returned_by` varchar(255) DEFAULT NULL,
+  `received_by` varchar(255) DEFAULT NULL,
+  `returned_date` date DEFAULT NULL,
+  `received_date` date DEFAULT NULL,
+  `remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rrsp_id`),
+  UNIQUE KEY `rrsp_no` (`rrsp_no`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rrsp_history`
+--
+
+DROP TABLE IF EXISTS `rrsp_history`;
+CREATE TABLE IF NOT EXISTS `rrsp_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `rrsp_id` int NOT NULL,
+  `rrsp_item_id` int DEFAULT NULL,
+  `ics_no` varchar(100) DEFAULT NULL,
+  `item_description` text,
+  `quantity` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `unit_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `end_user` varchar(255) DEFAULT NULL,
+  `item_remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_rrsp_id` (`rrsp_id`),
+  KEY `idx_rrsp_item_id` (`rrsp_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rrsp_items`
+--
+
+DROP TABLE IF EXISTS `rrsp_items`;
+CREATE TABLE IF NOT EXISTS `rrsp_items` (
+  `rrsp_item_id` int NOT NULL AUTO_INCREMENT,
+  `rrsp_id` int NOT NULL,
+  `item_description` varchar(255) NOT NULL,
+  `quantity` int DEFAULT '0',
+  `ics_no` varchar(120) DEFAULT NULL,
+  `end_user` varchar(255) DEFAULT NULL,
+  `item_remarks` varchar(255) DEFAULT NULL,
+  `unit_cost` decimal(12,2) DEFAULT '0.00',
+  `total_amount` decimal(14,2) DEFAULT '0.00',
+  PRIMARY KEY (`rrsp_item_id`),
+  KEY `rrsp_id` (`rrsp_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -782,39 +918,108 @@ CREATE TABLE IF NOT EXISTS `rpci` (
 -- Table structure for table `rsmi`
 --
 
-<<<<<<< HEAD
-CREATE TABLE `rsmi` (
-  `rsmi_id` int(11) NOT NULL,
-  `date_generated` datetime NOT NULL,
-  `total_issued` int(11) NOT NULL,
-  `month_year` varchar(20) NOT NULL
-=======
 DROP TABLE IF EXISTS `rsmi`;
 CREATE TABLE IF NOT EXISTS `rsmi` (
   `rsmi_id` int NOT NULL,
   `date_generated` datetime NOT NULL,
   `total_issued` int NOT NULL,
   `month_year` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
-<<<<<<< HEAD
--- Table structure for table `stock_card`
+-- Table structure for table `rspi_items`
 --
 
-CREATE TABLE `stock_card` (
-  `stock_card_id` int(11) NOT NULL,
-  `item_id` int(11) DEFAULT NULL,
-  `transaction_date` date DEFAULT NULL,
-  `reference` varchar(100) DEFAULT NULL,
-  `receipt_qty` int(11) DEFAULT 0,
-  `issue_qty` int(11) DEFAULT 0,
-  `balance_qty` int(11) DEFAULT NULL,
-  `issued_to_office` varchar(100) DEFAULT NULL
-=======
+DROP TABLE IF EXISTS `rspi_items`;
+CREATE TABLE IF NOT EXISTS `rspi_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `rspi_id` int NOT NULL,
+  `ics_no` varchar(50) NOT NULL,
+  `responsibility_center_code` varchar(50) DEFAULT NULL,
+  `property_no` varchar(50) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `unit` varchar(50) DEFAULT NULL,
+  `quantity_issued` int DEFAULT '0',
+  `unit_cost` decimal(12,2) DEFAULT '0.00',
+  `amount` decimal(12,2) GENERATED ALWAYS AS ((`quantity_issued` * `unit_cost`)) STORED,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `rspi_id` (`rspi_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `rspi_items`
+--
+
+INSERT INTO `rspi_items` (`id`, `rspi_id`, `ics_no`, `responsibility_center_code`, `property_no`, `description`, `unit`, `quantity_issued`, `unit_cost`, `created_at`) VALUES
+(1, 1, 'ICS-001', 'IT-001', 'PROP-001', 'Desktop Computer', 'unit', 5, 25000.00, '2025-10-27 05:55:30'),
+(2, 1, 'ICS-002', 'IT-002', 'PROP-002', 'Printer', 'unit', 2, 8000.00, '2025-10-27 05:55:30'),
+(3, 2, 'ICS-003', 'ADM-001', 'PROP-003', 'Office Chair', 'piece', 10, 1500.00, '2025-10-27 05:55:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rspi_reports`
+--
+
+DROP TABLE IF EXISTS `rspi_reports`;
+CREATE TABLE IF NOT EXISTS `rspi_reports` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `serial_no` varchar(20) NOT NULL,
+  `entity_name` varchar(100) NOT NULL,
+  `fund_cluster` varchar(50) NOT NULL,
+  `report_date` date NOT NULL,
+  `custodian_name` varchar(100) NOT NULL,
+  `posted_by` varchar(100) DEFAULT NULL,
+  `status` enum('draft','posted','archived') DEFAULT 'draft',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `serial_no` (`serial_no`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `rspi_reports`
+--
+
+INSERT INTO `rspi_reports` (`id`, `serial_no`, `entity_name`, `fund_cluster`, `report_date`, `custodian_name`, `posted_by`, `status`, `created_at`, `updated_at`) VALUES
+(1, '2025-10-001', 'TESDA Provincial Office', '101', '2025-10-20', 'Juan Dela Cruz', 'Maria Santos', 'posted', '2025-10-27 05:55:30', '2025-10-27 05:55:30'),
+(2, '2025-10-002', 'TESDA Provincial Office', '102', '2025-10-23', 'Pedro Reyes', 'Maria Santos', 'posted', '2025-10-27 05:55:30', '2025-10-27 05:55:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `semi_expendable_history`
+--
+
+DROP TABLE IF EXISTS `semi_expendable_history`;
+CREATE TABLE IF NOT EXISTS `semi_expendable_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `semi_id` int NOT NULL,
+  `date` date DEFAULT NULL,
+  `ics_rrsp_no` varchar(255) DEFAULT NULL,
+  `quantity` int DEFAULT '0',
+  `quantity_issued` int DEFAULT '0',
+  `quantity_returned` int DEFAULT '0',
+  `quantity_reissued` int DEFAULT '0',
+  `quantity_disposed` int DEFAULT '0',
+  `quantity_balance` int DEFAULT '0',
+  `office_officer_issued` varchar(255) DEFAULT NULL,
+  `office_officer_returned` varchar(255) DEFAULT NULL,
+  `office_officer_reissued` varchar(255) DEFAULT NULL,
+  `amount_total` decimal(15,2) DEFAULT '0.00',
+  `remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `amount` decimal(15,2) DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  KEY `semi_id` (`semi_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=331 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `semi_expendable_property`
 --
 
@@ -825,7 +1030,9 @@ CREATE TABLE IF NOT EXISTS `semi_expendable_property` (
   `ics_rrsp_no` varchar(50) NOT NULL,
   `semi_expendable_property_no` varchar(50) NOT NULL,
   `item_description` text NOT NULL,
+  `unit` varchar(64) DEFAULT NULL,
   `estimated_useful_life` int NOT NULL,
+  `quantity` int DEFAULT '0',
   `quantity_issued` int NOT NULL,
   `office_officer_issued` varchar(100) DEFAULT NULL,
   `quantity_returned` int DEFAULT '0',
@@ -839,18 +1046,9 @@ CREATE TABLE IF NOT EXISTS `semi_expendable_property` (
   `fund_cluster` varchar(20) DEFAULT '101',
   `remarks` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `amount` decimal(15,2) DEFAULT '0.00',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `semi_expendable_property`
---
-
-INSERT INTO `semi_expendable_property` (`id`, `date`, `ics_rrsp_no`, `semi_expendable_property_no`, `item_description`, `estimated_useful_life`, `quantity_issued`, `office_officer_issued`, `quantity_returned`, `office_officer_returned`, `quantity_reissued`, `office_officer_reissued`, `quantity_disposed`, `quantity_balance`, `amount_total`, `category`, `fund_cluster`, `remarks`, `created_at`) VALUES
-(1, '2025-10-08', '22-01', 'HV-200-101-10', 'computer', 5, 1, '', 0, '0', 0, '', 0, 1, 12000.00, 'Other PPE', '101', '', '2025-10-08 05:59:47'),
-(2, '2025-10-08', '22-04', 'HV-200-101-11', 'computer', 5, 1, '', 0, '0', 0, '', 0, 1, 12000.00, 'Other PPE', '101', '', '2025-10-08 06:00:59'),
-(3, '2025-10-08', '22-04', 'HV-200-101-12', 'computer', 5, 1, '', 0, '0', 0, '', 0, 1, 4000.00, 'Office Equipment', '101', '', '2025-10-08 06:12:56'),
-(4, '2025-10-08', '22-04', 'HV-200-101-13', 'pc', 5, 1, '', 0, '0', 0, '', 0, 1, 12000.00, 'ICT Equipment', '101', '', '2025-10-08 06:39:36');
+) ENGINE=MyISAM AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -868,18 +1066,11 @@ CREATE TABLE IF NOT EXISTS `stock_card` (
   `issue_qty` int DEFAULT '0',
   `balance_qty` int DEFAULT NULL,
   `issued_to_office` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
-<<<<<<< HEAD
--- Stand-in structure for view `vw_property_card_summary`
--- (See below for the actual view)
---
-CREATE TABLE `vw_property_card_summary` (
-=======
 -- Table structure for table `users`
 --
 
@@ -890,7 +1081,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password` varchar(250) NOT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
@@ -907,17 +1098,16 @@ INSERT INTO `users` (`user_id`, `username`, `password`) VALUES
 --
 DROP VIEW IF EXISTS `vw_property_card_summary`;
 CREATE TABLE IF NOT EXISTS `vw_property_card_summary` (
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
-`entity_name` varchar(255)
+`current_balance` decimal(33,2)
+,`description` text
+,`entity_name` varchar(255)
 ,`fund_cluster` varchar(50)
+,`last_transaction_date` date
 ,`ppe_type` varchar(255)
 ,`property_number` varchar(100)
-,`description` text
-,`total_received` decimal(32,2)
-,`total_issued` decimal(32,2)
-,`current_balance` decimal(33,2)
 ,`total_amount` decimal(37,2)
-,`last_transaction_date` date
+,`total_issued` decimal(32,2)
+,`total_received` decimal(32,2)
 );
 
 -- --------------------------------------------------------
@@ -927,105 +1117,18 @@ CREATE TABLE IF NOT EXISTS `vw_property_card_summary` (
 --
 DROP TABLE IF EXISTS `vw_property_card_summary`;
 
-<<<<<<< HEAD
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_property_card_summary`  AS SELECT `pc`.`entity_name` AS `entity_name`, `pc`.`fund_cluster` AS `fund_cluster`, `pc`.`ppe_type` AS `ppe_type`, `pc`.`property_number` AS `property_number`, `pc`.`description` AS `description`, sum(case when `pc`.`transaction_type` = 'receipt' then `pc`.`receipt_qty` else 0 end) AS `total_received`, sum(case when `pc`.`transaction_type` in ('issue','transfer','disposal') then `pc`.`issue_qty` else 0 end) AS `total_issued`, sum(case when `pc`.`transaction_type` = 'receipt' then `pc`.`receipt_qty` else 0 end) - sum(case when `pc`.`transaction_type` in ('issue','transfer','disposal') then `pc`.`issue_qty` else 0 end) AS `current_balance`, sum(`pc`.`amount`) AS `total_amount`, max(`pc`.`transaction_date`) AS `last_transaction_date` FROM `property_cards` AS `pc` GROUP BY `pc`.`entity_name`, `pc`.`fund_cluster`, `pc`.`ppe_type`, `pc`.`property_number`, `pc`.`description` ;
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `inventory_entries`
---
-ALTER TABLE `inventory_entries`
-  ADD PRIMARY KEY (`entry_id`),
-  ADD KEY `item_id` (`item_id`);
-
---
--- Indexes for table `items`
---
-ALTER TABLE `items`
-  ADD PRIMARY KEY (`item_id`);
-
---
--- Indexes for table `item_history`
---
-ALTER TABLE `item_history`
-  ADD PRIMARY KEY (`history_id`),
-  ADD KEY `item_id` (`item_id`),
-  ADD KEY `fk_item_history_ris` (`ris_id`);
-
---
--- Indexes for table `item_history_archive`
---
-ALTER TABLE `item_history_archive`
-  ADD PRIMARY KEY (`history_id`),
-  ADD KEY `item_id` (`item_id`);
-
---
--- Indexes for table `property_cards`
---
-ALTER TABLE `property_cards`
-  ADD PRIMARY KEY (`pc_id`),
-  ADD KEY `idx_entity_fund` (`entity_name`,`fund_cluster`),
-  ADD KEY `idx_property_number` (`property_number`),
-  ADD KEY `idx_ppe_type` (`ppe_type`),
-  ADD KEY `idx_transaction_date` (`transaction_date`),
-  ADD KEY `idx_pc_compound` (`entity_name`,`fund_cluster`,`ppe_type`,`transaction_date`);
-
---
--- Indexes for table `ris`
---
-ALTER TABLE `ris`
-  ADD PRIMARY KEY (`ris_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `inventory_entries`
---
-ALTER TABLE `inventory_entries`
-  MODIFY `entry_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=291;
-
---
--- AUTO_INCREMENT for table `items`
---
-ALTER TABLE `items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
-
---
--- AUTO_INCREMENT for table `item_history`
---
-ALTER TABLE `item_history`
-  MODIFY `history_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=589;
-
---
--- AUTO_INCREMENT for table `item_history_archive`
---
-ALTER TABLE `item_history_archive`
-  MODIFY `history_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `property_cards`
---
-ALTER TABLE `property_cards`
-  MODIFY `pc_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `ris`
---
-ALTER TABLE `ris`
-  MODIFY `ris_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
-=======
 DROP VIEW IF EXISTS `vw_property_card_summary`;
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_property_card_summary`  AS SELECT `pc`.`entity_name` AS `entity_name`, `pc`.`fund_cluster` AS `fund_cluster`, `pc`.`ppe_type` AS `ppe_type`, `pc`.`property_number` AS `property_number`, `pc`.`description` AS `description`, sum((case when (`pc`.`transaction_type` = 'receipt') then `pc`.`receipt_qty` else 0 end)) AS `total_received`, sum((case when (`pc`.`transaction_type` in ('issue','transfer','disposal')) then `pc`.`issue_qty` else 0 end)) AS `total_issued`, (sum((case when (`pc`.`transaction_type` = 'receipt') then `pc`.`receipt_qty` else 0 end)) - sum((case when (`pc`.`transaction_type` in ('issue','transfer','disposal')) then `pc`.`issue_qty` else 0 end))) AS `current_balance`, sum(`pc`.`amount`) AS `total_amount`, max(`pc`.`transaction_date`) AS `last_transaction_date` FROM `property_cards` AS `pc` GROUP BY `pc`.`entity_name`, `pc`.`fund_cluster`, `pc`.`ppe_type`, `pc`.`property_number`, `pc`.`description` ;
->>>>>>> 2fcf138baf998ee12e1b2085adec886dacd3abb6
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `iirusp_items`
+--
+ALTER TABLE `iirusp_items`
+  ADD CONSTRAINT `iirusp_items_ibfk_1` FOREIGN KEY (`iirusp_id`) REFERENCES `iirusp` (`iirusp_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `inventory_entries`
@@ -1039,6 +1142,24 @@ ALTER TABLE `inventory_entries`
 ALTER TABLE `item_history`
   ADD CONSTRAINT `fk_item_history_ris` FOREIGN KEY (`ris_id`) REFERENCES `ris` (`ris_id`),
   ADD CONSTRAINT `item_history_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `itr_items`
+--
+ALTER TABLE `itr_items`
+  ADD CONSTRAINT `fk_itr_items_itr` FOREIGN KEY (`itr_id`) REFERENCES `itr` (`itr_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `regspi_entries`
+--
+ALTER TABLE `regspi_entries`
+  ADD CONSTRAINT `fk_regspi_entries_header` FOREIGN KEY (`regspi_id`) REFERENCES `regspi` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `rrsp_items`
+--
+ALTER TABLE `rrsp_items`
+  ADD CONSTRAINT `rrsp_items_ibfk_1` FOREIGN KEY (`rrsp_id`) REFERENCES `rrsp` (`rrsp_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

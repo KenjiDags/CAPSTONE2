@@ -3,48 +3,85 @@ session_start();
 require 'config.php';
 
 $error = '';
-$success = '';
+$cookie_username = '';
+$remember_checked = false;
+
+// Pre-fill username if remember_token exists
+if (!empty($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+
+    $stmt = $conn->prepare("SELECT username FROM users WHERE remember_token = ? LIMIT 1");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $cookie_username = $user_data['username'];
+        $remember_checked = true;
+    } else {
+        setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    $confirm = trim($_POST['confirm_password'] ?? '');
+    $remember = isset($_POST['remember']);
 
-    if ($username && $password && $confirm) {
-        if ($password !== $confirm) {
-            $error = 'Passwords do not match.';
-        } else {
-            // Check if username exists
-            $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ? LIMIT 1");
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result && $result->num_rows > 0) {
-                $error = 'Username already taken.';
-            } else {
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-                $insert->bind_param("ss", $username, $hash);
-                if ($insert->execute()) {
-                    header('Location: index.php?registered=1');
-                    exit;
+    if ($username && $password) {
+        $stmt = $conn->prepare("SELECT user_id, password FROM users WHERE username = ? LIMIT 1");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result && $result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+
+            if (password_verify($password, $user['password'])) {
+                session_regenerate_id(true);
+
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['username'] = $username;
+                $_SESSION['logged_in'] = true;
+                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+
+                if ($remember) {
+                    $token = bin2hex(random_bytes(16));
+                    $stmtToken = $conn->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
+                    $stmtToken->bind_param("si", $token, $user['user_id']);
+                    $stmtToken->execute();
+
+                    setcookie('remember_token', $token, time() + 30*24*60*60, "/", "localhost", false, true);
                 } else {
-                    $error = 'Registration failed. Please try again.';
+                    setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
                 }
-                $insert->close();
+
+                header('Location:inventory.php');
+                exit;
+            } else {
+                $error = 'Invalid username or password.';
             }
-            $stmt->close();
+        } else {
+            $error = 'Invalid username or password.';
         }
+
+        $stmt->close();
     } else {
         $error = 'Please fill in all fields.';
     }
 }
+
+$registered = isset($_GET['registered']) && $_GET['registered'] === '1';
+$logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - TESDA Inventory</title>
+    <title>Login - TESDA Inventory</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <style>
         body { 
@@ -57,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             padding: 20px;
         }
-        .register-container { 
+        .login-container { 
             max-width: 380px; 
             width: 100%; 
             background: #fff; 
@@ -73,9 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             max-width: 90px;
             height: auto;
             margin-bottom: 15px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
         }
         .logo h1 {
             color: #0052a3;
@@ -108,6 +142,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input[type="password"]:focus { 
             outline: none;
             border-color: #0066cc;
+        }
+        input[type="checkbox"] {
+            margin-right: 6px;
         }
         .error { 
             color: #dc3545; 
@@ -148,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         button:active {
             background: #003d7a;
         }
-        .login-link { 
+        .signup-link { 
             display: block; 
             text-align: center; 
             margin-top: 20px; 
@@ -156,18 +193,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: none;
             font-size: 13px;
         }
-        .login-link a {
+        .signup-link a {
             color: #0066cc;
             text-decoration: none;
             font-weight: 600;
         }
-        .login-link a:hover { 
+        .signup-link a:hover { 
             text-decoration: underline; 
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
+    <div class="login-container">
         <div class="logo">
             <img src="images/tesda_logo.png" alt="TESDA Logo">
             <h1>TESDA</h1>
@@ -176,28 +213,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($error): ?>
             <div class="error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        <?php if ($success): ?>
-            <div class="success"><?= htmlspecialchars($success) ?></div>
+
+        <?php if ($registered): ?>
+            <div class="success">Account created successfully! You can now login.</div>
+        <?php endif; ?>
+
+        <?php if ($logged_out): ?>
+            <div class="success">You have been logged out successfully.</div>
         <?php endif; ?>
 
         <form method="post" autocomplete="off">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" name="username" id="username" required autofocus>
+                <input type="text" name="username" id="username" required autofocus
+                       value="<?= htmlspecialchars($cookie_username) ?>">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password" required>
             </div>
             <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" name="confirm_password" id="confirm_password" required>
+                <input type="checkbox" name="remember" id="remember" <?= $remember_checked ? 'checked' : '' ?>>
+                <label for="remember">Remember Me</label>
             </div>
-            <button type="submit">Register</button>
+            <button type="submit">Login</button>
         </form>
 
-        <div class="login-link">
-            Already have an account? <a href="index.php">Login here</a>
+        <div class="signup-link">
+            Don't have an account? <a href="register.php">Register</a>
         </div>
     </div>
 </body>

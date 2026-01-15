@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
-$username   = "root"; // default for XAMPP
-$password   = "";     // default for XAMPP
+$username   = "root"; 
+$password   = "";     
 
 // Connect to MySQL (choose any default database, it doesn’t matter)
 $conn = new mysqli($servername, $username, $password, "tesda_inventory");

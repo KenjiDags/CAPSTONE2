@@ -397,6 +397,46 @@ tr:hover {
     background: linear-gradient(135deg, #002d80 0%, #3a7bc8 100%);
 }
 
+/* Modal password inputs */
+.modal input[type=password] {
+    width: 100%;
+    padding: 14px 18px;             
+    margin: 12px 0;                 
+    border: 2px solid #e8f0fe;      
+    border-radius: 12px;             
+    font-size: 1rem;
+    font-weight: 500;
+    background-color: #f4f8ff;       
+    transition: all 0.3s ease;       
+    box-sizing: border-box;
+}
+
+/* Focus state */
+.modal input[type=password]:focus {
+    outline: none;
+    border-color: #0038a8;           
+    box-shadow: 0 0 0 4px rgba(0, 56, 168, 0.1); 
+    background-color: #fff;           
+}
+
+.modal input::placeholder {
+    color: #7a8fa6;                  
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+.show-password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #0038a8;
+    font-size: 0.9rem;
+    font-weight: 600;
+    user-select: none;
+}
+
 .close {
     color: #ccc;
     float: right;
@@ -1296,6 +1336,7 @@ body {
     z-index: 1000;
     transition: all 0.3s ease;
     overflow-y: auto;
+    padding-bottom: 20px; 
 }
 
 .sidebar .logo-text {
@@ -1452,6 +1493,71 @@ body {
     background: rgba(0, 56, 168, 0.1);
     padding-left: 35px;
 }
+
+/* Logout Section */
+.logout-wrapper {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;    
+    width: 100%;
+    padding: 10px 0;
+    border-top: 1px solid rgba(0,0,0,0.1);
+
+    margin-top: 20px; 
+    margin-bottom: 0; 
+}
+
+/* Change Password Button */
+.change-password-btn {
+    display: block;
+    width: 80%;
+    max-width: 200px;
+    margin-bottom: 10px;    
+    padding: 10px 0;
+    background: linear-gradient(135deg, #4a90e2 0%, #6bb0f5 100%);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.change-password-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.95;
+    box-shadow: 0 10px 22px rgba(74,144,226,0.18);
+}
+
+/* Logout Button */
+.logout-btn {
+    display: block;   
+    width: 80%;              
+    max-width: 200px;        
+    padding: 10px 0;         
+    margin: 0 auto;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 6px 14px rgba(255,107,107,0.12);
+
+    white-space: nowrap;     
+    letter-spacing: normal;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.logout-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.95;
+    box-shadow: 0 10px 22px rgba(255,107,107,0.18);
+}
+
 
 /* Fade animation for dropdown */
 @keyframes fadeIn {
@@ -2402,3 +2508,25 @@ body {
     flex: 1 1 200px; 
     min-width: 180px;
 }
+
+.sidebar-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-gray);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center; /* centers the content horizontally */
+    justify-content: center; /* centers the content vertically if needed */
+}
+
+.sidebar-footer .sidebar-user {
+    color: var(--primary-blue);
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center; /* center username text */
+}
+

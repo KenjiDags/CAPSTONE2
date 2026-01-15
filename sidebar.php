@@ -67,18 +67,45 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PC.php" class="<?= $currentPage == 'PC.php' ? 'active' : '' ?>">PC</a>
                             <a href="ppe_item2.php" class="<?= $currentPage == 'ppe_item2.php' ? 'active' : '' ?>">📌 Placeholder 2</a>
                         </div>
+                    </div>  
+                </nav>
+
+                    <!-- Change Password -->
+                    <div class="logout-wrapper">
+                        <a href="#" class="change-password-btn" id="openChangePassword">Change Password</a>
+                        <a href="logout.php" class="logout-btn">Logout</a>
                     </div>
                 
-                </nav>
         </div>
 
-    <!-- Mobile Menu Toggle (for responsive design) -->
-    <div class="mobile-menu-toggle">
-        <span></span>
-        <span></span>
-        <span></span>
+        <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeChangePassword">&times;</span>
+            <h3>Change Password</h3>
+            
+            <form id="changePasswordForm" method="post">
+                <div class="password-field" style="position: relative;">
+                    <input type="password" name="currentPassword" id="currentPassword" placeholder="Current Password" required>
+                    <span class="show-password-toggle" onclick="togglePassword('currentPassword')">Show</span>
+                </div>
+
+                <div class="password-field" style="position: relative;">
+                    <input type="password" name="newPassword" id="newPassword" placeholder="New Password" required>
+                    <span class="show-password-toggle" onclick="togglePassword('newPassword')">Show</span>
+                </div>
+
+                <div class="password-field" style="position: relative;">
+                    <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm New Password" required>
+                    <span class="show-password-toggle" onclick="togglePassword('confirmPassword')">Show</span>
+                </div>
+                    <button type="submit" class="save-btn">Save</button> 
+            </form>
+            <div id="changePasswordMessage" style="margin-top:15px; text-align:center; font-weight:600;"></div>
+        </div>
     </div>
 
+    <script src="js/password.js?v=<?= time() ?>"></script>
     <script src="js/sidebar_script.js?v=<?= time() ?>"></script>
 </body>
 </html>

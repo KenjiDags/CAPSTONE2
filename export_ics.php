@@ -181,6 +181,38 @@ if ($itrHistRes && $itrHistRes->num_rows > 0) {
 } elseif ($itrHistRes) {
     $itrHistRes->free();
 }
+
+// Load IIRUSP disposals by stock_number (property_no)
+$iirusp_disposals_by_stock = [];
+$iirusp_sql = "
+    SELECT 
+        ii.semi_expendable_property_no,
+        ii.quantity,
+        ii.disposal_sale,
+        ii.disposal_transfer,
+        ii.disposal_destruction,
+        i.iirusp_no,
+        i.as_at
+    FROM iirusp_items ii
+    JOIN iirusp i ON ii.iirusp_id = i.iirusp_id
+    WHERE ii.semi_expendable_property_no IN (
+        SELECT DISTINCT stock_number FROM ics_items WHERE ics_id = $ics_id
+    )
+    ORDER BY i.as_at ASC
+";
+$iirusp_res = $conn->query($iirusp_sql);
+if ($iirusp_res && $iirusp_res->num_rows > 0) {
+    while ($r = $iirusp_res->fetch_assoc()) {
+        $sn = $r['semi_expendable_property_no'];
+        if (!isset($iirusp_disposals_by_stock[$sn])) {
+            $iirusp_disposals_by_stock[$sn] = [];
+        }
+        $iirusp_disposals_by_stock[$sn][] = $r;
+    }
+    $iirusp_res->free();
+} elseif ($iirusp_res) {
+    $iirusp_res->free();
+}
 ?>
 
 <!DOCTYPE html>
@@ -560,18 +592,84 @@ if ($itrHistRes && $itrHistRes->num_rows > 0) {
                                 echo '</tr>';
                                 $row_count++;
                             }
+
+                            // Add IIRUSP disposal rows for this item
+                            $stockNo = $item['stock_number'] ?? '';
+                            if ($stockNo && isset($iirusp_disposals_by_stock[$stockNo])) {
+                                foreach ($iirusp_disposals_by_stock[$stockNo] as $disposal) {
+                                    $dispQty = (float)($disposal['quantity'] ?? 0);
+                                    $dispQtyDisplay = (fmod($dispQty, 1.0) == 0.0) ? number_format($dispQty, 0) : number_format($dispQty, 2);
+                                    $dispType = 'Disposal';
+                                    if ((float)$disposal['disposal_sale'] > 0) { $dispType = 'Disposed (Sale)'; }
+                                    elseif ((float)$disposal['disposal_transfer'] > 0) { $dispType = 'Disposed (Transfer)'; }
+                                    elseif ((float)$disposal['disposal_destruction'] > 0) { $dispType = 'Disposed (Destruction)'; }
+                                    
+                                    $dispDate = $disposal['as_at'] ? date('m/d/Y', strtotime($disposal['as_at'])) : '';
+                                    $dispNote = $dispType . ' via IIRUSP ' . htmlspecialchars($disposal['iirusp_no']);
+                                    
+                                    echo '<tr class="history-row">';
+                                    echo '<td>' . $dispQtyDisplay . '</td>';
+                                    echo '<td>' . htmlspecialchars($unit) . '</td>';
+                                    echo '<td>' . number_format($unitCostVal, 2) . '</td>';
+                                    echo '<td>' . number_format($dispQty * $unitCostVal, 2) . '</td>';
+                                    echo '<td class="description">' . htmlspecialchars($item['description'] ?? '') . ' (' . $dispNote . ')</td>';
+                                    echo '<td>' . htmlspecialchars($stockNo) . '</td>';
+                                    echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
+                                    echo '</tr>';
+                                    $row_count++;
+                                }
+                            }
                         } else {
-                            // No history: render single current row as usual
-                            echo '<tr class="current-row">';
-                            echo '<td>' . $qtyDisplay . '</td>';
-                            echo '<td>' . htmlspecialchars($unit) . '</td>';
-                            echo '<td>' . number_format($unitCostVal, 2) . '</td>';
-                            echo '<td>' . number_format($totalCostVal, 2) . '</td>';
-                            echo '<td class="description">' . htmlspecialchars((string)($item['description'] ?? '')) . '</td>';
-                            echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
-                            echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
-                            echo '</tr>';
-                            $row_count++;
+                            // Check for IIRUSP disposals even if no history
+                            $stockNo = $item['stock_number'] ?? '';
+                            if ($stockNo && isset($iirusp_disposals_by_stock[$stockNo])) {
+                                // Render baseline row first
+                                echo '<tr class="current-row">';
+                                echo '<td>' . $qtyDisplay . '</td>';
+                                echo '<td>' . htmlspecialchars($unit) . '</td>';
+                                echo '<td>' . number_format($unitCostVal, 2) . '</td>';
+                                echo '<td>' . number_format($totalCostVal, 2) . '</td>';
+                                echo '<td class="description">' . htmlspecialchars($item['description'] ?? '') . '</td>';
+                                echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
+                                echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
+                                echo '</tr>';
+                                $row_count++;
+                                
+                                // Then render disposal rows
+                                foreach ($iirusp_disposals_by_stock[$stockNo] as $disposal) {
+                                    $dispQty = (float)($disposal['quantity'] ?? 0);
+                                    $dispQtyDisplay = (fmod($dispQty, 1.0) == 0.0) ? number_format($dispQty, 0) : number_format($dispQty, 2);
+                                    $dispType = 'Disposal';
+                                    if ((float)$disposal['disposal_sale'] > 0) { $dispType = 'Disposed (Sale)'; }
+                                    elseif ((float)$disposal['disposal_transfer'] > 0) { $dispType = 'Disposed (Transfer)'; }
+                                    elseif ((float)$disposal['disposal_destruction'] > 0) { $dispType = 'Disposed (Destruction)'; }
+                                    
+                                    $dispNote = $dispType . ' via IIRUSP ' . htmlspecialchars($disposal['iirusp_no']);
+                                    
+                                    echo '<tr class="history-row">';
+                                    echo '<td>' . $dispQtyDisplay . '</td>';
+                                    echo '<td>' . htmlspecialchars($unit) . '</td>';
+                                    echo '<td>' . number_format($unitCostVal, 2) . '</td>';
+                                    echo '<td>' . number_format($dispQty * $unitCostVal, 2) . '</td>';
+                                    echo '<td class="description">' . htmlspecialchars($item['description'] ?? '') . ' (' . $dispNote . ')</td>';
+                                    echo '<td>' . htmlspecialchars($stockNo) . '</td>';
+                                    echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
+                                    echo '</tr>';
+                                    $row_count++;
+                                }
+                            } else {
+                                // No history and no disposal: render single current row
+                                echo '<tr class="current-row">';
+                                echo '<td>' . $qtyDisplay . '</td>';
+                                echo '<td>' . htmlspecialchars($unit) . '</td>';
+                                echo '<td>' . number_format($unitCostVal, 2) . '</td>';
+                                echo '<td>' . number_format($totalCostVal, 2) . '</td>';
+                                echo '<td class="description">' . htmlspecialchars((string)($item['description'] ?? '')) . '</td>';
+                                echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
+                                echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
+                                echo '</tr>';
+                                $row_count++;
+                            }
                         }
                     }
                 }

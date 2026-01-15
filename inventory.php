@@ -1,6 +1,20 @@
 <?php
+session_start();
 require 'config.php';
 require 'functions.php';
+
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header('Location: login.php?logged_out=1');
+    exit;
+}
+
+//Block session hijacking by verifying user agent
+if (!isset($_SESSION['user_agent']) || $_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
+    session_unset();
+    session_destroy();
+    header('Location: login.php?logged_out=1');
+    exit;
+}
 
 
 if (isset($_GET['fix_null_item_history'])) {
@@ -504,14 +518,12 @@ case 'update':
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Keep icon and text on a single line for action buttons */
         .btn.edit-btn, .btn.delete-btn, .btn.clear-entries-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             white-space: nowrap;
         }
-        /* Slight spacing polish for icons */   
         .btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
             font-size: 0.95em;
         }
@@ -661,7 +673,7 @@ case 'update':
                                 }";
                             
                             // Add inventory entries
-                            $sub_result->data_seek(0); // Reset result pointer
+                            $sub_result->data_seek(0); 
                             while ($sub_row = $sub_result->fetch_assoc()) {
                                 echo "
                                 subQtyHTML += '<div class=\"sub-entry\">{$sub_row['quantity']}</div>';

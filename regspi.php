@@ -3,8 +3,6 @@ require 'config.php';
 require_once 'functions.php';
 include 'sidebar.php';
 
-// REGSPI data source: ICS only (as requested)
-// We derive rows from ICS headers/items, enriching with semi_expendable_property when available
 
 $rows = [];
 
@@ -89,7 +87,6 @@ if (!empty($binds)) {
     }
 }
 
-// Final pass: scrub boilerplate remarks like "Initial Receipt/Report"
 if (!empty($rows)) {
     foreach ($rows as &$__r) {
         $rm = isset($__r['remarks']) ? trim((string)$__r['remarks']) : '';
@@ -115,49 +112,43 @@ if (!empty($rows)) {
         /* Make the main REGSPI table scrollable */
         .rsep-table-container { margin-top: 0; }
         .rsep-table-wrapper {
-            max-height: 520px; /* adjust as needed */
-            overflow-y: auto; /* wrapper is the vertical scroller */
+            max-height: 520px; 
+            overflow-y: auto; 
             overflow-x: auto;
             border: 1px solid #e5e7eb;
-            border-top: 0; /* remove top border so header sits flush */
-            border-radius: 0 0 8px 8px; /* no rounded corners on top to avoid white arc */
+            border-top: 0; 
+            border-radius: 0 0 8px 8px; 
             -webkit-overflow-scrolling: touch;
-            scrollbar-gutter: stable; /* prevent layout shift when scrollbar appears */
-            background: var(--white); /* match header to remove any visible top gap */
-            position: relative; /* anchor for sticky */
+            scrollbar-gutter: stable; 
+            background: var(--white); 
+            position: relative; 
         }
         .rsep-table-container, .rsep-table-wrapper, .rsep-table {
             border-top-left-radius: 0 !important;
             border-top-right-radius: 0 !important;
         }
     .rsep-table { width: 100%; border-collapse: collapse; }
-    /* Critical: allow sticky header to work by not clipping the table box */
     .rsep-table { overflow: visible !important; border-radius: 0 !important; background: transparent !important; margin-top: 0 !important; }
         .rsep-table th, .rsep-table td { border: 0px solid #e5e7eb; padding: 6px 8px; }
 
-        /* Sticky multi-row header inside scrollable wrapper (reference: rpci) */
         .rsep-table thead th {
             position: sticky !important;
-            top: 0; /* first row default (others adjusted via JS offsets) */
+            top: 0; 
             z-index: 2;
-            background: var(--blue-gradient) !important; /* keep the blue gradient while sticky */
+            background: var(--blue-gradient) !important; 
             color: #fff;
             height: 40px;
             line-height: 1.2;
         }
-        /* Ensure top stacking order for grouped header row */
     .rsep-table thead tr:nth-child(1) th { z-index: 5; }
     .rsep-table thead tr:nth-child(2) th { z-index: 4; }
     .rsep-table thead tr:nth-child(3) th { z-index: 3; }
 
-        /* Add subtle separation while scrolling */
         .rsep-table-wrapper.scrolling .rsep-table thead th {
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
-        /* reduce visual gap between head and body */
         .rsep-table-wrapper .rsep-table tbody tr:first-child td { border-top: 2px solid #002d80; }
 
-        /* Match ICS Add button style for the Export button */
         .search-container .export-btn {
             display: inline-flex;
             align-items: center;
@@ -166,7 +157,6 @@ if (!empty($rows)) {
             padding: 0 16px;
             line-height: 1;
         }
-            /* Pull the button and table closer together */
             .search-container { margin-bottom: -20px; }
             .content > .container { margin-top: 0; }
             .rsep-form { margin-top: 0; margin-bottom: 8px; }
