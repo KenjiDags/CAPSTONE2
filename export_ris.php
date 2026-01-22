@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'auth.php';
 
 if (!isset($_GET['ris_id'])) {
     die("❌ Error: RIS ID not specified in the URL.");

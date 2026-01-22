@@ -1,15 +1,14 @@
 <?php
-// ==========================================
-// 1. BACKEND POST HANDLER (SAVES DATA)
-// ==========================================
+require 'auth.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Clean buffer to ensure JSON valid response
     ob_start();
     require 'config.php';
     require 'functions.php';
-    ob_clean(); // Discard any include output
+    ob_clean(); 
     header('Content-Type: application/json');
-    ini_set('display_errors', 0); // Hide PHP warnings in response
+    ini_set('display_errors', 0); 
 
     try {
         // Ensure tables exist

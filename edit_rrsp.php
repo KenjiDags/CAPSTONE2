@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require 'functions.php';
 $rrsp_id = isset($_GET['rrsp_id']) ? (int)$_GET['rrsp_id'] : 0;

@@ -1,7 +1,7 @@
 <?php
-// Start output buffering to allow safe redirects after delete
 ob_start();
-include 'config.php'; // This gives us $conn (MySQLi connection)
+require 'auth.php';
+include 'config.php'; 
 include 'sidebar.php';
 
 // Handle delete action

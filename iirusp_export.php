@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 
 $entity_name = htmlspecialchars($_GET['entity_name'] ?? '');

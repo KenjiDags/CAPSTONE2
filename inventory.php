@@ -1,20 +1,8 @@
 <?php
-session_start();
+require 'auth.php';
 require 'config.php';
 require 'functions.php';
 
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php?logged_out=1');
-    exit;
-}
-
-//Block session hijacking by verifying user agent
-if (!isset($_SESSION['user_agent']) || $_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
-    session_unset();
-    session_destroy();
-    header('Location: login.php?logged_out=1');
-    exit;
-}
 
 
 if (isset($_GET['fix_null_item_history'])) {

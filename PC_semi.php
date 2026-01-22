@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require_once 'config.php';
 ?>
 <!DOCTYPE html>

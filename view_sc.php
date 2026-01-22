@@ -1,5 +1,7 @@
-<?php include 'sidebar.php'; ?>
-<?php require 'config.php'; 
+<?php 
+    require 'config.php'; 
+    require 'auth.php';
+    include 'sidebar.php';
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_history']) && isset($_POST['item_id'])) {
         $item_id_to_clear = (int)$_POST['item_id'];

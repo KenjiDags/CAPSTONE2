@@ -1,5 +1,8 @@
 <?php ob_start(); include 'sidebar.php'; ?>
-<?php require 'config.php'; ?>
+<?php 
+require 'auth.php';
+require 'config.php'; 
+?>
 
 <?php
 require 'functions.php';

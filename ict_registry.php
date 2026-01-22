@@ -1,13 +1,5 @@
 <?php
-// ict_registry.php
-session_start();
-
-// Check if user is logged in (uncomment if you have authentication)
-// if (!isset($_SESSION['user_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
-
+require 'auth.php';
 require_once 'config.php';
 
 // Handle form submissions

@@ -1,9 +1,9 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require 'functions.php'; // for columnExists helper if needed
 header('Content-Type: application/json');
-// Per request: permanently disable any automatic ICS creation from ITR submissions.
-// The ITR flow must NOT write to the ICS tables anymore.
+
 $ENABLE_ITR_TO_ICS = false; // kept for clarity; ICS block below removed
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

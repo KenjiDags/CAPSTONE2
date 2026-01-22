@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 header('Content-Type: application/json');
 // Prevent caching so the latest serial is always fetched

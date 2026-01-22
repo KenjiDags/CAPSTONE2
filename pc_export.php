@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'auth.php';
 
 // Get Property Card data
 $pc_query = "

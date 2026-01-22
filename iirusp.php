@@ -1,5 +1,6 @@
 <?php
 ob_start();
+require 'auth.php';
 require 'config.php';
 require 'functions.php';
 

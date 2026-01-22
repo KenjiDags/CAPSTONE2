@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require_once 'functions.php';
 // Ensure history table exists to prevent fatal errors on export

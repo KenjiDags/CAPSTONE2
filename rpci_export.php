@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 
 // Fetch inventory items from database

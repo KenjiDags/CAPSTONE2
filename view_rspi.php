@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 
 if (!isset($_GET['ics_id'])) {

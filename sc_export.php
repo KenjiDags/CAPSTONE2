@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'auth.php';
 
 if (!isset($_GET['item_id'])) {
     die("❌ Error: item not found.");

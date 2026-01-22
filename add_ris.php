@@ -1,8 +1,11 @@
-<?php include 'sidebar.php'; ?>
-<?php require 'config.php'; ?>
+<?php
+    require 'functions.php';
+    require 'config.php'; 
+    require 'auth.php';
+    include 'sidebar.php'; 
+ ?>
 
 <?php
-require 'functions.php';
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     

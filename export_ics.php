@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 
 function formatItrTransferNote($transferQty, $toAccountable, $transferType, $transferOther)

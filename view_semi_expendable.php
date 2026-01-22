@@ -1,7 +1,8 @@
-<?php include 'sidebar.php'; ?>
-<?php require 'config.php'; 
-      require_once 'functions.php';
-      // Make sure history table exists to avoid fatal errors on first use
+<?php 
+    require 'auth.php';
+    require 'config.php'; 
+    include 'sidebar.php';
+    require_once 'functions.php';
       ensure_semi_expendable_history($conn);
     
     if (!isset($_GET['id'])) {

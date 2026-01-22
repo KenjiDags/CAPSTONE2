@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require_once 'functions.php';
 
@@ -174,8 +175,8 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                 <div class="info-line">Semi-expendable Property: <span contenteditable="true"><?php echo h($categoryLabel); ?></span></div>
             </div>
             <div class="header-right">
-                <div class="info-line">Fund Cluster: <span contenteditable="true" style="min: width 100px;px;">101</span></div>
-                <div class="info-line">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min: width 100px;px;">1</span></div>
+                <div class="info-line">Fund Cluster: <span contenteditable="true" style="min-width: 100px;">101</span></div>
+                <div class="info-line">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min-width: 100px;">1</span></div>
             </div>
         </div>
         

@@ -1,9 +1,10 @@
 <?php
 // Enable safe redirects even if sidebar outputs content
 ob_start();
+require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'sidebar.php'; // Add sidebar requirement
+require_once 'sidebar.php'; 
 // Ensure required columns exist (idempotent)
 ensure_semi_expendable_amount_columns($conn);
 // Ensure 'unit' column exists on semi_expendable_property (idempotent)

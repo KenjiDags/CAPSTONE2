@@ -2,9 +2,10 @@
 // edit_semi_expendable.php - Edit form for semi-expendable property
 // Start output buffering to allow safe redirects even if sidebar outputs content
 ob_start();
+require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'sidebar.php'; // Add sidebar requirement
+require_once 'sidebar.php'; 
 // Ensure 'unit' column exists on semi_expendable_property (idempotent)
 try {
     if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {

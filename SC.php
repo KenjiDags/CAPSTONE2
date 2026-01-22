@@ -1,4 +1,7 @@
-<?php include 'sidebar.php'; ?>
+<?php 
+    require 'auth.php';
+    include 'sidebar.php'; 
+?>
 
 <!DOCTYPE html>
 <html lang="en">

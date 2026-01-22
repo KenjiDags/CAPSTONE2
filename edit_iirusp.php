@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require 'functions.php';
 ensure_iirusp_tables($conn);

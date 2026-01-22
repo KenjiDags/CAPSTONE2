@@ -1,7 +1,8 @@
 <?php
+require 'auth.php';
 require 'config.php';
 require 'functions.php';
-
+ 
 // DELETE LOGIC (moved from delete_ris.php)
 if (isset($_GET['delete_ris_id'])) {
     $ris_id = (int)$_GET['delete_ris_id'];
