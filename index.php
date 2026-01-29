@@ -1,5 +1,12 @@
 <?php
-require 'auth.php';
+session_start();
+
+// Already logged in? Skip login page
+if (isset($_SESSION['user_id']) && $_SESSION['logged_in'] === true) {
+    header('Location: inventory.php');
+    exit;
+}
+
 require 'config.php';
 
 $error = '';

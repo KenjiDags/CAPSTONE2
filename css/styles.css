@@ -552,7 +552,7 @@ tbody tr:hover {
     box-shadow: 0 4px 12px rgba(0, 56, 168, 0.1);
 }
 
-/* Search and Filter Styles (for future enhancements) */
+/* Search and Filter Styles */
 .search-container {
     margin-bottom: 20px;
     display: block;

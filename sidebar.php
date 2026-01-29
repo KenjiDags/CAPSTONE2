@@ -30,6 +30,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 ?>
 
                 <nav>
+
+                    <div class="home">
+                        <a href="analytics.php"> Home </a>
+                    </div>
+
                     <div class="dropdown <?= $dropdownActive ? 'open' : '' ?>">
                         <button class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>">
                             🗂️ Office Supplies
