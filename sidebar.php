@@ -42,9 +42,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div class="dropdown-menu">
                             <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>">📋 Supply List</a>
                             <a href="ris.php" class="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'active' : '' ?>">📑 RIS</a>
-                            <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>">🛡️ RSMI</a>
-                            <a href="SC.php" class="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'active' : '' ?>">♻️ SC</a>
-                            <a href="rpci.php" class="<?= $currentPage == 'rpci.php' ? 'active' : '' ?>">⚙️ RPCI</a>
+                            <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>">📑 RSMI</a>
+                            <a href="SC.php" class="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'active' : '' ?>">📑 SC</a>
+                            <a href="rpci.php" class="<?= $currentPage == 'rpci.php' ? 'active' : '' ?>">📑 RPCI</a>
                         </div>
                     </div>
 
@@ -54,13 +54,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             🧰 Semi Expendables
                         </button>
                         <div class="dropdown-menu">
-                            <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Supply List</a>
+                            <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Inventory List</a>
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📇 SPC</a>
                             <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="regspi.php" class="<?= $currentPage == 'regspi.php' ? 'active' : '' ?>">📦 RegSPI</a>
                             <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
                             <a href="rspi.php" class="<?= $currentPage == 'rspi.php' ? 'active' : '' ?>">📦 RSPI</a>
-                            <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>">⚙️ RPCSP</a>
+                            <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>">📄 RPCSP</a>
                             <a href="rrsp.php" class="<?= $currentPage == 'rrsp.php' ? 'active' : '' ?>">📄 RRSP</a>
                             <a href="iirusp.php" class="<?= $currentPage == 'iirusp.php' ? 'active' : '' ?>">📄 IIRUSP</a>
                         </div>
@@ -72,10 +72,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             🛠️ PPE
                         </button>
                         <div class="dropdown-menu">
-                            <a href="PC.php" class="<?= $currentPage == 'PC.php' ? 'active' : '' ?>">PC</a>
-                            <a href="ppe_item2.php" class="<?= $currentPage == 'ppe_item2.php' ? 'active' : '' ?>">📌 Placeholder 2</a>
+                            <a href="PPE.php" class="<?= $currentPage == 'PPE.php' ? 'active' : '' ?>">📋 Inventory List</a>
+                            <a href="PPE_PC.php" class="<?= $currentPage == 'PPE_PC.php' ? 'active' : '' ?>">📄 PC</a>
                         </div>
-                    </div>  
+                    </div>
                 </nav>
 
                     <!-- Change Password -->

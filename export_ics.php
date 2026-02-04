@@ -15,10 +15,7 @@ function formatItrTransferNote($transferQty, $toAccountable, $transferType, $tra
     if ($typeLabel === '' && $transferOther !== '') { $typeLabel = $transferOther; }
     if ($typeLabel !== '' && strcasecmp($typeLabel, 'Others') === 0 && $transferOther !== '') { $typeLabel = $transferOther; }
 
-    // If this is a return, use the new format
-   
 
-    // Otherwise, it's a transfer (remove '(Transferred)')
     $note = ($qty === 1) ? '1 unit transferred' : ($qty . ' units transferred');
     if ($toAccountable !== '') {
         $note .= ' to ' . $toAccountable;
@@ -726,14 +723,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         </table>
     </div>
 
-    <script>
-        // Auto-focus on print when page loads (optional)
-        // window.addEventListener('load', function() {
-        //     setTimeout(function() {
-        //         window.print();
-        //     }, 500);
-        // });
-    </script>
 </body>
 </html>
 
