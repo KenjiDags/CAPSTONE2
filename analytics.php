@@ -9,7 +9,7 @@ require 'auth.php';
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Analytics Dashboard</title>
   <link rel="stylesheet" href="css/analytics.css?v=<?= time() ?>">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/chart.min.js"></script>
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
