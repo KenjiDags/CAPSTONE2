@@ -1,9 +1,6 @@
 <?php
 require 'auth.php';
-// Optional: restrict to admin
-if (function_exists('require_role')) {
-    // require_role('admin');
-}
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -42,10 +39,10 @@ if (function_exists('require_role')) {
   <section>
     <h3>Low Stock Items</h3>
     <!-- Severity legend -->
-    <div style="margin-bottom:8px;font-weight:600;">
-      <span class="legend-critical"></span> Critical 
-      <span class="legend-warning"></span> Warning
-      <span class="legend-ok"></span> OK
+    <div class="stock-legend">
+      <span class="legend-critical"></span><span class="legend-label">Critical</span>
+      <span class="legend-warning"></span><span class="legend-label">Warning</span>
+      <span class="legend-ok"></span><span class="legend-label">OK</span>
     </div>
     <div style="margin-bottom:8px;color:#666;font-weight:600;">Items at or below reorder point</div>
     <div id="lowStock"></div>
@@ -154,11 +151,14 @@ fetch('analytics_data.php')
       itemSelect.dispatchEvent(new Event('change'));
     }
 
-  // --- Low Stock Table with Color Coding ---
-  const lowDiv = document.getElementById('lowStock');
-  if (low.length === 0) {
+// --- Low Stock Table with Color Coding ---
+const lowDiv = document.getElementById('lowStock');
+if (low.length === 0) {
     lowDiv.innerHTML = '<p>No low-stock items.</p>';
-  } else {
+} else {
+    // Sort alphabetically by item_name
+    low.sort((a, b) => a.item_name.localeCompare(b.item_name));
+
     const table = document.createElement('table');
     table.className = 'analytics-table';
 
@@ -178,30 +178,38 @@ fetch('analytics_data.php')
     const tbody = document.createElement('tbody');
 
     low.forEach(item => {
-      const tr = document.createElement('tr');
+        const tr = document.createElement('tr');
 
-      // Determine severity
-      const ratio = item.quantity / item.reorder_point;
-      let severity = 'ok';
-      if (ratio <= CRITICAL_THRESHOLD) severity = 'critical';
-      else if (ratio <= WARNING_THRESHOLD) severity = 'warning';
+        // Determine severity
+        let severity;
 
-      tr.className = severity; // Apply severity to the row
+        if (item.quantity === 0) {
+            severity = 'critical';
+        } else if (item.reorder_point === 0) {
+            severity = 'ok';
+        } else {
+            const ratio = item.quantity / item.reorder_point;
+            if (ratio <= CRITICAL_THRESHOLD) severity = 'critical';
+            else if (ratio <= WARNING_THRESHOLD) severity = 'warning';
+            else severity = 'ok';
+        }
 
-      // Row content
-      tr.className = severity;
-      tr.innerHTML = `
-        <td>${item.stock_number}</td>
-        <td>${item.item_name}</td>
-        <td>${item.quantity}</td>
-        <td>${item.reorder_point}</td>
-      `;
-      tbody.appendChild(tr);
+        tr.className = severity;
+
+        // Row content
+        tr.innerHTML = `
+          <td>${item.stock_number}</td>
+          <td>${item.item_name}</td>
+          <td>${item.quantity}</td>
+          <td>${item.reorder_point}</td>
+        `;
+        tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     lowDiv.appendChild(table);
-  }
+}
+
 
   })
   .catch(err => {

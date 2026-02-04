@@ -3,7 +3,7 @@ session_start();
 
 // Already logged in? Skip login page
 if (isset($_SESSION['user_id']) && $_SESSION['logged_in'] === true) {
-    header('Location: inventory.php');
+    header('Location: analytics.php');
     exit;
 }
 
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
                 }
 
-                header('Location:inventory.php');
+                header('Location:analytics.php');
                 exit;
             } else {
                 $error = 'Invalid username or password.';

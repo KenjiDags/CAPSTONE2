@@ -1090,6 +1090,9 @@ CREATE TABLE IF NOT EXISTS `users` (
 INSERT INTO `users` (`user_id`, `username`, `password`) VALUES
 (1, 'asd', '$2y$10$PApfH/YVd9WxMAO/BYs/Zu8rsDSEVzpl.Q8zGveIgeUfYZwQKHBNW');
 
+ALTER TABLE users 
+ADD remember_token VARCHAR(255) NULL;
+
 -- --------------------------------------------------------
 
 --

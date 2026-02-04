@@ -1,5 +1,4 @@
 <?php
-require 'auth.php';
 require 'config.php';
 
 $error = '';

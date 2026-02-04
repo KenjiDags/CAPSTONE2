@@ -2,7 +2,6 @@
     require 'functions.php';
     require 'config.php'; 
     require 'auth.php';
-    include 'sidebar.php'; 
  ?>
 
 <?php
@@ -149,6 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: ris.php");
     }
     exit();
+
+    include 'sidebar.php'; 
 }
 
 // Check if we're editing an existing RIS
