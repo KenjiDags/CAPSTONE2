@@ -65,7 +65,7 @@ if ($result) {
                         <label>For which: 
                             <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer">,    
                             <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation">,
-                            <input type="text" id="entity_name" name="entity_name" placeholder="Entity Name">
+                            <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name">
                             is accountable, having assumed such accountability on
                             <input type="date" id="assumption_date" name="assumption_date">
                             .

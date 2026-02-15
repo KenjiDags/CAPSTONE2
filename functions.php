@@ -395,4 +395,51 @@ function logItemHistory($conn, $item_id, ?int $quantity_change = null, string $c
     $insert->close();
 }
 
+// Restock items
+function restockItems($conn, $data) {
+
+    $total = count($data['stock_number']);
+
+    for ($i = 0; $i < $total; $i++) {
+
+        $stock_number = $data['stock_number'][$i];
+        $qty_to_add = intval($data['quantity_on_hand'][$i]);
+        $unit_cost = floatval($data['unit_cost'][$i]);
+
+        if ($qty_to_add <= 0) continue;
+
+        // Get item id
+        $stmt = $conn->prepare("SELECT item_id FROM items WHERE stock_number = ?");
+        $stmt->bind_param("s", $stock_number);
+        $stmt->execute();
+        $item = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$item) continue;
+
+        $item_id = $item['item_id'];
+
+        // Insert entry
+        $entry = $conn->prepare("
+            INSERT INTO inventory_entries (item_id, quantity, unit_cost)
+            VALUES (?, ?, ?)
+        ");
+        $entry->bind_param("iid", $item_id, $qty_to_add, $unit_cost);
+        $entry->execute();
+        $entry->close();
+
+        // Update qty
+        $update = $conn->prepare("
+            UPDATE items SET quantity_on_hand = quantity_on_hand + ?
+            WHERE item_id = ?
+        ");
+        $update->bind_param("ii", $qty_to_add, $item_id);
+        $update->execute();
+        $update->close();
+
+        updateAverageCost($conn, $item_id);
+        logItemHistory($conn, $item_id, $qty_to_add, 'restock');
+    }
+}
+
 ?>

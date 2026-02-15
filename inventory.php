@@ -527,6 +527,9 @@ case 'update':
         <button class="add-btn" onclick="document.getElementById('addModal').style.display='block'">
             <i class="fas fa-plus"></i> Add New Item
         </button>
+    <button class="add-btn" onclick="window.location.href='add_multiple_items.php'">
+        <i class="fas fa-plus"></i> Restock Items
+    </button>
         <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, description, or unit...">
     </div>
 

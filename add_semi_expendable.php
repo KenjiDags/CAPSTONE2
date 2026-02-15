@@ -291,7 +291,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Semi-Expendable Item</title>
-    <!-- Add your existing CSS links here -->
+    
     <style>
         .form-container {
             max-width: 800px;

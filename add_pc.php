@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="entity_name">Entity Name <span class="required">*</span></label>
-                        <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($pc_data['entity_name'] ?? '') ?>" required>
+                        <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($pc_data['entity_name'] ?? 'TESDA Regional Office') ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="fund_cluster">Fund Cluster <span class="required">*</span></label>

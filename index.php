@@ -3,7 +3,7 @@ session_start();
 
 // Already logged in? Skip login page
 if (isset($_SESSION['user_id']) && $_SESSION['logged_in'] === true) {
-    header('Location: analytics.php');
+    header('Location: inventory.php');
     exit;
 }
 

@@ -243,7 +243,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             <h3>RIS Details</h3>
 
             <label>Entity Name:</label>
-            <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ris_data['entity_name'] ?? ''); ?>" required>
+            <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ris_data['entity_name'] ?? 'TESDA Regional Office'); ?>" required>
 
             <label>Fund Cluster:</label>
             <input type="text" name="fund_cluster" value="<?php echo htmlspecialchars($ris_data['fund_cluster'] ?? ''); ?>">

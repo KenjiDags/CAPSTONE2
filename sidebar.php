@@ -25,16 +25,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <?php
                      $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php']);
                          $expendablesDropdownActive = in_array($currentPage, ['semi_expendible.php', 'PC.php', 'PC_semi.php', 'ics.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php']);
-                $ppeDropdownActive = in_array($currentPage, ['ppe_item1.php', 'ppe_item2.php']);
+                $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'PPE_PC.php']);
 
                 ?>
 
                 <nav>
-
-                    <div class="home">
-                        <a href="analytics.php"> Home </a>
-                    </div>
-
                     <div class="dropdown <?= $dropdownActive ? 'open' : '' ?>">
                         <button class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>">
                             🗂️ Office Supplies
@@ -76,6 +71,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PPE_PC.php" class="<?= $currentPage == 'PPE_PC.php' ? 'active' : '' ?>">📄 PC</a>
                         </div>
                     </div>
+
+                    <div class="home">
+                        <a href="analytics.php"> Home </a>
+                    </div>
+
                 </nav>
 
                     <!-- Change Password -->
