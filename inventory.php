@@ -515,6 +515,11 @@ case 'update':
         .btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
             font-size: 0.95em;
         }
+        .btn.clear-entries-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            max-width: 175px;
+        }
     </style>
 </head>
 <body>

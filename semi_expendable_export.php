@@ -97,7 +97,7 @@ $stmt->close();
 
     <table class="meta-top">
   <tr>
-    <td style="width:60%; font-weight:bold;">Entity Name:&nbsp; <span class="meta-underline">TESDA</span></td>
+    <td style="width:60%; font-weight:bold;">Entity Name:&nbsp; <span class="meta-underline">TESDA Regional Office</span></td>
     <td style="width:40%; font-weight:normal;">
       <div class="inline-fill"><strong>Fund Cluster:</strong> <span class="meta-underline"><?php echo htmlspecialchars($item['fund_cluster'] ?? ''); ?></span></div>
     </td>

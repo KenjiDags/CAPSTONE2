@@ -102,7 +102,7 @@ require_once 'config.php';
           <i class="fas fa-search"></i> Search:
         </label>
         <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or property no..." />
-        <a href="semi_expendable_export_all.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>" target="_blank" class="pill-btn pill-export">
+        <a href="semi_expendable_export_all.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>" class="pill-btn pill-export">
           <i class="fas fa-file-export"></i> Export All
         </a>
       </div>
@@ -174,7 +174,7 @@ require_once 'config.php';
                 echo '<td class="text-center actions-col">';
                 echo '<div class="action-stack">';
                 echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
-                echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" target="_blank" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
+                echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
                 echo '</div>';
                 echo '</td>';
                 echo '</tr>';

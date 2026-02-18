@@ -189,7 +189,7 @@ ensure_iirusp_tables($conn);
             </div>
             <div class="form-group">
                 <label>Entity Name:</label>
-                <input type="text" id="entity_name" value="TESDA-CAR">
+                <input type="text" id="entity_name" value="TESDA Regional Office">
             </div>
             <div class="form-group">
                 <label>Fund Cluster:</label>

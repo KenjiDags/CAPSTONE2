@@ -419,12 +419,15 @@ function restockItems($conn, $data) {
 
         $item_id = $item['item_id'];
 
+        // Calculate total cost (unit cost * quantity)
+        $total_cost = $unit_cost * $qty_to_add;
+
         // Insert entry
         $entry = $conn->prepare("
             INSERT INTO inventory_entries (item_id, quantity, unit_cost)
             VALUES (?, ?, ?)
         ");
-        $entry->bind_param("iid", $item_id, $qty_to_add, $unit_cost);
+        $entry->bind_param("iid", $item_id, $qty_to_add, $total_cost);
         $entry->execute();
         $entry->close();
 

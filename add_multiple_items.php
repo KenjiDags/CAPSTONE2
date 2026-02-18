@@ -13,7 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ---------- FETCH ALL ITEMS FOR DISPLAY ----------
-$items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
+$items = $conn->query("SELECT i.*, 
+    CASE 
+        WHEN i.calculated_unit_cost IS NOT NULL THEN i.calculated_unit_cost
+        WHEN (i.initial_quantity > 0 AND (SELECT COUNT(*) FROM inventory_entries ie WHERE ie.item_id = i.item_id) > 0)
+        THEN ((i.initial_quantity * i.unit_cost) + COALESCE((SELECT SUM(ie.quantity * ie.unit_cost) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0)) / (i.initial_quantity + COALESCE((SELECT SUM(ie.quantity) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0))
+        ELSE i.unit_cost 
+    END as display_unit_cost
+    FROM items i 
+    ORDER BY i.item_name ASC");
 ?>
 <!DOCTYPE html>
 <html>
@@ -123,7 +131,7 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
                             <input 
                                 type="number" 
                                 name="unit_cost[]" 
-                                value="<?= htmlspecialchars($row['unit_cost']) ?>"
+                                value="<?= number_format($row['display_unit_cost'], 2, '.', '') ?>"
                                 step="0.01"
                                 min="0"
                                 style="width: 100px;"

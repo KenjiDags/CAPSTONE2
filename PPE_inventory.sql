@@ -17,12 +17,16 @@ CREATE TABLE ppe_property (
     entity_name VARCHAR(255) NOT NULL,
 
     ptr_no VARCHAR(50) NULL,
+    date_acquired DATE NULL,
 
     `condition` ENUM('Good', 'Fair', 'Poor', 'Unserviceable') DEFAULT 'Good',
     status ENUM('Active', 'Transferred', 'Returned', 'For Repair', 'Unserviceable', 'Disposed') DEFAULT 'Active',
 
     fund_cluster VARCHAR(10) DEFAULT '101',
-    remarks TEXT
+    remarks TEXT,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ppe_pc (
@@ -49,4 +53,29 @@ CREATE TABLE ppe_pc (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ppe_ptr (
+    ptr_id INT AUTO_INCREMENT PRIMARY KEY,
+    ptr_no VARCHAR(100) NOT NULL,
+    entity_name VARCHAR(255) DEFAULT 'TESDA Regional Office',
+    fund_cluster VARCHAR(100) DEFAULT '101',
+    from_officer VARCHAR(255),
+    to_officer VARCHAR(255),
+    transfer_date DATE,
+    transfer_type VARCHAR(100),
+    reason TEXT,
+    approved_by VARCHAR(255),
+    released_by VARCHAR(255),
+    received_by VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ppe_ptr_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ptr_id INT NOT NULL,
+    ppe_id INT NOT NULL,
+    FOREIGN KEY (ptr_id) REFERENCES ppe_ptr(ptr_id) ON DELETE CASCADE,
+    FOREIGN KEY (ppe_id) REFERENCES ppe_property(id) ON DELETE CASCADE
 );

@@ -178,7 +178,7 @@ if (!empty($rows)) {
                 <div class="form-fields">
                     <div class="field-group">
                         <label for="entity-name">Entity Name:</label>
-                        <input type="text" id="entity-name" name="entity_name" value="TESDA-CAR">
+                        <input type="text" id="entity-name" name="entity_name" value="TESDA Regional Office">
                     </div>
                     <div class="field-group">
                         <label for="fund-cluster">Fund Cluster:</label>

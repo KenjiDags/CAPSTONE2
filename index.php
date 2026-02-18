@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
                 }
 
-                header('Location:analytics.php');
+                header('Location:inventory.php');
                 exit;
             } else {
                 $error = 'Invalid username or password.';

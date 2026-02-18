@@ -61,10 +61,17 @@ try {
     <style>
             .search-add-container { 
                 display: flex; 
-                justify-content: space-between; 
                 align-items: center; 
                 margin-bottom: 20px; 
                 gap: 20px; 
+            }
+            .add-btn-section {
+                flex: 0 0 auto;
+            }
+            .search-section {
+                flex: 1;
+                display: flex;
+                justify-content: center;
             }
             .search-form { 
                 display: flex; 
@@ -116,7 +123,6 @@ try {
             }
             table th, table td { 
                 padding: 10px; 
-                border: 1px solid #ddd; 
                 text-align: left; }
             .actions-cell { white-space: nowrap; 
             }
@@ -191,14 +197,18 @@ try {
 
     <!-- Search and Add -->
     <div class="search-add-container">
-        <form method="GET" class="search-form">
-            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer" class="search-input">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-            <?php if (!empty($search)): ?>
-                <a href="PPE.php" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
-            <?php endif; ?>
-        </form>
-        <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
+        <div class="add-btn-section">
+            <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
+        </div>
+        <div class="search-section">
+            <form method="GET" class="search-form">
+                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer" class="search-input">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                <?php if (!empty($search)): ?>
+                    <a href="PPE.php" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
+                <?php endif; ?>
+            </form>
+        </div>
     </div>
 
     <?php if (isset($_GET['deleted'])): ?>
@@ -240,7 +250,8 @@ try {
                     <td class="actions-cell">
                         <div class="action-buttons">
                             <button class="pill-btn pill-view" onclick="viewItem(<?= $item['id']; ?>)"><i class="fas fa-eye"></i> View</button>
-                            <form method="POST" onsubmit="return confirm('Delete this item permanently?');">
+                            <a href="edit_ppe.php?id=<?= $item['id']; ?>" class="pill-btn pill-edit"><i class="fas fa-edit"></i> Edit</a>
+                            <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="display: inline;">
                                 <input type="hidden" name="delete_id" value="<?= $item['id']; ?>">
                                 <button type="submit" class="pill-btn pill-delete"><i class="fas fa-trash"></i> Delete</button>
                             </form>

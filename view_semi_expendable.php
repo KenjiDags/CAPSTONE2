@@ -47,7 +47,7 @@
                   $backUrl = $returnGet;
               }
             ?>
-            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn btn-secondary">← Back</a>
+            <a href="PC_semi.php" class="btn btn-secondary">← Back</a>
             <form action="semi_expendable_export.php" method="get" style="display:inline;">
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                 <button type="submit" class="btn btn-primary">📄 Export PDF</button>

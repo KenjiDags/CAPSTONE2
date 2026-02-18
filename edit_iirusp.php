@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="form-group">
                 <label>Entity Name:</label>
-                <input type="text" id="entity_name" value="<?php echo htmlspecialchars($iirusp['entity_name'] ?? ''); ?>">
+                <input type="text" id="entity_name" value="<?php echo htmlspecialchars($iirusp['entity_name'] ?? 'TESDA Regional Office'); ?>">
             </div>
             <div class="form-group">
                 <label>Fund Cluster:</label>

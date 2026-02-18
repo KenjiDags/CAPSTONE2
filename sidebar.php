@@ -46,11 +46,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <!-- Semi Expendables Dropdown -->
                     <div class="dropdown <?= $expendablesDropdownActive ? 'open' : '' ?>">
                         <button class="dropdown-toggle <?= $expendablesDropdownActive ? 'active' : '' ?>">
-                            🧰 Semi Expendables
+                            🗂️ Semi Expendables
                         </button>
                         <div class="dropdown-menu">
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Inventory List</a>
-                            <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📇 SPC</a>
+                            <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📄 SPC</a>
                             <a href="ics.php" class="<?= $currentPage == 'ics.php' ? 'active' : '' ?>">📦 ICS</a>
                             <a href="regspi.php" class="<?= $currentPage == 'regspi.php' ? 'active' : '' ?>">📦 RegSPI</a>
                             <a href="itr.php" class="<?= $currentPage == 'itr.php' ? 'active' : '' ?>">📦 ITR</a>
@@ -64,16 +64,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <!-- PPE Dropdown -->
                     <div class="dropdown <?= $ppeDropdownActive ? 'open' : '' ?>">
                         <button class="dropdown-toggle <?= $ppeDropdownActive ? 'active' : '' ?>">
-                            🛠️ PPE
+                            🗂️ PPE
                         </button>
                         <div class="dropdown-menu">
                             <a href="PPE.php" class="<?= $currentPage == 'PPE.php' ? 'active' : '' ?>">📋 Inventory List</a>
                             <a href="PPE_PC.php" class="<?= $currentPage == 'PPE_PC.php' ? 'active' : '' ?>">📄 PC</a>
+                            <a href="PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>">📄 PTR</a>
                         </div>
                     </div>
 
                     <div class="home">
-                        <a href="analytics.php"> Home </a>
+                        <a href="analytics.php"> Analytics </a>
                     </div>
 
                 </nav>
