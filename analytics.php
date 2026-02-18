@@ -14,9 +14,52 @@ require 'auth.php';
 <body>
 <?php include 'sidebar.php'; ?>
 
+<style>
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+  }
+  .tab-button {
+    padding: 12px 24px;
+    background: #f5f5f5;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s;
+  }
+  .tab-button:hover {
+    background: #e8e8e8;
+  }
+  .tab-button.active {
+    background: white;
+    color: #007cba;
+    border-bottom-color: #007cba;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+</style>
+
 <div class="container">
   <h2>Analytics Dashboard</h2>
 
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-button active" data-tab="office-supplies">Office Supplies</button>
+    <button class="tab-button" data-tab="semi-expendables">Semi Expendables</button>
+    <button class="tab-button" data-tab="ppe">PPE</button>
+  </div>
+
+  <!-- Office Supplies Tab -->
+  <div class="tab-content active" id="office-supplies">
   <!-- Supply Chart -->
   <section style="margin-bottom:28px;">
     <h3>Supply List (Top items by quantity)</h3>
@@ -47,6 +90,23 @@ require 'auth.php';
     <div style="margin-bottom:8px;color:#666;font-weight:600;">Items at or below reorder point</div>
     <div id="lowStock"></div>
   </section>
+  </div>
+
+  <!-- Semi Expendables Tab -->
+  <div class="tab-content" id="semi-expendables">
+  <section>
+    <h3>Semi Expendable Items</h3>
+    <div id="semiTable"></div>
+  </section>
+  </div>
+
+  <!-- PPE Tab -->
+  <div class="tab-content" id="ppe">
+  <section>
+    <h3>PPE Items</h3>
+    <div id="ppeTable"></div>
+  </section>
+  </div>
 
 </div>
 
@@ -54,7 +114,50 @@ require 'auth.php';
 const CRITICAL_THRESHOLD = 0.25;
 const WARNING_THRESHOLD = 0.5;
 
-fetch('analytics_data.php')
+// Tab switching logic
+const tabButtons = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+
+function switchToTab(targetTab) {
+  // Remove active class from all buttons and contents
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  tabContents.forEach(content => content.classList.remove('active'));
+  
+  // Add active class to clicked button and corresponding content
+  const targetButton = document.querySelector(`[data-tab="${targetTab}"]`);
+  if (targetButton) {
+    targetButton.classList.add('active');
+    document.getElementById(targetTab).classList.add('active');
+  }
+  
+  // Save current tab to localStorage
+  localStorage.setItem('analyticsActiveTab', targetTab);
+  
+  // Load data for the selected tab if not already loaded
+  if (targetTab === 'semi-expendables' && !window.semiDataLoaded) {
+    loadSemiExpendableData();
+    window.semiDataLoaded = true;
+  } else if (targetTab === 'ppe' && !window.ppeDataLoaded) {
+    loadPPEData();
+    window.ppeDataLoaded = true;
+  }
+}
+
+tabButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const targetTab = button.getAttribute('data-tab');
+    switchToTab(targetTab);
+  });
+});
+
+// Restore last active tab on page load
+const savedTab = localStorage.getItem('analyticsActiveTab');
+if (savedTab && document.getElementById(savedTab)) {
+  switchToTab(savedTab);
+}
+
+// Load Office Supplies data (default)
+fetch('analytics_data.php?category=office-supplies')
   .then(res => res.json())
   .then(json => {
     const supply = json.supply_list || [];
@@ -153,16 +256,129 @@ fetch('analytics_data.php')
 
 // --- Low Stock Table with Color Coding ---
 const lowDiv = document.getElementById('lowStock');
-if (low.length === 0) {
+renderLowStockTable(low, 'lowStock');
+
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Error loading analytics data — check console for details.');
+  });
+
+// Load Semi Expendable Data
+function loadSemiExpendableData() {
+  fetch('analytics_data.php?category=semi-expendables')
+    .then(res => res.json())
+    .then(json => {
+      const items = json.items || [];
+      const semiTableDiv = document.getElementById('semiTable');
+      
+      if (items.length === 0) {
+        semiTableDiv.innerHTML = '<p>No semi-expendable items found.</p>';
+        return;
+      }
+
+      const table = document.createElement('table');
+      table.className = 'analytics-table';
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th>Property No.</th>
+          <th>Item Description</th>
+          <th>Status</th>
+          <th>Current Officer</th>
+          <th>Quantity Balance</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.property_no || 'N/A'}</td>
+          <td>${item.item_name || 'N/A'}</td>
+          <td>${item.status || 'Active'}</td>
+          <td>${item.officer || 'N/A'}</td>
+          <td>${item.quantity || 0}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      semiTableDiv.appendChild(table);
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('semiTable').innerHTML = '<p>Error loading semi-expendable data.</p>';
+    });
+}
+
+// Load PPE Data
+function loadPPEData() {
+  fetch('analytics_data.php?category=ppe')
+    .then(res => res.json())
+    .then(json => {
+      const items = json.items || [];
+      const ppeTableDiv = document.getElementById('ppeTable');
+      
+      if (items.length === 0) {
+        ppeTableDiv.innerHTML = '<p>No PPE items found.</p>';
+        return;
+      }
+
+      const table = document.createElement('table');
+      table.className = 'analytics-table';
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th>PAR No.</th>
+          <th>Item Name</th>
+          <th>Condition</th>
+          <th>Status</th>
+          <th>Current Officer/Custodian</th>
+          <th>Quantity</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.property_no || 'N/A'}</td>
+          <td>${item.item_name || 'N/A'}</td>
+          <td>${item.condition || 'N/A'}</td>
+          <td>${item.status || 'N/A'}</td>
+          <td>${item.officer || 'N/A'}</td>
+          <td>${item.quantity || 0}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      ppeTableDiv.appendChild(table);
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('ppeTable').innerHTML = '<p>Error loading PPE data.</p>';
+    });
+}
+
+
+// Shared function to render low stock table
+function renderLowStockTable(low, containerId) {
+  const lowDiv = document.getElementById(containerId);
+  if (low.length === 0) {
     lowDiv.innerHTML = '<p>No low-stock items.</p>';
-} else {
-    // Sort alphabetically by item_name
+  } else {
     low.sort((a, b) => a.item_name.localeCompare(b.item_name));
 
     const table = document.createElement('table');
     table.className = 'analytics-table';
 
-    // Table header
     const thead = document.createElement('thead');
     thead.innerHTML = `
       <tr>
@@ -174,48 +390,37 @@ if (low.length === 0) {
     `;
     table.appendChild(thead);
 
-    // Table body
     const tbody = document.createElement('tbody');
 
     low.forEach(item => {
-        const tr = document.createElement('tr');
+      const tr = document.createElement('tr');
 
-        // Determine severity
-        let severity;
+      let severity;
+      if (item.quantity === 0) {
+        severity = 'critical';
+      } else if (item.reorder_point === 0) {
+        severity = 'ok';
+      } else {
+        const ratio = item.quantity / item.reorder_point;
+        if (ratio <= CRITICAL_THRESHOLD) severity = 'critical';
+        else if (ratio <= WARNING_THRESHOLD) severity = 'warning';
+        else severity = 'ok';
+      }
 
-        if (item.quantity === 0) {
-            severity = 'critical';
-        } else if (item.reorder_point === 0) {
-            severity = 'ok';
-        } else {
-            const ratio = item.quantity / item.reorder_point;
-            if (ratio <= CRITICAL_THRESHOLD) severity = 'critical';
-            else if (ratio <= WARNING_THRESHOLD) severity = 'warning';
-            else severity = 'ok';
-        }
-
-        tr.className = severity;
-
-        // Row content
-        tr.innerHTML = `
-          <td>${item.stock_number}</td>
-          <td>${item.item_name}</td>
-          <td>${item.quantity}</td>
-          <td>${item.reorder_point}</td>
-        `;
-        tbody.appendChild(tr);
+      tr.className = severity;
+      tr.innerHTML = `
+        <td>${item.stock_number}</td>
+        <td>${item.item_name}</td>
+        <td>${item.quantity}</td>
+        <td>${item.reorder_point}</td>
+      `;
+      tbody.appendChild(tr);
     });
 
     table.appendChild(tbody);
     lowDiv.appendChild(table);
+  }
 }
-
-
-  })
-  .catch(err => {
-    console.error(err);
-    alert('Error loading analytics data — check console for details.');
-  });
 </script>
 
 </body>

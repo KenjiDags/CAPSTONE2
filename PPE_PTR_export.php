@@ -62,6 +62,9 @@ if (isset($_GET['item_ids'])) {
       margin: 0 0 15px 0;
       letter-spacing: 0.5px;
     }
+    .form-table td.text-left div {
+      margin-bottom: 4px;
+    }
     
     .form-table {
       width: 100%;
@@ -107,6 +110,9 @@ if (isset($_GET['item_ids'])) {
       border-bottom: 1px solid #000;
       margin: 6px 0;
       min-height: 14px;
+    }
+    .reason-lines:last-child {
+      margin-bottom: 15px; /* extra space after the last line */
     }
     
     .signature-cell {
@@ -183,6 +189,38 @@ if (isset($_GET['item_ids'])) {
       border-radius: 4px;
       font-size: 12px;
     }
+
+    .transfer-type {
+        text-align: left !important;
+        padding-left: 8px;
+    }
+
+    .transfer-options {
+        display: grid;                  
+        grid-template-columns: repeat(2, max-content); /* two columns sized to content */
+        column-gap: 16px;               /* smaller gap between columns */
+        row-gap: 4px;                   /* gap between rows */
+        margin-top: 6px;
+        margin-left: 72px;              /* keeps them aligned under "Transfer Type:" */
+    }
+
+    .option {
+        display: flex;
+        align-items: center;
+        gap: 6px;                        /* space between checkbox and text */
+    }
+
+    .checkbox {
+        width: 12px;
+        height: 12px;
+        border: 1px solid black;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 6px;
+        font-size: 12px;
+        font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -204,7 +242,7 @@ if (isset($_GET['item_ids'])) {
     <div class="title">PROPERTY TRANSFER REPORT</div>
 
     <!-- Entity Name and Fund Cluster Header -->
-    <div style="display: flex; margin-top: 15px; margin-bottom: 10px; padding: 5px 0;">
+    <div style="display: flex; margin-top: 15px; margin-bottom: 0px; padding: 5px 0;">
         <div style="width: 70%;"><strong>Entity Name:</strong> <?= htmlspecialchars($entity_name) ?></div>
         <div style="width: 30%;"><strong>Fund Cluster:</strong> <?= htmlspecialchars($fund_cluster) ?></div>
     </div>
@@ -213,20 +251,43 @@ if (isset($_GET['item_ids'])) {
     <table class="form-table">
         <!-- Header Section (aligned with 5-column layout) -->
         <tr>
-            <td colspan="3"><strong>From Accountable Officer/Agency/Fund Cluster:</strong></td>
-            <td colspan="2"><strong>PTR No.:</strong> <?= htmlspecialchars($ptr_no) ?></td>
+            <td colspan="3" class="text-left">
+                <div><strong>From Accountable Officer/Agency/Fund Cluster:</strong> <?= htmlspecialchars($from_officer) ?></div>
+                <div><strong>To Accountable Officer/Agency/Fund Cluster:</strong> <?= htmlspecialchars($to_officer) ?></div>
+            </td>
+            <td colspan="2" class="text-left">
+                <div><strong>PTR No.:</strong> <?= htmlspecialchars($ptr_no) ?></div>
+                <div><strong>Date:</strong> <?= htmlspecialchars($transfer_date) ?></div>
+            </td>
         </tr>
-        <tr>
-            <td colspan="3"><strong>To Accountable Officer/Agency/Fund Cluster:</strong><br>
-            <td colspan="2"><strong>Date:</strong> <?= htmlspecialchars($transfer_date) ?></td>
-        </tr>
+
         <tr>
             <td colspan="5" class="transfer-type">
                 <strong>Transfer Type:</strong> (check only one)
-                <span class="checkbox"><?= $transfer_type=='Donation'?'✓':'' ?></span> Donation
-                <span class="checkbox"><?= $transfer_type=='Relocation'?'✓':'' ?></span> Relocation
-                <span class="checkbox"><?= $transfer_type=='Reassignment'?'✓':'' ?></span> Reassignment
-                <span class="checkbox"><?= $transfer_type=='Others'?'✓':'' ?></span> Others (Specify) _____________
+
+                <div class="transfer-options">
+
+                    <div class="option">
+                        <div class="checkbox"><?= $transfer_type=='Donation'?'✓':'' ?></div>
+                        Donation
+                    </div>
+
+                    <div class="option">
+                        <div class="checkbox"><?= $transfer_type=='Relocation'?'✓':'' ?></div>
+                        Relocate
+                    </div>
+
+                    <div class="option">
+                        <div class="checkbox"><?= $transfer_type=='Reassignment'?'✓':'' ?></div>
+                        Reassignment
+                    </div>
+
+                    <div class="option">
+                        <div class="checkbox"><?= $transfer_type=='Others'?'✓':'' ?></div>
+                        Others (Specify) _____________
+                    </div>
+
+                </div>
             </td>
         </tr>
         

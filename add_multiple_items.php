@@ -44,6 +44,24 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
         .save-btn:hover {
             background: #218838;
         }
+        .filter-container {
+            margin-bottom: 20px;
+        }
+        .filter-dropdown {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+        .hidden-row {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +70,14 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
 
 <div class="container">
     <h2>Restock Inventory</h2>
-    <p>Enter the quantity you want to add for each item.</p>
+
+    <!-- FILTER DROPDOWN -->
+    <div class="filter-container">
+        <select id="stockFilter" class="filter-dropdown">
+            <option value="all">Show All Items</option>
+            <option value="low-stock">Show Low-Stock Items</option>
+        </select>
+    </div>
 
     <!-- FORM NOW SUBMITS TO THIS SAME PAGE -->
     <form method="POST">
@@ -65,26 +90,25 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
                     <th>Description</th>
                     <th>Unit</th>
                     <th>Current Qty</th>
-                    <th>Unit Cost</th>
                     <th>IAR</th>
                     <th style="text-align:center;">Qty to Add</th>
+                    <th>Unit Cost</th>
                 </tr>
             </thead>
 
             <tbody>
                 <?php while ($row = $items->fetch_assoc()): ?>
-                    <tr>
+                    <tr data-quantity="<?= $row['quantity_on_hand'] ?>" data-reorder-point="<?= $row['reorder_point'] ?>">
                         <td><?= htmlspecialchars($row['stock_number']) ?></td>
                         <td><?= htmlspecialchars($row['item_name']) ?></td>
                         <td><?= htmlspecialchars($row['description']) ?></td>
                         <td><?= htmlspecialchars($row['unit']) ?></td>
                         <td><?= htmlspecialchars($row['quantity_on_hand']) ?></td>
-                        <td><?= htmlspecialchars($row['unit_cost']) ?></td>
+
                         <td><?= htmlspecialchars($row['iar']) ?></td>
 
-                        <!-- HIDDEN FIELDS USED BY restockItems() -->
+                        <!-- HIDDEN FIELD FOR STOCK NUMBER -->
                         <input type="hidden" name="stock_number[]" value="<?= $row['stock_number'] ?>">
-                        <input type="hidden" name="unit_cost[]" value="<?= $row['unit_cost'] ?>">
 
                         <td style="text-align:center;">
                             <input 
@@ -92,6 +116,18 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
                                 name="quantity_on_hand[]" 
                                 min="0" 
                                 placeholder="0"
+                            >
+                        </td>
+
+                        <td>
+                            <input 
+                                type="number" 
+                                name="unit_cost[]" 
+                                value="<?= htmlspecialchars($row['unit_cost']) ?>"
+                                step="0.01"
+                                min="0"
+                                style="width: 100px;"
+                                placeholder="Unit Cost"
                             >
                         </td>
                     </tr>
@@ -103,5 +139,31 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
         <button class="save-btn" type="submit">Save Restock Entries</button>
     </form>
 </div>
+
+<script>
+    const filterDropdown = document.getElementById('stockFilter');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    filterDropdown.addEventListener('change', function() {
+        const filterValue = this.value;
+        
+        tableRows.forEach(row => {
+            const quantity = parseInt(row.getAttribute('data-quantity'));
+            const reorderPoint = parseInt(row.getAttribute('data-reorder-point'));
+            
+            if (filterValue === 'all') {
+                row.classList.remove('hidden-row');
+            } else if (filterValue === 'low-stock') {
+                // Show items at or below their reorder point
+                if (quantity <= reorderPoint) {
+                    row.classList.remove('hidden-row');
+                } else {
+                    row.classList.add('hidden-row');
+                }
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
