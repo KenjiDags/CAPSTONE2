@@ -1,7 +1,6 @@
 <?php
 require 'auth.php';
 require 'config.php';
-include 'sidebar.php';
 
 // Handle Delete action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
@@ -56,144 +55,83 @@ try {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PPE Inventory List</title>
 <link rel="stylesheet" href="/tesda/css/styles.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="/tesda/css/PPE.css?v=<?php echo time(); ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
-            .search-add-container { 
-                display: flex; 
-                align-items: center; 
-                margin-bottom: 20px; 
-                gap: 20px; 
-            }
-            .add-btn-section {
-                flex: 0 0 auto;
-            }
-            .search-section {
-                flex: 1;
-                display: flex;
-                justify-content: center;
-            }
-            .search-form { 
-                display: flex; 
-                gap: 10px; 
-            }
-            .search-input { 
-                padding: 10px; 
-                border-radius: 4px; 
-                border: 1px solid #ddd; 
-                width: 400px; 
-                max-width: 100%; 
-            }
-            .btn { 
-                padding: 8px 16px; 
-                border-radius: 4px; 
-                border: none; 
-                cursor: pointer; 
-                text-decoration: none; 
-                display: inline-flex; 
-                align-items: center; 
-                gap: 6px; 
-                font-size: 14px; 
-            }
-            .btn-primary { 
-                background: #2563eb; 
-                color: #fff; 
-            } 
-            .btn-primary:hover { 
-                background: #1d4ed8; 
-            }
-            .btn-success { 
-                background: #10b981; 
-                color: #fff; 
-            } 
-            .btn-success:hover { 
-                background: #059669; 
-            }
-            .btn-secondary { 
-                background: #6b7280; 
-                color: #fff; 
-            } 
-            .btn-secondary:hover { 
-                background: #4b5563; 
-            }
-            table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin-bottom: 40px; 
-            }
-            table th, table td { 
-                padding: 10px; 
-                text-align: left; }
-            .actions-cell { white-space: nowrap; 
-            }
-            .pill-btn { 
-                display: inline-flex; 
-                align-items: center; 
-                justify-content: center; 
-                gap: 6px; padding: 6px 12px; 
-                border-radius: 9999px; 
-                color: #fff; 
-                font-weight: 600; 
-                font-size: 13px; 
-                border: none; 
-                cursor: pointer; 
-            }
-            .pill-edit { 
-                background: linear-gradient(135deg,#67a8ff 0%,#3b82f6 100%); 
-            }
-            .pill-delete { 
-                background: linear-gradient(135deg,#ff9aa2 0%,#ef4444 100%); 
-            }
-            .pill-view { 
-                background: linear-gradient(135deg,#facc15 0%,#f59e0b 100%); 
-            }
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 1000;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.5);
-                align-items: center;
-                justify-content: center;
-            }
-            .modal-content {
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: 90%;
-                max-width: 600px;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-            .modal-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 10px;
-            }
-            .modal-close {
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            .detail-row { 
-                margin-bottom: 10px; 
-                padding: 8px 0; 
-                border-bottom: 1px solid #f3f4f6; 
-                }
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f1b3";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Container spacing override */
+        .container {
+            margin: 20px auto;
+        }
+        
+        /* Search Section Layout */
+        .add-btn-section {
+            flex: 0 0 auto;
+        }
+        
+        .search-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .search-form { 
+            display: flex; 
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .search-input { 
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            border: 2px solid #e5e7eb; 
+            width: 400px; 
+            max-width: 100%;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:hover {
+            border-color: #cbd5e1;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Status and Condition Badges */
+        table tbody td:nth-child(7),
+        table tbody td:nth-child(8) {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        /* Status column colors */
+        table tbody tr:has(td:nth-child(7):contains("Active")) td:nth-child(7),
+        table tbody td:nth-child(7) {
+            color: #047857;
+        }
+        
+        /* Condition column colors */
+        table tbody td:nth-child(8) {
+            color: #0891b2;
+        }
     </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 <div class="container">
-    <header>
-        <h2>PPE Inventory List</h2>
-    </header>
+    <h2>PPE Inventory List</h2>
 
     <!-- Search and Add -->
     <div class="search-add-container">
@@ -220,21 +158,24 @@ try {
     <table>
         <thead>
             <tr>
-                <th>PAR No</th>
-                <th>Item Name</th>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Unit</th>
-                <th>Officer in charge</th>
-                <th>Status</th>
-                <th>Condition</th>
-                <th>Amount</th>
-                <th>Actions</th>
+                <th><i class="fas fa-hashtag"></i> PAR No</th>
+                <th><i class="fas fa-box"></i> Item Name</th>
+                <th><i class="fas fa-align-left"></i> Description</th>
+                <th><i class="fas fa-list-ol"></i> Quantity</th>
+                <th><i class="fas fa-ruler"></i> Unit</th>
+                <th><i class="fas fa-user-tie"></i> Officer in charge</th>
+                <th><i class="fas fa-info-circle"></i> Status</th>
+                <th><i class="fas fa-check-circle"></i> Condition</th>
+                <th><i class="fas fa-dollar-sign"></i> Amount</th>
+                <th><i class="fas fa-cogs"></i> Actions</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($items)): ?>
-                <tr><td colspan="10" style="text-align:center; padding: 40px;">No items found. Add your first item!</td></tr>
+                <tr><td colspan="10">
+                    <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
+                    <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
+                </td></tr>
             <?php else: ?>
                 <?php foreach ($items as $item): ?>
                 <tr>
@@ -279,12 +220,19 @@ try {
 
 <script>
 function viewItem(id){
+    const modal = document.getElementById('viewModal');
+    const details = document.getElementById('itemDetails');
+    
+    // Show loading state
+    details.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3b82f6;"></i><div style="margin-top: 12px; color: #64748b;">Loading...</div></div>';
+    modal.style.display='flex';
+    
     fetch(`get_ppe_details.php?id=${id}`)
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
             const item = data.item;
-            document.getElementById('itemDetails').innerHTML = `
+            details.innerHTML = `
                 <div class="detail-row"><strong>PAR No:</strong> ${item.par_no}</div>
                 <div class="detail-row"><strong>Item Name:</strong> ${item.item_name}</div>
                 <div class="detail-row"><strong>Description:</strong> ${item.item_description}</div>
@@ -297,8 +245,12 @@ function viewItem(id){
                 <div class="detail-row"><strong>Amount:</strong> ₱${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
                 ${item.remarks?`<div class="detail-row"><strong>Remarks:</strong> ${item.remarks}</div>`:''}
             `;
-            document.getElementById('viewModal').style.display='flex';
-        } else alert('Error loading item details');
+        } else {
+            details.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px;"></i><div style="margin-top: 12px;">Error loading item details</div></div>';
+        }
+    })
+    .catch(error => {
+        details.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px;"></i><div style="margin-top: 12px;">Error loading item details</div></div>';
     });
 }
 

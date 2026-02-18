@@ -9,59 +9,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSMI - Report on Stock of Materials and Supplies Issued</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .export-section {
-            margin-bottom: 20px;
-            border-radius: 5px;
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f570";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
         }
         
+        /* Container spacing override */
+        .container {
+            margin: 20px auto;
+        }
+        
+        /* Align export button properly in container */
+        .search-add-container {
+            align-items: center;
+            padding: 15px 20px 0px 20px;
+        }
+        
+        /* Export button styling */
         .export-btn {
-            background-color: #28a745;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 20px;
             text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            margin-right: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
             cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
         }
         
         .export-btn:hover {
-            background-color: #218838;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             color: white;
             text-decoration: none;
         }
         
         .export-btn i {
-            margin-right: 5px;
+            font-size: 1.1em;
+        }
+        
+        .export-section {
+            margin-bottom: 20px;
+        }
+        
+        /* Currency cell styling */
+        .currency {
+            text-align: right;
+            font-weight: 600;
+            color: #059669;
         }
     </style>
 </head>
-<body class="rsmi-page">
+<body>
     <?php include 'sidebar.php'; ?>
 
-    <div class="content">
+    <div class="container">
         <h2>Report on the Stock of Materials and Supplies Issued (RSMI)</h2>
 
         <!-- Export Section -->
-        <div class="export-section">
+        <div class="search-add-container">
             <a href="rsmi_export.php" class="export-btn" target="_blank">
-                📄 Export to PDF
+                <i class="fas fa-file-pdf"></i> Export to PDF
             </a>
         </div>
 
-        <table>
+        <div class="table-container">
+            <table>
             <thead>
                 <tr>
-                    <th>RIS No.</th>
-                    <th>Stock No.</th>
-                    <th>Item</th>
-                    <th>Unit</th>
-                    <th>Quantity Issued</th>
-                    <th>Unit Cost</th>
-                    <th>Amount</th>
+                    <th><i class="fas fa-hashtag"></i> RIS No.</th>
+                    <th><i class="fas fa-barcode"></i> Stock No.</th>
+                    <th><i class="fas fa-tag"></i> Item</th>
+                    <th><i class="fas fa-ruler"></i> Unit</th>
+                    <th><i class="fas fa-cubes"></i> Quantity Issued</th>
+                    <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
+                    <th><i class="fas fa-calculator"></i> Amount</th>
                 </tr>
             </thead>
             <tbody>
@@ -96,13 +129,16 @@
                 ?>
             </tbody>
         </table>
+        </div>
 
         <h2>Recapitulation</h2>
-        <table>
+        
+        <div class="table-container">
+            <table>
             <thead>
                 <tr>
-                    <th>Stock No.</th>
-                    <th>Total Quantity Issued</th>
+                    <th><i class="fas fa-barcode"></i> Stock No.</th>
+                    <th><i class="fas fa-cubes"></i> Total Quantity Issued</th>
                 </tr>
             </thead>
             <tbody>
@@ -126,6 +162,7 @@
                 ?>
             </tbody>
         </table>
+        </div>
     </div>
 
     <script>

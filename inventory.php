@@ -504,21 +504,162 @@ case 'update':
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESDA Inventory Management System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f0f7";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Container spacing override */
+        .container {
+            margin: 20px auto;
+        }
+        
+        /* Make Add and Restock buttons bigger */
+        .search-add-container .btn-success {
+            padding: 12px 24px;
+            font-size: 15px;
+        }
+        
+        /* Action buttons styling */
         .btn.edit-btn, .btn.delete-btn, .btn.clear-entries-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             white-space: nowrap;
         }
+        
         .btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
             font-size: 0.95em;
         }
+        
         .btn.clear-entries-btn {
             padding: 8px 12px;
             font-size: 0.8rem;
             max-width: 175px;
+        }
+        
+        /* Table action buttons use pill style */
+        .btn.edit-btn {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin: 2px;
+        }
+        
+        .btn.edit-btn:hover {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn.delete-btn {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin: 2px;
+        }
+        
+        .btn.delete-btn:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn.clear-entries-btn {
+            background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+            color: #fff;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin: 2px;
+        }
+        
+        .btn.clear-entries-btn:hover {
+            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        /* Search input styling */
+        .search-add-container input[type="text"] {
+            width: 800px;
+            max-width: 800px;
+            padding: 10px 18px;
+            font-size: 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 25px;
+            transition: border-color 0.2s ease;
+            margin-left: 80px;
+            margin-right: auto;
+        }
+        
+        .search-add-container input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        /* Sub-entries styling */
+        .sub-entry {
+            font-size: 0.85em;
+            color: #6b7280;
+            padding: 2px 0;
+        }
+        
+        .sub-entry.initial {
+            font-style: italic;
+            color: #9ca3af;
+        }
+        
+        /* Actions cell button layout */
+        .actions-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-start;
+        }
+        
+        .actions-row {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+        
+        .actions-row-full {
+            width: 100%;
+        }
+        
+        /* Ensure buttons don't grow to fill container */
+        .btn.edit-btn,
+        .btn.delete-btn {
+            flex-shrink: 0;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -526,32 +667,32 @@ case 'update':
 <?php include 'sidebar.php'; ?>
 
 <div class="container">
-    <h2><i class=""></i> Office Supplies</h2>
+    <h2>Office Supplies</h2>
 
-    <div class="search-container">
-        <button class="add-btn" onclick="document.getElementById('addModal').style.display='block'">
+    <div class="search-add-container">
+        <button class="btn btn-success" onclick="document.getElementById('addModal').style.display='block'">
             <i class="fas fa-plus"></i> Add New Item
         </button>
-    <button class="add-btn" onclick="window.location.href='add_multiple_items.php'">
-        <i class="fas fa-plus"></i> Restock Items
-    </button>
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, description, or unit...">
+        <button class="btn btn-success" onclick="window.location.href='add_multiple_items.php'">
+            <i class="fas fa-box"></i> Restock Items
+        </button>
+        <input type="text" id="searchInput" placeholder="Search by stock number, description, or unit...">
     </div>
 
     <div class="table-container">
         <table id="inventoryTable">
             <thead>
                 <tr>
-                    <th><i class=""></i> Stock Number</th>
-                    <th><i class=""></i> Item</th>
-                    <th><i class=""></i> Description</th>
-                    <th><i class=""></i> Unit</th>
-                    <th><i class=""></i> Quantity</th>
-                    <th><i class=""></i> Unit Cost</th>
-                    <th><i class=""></i> Total Cost</th>
-                    <th><i class=""></i> Reorder Point</th>
-                    <th><i class=""></i> Last Updated</th>
-                    <th><i class=""></i> Actions</th>
+                    <th><i class="fas fa-barcode"></i> Stock Number</th>
+                    <th><i class="fas fa-tag"></i> Item</th>
+                    <th><i class="fas fa-align-left"></i> Description</th>
+                    <th><i class="fas fa-ruler"></i> Unit</th>
+                    <th><i class="fas fa-cubes"></i> Quantity</th>
+                    <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
+                    <th><i class="fas fa-calculator"></i> Total Cost</th>
+                    <th><i class="fas fa-exclamation-triangle"></i> Reorder Point</th>
+                    <th><i class="fas fa-clock"></i> Last Updated</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -608,39 +749,44 @@ case 'update':
                             <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
                             <td>{$row['reorder_point']}</td>
                             <td>" . date('M d, Y H:i', strtotime($row['created_at'] ?? 'now')) . "</td>
-                            <td>
-                                <button 
-                                    class='btn edit-btn' 
-                                    onclick='openEditModal(this)'
-                                    data-id='{$row['item_id']}'
-                                    data-stock_number='{$row['stock_number']}'
-                                    data-item_name= '{$row['item_name']}'
-                                    data-description='{$row['description']}'
-                                    data-unit='{$row['unit']}'
-                                    data-reorder_point='{$row['reorder_point']}'
-                                    data-unit_cost='" . (isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])) . "'                                    data-quantity_on_hand='{$row['quantity_on_hand']}'
-                                    data-iar='{$row['iar']}'
-                                    title='Edit Item'
-                                >
-                                    <i class='fas fa-edit'></i> Edit
-                                </button>
+                            <td class='actions-cell'>
+                                <div class='actions-row'>
+                                    <button 
+                                        class='btn edit-btn' 
+                                        onclick='openEditModal(this)'
+                                        data-id='{$row['item_id']}'
+                                        data-stock_number='{$row['stock_number']}'
+                                        data-item_name= '{$row['item_name']}'
+                                        data-description='{$row['description']}'
+                                        data-unit='{$row['unit']}'
+                                        data-reorder_point='{$row['reorder_point']}'
+                                        data-unit_cost='" . (isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])) . "'                                        data-quantity_on_hand='{$row['quantity_on_hand']}'
+                                        data-iar='{$row['iar']}'
+                                        title='Edit Item'
+                                    >
+                                        <i class='fas fa-edit'></i> Edit
+                                    </button>
 
-                                <button 
-                                    class='btn delete-btn' 
-                                    onclick='deleteItem({$row['item_id']})' 
-                                    title='Delete Item'
-                                >
-                                    <i class='fas fa-trash'></i> Delete
-                                </button>
+                                    <button 
+                                        class='btn delete-btn' 
+                                        onclick='deleteItem({$row['item_id']})' 
+                                        title='Delete Item'
+                                    >
+                                        <i class='fas fa-trash'></i> Delete
+                                    </button>
+                                </div>
                                 
                                 " . ($row['has_multiple_entries'] ? "
-                                <button 
-                                    class='btn clear-entries-btn' 
-                                    onclick='clearEntries({$row['item_id']})' 
-                                    title='Clear All Entries'
-                                >
-                                    <i class='fas fa-broom'></i> Clear Entries
-                                </button>
+                                <div class='actions-row actions-row-full'>
+                                    <button 
+                                        class='btn clear-entries-btn' 
+                                        onclick='clearEntries({$row['item_id']})' 
+                                        title='Clear All Entries'
+                                        style='width: 100%; max-width: none;'
+                                    >
+                                        <i class='fas fa-broom'></i> Clear Entries
+                                    </button>
+                                </div>
                                 " : "") . "
                             </td>
                         </tr>";

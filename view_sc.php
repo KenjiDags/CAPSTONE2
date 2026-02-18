@@ -31,8 +31,6 @@
     }
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,11 +38,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View SC - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+    /* Page-Specific Icon */
+    .container h2::before {
+        content: "\f022";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        color: #3b82f6;
+        margin-right: 10px;
+    }
+    
+    /* Container spacing override */
+    .container {
+        margin: 20px auto;
+        margin-left: 240px; 
+    }
+    
+    /* Action buttons styling */
+    .ris-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .ris-actions .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .ris-actions form {
+        display: inline;
+        margin: 0;
+    }
+    
+    /* Details section styling */
+    .ris-details {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .ris-details p {
+        margin: 10px 0;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .ris-details p strong {
+        min-width: 200px;
+        color: #1e293b;
+    }
+    
+    /* Section headers */
+    h3 {
+        color: #1e293b;
+        font-size: 1.3rem;
+        margin: 30px 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* History table wrapper */
+    .history-table {
+        margin-top: 15px;
+        overflow-x: auto;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        font-style: italic;
+        color: #6b7280;
+        text-align: center;
+        padding: 40px;
+    }
+
+    #clearHistoryBtn {
+        background-color: #facc15 !important;
+        border-color: #eab308 !important;
+        color: #1e293b !important;
+    }
+    #clearHistoryBtn:hover {
+        background-color: #eab308 !important;
+    }
+        </style>
 </head>
-<body class="view-sc-page">
+<body>
 
-
-    <?php
+<?php
         if (!isset($_GET['item_id'])) {
             die("❌ Error: item not found.");
         }
@@ -85,101 +174,114 @@
         }
     ?>
 
-    <div class="content">
-        <h2>📋 Viewing Item No. <?php echo htmlspecialchars($items['item_id']); ?></h2>
+    <div class="container">
+        <h2>Viewing Stock Card - Item No. <?php echo htmlspecialchars($items['item_id']); ?></h2>
 
         <div class="ris-actions">
-            <a href="SC.php" class="btn btn-secondary">← Back to SC List</a>
-            <form action="sc_export.php" method="get" style="display:inline;">
+            <a href="SC.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to SC List
+            </a>
+            <form action="sc_export.php" method="get">
                 <input type="hidden" name="item_id" value="<?php echo $item_id; ?>">
-                <button type="submit" class="btn btn-primary">📄 Export PDF</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
             </form>
 
             <form method="POST" 
                 action="" 
-                onsubmit="return confirm('Are you sure you want to delete this item\'s history?')" 
-                style="display:inline;">
+                onsubmit="return confirm('Are you sure you want to delete this item\'s history?')">
                 <input type="hidden" name="clear_history" value="1">
                 <input type="hidden" name="item_id" value="<?= $item_id ?>">
                 <?php if (!empty($history_rows)): ?>
                     <button id="clearHistoryBtn" 
                             class="btn btn-danger"
                             data-item-id="<?= $item_id ?>">
-                        🗑️ Clear History
+                        <i class="fas fa-trash"></i> Clear History
                     </button>
                     
                 <?php endif; ?>
             </form>
         </div>
 
+        <h3><i class="fas fa-info-circle"></i> Item Details</h3>
         <div class="ris-details">
-            <p><strong>Entity Name:</strong> <?php echo "TESDA"; ?></p>
-            <p><strong>Item:</strong> <?php echo htmlspecialchars($items['item_name']); ?></p>
-            <p><strong>Description:</strong> <?php echo htmlspecialchars($items['description']); ?></p>
-            <p><strong>Quantity:</strong> <?php echo htmlspecialchars($items['quantity_on_hand']); ?></p>
-            <p><strong>Stock No.:</strong> <?php echo htmlspecialchars($items['stock_number']); ?></p>
-            <p><strong>Unit of Measurement:</strong> <?php echo htmlspecialchars($items['unit']); ?></p>
-            <p><strong>Re-order Point:</strong> <?php echo htmlspecialchars($items['reorder_point']); ?></p>
-            <p><strong>Date:</strong> <?php echo date('m/d/Y'); ?></p>
-            <p><strong>History:</strong></p>
+            <p><strong>Entity Name:</strong> <span><?php echo "TESDA"; ?></span></p>
+            <p><strong>Item:</strong> <span><?php echo htmlspecialchars($items['item_name']); ?></span></p>
+            <p><strong>Description:</strong> <span><?php echo htmlspecialchars($items['description']); ?></span></p>
+            <p><strong>Quantity:</strong> <span><?php echo htmlspecialchars($items['quantity_on_hand']); ?></span></p>
+            <p><strong>Stock No.:</strong> <span><?php echo htmlspecialchars($items['stock_number']); ?></span></p>
+            <p><strong>Unit of Measurement:</strong> <span><?php echo htmlspecialchars($items['unit']); ?></span></p>
+            <p><strong>Re-order Point:</strong> <span><?php echo htmlspecialchars($items['reorder_point']); ?></span></p>
+            <p><strong>Date:</strong> <span><?php echo date('m/d/Y'); ?></span></p>
+        </div>
 
+        <h3><i class="fas fa-history"></i> Item History</h3>
+        <div class="ris-details">
             <?php if (count($history_rows) > 0): ?>
                 <div class="history-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Stock No.</th>
-                                <th>Item</th>
-                                <th>Description</th>
-                                <th>Unit</th>
-                                <th>Reorder Point</th>
-                                <th>Unit Cost (₱)</th>
-                                <th>Quantity</th>
-                                <th>Qty Change</th>
-                                <th>Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                        <?php 
-                        // Map change_type to more readable text
-                        $change_labels = [
-                            'add' => 'Added New Item',
-                            'entry' => 'New Stock Entry',
-                            'update' => 'Updated Item',
-                            'cleared' => 'Cleared History',
-                            'delete' => 'Deleted Item',
-                            'issue' => 'Issued Item',
-                        ];
-                    
-                                foreach ($history_rows as $h): 
-                                    $type_label = $change_labels[$h['change_type']] ?? ucfirst($h['change_type']);
-                                ?>
-                                    <td><?= date('M d, Y H:i', strtotime($h['changed_at'])) ?></td>
-                                    <td><?= htmlspecialchars($h['stock_number']) ?></td>
-                                    <td><?= htmlspecialchars($h['item_name']) ?></td>
-                                    <td><?= htmlspecialchars($h['description']) ?></td>
-                                    <td><?= htmlspecialchars($h['unit']) ?></td>
-                                    <td><?= htmlspecialchars($h['reorder_point']) ?></td>
-                                    <td><?= number_format($h['unit_cost'], 2) ?></td>
-                                    <td><?= htmlspecialchars($h['quantity_on_hand']) ?></td>
-                                    <td style="color: <?= $h['quantity_change'] > 0 ? 'green' : ($h['quantity_change'] < 0 ? 'red' : 'gray') ?>;">
-                                        <?= $h['quantity_change'] > 0 ? '+' : '' ?><?= $h['quantity_change'] ?>
-                                    </td>
-                                    <td><?= htmlspecialchars($type_label) ?></td>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-calendar"></i> Date</th>
+                                    <th><i class="fas fa-barcode"></i> Stock No.</th>
+                                    <th><i class="fas fa-tag"></i> Item</th>
+                                    <th><i class="fas fa-align-left"></i> Description</th>
+                                    <th><i class="fas fa-ruler"></i> Unit</th>
+                                    <th><i class="fas fa-exclamation-triangle"></i> Reorder Point</th>
+                                    <th><i class="fas fa-dollar-sign"></i> Unit Cost (₱)</th>
+                                    <th><i class="fas fa-cubes"></i> Quantity</th>
+                                    <th><i class="fas fa-exchange-alt"></i> Qty Change</th>
+                                    <th><i class="fas fa-list"></i> Type</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+
+                            <?php 
+                            // Map change_type to more readable text
+                            $change_labels = [
+                                'add' => 'Added New Item',
+                                'entry' => 'New Stock Entry',
+                                'update' => 'Updated Item',
+                                'cleared' => 'Cleared History',
+                                'delete' => 'Deleted Item',
+                                'issue' => 'Issued Item',
+                            ];
+                        
+                                    foreach ($history_rows as $h): 
+                                        $type_label = $change_labels[$h['change_type']] ?? ucfirst($h['change_type']);
+                                    ?>
+                                    <tr>
+                                        <td><?= date('M d, Y H:i', strtotime($h['changed_at'])) ?></td>
+                                        <td><?= htmlspecialchars($h['stock_number']) ?></td>
+                                        <td><?= htmlspecialchars($h['item_name']) ?></td>
+                                        <td><?= htmlspecialchars($h['description']) ?></td>
+                                        <td><?= htmlspecialchars($h['unit']) ?></td>
+                                        <td><?= htmlspecialchars($h['reorder_point']) ?></td>
+                                        <td><?= number_format($h['unit_cost'], 2) ?></td>
+                                        <td><?= htmlspecialchars($h['quantity_on_hand']) ?></td>
+                                        <td style="color: <?= $h['quantity_change'] > 0 ? '#10b981' : ($h['quantity_change'] < 0 ? '#ef4444' : '#6b7280') ?>; font-weight: 600;">
+                                            <?= $h['quantity_change'] > 0 ? '+' : '' ?><?= $h['quantity_change'] ?>
+                                        </td>
+                                        <td><?= htmlspecialchars($type_label) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             <?php else: ?>
-                <p style="font-style: italic; color: #888;">No history found for this item.</p>
+                <p class="empty-state">
+                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                    No history found for this item.
+                </p>
             <?php endif; ?>
 
         </div>
 
     </div>
+
 <script src="js/view_ris_script.js?v=<?= time() ?>"></script>
 </body>
 </html>

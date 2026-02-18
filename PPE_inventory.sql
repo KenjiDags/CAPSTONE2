@@ -66,8 +66,14 @@ CREATE TABLE ppe_ptr (
     transfer_type VARCHAR(100),
     reason TEXT,
     approved_by VARCHAR(255),
+    approved_by_designation VARCHAR(255),
+    approved_by_date DATE,
     released_by VARCHAR(255),
+    released_by_designation VARCHAR(255),
+    released_by_date DATE,
     received_by VARCHAR(255),
+    received_by_designation VARCHAR(255),
+    received_by_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
 );

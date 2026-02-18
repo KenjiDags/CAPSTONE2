@@ -43,8 +43,14 @@ $transfer_date = $ptr['transfer_date'];
 $transfer_type = $ptr['transfer_type'];
 $reason = $ptr['reason'];
 $approved_by = $ptr['approved_by'] ?? '';
+$approved_by_designation = $ptr['approved_by_designation'] ?? '';
+$approved_by_date = $ptr['approved_by_date'] ?? '';
 $released_by = $ptr['released_by'] ?? '';
+$released_by_designation = $ptr['released_by_designation'] ?? '';
+$released_by_date = $ptr['released_by_date'] ?? '';
 $received_by = $ptr['received_by'] ?? '';
+$received_by_designation = $ptr['received_by_designation'] ?? '';
+$received_by_date = $ptr['received_by_date'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -452,17 +458,17 @@ $received_by = $ptr['received_by'] ?? '';
                 <!-- Designation -->
                 <div class="signature-row">
                     <div class="signature-label">Designation:</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-line"></div>
-                    <div class="signature-line"></div>
+                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($approved_by_designation) ?></span></div>
+                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($released_by_designation) ?></span></div>
+                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($received_by_designation) ?></span></div>
                 </div>
 
                 <!-- Date -->
                 <div class="signature-row">
                     <div class="signature-label">Date:</div>
-                    <div class="signature-line"></div>
-                    <div class="signature-line"></div>
-                    <div class="signature-line"></div>
+                    <div class="signature-line"><span class="data-underline"><?= $approved_by_date ? htmlspecialchars(date('F d, Y', strtotime($approved_by_date))) : '' ?></span></div>
+                    <div class="signature-line"><span class="data-underline"><?= $released_by_date ? htmlspecialchars(date('F d, Y', strtotime($released_by_date))) : '' ?></span></div>
+                    <div class="signature-line"><span class="data-underline"><?= $received_by_date ? htmlspecialchars(date('F d, Y', strtotime($received_by_date))) : '' ?></span></div>
                 </div>
 
             </td>

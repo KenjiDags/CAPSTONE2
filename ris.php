@@ -75,16 +75,67 @@ switch ($sort_by) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RIS - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+    <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f570";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Container spacing override */
+        .container {
+            margin: 20px auto;
+        }
+        
+        /* Sort container styling */
+        .sort-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sort-container label {
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .sort-container select {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        
+        .sort-container select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        /* Make Add RIS button bigger */
+        .search-add-container .btn-success {
+            padding: 12px 24px;
+            font-size: 15px;
+        }
+    </style>
 </head>
-<body class="ris-page">
+<body>
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Requisition and Issue Slip (RIS)</h2>
     
-    <div class="header-controls">
-        <button onclick="window.location.href='add_ris.php'">
+    <div class="search-add-container">
+        <button class="btn btn-success" onclick="window.location.href='add_ris.php'">
             <i class="fas fa-plus"></i> Add RIS Form
         </button>
         
@@ -100,17 +151,18 @@ switch ($sort_by) {
         </div>
     </div>
     
-    <table>
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> RIS No.</th>
-                <th><i class="fas fa-calendar"></i> Date</th>
-                <th><i class="fas fa-user"></i> Requested By</th>
-                <th><i class="fas fa-clipboard-list"></i> Purpose</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="table-container">
+        <table id="risTable">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> RIS No.</th>
+                    <th><i class="fas fa-calendar"></i> Date</th>
+                    <th><i class="fas fa-user"></i> Requested By</th>
+                    <th><i class="fas fa-clipboard-list"></i> Purpose</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>
             <?php 
             $result = $conn->query("SELECT * FROM ris $order_clause");
             if ($result && $result->num_rows > 0) {
@@ -146,6 +198,7 @@ switch ($sort_by) {
             ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 <script>

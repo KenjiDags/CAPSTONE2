@@ -26,13 +26,270 @@ if ($result) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPCI - Report on Physical Count of Inventories</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f46d";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Container spacing override */
+        .container {
+            margin: 20px auto;
+        }
+        
+        /* RPCI specific styles */
+        .rpci-form {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rpci-header h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .form-subtitle {
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .rpci-meta {
+            margin: 20px 0;
+        }
+        
+        .rpci-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .rpci-meta-row label {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .rpci-meta-row input[type="date"] {
+            padding: 8px 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-fields {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .field-group label {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .field-group input[type="text"],
+        .field-group input[type="date"] {
+            padding: 10px 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .field-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        .table-controls {
+            margin: 12px 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .table-controls label {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .table-controls select {
+            padding: 8px 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .search-container {
+            margin: 12px 0;
+        }
+        
+        .search-input-rpci {
+            width: 100%;
+            padding: 10px 16px;
+            font-size: 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+        }
+        
+        .search-input-rpci:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        .rpci-table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+        
+        .rpci-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .rpci-table thead {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+        }
+        
+        .rpci-table thead th {
+            position: sticky !important;
+            top: 0;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+            color: white;
+            z-index: 2;
+            padding: 12px 8px;
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: middle;
+            line-height: 1.4;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .rpci-table thead th:last-child {
+            border-right: none;
+        }
+        
+        .rpci-table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: top;
+        }
+        
+        .rpci-table tbody td:last-child {
+            border-right: none;
+        }
+        
+        .rpci-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .rpci-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        .rpci-table tbody tr:hover {
+            background-color: #e0f2fe;
+        }
+        
+        .rpci-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .currency {
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .signature-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .signature-box {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .signature-box h4 {
+            color: #334155;
+            margin-bottom: 10px;
+        }
+        
+        .signature-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .signature-text {
+            font-size: 0.85em;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        /* Export button styling */
+        .export-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
-<body class="rpci-page">
-    <div class="content">
-        <div class="rpci-form">
+<body>
+<?php include 'sidebar.php'; ?>
+
+<div class="container">
+    <div class="rpci-form">
             <div class="rpci-header">
                 <h2>Report on the Physical Count of Inventories</h2>
-                <div class="form-subtitle">(Type of Inventory Item)</div>
 
                 <div class="rpci-meta">
                     <div class="rpci-meta-row">
@@ -82,16 +339,16 @@ if ($result) {
                 <table class="rpci-table" id="rpci-table">
                     <thead>
                         <tr>
-                            <th rowspan="2">Article</th>
-                            <th rowspan="2">Item</th>
-                            <th rowspan="2">Description</th>
-                            <th rowspan="2">Stock Number</th>
-                            <th rowspan="2">Unit of Measure</th>
-                            <th rowspan="2">Unit Value</th>
-                            <th rowspan="2">Balance Per Card<br>(Quantity)</th>
-                            <th rowspan="2">On Hand Per Count<br>(Quantity)</th>
-                            <th colspan="2">Shortage/Overage</th>
-                            <th rowspan="2">Remarks</th>
+                            <th rowspan="2"><i class="fas fa-list"></i> Article</th>
+                            <th rowspan="2"><i class="fas fa-tag"></i> Item</th>
+                            <th rowspan="2"><i class="fas fa-align-left"></i> Description</th>
+                            <th rowspan="2"><i class="fas fa-barcode"></i> Stock Number</th>
+                            <th rowspan="2"><i class="fas fa-ruler"></i> Unit of Measure</th>
+                            <th rowspan="2"><i class="fas fa-dollar-sign"></i> Unit Value</th>
+                            <th rowspan="2"><i class="fas fa-clipboard"></i> Balance Per Card<br>(Quantity)</th>
+                            <th rowspan="2"><i class="fas fa-hand-paper"></i> On Hand Per Count<br>(Quantity)</th>
+                            <th colspan="2"><i class="fas fa-chart-line"></i> Shortage/Overage</th>
+                            <th rowspan="2"><i class="fas fa-comment"></i> Remarks</th>
                         </tr>
                         <tr>
                             <th>Quantity</th>

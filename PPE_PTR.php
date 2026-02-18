@@ -40,6 +40,38 @@ if ($result->num_rows == 0) {
     $conn->query("ALTER TABLE ppe_ptr ADD COLUMN received_by VARCHAR(255)");
 }
 
+// Check and add designation columns
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'approved_by_designation'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN approved_by_designation VARCHAR(255)");
+}
+
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'released_by_designation'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN released_by_designation VARCHAR(255)");
+}
+
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'received_by_designation'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN received_by_designation VARCHAR(255)");
+}
+
+// Check and add date columns
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'approved_by_date'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN approved_by_date DATE");
+}
+
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'released_by_date'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN released_by_date DATE");
+}
+
+$result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'received_by_date'");
+if ($result->num_rows == 0) {
+    $conn->query("ALTER TABLE ppe_ptr ADD COLUMN received_by_date DATE");
+}
+
 $conn->query("CREATE TABLE IF NOT EXISTS ppe_ptr_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ptr_id INT NOT NULL,
@@ -99,61 +131,95 @@ if ($search !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Transfer Report (PTR) - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-  .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
-  .filters .control { display:flex; align-items:center; gap:10px; }
-  /* Themed fields (match site style) */
-  .filters select, .filters input {
-    height: 38px;
-    padding: 8px 14px;
-    border-radius: 9999px;
-    border: 1px solid #cbd5e1;
-    background-color: #f8fafc;
-    color: #111827;
-    font-size: 14px;
-    outline: none;
-    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
-  }
-  .filters input::placeholder { color: #9ca3af; }
-  .filters select:hover, .filters input:hover { background-color: #ffffff; }
-  .filters select:focus, .filters input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px #3b82f626;
-    background-color: #ffffff;
-  }
-  .filters select {
-    appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    padding-right: 38px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 18px 18px;
-  }
-  .filters .pill-btn { height: 38px; padding: 0 16px; }
-  .filters #searchInput { width: 400px; max-width: 65vw; }
-    .pill-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 9999px;
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      text-decoration: none;
-      cursor: pointer;
+    /* Page-Specific Icon */
+    .container h2::before {
+        content: "\f0ec";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        color: #3b82f6;
     }
-    .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
-    .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
-    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
+    
+    /* Filters Section Styling */
+    .filters .control { 
+        display:flex; 
+        align-items:center; 
+        gap:10px; 
+    }
+    
+    /* Themed fields */
+    .filters select, .filters input {
+        height: 38px;
+        padding: 8px 14px;
+        border-radius: 9999px;
+        border: 1px solid #cbd5e1;
+        background-color: #f8fafc;
+        color: #111827;
+        font-size: 14px;
+        outline: none;
+        transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+    }
+    
+    .filters input::placeholder { 
+        color: #9ca3af; 
+    }
+    
+    .filters select:hover, .filters input:hover { 
+        background-color: #ffffff; 
+    }
+    
+    .filters select:focus, .filters input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px #3b82f626;
+        background-color: #ffffff;
+    }
+    
+    .filters select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 38px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 18px 18px;
+    }
+    
+    .filters .pill-btn { 
+        height: 38px; 
+        padding: 0 16px; 
+    }
+    
+    .filters #searchInput { 
+        width: 400px; 
+        max-width: 65vw; 
+    }
+    
+    /* Amount Column Styling */
+    table td:nth-child(6) {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #059669;
+    }
+    
+    /* Date Column Styling */
+    table td:nth-child(2) {
+        color: #64748b;
+        font-size: 13px;
+    }
+    
+    /* Transfer Type Badge */
+    table td:nth-child(5) {
+        font-size: 13px;
+        font-weight: 500;
+    }
     </style>
 </head>
 <body class="ptr-page">
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Property Transfer Report (PTR)</h2>
 
   <form id="ptr-filters" method="get" class="filters">
@@ -237,8 +303,10 @@ if ($search !== '') {
                     echo '</tr>';
                 }
             } else {
-                echo '<tr><td colspan="7">
-                        <i class="fas fa-inbox"></i> No PTR records found.
+                echo '<tr><td colspan="7" style="text-align: center;">
+                        <i class="fas fa-inbox"></i>
+                        <div style="font-weight: 600; margin-bottom: 8px;">No PTR Records Found</div>
+                        <div style="font-size: 14px;">Start by creating a new Property Transfer Report</div>
                       </td></tr>';
             }
             ?>
