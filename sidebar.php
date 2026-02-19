@@ -12,13 +12,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="sidebar">
-        <a href="inventory.php" class="logo-text">
+        <a href="user_settings.php" class="logo-text">
             <div class="logo">
                 <img src="images/tesda_logo.png">
-                <h3>Tesda Inventory</h3>
+                <h3>TESDA Inventory</h3>
             </div>
         </a>
 
@@ -73,46 +74,21 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         </div>
                     </div>
 
-                    <div class="home">
-                        <a href="analytics.php"> Analytics </a>
-                    </div>
+                    <a href="analytics.php" class="no-italic <?= $currentPage == 'analytics.php' ? 'active' : '' ?>">
+                        📊 Analytics
+                    </a>
 
                 </nav>
 
-                    <!-- Change Password -->
+                    <!-- Logout -->
                     <div class="logout-wrapper">
-                        <a href="#" class="change-password-btn" id="openChangePassword">Change Password</a>
-                        <a href="logout.php" class="logout-btn">Logout</a>
+                        <a href="logout.php" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </a>
                     </div>
                 
         </div>
-
-        <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="closeChangePassword">&times;</span>
-            <h3>Change Password</h3>
-            
-            <form id="changePasswordForm" method="post">
-                <div class="password-field" style="position: relative;">
-                    <input type="password" name="currentPassword" id="currentPassword" placeholder="Current Password" required>
-                    <span class="show-password-toggle" onclick="togglePassword('currentPassword')">Show</span>
-                </div>
-
-                <div class="password-field" style="position: relative;">
-                    <input type="password" name="newPassword" id="newPassword" placeholder="New Password" required>
-                    <span class="show-password-toggle" onclick="togglePassword('newPassword')">Show</span>
-                </div>
-
-                <div class="password-field" style="position: relative;">
-                    <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm New Password" required>
-                    <span class="show-password-toggle" onclick="togglePassword('confirmPassword')">Show</span>
-                </div>
-                    <button type="submit" class="save-btn">Save</button> 
-            </form>
-            <div id="changePasswordMessage" style="margin-top:15px; text-align:center; font-weight:600;"></div>
-        </div>
-    </div>
 
     <script src="js/password.js?v=<?= time() ?>"></script>
     <script src="js/sidebar_script.js?v=<?= time() ?>"></script>

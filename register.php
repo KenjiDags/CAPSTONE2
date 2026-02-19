@@ -4,11 +4,12 @@ require 'config.php';
 $error = '';
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $full_name = trim($_POST['full_name'] ?? '');
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm = trim($_POST['confirm_password'] ?? '');
 
-    if ($username && $password && $confirm) {
+    if ($full_name && $username && $password && $confirm) {
         if ($password !== $confirm) {
             $error = 'Passwords do not match.';
         } else {
@@ -21,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Username already taken.';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-                $insert->bind_param("ss", $username, $hash);
+                $insert = $conn->prepare("INSERT INTO users (full_name, username, password) VALUES (?, ?, ?)");
+                $insert->bind_param("sss", $full_name, $username, $hash);
                 if ($insert->execute()) {
                     header('Location: index.php?registered=1');
                     exit;
@@ -181,8 +182,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="post" autocomplete="off">
             <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" name="full_name" id="full_name" required autofocus>
+            </div>
+            <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" name="username" id="username" required autofocus>
+                <input type="text" name="username" id="username" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>

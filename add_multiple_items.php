@@ -24,49 +24,70 @@ $items = $conn->query("SELECT i.*,
     ORDER BY i.item_name ASC");
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Restock Items</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restock Items - TESDA Inventory System</title>
+    <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Table styling specific to restock page */
+        .table-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-        }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        input[type="number"] {
-            width: 80px;
-            padding: 5px;
-        }
-        .save-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .save-btn:hover {
-            background: #218838;
-        }
-        .filter-container {
-            margin-bottom: 20px;
-        }
-        .filter-dropdown {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
             background: white;
-            cursor: pointer;
         }
-        .filter-dropdown:focus {
+        thead {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        th i {
+            margin-right: 6px;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        /* Input styling */
+        input[type="number"] {
+            padding: 8px 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100px;
+        }
+        input[type="number"]:hover {
+            border-color: #cbd5e1;
+        }
+        input[type="number"]:focus {
             outline: none;
-            border-color: #28a745;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        
+        /* Hidden row */
         .hidden-row {
             display: none;
         }
@@ -77,75 +98,96 @@ $items = $conn->query("SELECT i.*,
 <?php include 'sidebar.php'; ?>
 
 <div class="container">
-    <h2>Restock Inventory</h2>
+    <div class="form-container">
+        <header class="page-header">
+            <h1>
+                <i class="fas fa-boxes"></i>
+                Restock Inventory
+            </h1>
+            <p>Add new stock to multiple items at once</p>
+        </header>
 
-    <!-- FILTER DROPDOWN -->
-    <div class="filter-container">
-        <select id="stockFilter" class="filter-dropdown">
-            <option value="all">Show All Items</option>
-            <option value="low-stock">Show Low-Stock Items</option>
-        </select>
+        <!-- FILTER DROPDOWN -->
+        <div class="filter-container">
+            <label for="stockFilter">
+                <i class="fas fa-filter"></i> Filter Items:
+            </label>
+            <select id="stockFilter" class="filter-dropdown">
+                <option value="all">Show All Items</option>
+                <option value="low-stock">Show Low-Stock Items Only</option>
+            </select>
+        </div>
+
+        <!-- FORM NOW SUBMITS TO THIS SAME PAGE -->
+        <form method="POST">
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-barcode"></i> Stock #</th>
+                            <th><i class="fas fa-tag"></i> Item Name</th>
+                            <th><i class="fas fa-align-left"></i> Description</th>
+                            <th><i class="fas fa-ruler"></i> Unit</th>
+                            <th><i class="fas fa-cubes"></i> Current Qty</th>
+                            <th><i class="fas fa-file-invoice"></i> IAR</th>
+                            <th style="text-align:center;"><i class="fas fa-plus-circle"></i> Qty to Add</th>
+                            <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <?php while ($row = $items->fetch_assoc()): ?>
+                            <tr data-quantity="<?= $row['quantity_on_hand'] ?>" data-reorder-point="<?= $row['reorder_point'] ?>">
+                                <td><strong><?= htmlspecialchars($row['stock_number']) ?></strong></td>
+                                <td><?= htmlspecialchars($row['item_name']) ?></td>
+                                <td><?= htmlspecialchars($row['description']) ?></td>
+                                <td><?= htmlspecialchars($row['unit']) ?></td>
+                                <td><?= htmlspecialchars($row['quantity_on_hand']) ?></td>
+
+                                <td><?= htmlspecialchars($row['iar']) ?></td>
+
+                                <!-- HIDDEN FIELD FOR STOCK NUMBER -->
+                                <input type="hidden" name="stock_number[]" value="<?= $row['stock_number'] ?>">
+
+                                <td style="text-align:center;">
+                                    <input 
+                                        type="number" 
+                                        name="quantity_on_hand[]" 
+                                        min="0" 
+                                        placeholder="0"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input 
+                                        type="number" 
+                                        name="unit_cost[]" 
+                                        value="<?= number_format($row['display_unit_cost'], 2, '.', '') ?>"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="Unit Cost"
+                                    >
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+
+                </table>
+            </div>
+
+            <div class="button-group">
+                <button class="save-btn" type="submit">
+                    <i class="fas fa-save"></i>
+                    Save Restock Entries
+                </button>
+                <a href="inventory.php" class="cancel-btn">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
     </div>
-
-    <!-- FORM NOW SUBMITS TO THIS SAME PAGE -->
-    <form method="POST">
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Stock #</th>
-                    <th>Item Name</th>
-                    <th>Description</th>
-                    <th>Unit</th>
-                    <th>Current Qty</th>
-                    <th>IAR</th>
-                    <th style="text-align:center;">Qty to Add</th>
-                    <th>Unit Cost</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <?php while ($row = $items->fetch_assoc()): ?>
-                    <tr data-quantity="<?= $row['quantity_on_hand'] ?>" data-reorder-point="<?= $row['reorder_point'] ?>">
-                        <td><?= htmlspecialchars($row['stock_number']) ?></td>
-                        <td><?= htmlspecialchars($row['item_name']) ?></td>
-                        <td><?= htmlspecialchars($row['description']) ?></td>
-                        <td><?= htmlspecialchars($row['unit']) ?></td>
-                        <td><?= htmlspecialchars($row['quantity_on_hand']) ?></td>
-
-                        <td><?= htmlspecialchars($row['iar']) ?></td>
-
-                        <!-- HIDDEN FIELD FOR STOCK NUMBER -->
-                        <input type="hidden" name="stock_number[]" value="<?= $row['stock_number'] ?>">
-
-                        <td style="text-align:center;">
-                            <input 
-                                type="number" 
-                                name="quantity_on_hand[]" 
-                                min="0" 
-                                placeholder="0"
-                            >
-                        </td>
-
-                        <td>
-                            <input 
-                                type="number" 
-                                name="unit_cost[]" 
-                                value="<?= number_format($row['display_unit_cost'], 2, '.', '') ?>"
-                                step="0.01"
-                                min="0"
-                                style="width: 100px;"
-                                placeholder="Unit Cost"
-                            >
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-
-        </table>
-
-        <button class="save-btn" type="submit">Save Restock Entries</button>
-    </form>
 </div>
 
 <script>

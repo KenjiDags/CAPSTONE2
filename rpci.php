@@ -37,11 +37,6 @@ if ($result) {
             color: #3b82f6;
         }
         
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
         /* RPCI specific styles */
         .rpci-form {
             background: rgba(255, 255, 255, 0.9);
@@ -185,25 +180,13 @@ if ($result) {
             word-wrap: break-word;
             vertical-align: middle;
             line-height: 1.4;
-            border-right: 1px solid rgba(255,255,255,0.2);
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .rpci-table thead th:last-child {
-            border-right: none;
         }
         
         .rpci-table tbody td {
             padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
             white-space: normal;
             word-wrap: break-word;
             vertical-align: top;
-        }
-        
-        .rpci-table tbody td:last-child {
-            border-right: none;
         }
         
         .rpci-table tbody tr {
@@ -216,15 +199,6 @@ if ($result) {
         
         .rpci-table tbody tr:hover {
             background-color: #e0f2fe;
-        }
-        
-        .rpci-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .currency {
-            text-align: right;
-            font-weight: 600;
         }
         
         .signature-section {
@@ -258,28 +232,6 @@ if ($result) {
             font-size: 0.85em;
             color: #64748b;
             line-height: 1.4;
-        }
-        
-        /* Export button styling */
-        .export-btn {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .export-btn:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
     </style>
 </head>

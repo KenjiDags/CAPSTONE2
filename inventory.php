@@ -22,6 +22,41 @@ if (isset($_GET['fix_null_reorder_point'])) {
         echo "<div style='color:red;font-weight:bold;'>Error updating items: {$conn->error}</div>";
     }
 }
+
+// SORT LOGIC
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'stock_number';
+$order_clause = '';
+
+switch ($sort_by) {
+    case 'item_name':
+        $order_clause = "ORDER BY i.item_name ASC";
+        break;
+    case 'quantity_low':
+        $order_clause = "ORDER BY i.quantity_on_hand ASC";
+        break;
+    case 'quantity_high':
+        $order_clause = "ORDER BY i.quantity_on_hand DESC";
+        break;
+    case 'cost_low':
+        $order_clause = "ORDER BY i.unit_cost ASC";
+        break;
+    case 'cost_high':
+        $order_clause = "ORDER BY i.unit_cost DESC";
+        break;
+    case 'stock_number':
+    default:
+        $order_clause = "ORDER BY i.stock_number ASC";
+        break;
+}
+
+// SEARCH FILTER
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$whereClause = '';
+if ($search !== '') {
+    $esc = $conn->real_escape_string($search);
+    $whereClause = " WHERE (i.stock_number LIKE '%$esc%' OR i.item_name LIKE '%$esc%' OR i.description LIKE '%$esc%' OR i.unit LIKE '%$esc%')";
+}
+
 // Handle AJAX requests
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
@@ -514,153 +549,6 @@ case 'update':
             font-weight: 900;
             color: #3b82f6;
         }
-        
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
-        /* Make Add and Restock buttons bigger */
-        .search-add-container .btn-success {
-            padding: 12px 24px;
-            font-size: 15px;
-        }
-        
-        /* Action buttons styling */
-        .btn.edit-btn, .btn.delete-btn, .btn.clear-entries-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-        
-        .btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
-            font-size: 0.95em;
-        }
-        
-        .btn.clear-entries-btn {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-            max-width: 175px;
-        }
-        
-        /* Table action buttons use pill style */
-        .btn.edit-btn {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: #fff;
-            padding: 7px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin: 2px;
-        }
-        
-        .btn.edit-btn:hover {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .btn.delete-btn {
-            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-            color: #fff;
-            padding: 7px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin: 2px;
-        }
-        
-        .btn.delete-btn:hover {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .btn.clear-entries-btn {
-            background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-            color: #fff;
-            padding: 7px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin: 2px;
-        }
-        
-        .btn.clear-entries-btn:hover {
-            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        /* Search input styling */
-        .search-add-container input[type="text"] {
-            width: 800px;
-            max-width: 800px;
-            padding: 10px 18px;
-            font-size: 14px;
-            border: 2px solid #cbd5e1;
-            border-radius: 25px;
-            transition: border-color 0.2s ease;
-            margin-left: 80px;
-            margin-right: auto;
-        }
-        
-        .search-add-container input[type="text"]:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
-        /* Sub-entries styling */
-        .sub-entry {
-            font-size: 0.85em;
-            color: #6b7280;
-            padding: 2px 0;
-        }
-        
-        .sub-entry.initial {
-            font-style: italic;
-            color: #9ca3af;
-        }
-        
-        /* Actions cell button layout */
-        .actions-cell {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: flex-start;
-        }
-        
-        .actions-row {
-            display: flex;
-            gap: 4px;
-            flex-wrap: nowrap;
-            align-items: center;
-        }
-        
-        .actions-row-full {
-            width: 100%;
-        }
-        
-        /* Ensure buttons don't grow to fill container */
-        .btn.edit-btn,
-        .btn.delete-btn {
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
     </style>
 </head>
 <body>
@@ -669,15 +557,35 @@ case 'update':
 <div class="container">
     <h2>Office Supplies</h2>
 
-    <div class="search-add-container">
-        <button class="btn btn-success" onclick="document.getElementById('addModal').style.display='block'">
-            <i class="fas fa-plus"></i> Add New Item
-        </button>
-        <button class="btn btn-success" onclick="window.location.href='add_multiple_items.php'">
-            <i class="fas fa-box"></i> Restock Items
-        </button>
-        <input type="text" id="searchInput" placeholder="Search by stock number, description, or unit...">
-    </div>
+    <form id="inventory-filters" method="get" class="filters">
+        <div class="control">
+            <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                <i class="fas fa-sort"></i> Sort by:
+            </label>
+            <select id="sort-select" name="sort" onchange="this.form.submit()">
+                <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
+                <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
+                <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
+                <option value="quantity_high" <?= ($sort_by == 'quantity_high') ? 'selected' : '' ?>>Quantity (High to Low)</option>
+                <option value="cost_low" <?= ($sort_by == 'cost_low') ? 'selected' : '' ?>>Unit Cost (Low to High)</option>
+                <option value="cost_high" <?= ($sort_by == 'cost_high') ? 'selected' : '' ?>>Unit Cost (High to Low)</option>
+            </select>
+        </div>
+        <div class="control" style="flex: 1; display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding-left: 20px;">
+            <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                <i class="fas fa-search"></i> Search:
+            </label>
+            <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by stock number, item name, description, or unit..." />
+        </div>
+        <div class="control" style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" class="btn btn-success" onclick="document.getElementById('addModal').style.display='block'">
+                <i class="fas fa-plus"></i> Add New Item
+            </button>
+            <button type="button" class="btn btn-success" onclick="window.location.href='add_multiple_items.php'">
+                <i class="fas fa-box"></i> Restock Items
+            </button>
+        </div>
+    </form>
 
     <div class="table-container">
         <table id="inventoryTable">
@@ -718,7 +626,8 @@ case 'update':
                     END as has_multiple_entries,
                     COALESCE(i.calculated_quantity, i.quantity_on_hand) as display_quantity
                     FROM items i 
-                    ORDER BY i.stock_number ASC";
+                    $whereClause
+                    $order_clause";
                 $result = $conn->query($sql);
 
                 if ($result->num_rows > 0) {
@@ -922,6 +831,20 @@ case 'update':
 
 <!-- Notification -->
 <div id="notification" class="notification"></div>
+
+<script>
+// Handle search form submission on Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('inventory-filters').submit();
+            }
+        });
+    }
+});
+</script>
 
 <script src="js/inventory_script.js?v=<?= time() ?>"></script>
 

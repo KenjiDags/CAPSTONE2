@@ -20,53 +20,18 @@
             color: #3b82f6;
         }
         
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
         /* Align export button properly in container */
         .search-add-container {
             align-items: center;
             padding: 15px 20px 0px 20px;
         }
         
-        /* Export button styling */
-        .export-btn {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 20px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-        }
-        
-        .export-btn:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .export-btn i {
-            font-size: 1.1em;
-        }
-        
         .export-section {
             margin-bottom: 20px;
         }
         
-        /* Currency cell styling */
+        /* Currency cell styling - green color override */
         .currency {
-            text-align: right;
-            font-weight: 600;
             color: #059669;
         }
     </style>
@@ -76,13 +41,6 @@
 
     <div class="container">
         <h2>Report on the Stock of Materials and Supplies Issued (RSMI)</h2>
-
-        <!-- Export Section -->
-        <div class="search-add-container">
-            <a href="rsmi_export.php" class="export-btn" target="_blank">
-                <i class="fas fa-file-pdf"></i> Export to PDF
-            </a>
-        </div>
 
         <div class="table-container">
             <table>
@@ -100,6 +58,19 @@
             <tbody>
                 <?php 
                 require 'config.php';
+
+                // Fetch current user's full name for custodian default
+                $default_custodian = '';
+                $user_id = $_SESSION['user_id'];
+                $stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ? LIMIT 1");
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+                $result_user = $stmt->get_result();
+                if ($result_user && $result_user->num_rows > 0) {
+                    $user_data = $result_user->fetch_assoc();
+                    $default_custodian = $user_data['full_name'] ?? '';
+                }
+                $stmt->close();
 
                 $result = $conn->query("
                     SELECT ris.ris_no, ri.stock_number, i.item_name, i.description, i.unit, ri.issued_quantity, 
@@ -163,9 +134,84 @@
             </tbody>
         </table>
         </div>
+
+        <!-- Signature Names Form -->
+        <div class="section-card" style="background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-top: 30px; margin-bottom: 20px;">
+            <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-signature"></i> Signatory Information
+            </h3>
+            <form id="signatureForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: end;">
+                <div class="form-group" style="margin: 0;">
+                    <label for="custodian_name" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
+                        <i class="fas fa-user"></i> Supply/Property Custodian:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="custodian_name" 
+                        name="custodian_name" 
+                        value="<?php echo htmlspecialchars($default_custodian); ?>"
+                        placeholder="Enter name"
+                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+                    >
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label for="accounting_staff" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
+                        <i class="fas fa-calculator"></i> Designated Accounting Staff:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="accounting_staff" 
+                        name="accounting_staff" 
+                        placeholder="Enter name"
+                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+                    >
+                </div>
+            </form>
+            <style>
+                #signatureForm input:hover {
+                    border-color: #cbd5e1;
+                }
+                #signatureForm input:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+            </style>
+        </div>
+
+        <!-- Export Section -->
+        <div class="search-add-container">
+            <a href="#" id="exportBtn" class="export-btn">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </a>
+        </div>
     </div>
 
     <script>
+        // Update export link with signature names
+        document.getElementById('exportBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const custodianName = document.getElementById('custodian_name').value;
+            const accountingStaff = document.getElementById('accounting_staff').value;
+            
+            let exportUrl = 'rsmi_export.php';
+            const params = new URLSearchParams();
+            
+            if (custodianName) {
+                params.append('custodian_name', custodianName);
+            }
+            if (accountingStaff) {
+                params.append('accounting_staff', accountingStaff);
+            }
+            
+            if (params.toString()) {
+                exportUrl += '?' + params.toString();
+            }
+            
+            window.location.href = exportUrl;
+        });
+        
         // Add mobile sidebar toggle functionality if needed
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');

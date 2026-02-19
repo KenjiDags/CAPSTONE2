@@ -50,75 +50,9 @@
         margin-right: 10px;
     }
     
-    /* Container spacing override */
+    /* Page-specific container with left margin */
     .container {
-        margin: 20px auto;
         margin-left: 240px; 
-    }
-    
-    /* Action buttons styling */
-    .ris-actions {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    
-    .ris-actions .btn {
-        padding: 10px 20px;
-        font-size: 14px;
-    }
-    
-    .ris-actions form {
-        display: inline;
-        margin: 0;
-    }
-    
-    /* Details section styling */
-    .ris-details {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 24px;
-        border: 1px solid rgba(255,255,255,0.3);
-    }
-    
-    .ris-details p {
-        margin: 10px 0;
-        display: flex;
-        gap: 10px;
-    }
-    
-    .ris-details p strong {
-        min-width: 200px;
-        color: #1e293b;
-    }
-    
-    /* Section headers */
-    h3 {
-        color: #1e293b;
-        font-size: 1.3rem;
-        margin: 30px 0 15px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    /* History table wrapper */
-    .history-table {
-        margin-top: 15px;
-        overflow-x: auto;
-    }
-    
-    /* Empty state */
-    .empty-state {
-        font-style: italic;
-        color: #6b7280;
-        text-align: center;
-        padding: 40px;
     }
 
     #clearHistoryBtn {
@@ -129,7 +63,7 @@
     #clearHistoryBtn:hover {
         background-color: #eab308 !important;
     }
-        </style>
+    </style>
 </head>
 <body>
 

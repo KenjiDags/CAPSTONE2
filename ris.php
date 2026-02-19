@@ -86,11 +86,6 @@ switch ($sort_by) {
             color: #3b82f6;
         }
         
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
         /* Sort container styling */
         .sort-container {
             display: flex;

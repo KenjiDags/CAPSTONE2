@@ -1,5 +1,37 @@
 <?php 
     require 'auth.php';
+    require 'config.php';
+
+// SORT LOGIC
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'stock_number';
+$order_clause = '';
+
+switch ($sort_by) {
+    case 'item_name':
+        $order_clause = "ORDER BY item_name ASC";
+        break;
+    case 'quantity_low':
+        $order_clause = "ORDER BY quantity_on_hand ASC";
+        break;
+    case 'quantity_high':
+        $order_clause = "ORDER BY quantity_on_hand DESC";
+        break;
+    case 'reorder_point':
+        $order_clause = "ORDER BY reorder_point DESC";
+        break;
+    case 'stock_number':
+    default:
+        $order_clause = "ORDER BY stock_number ASC";
+        break;
+}
+
+// SEARCH FILTER
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$whereClause = '';
+if ($search !== '') {
+    $esc = $conn->real_escape_string($search);
+    $whereClause = " WHERE (stock_number LIKE '%$esc%' OR item_name LIKE '%$esc%' OR description LIKE '%$esc%' OR unit LIKE '%$esc%' OR iar LIKE '%$esc%')";
+}
 ?>
 
 <!DOCTYPE html>
@@ -19,68 +51,6 @@
             font-weight: 900;
             color: #3b82f6;
         }
-        
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
-        /* SC page specific container layout */
-        .container .search-add-container {
-            justify-content: center;
-            position: relative;
-            gap: 0;
-        }
-        
-        /* Search input styling */
-        .search-add-container input[type="text"] {
-            width: 700px;
-            max-width: 700px;
-            padding: 12px 20px;
-            font-size: 15px;
-            border: 2px solid #cbd5e1;
-            border-radius: 25px;
-            transition: border-color 0.2s ease;
-        }
-        
-        .search-add-container input[type="text"]:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
-        /* Export button styling */
-        .export-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 10px 18px;
-            border: none;
-            border-radius: 20px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        .export-btn:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .export-btn i {
-            font-size: 1.1em;
-        }
     </style>
 </head>
 <body>
@@ -89,12 +59,31 @@
 <div class="container">
     <h2>Stock Card (SC)</h2>
 
-    <div class="search-add-container">
-        <input type="text" id="searchInput" placeholder="Search by stock number, item, or unit...">
-        <a href="sc_export_all.php" class="export-btn" title="Export All Items">
-            <i class="fas fa-file-export"></i> Export All
-        </a>
-    </div>
+    <form id="sc-filters" method="get" class="filters">
+        <div class="control">
+            <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                <i class="fas fa-sort"></i> Sort by:
+            </label>
+            <select id="sort-select" name="sort" onchange="this.form.submit()">
+                <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
+                <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
+                <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
+                <option value="quantity_high" <?= ($sort_by == 'quantity_high') ? 'selected' : '' ?>>Quantity (High to Low)</option>
+                <option value="reorder_point" <?= ($sort_by == 'reorder_point') ? 'selected' : '' ?>>Reorder Point (High to Low)</option>
+            </select>
+        </div>
+        <div class="control" style="flex: 1; display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding-left: 20px;">
+            <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                <i class="fas fa-search"></i> Search:
+            </label>
+            <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by stock number, item, description, or unit..." />
+        </div>
+        <div class="control" style="display: flex; align-items: center; gap: 10px;">
+            <a href="sc_export_all.php" class="export-btn" title="Export All Items">
+                <i class="fas fa-file-export"></i> Export All
+            </a>
+        </div>
+    </form>
 
     <div class="table-container">
         <table id="scTable">
@@ -112,8 +101,7 @@
         </thead>
         <tbody>
             <?php 
-            require 'config.php';
-                $sql = "SELECT * FROM items ORDER BY stock_number ASC";
+                $sql = "SELECT * FROM items $whereClause $order_clause";
                 $result = $conn->query($sql);            
                 
                 if ($result->num_rows > 0) {
@@ -149,22 +137,27 @@
     </div>
 </div>
 
-<!-- Search Bar JS-->
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function () {
-        const filter = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#scTable tbody tr');
+// Auto-search functionality with debounce
+let searchTimeout;
+const searchInput = document.getElementById('searchInput');
+const scFiltersForm = document.getElementById('sc-filters');
 
-        rows.forEach(row => {
-            const stockNo = row.cells[0].textContent.toLowerCase();
-            const item_name = row.cells[1].textContent.toLowerCase(); 
-            const description = row.cells[2].textContent.toLowerCase();
-            const unit = row.cells[3].textContent.toLowerCase();
-
-            const match = stockNo.includes(filter) || item_name.includes(filter) || description.includes(filter) || unit.includes(filter);
-            row.style.display = match ? '' : 'none';
-        });
+if (searchInput) {
+    // Auto-focus searchbar if there's a search value
+    if (searchInput.value.length > 0) {
+        searchInput.focus();
+        // Move cursor to end of text
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    }
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            scFiltersForm.submit();
+        }, 500); // Wait 500ms after user stops typing
     });
+}
 </script>
 
 </body>

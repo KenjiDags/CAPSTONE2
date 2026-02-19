@@ -1087,12 +1087,11 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `username`, `password`) VALUES
-(1, 'asd', '$2y$10$PApfH/YVd9WxMAO/BYs/Zu8rsDSEVzpl.Q8zGveIgeUfYZwQKHBNW');
-
 ALTER TABLE users 
 ADD remember_token VARCHAR(255) NULL;
 
+ALTER TABLE users
+ADD full_name VARCHAR(255) NULL
 -- --------------------------------------------------------
 
 --
@@ -1164,6 +1163,12 @@ ALTER TABLE `regspi_entries`
 ALTER TABLE `rrsp_items`
   ADD CONSTRAINT `rrsp_items_ibfk_1` FOREIGN KEY (`rrsp_id`) REFERENCES `rrsp` (`rrsp_id`) ON DELETE CASCADE;
 COMMIT;
+
+CREATE Table if NOT exists `officers` (
+  officer_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  officer_name varchar(255) NOT NULL,
+  officer_position varchar(255) NOT NULL
+); 
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

@@ -2,6 +2,10 @@
 require 'auth.php';
 require 'config.php';
 
+// Get signature names from GET parameters
+$custodian_name = isset($_GET['custodian_name']) ? htmlspecialchars(trim($_GET['custodian_name'])) : '';
+$accounting_staff = isset($_GET['accounting_staff']) ? htmlspecialchars(trim($_GET['accounting_staff'])) : '';
+
 // Get all RSMI data
 $rsmi_query = "
     SELECT ris.ris_no, ri.stock_number, i.item_name, i.description, i.unit, ri.issued_quantity, 
@@ -258,6 +262,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            height: 200px;
         }
 
         .signature-left {
@@ -266,8 +271,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
 
         .signature-line {
             border-bottom: 1px solid black;
-            height: 25px;
-            margin-top: 15px;
+            margin-top: 3px;
             margin-bottom: 5px;
         }
 
@@ -520,6 +524,9 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                     I hereby certify to the correctness of the above information.
                 </div>
                 <div style="text-align: center; margin-top: auto;">
+                    <?php if ($custodian_name): ?>
+                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
+                    <?php endif; ?>
                     <div class="signature-line"></div>
                     <div class="signature-text">
                         Signature over Printed Name of Supply<br>
@@ -530,12 +537,15 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             <div class="signature-right">
                 <div class="posted-by">Posted by:</div>
                 <div style="text-align: center; margin-top: auto;">
+                    <?php if ($accounting_staff): ?>
+                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $accounting_staff ?></div>
+                    <?php endif; ?>
                     <div class="signature-line"></div>
                     <div class="signature-text">
                         of Designated Accounting<br>
                         Staff
                     </div>
-                    <div style="margin-top: 15px;">
+                    <div style="margin-top: 30px;">
                         <div class="signature-line"></div>
                         <div class="signature-text">Date</div>
                     </div>
