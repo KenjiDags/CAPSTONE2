@@ -83,117 +83,142 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($category); ?> - Semi-Expendable Property</title>
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Minimal styling - use your existing styles */
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f1b2";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Category Tabs */
         .category-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
+            display: flex !important;
+            gap: 10px !important;
+            margin-bottom: 20px !important;
+            border-bottom: 2px solid #e5e7eb !important;
+            flex-wrap: wrap !important;
         }
         .category-tab {
-            padding: 10px 20px;
-            text-decoration: none;
-            color: #666;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
+            padding: 12px 20px !important;
+            text-decoration: none !important;
+            color: #6b7280 !important;
+            border-bottom: 3px solid transparent !important;
+            transition: all 0.3s !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            margin-bottom: -2px !important;
+        }
+        .category-tab:hover {
+            color: #3b82f6 !important;
+            border-bottom-color: #93c5fd !important;
         }
         .category-tab.active {
-            color: #2563eb;
-            border-bottom-color: #2563eb;
-            font-weight: 600;
+            color: #3b82f6 !important;
+            border-bottom-color: #3b82f6 !important;
+            font-weight: 600 !important;
         }
+        
+        /* Statistics Cards */
         .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
         }
         .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            padding: 20px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
         }
-        .table-container {
-            background: transparent;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: none;
+        .stat-card:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
         }
-        .search-add-container {
+        .stat-card:nth-child(1) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        }
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        }
+        .stat-card:nth-child(4) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0 !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            opacity: 0.9 !important;
+        }
+        .stat-number {
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            margin: 0 !important;
+        }
+        
+        /* Search Section Layout */
+        .add-btn-section {
+            flex: 0 0 auto;
+        }
+        
+        .search-section {
+            flex: 1;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 20px;
+            justify-content: center;
         }
+        
         .search-form {
             display: flex;
-            align-items: center;
             gap: 10px;
-        }
-        .search-input {
-            width: 500px;      
-            min-width: 0;       
-            max-width: 100%;     
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
             align-items: center;
-            gap: 8px;
+        }
+        
+        .search-input {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            width: 400px;
+            max-width: 100%;
             font-size: 14px;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
-        .btn-primary {
-            background: #2563eb;
-            color: white;
+        
+        .search-input:hover {
+            border-color: #cbd5e1;
         }
-        .btn-primary:hover {
-            background: #1d4ed8;
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        .btn-success {
-            background: #10b981;
-            color: white;
+        
+        /* Action buttons */
+        .actions-cell {
+            white-space: nowrap;
         }
-        .btn-success:hover {
-            background: #059669;
+        .action-stack {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
         }
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-        .btn-info {
-            background: #0ea5e9;
-            color: white;
-        }
-        .btn-info:hover {
-            background: #0284c7;
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        /* Pill-style action buttons (Edit/Delete) */
         .pill-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             padding: 8px 12px;
-            width: 110px; /* equal width for both, slightly smaller */
+            width: 110px;
             border-radius: 9999px;
             color: #fff;
             font-weight: 600;
@@ -201,13 +226,51 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             border: none;
             box-shadow: 0 3px 8px rgba(0,0,0,0.12);
             transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            cursor: pointer;
         }
-        .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.18); opacity: 0.96; text-decoration: none; }
-        .pill-edit { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
-        .pill-delete { background: linear-gradient(135deg, #ff9aa2 0%, #ef4444 100%); }
-    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.9em; }
-        .actions-cell { white-space: nowrap; }
-    .action-stack { display: inline-flex; flex-direction: column; gap: 6px; align-items: center; }
+        .pill-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+            opacity: 0.96;
+            text-decoration: none;
+        }
+        .pill-edit {
+            background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%);
+        }
+        .pill-delete {
+            background: linear-gradient(135deg, #ff9aa2 0%, #ef4444 100%);
+        }
+        .pill-btn .fas {
+            font-size: 0.9em;
+        }
+        
+        /* Add button styling */
+        .btn-add {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn-add:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -222,66 +285,55 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         }
         .modal-content {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 30px;
+            border-radius: 12px;
             width: 90%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 15px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: #1e3a8a;
         }
         .modal-close {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #ef4444;
         }
         .detail-row {
-            margin-bottom: 10px;
-            padding: 8px 0;
+            margin-bottom: 12px;
+            padding: 10px 0;
             border-bottom: 1px solid #f3f4f6;
         }
-        .alert {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
+        .detail-row:last-child {
+            border-bottom: none;
         }
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+        .detail-row strong {
+            color: #374151;
+            font-weight: 600;
         }
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-        /* Align action buttons nicely */
-        .actions-cell { white-space: nowrap; }
-        .action-buttons { display: inline-flex; gap: 8px; align-items: center; }
-        .action-buttons .btn { margin: 0; }
-        .action-buttons form { margin: 0; display: inline; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h2>Semi-Expendable Property — <?php echo htmlspecialchars($category); ?></h2>
-        </header>
+<?php include 'sidebar.php'; ?>
+<div class="container">
+    <h2>Semi-Expendable Property — <?php echo htmlspecialchars($category); ?></h2>
 
         <!-- Category Tabs -->
         <div class="category-tabs">
@@ -295,6 +347,12 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 
         <!-- Search and Add Container -->
         <div class="search-add-container">
+        <div class="add-btn-section">
+            <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-add">
+                <i class="fas fa-plus"></i> Add New Item
+            </a>
+        </div>
+        <div class="search-section">
             <form method="GET" class="search-form">
                 <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
                 <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
@@ -309,32 +367,28 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                     </a>
                 <?php endif; ?>
             </form>
-            
-            <!-- Add New Item Button -->
-            <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-success">
-                <i class="fas fa-plus"></i> Add New Item
-            </a>
         </div>
+    </div>
 
-        <!-- Statistics Cards -->
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h3>Total Items</h3>
-                <p class="stat-number"><?php echo number_format($total_items); ?></p>
-            </div>
-            <div class="stat-card">
-                <h3>Total Quantity</h3>
-                <p class="stat-number"><?php echo number_format($total_quantity); ?></p>
-            </div>
-            <div class="stat-card">
-                <h3>Total Value</h3>
-                <p class="stat-number">₱<?php echo number_format($total_value, 2); ?></p>
-            </div>
-            <div class="stat-card">
-                <h3>Fund Cluster</h3>
-                <p class="stat-number">101</p>
-            </div>
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <h3>Total Items</h3>
+            <p class="stat-number"><?php echo number_format($total_items); ?></p>
         </div>
+        <div class="stat-card">
+            <h3>Total Quantity</h3>
+            <p class="stat-number"><?php echo number_format($total_quantity); ?></p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Value</h3>
+            <p class="stat-number">₱<?php echo number_format($total_value, 2); ?></p>
+        </div>
+        <div class="stat-card">
+            <h3>Fund Cluster</h3>
+            <p class="stat-number">101</p>
+        </div>
+    </div>
 
         <?php if (isset($_GET['deleted']) && $_GET['deleted'] == '1'): ?>
             <div class="alert alert-success">Item deleted successfully.</div>

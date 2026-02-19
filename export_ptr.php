@@ -70,7 +70,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
       color: #000;
     }
     .page-wrapper {
-      max-width: 850px;
+      max-width: 780px;
       margin: 0 auto;
       border: 2px solid #000;
       padding: 20px;
@@ -450,25 +450,25 @@ $received_by_date = $ptr['received_by_date'] ?? '';
                 <!-- Printed Name -->
                 <div class="signature-row">
                     <div class="signature-label">Printed Name:</div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($approved_by) ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($released_by) ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($received_by) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($approved_by) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($released_by) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($received_by) ?></span></div>
                 </div>
 
                 <!-- Designation -->
                 <div class="signature-row">
                     <div class="signature-label">Designation:</div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($approved_by_designation) ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($released_by_designation) ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= htmlspecialchars($received_by_designation) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($approved_by_designation) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($released_by_designation) ?></span></div>
+                    <div class="signature-line"><?= htmlspecialchars($received_by_designation) ?></span></div>
                 </div>
 
                 <!-- Date -->
                 <div class="signature-row">
                     <div class="signature-label">Date:</div>
-                    <div class="signature-line"><span class="data-underline"><?= $approved_by_date ? htmlspecialchars(date('F d, Y', strtotime($approved_by_date))) : '' ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= $released_by_date ? htmlspecialchars(date('F d, Y', strtotime($released_by_date))) : '' ?></span></div>
-                    <div class="signature-line"><span class="data-underline"><?= $received_by_date ? htmlspecialchars(date('F d, Y', strtotime($received_by_date))) : '' ?></span></div>
+                    <div class="signature-line"><?= $approved_by_date ? htmlspecialchars(date('F d, Y', strtotime($approved_by_date))) : '' ?></span></div>
+                    <div class="signature-line"><?= $released_by_date ? htmlspecialchars(date('F d, Y', strtotime($released_by_date))) : '' ?></span></div>
+                    <div class="signature-line"><?= $received_by_date ? htmlspecialchars(date('F d, Y', strtotime($received_by_date))) : '' ?></span></div>
                 </div>
 
             </td>

@@ -9,15 +9,25 @@ require_once 'config.php';
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Property Card (Semi-Expendables)</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    .page-header { display:flex; justify-content:center; align-items:center; margin-bottom:16px; text-align:center; }
-    .page-header h2 { margin:0; }
+    /* Page-Specific Icon */
+    .container h2::before {
+      content: "\f15c";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: #3b82f6;
+      margin-right: 12px;
+    }
     .export-section { display:flex; gap:10px; }
-    .btn { padding:8px 12px; border:none; border-radius:4px; text-decoration:none; cursor:pointer; display:inline-block; }
-    .btn-primary { background:#2563eb; color:#fff; }
-    .btn-secondary { background:#6b7280; color:#fff; }
-    .table-wrapper { overflow-x:auto; background:transparent; border-radius:8px; box-shadow:none; }
+    .table-wrapper { 
+      overflow-x:auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 0;
+    }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .currency { text-align: right; }
@@ -75,10 +85,8 @@ require_once 'config.php';
 </head>
 <body>
   <?php include 'sidebar.php'; ?>
-  <div class="content">
-    <div class="page-header">
-      <h2>Property Card (Semi-Expendables)</h2>
-    </div>
+  <div class="container">
+    <h2>Property Card (Semi-Expendables)</h2>
 
   <form id="pc-semi-filters" method="get" class="filters">
       <?php
@@ -175,6 +183,7 @@ require_once 'config.php';
                 echo '<div class="action-stack">';
                 echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
                 echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
+                echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')">Delete</a>';
                 echo '</div>';
                 echo '</td>';
                 echo '</tr>';

@@ -1091,7 +1091,198 @@ ALTER TABLE users
 ADD remember_token VARCHAR(255) NULL;
 
 ALTER TABLE users
-ADD full_name VARCHAR(255) NULL
+ADD full_name VARCHAR(255) NULL;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_property`
+--
+
+DROP TABLE IF EXISTS `ppe_property`;
+CREATE TABLE IF NOT EXISTS `ppe_property` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `par_no` varchar(50) NOT NULL,
+  `item_name` text NOT NULL,
+  `item_description` text NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `officer_incharge` varchar(255) NOT NULL,
+  `quantity` int DEFAULT '1',
+  `unit` varchar(50) DEFAULT 'unit',
+  `custodian` varchar(255) NOT NULL,
+  `entity_name` varchar(255) NOT NULL,
+  `ptr_no` varchar(50) DEFAULT NULL,
+  `date_acquired` date DEFAULT NULL,
+  `condition` enum('Good','Fair','Poor','Unserviceable') DEFAULT 'Good',
+  `status` enum('Active','Transferred','Returned','For Repair','Unserviceable','Disposed') DEFAULT 'Active',
+  `fund_cluster` varchar(10) DEFAULT '101',
+  `remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_pc`
+--
+
+DROP TABLE IF EXISTS `ppe_pc`;
+CREATE TABLE IF NOT EXISTS `ppe_pc` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `date_created` date NOT NULL,
+  `par_no` varchar(50) NOT NULL,
+  `ppe_property_no` varchar(50) NOT NULL,
+  `item_name` text NOT NULL,
+  `item_description` text NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `quantity` int DEFAULT '1',
+  `unit` varchar(50) DEFAULT 'unit',
+  `custodian` varchar(255) NOT NULL,
+  `officer` varchar(255) NOT NULL,
+  `entity_name` varchar(255) NOT NULL,
+  `ptr_no` varchar(50) DEFAULT NULL,
+  `fund_cluster` varchar(10) DEFAULT '101',
+  `remarks` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ppe_property_no` (`ppe_property_no`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_ptr`
+--
+
+DROP TABLE IF EXISTS `ppe_ptr`;
+CREATE TABLE IF NOT EXISTS `ppe_ptr` (
+  `ptr_id` int NOT NULL AUTO_INCREMENT,
+  `ptr_no` varchar(100) NOT NULL,
+  `entity_name` varchar(255) DEFAULT 'TESDA Regional Office',
+  `fund_cluster` varchar(100) DEFAULT '101',
+  `from_officer` varchar(255) DEFAULT NULL,
+  `to_officer` varchar(255) DEFAULT NULL,
+  `transfer_date` date DEFAULT NULL,
+  `transfer_type` varchar(100) DEFAULT NULL,
+  `reason` text,
+  `approved_by` varchar(255) DEFAULT NULL,
+  `approved_by_designation` varchar(255) DEFAULT NULL,
+  `approved_by_date` date DEFAULT NULL,
+  `released_by` varchar(255) DEFAULT NULL,
+  `released_by_designation` varchar(255) DEFAULT NULL,
+  `released_by_date` date DEFAULT NULL,
+  `received_by` varchar(255) DEFAULT NULL,
+  `received_by_designation` varchar(255) DEFAULT NULL,
+  `received_by_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ptr_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_ptr_items`
+--
+
+DROP TABLE IF EXISTS `ppe_ptr_items`;
+CREATE TABLE IF NOT EXISTS `ppe_ptr_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `ptr_id` int NOT NULL,
+  `ppe_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ptr_id` (`ptr_id`),
+  KEY `ppe_id` (`ppe_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_par`
+--
+
+DROP TABLE IF EXISTS `ppe_par`;
+CREATE TABLE IF NOT EXISTS `ppe_par` (
+  `par_id` int NOT NULL AUTO_INCREMENT,
+  `par_no` varchar(100) NOT NULL,
+  `entity_name` varchar(255) DEFAULT 'TESDA Regional Office',
+  `fund_cluster` varchar(100) DEFAULT '101',
+  `date_acquired` date DEFAULT NULL,
+  `property_number` varchar(100) DEFAULT NULL,
+  `received_by` varchar(255) DEFAULT NULL,
+  `received_by_designation` varchar(255) DEFAULT NULL,
+  `received_by_date` date DEFAULT NULL,
+  `issued_by` varchar(255) DEFAULT NULL,
+  `issued_by_designation` varchar(255) DEFAULT NULL,
+  `issued_by_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`par_id`),
+  UNIQUE KEY `par_no` (`par_no`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ppe_par_items`
+--
+
+DROP TABLE IF EXISTS `ppe_par_items`;
+CREATE TABLE IF NOT EXISTS `ppe_par_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `par_id` int NOT NULL,
+  `ppe_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `par_id` (`par_id`),
+  KEY `ppe_id` (`ppe_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rpcppe`
+--
+
+DROP TABLE IF EXISTS `rpcppe`;
+CREATE TABLE IF NOT EXISTS `rpcppe` (
+  `rpcppe_id` int NOT NULL AUTO_INCREMENT,
+  `report_date` date NOT NULL,
+  `fund_cluster` varchar(100) DEFAULT '101',
+  `accountable_officer` varchar(255) DEFAULT NULL,
+  `official_designation` varchar(255) DEFAULT NULL,
+  `entity_name` varchar(255) DEFAULT 'TESDA Regional Office',
+  `assumption_date` date DEFAULT NULL,
+  `certified_by` varchar(255) DEFAULT NULL,
+  `approved_by` varchar(255) DEFAULT NULL,
+  `verified_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rpcppe_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rpcppe_items`
+--
+
+DROP TABLE IF EXISTS `rpcppe_items`;
+CREATE TABLE IF NOT EXISTS `rpcppe_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `rpcppe_id` int NOT NULL,
+  `ppe_id` int NOT NULL,
+  `on_hand_per_count` int DEFAULT '0',
+  `shortage_overage_qty` int DEFAULT '0',
+  `shortage_overage_value` decimal(10,2) DEFAULT '0.00',
+  `remarks` text,
+  PRIMARY KEY (`id`),
+  KEY `rpcppe_id` (`rpcppe_id`),
+  KEY `ppe_id` (`ppe_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -1162,6 +1353,21 @@ ALTER TABLE `regspi_entries`
 --
 ALTER TABLE `rrsp_items`
   ADD CONSTRAINT `rrsp_items_ibfk_1` FOREIGN KEY (`rrsp_id`) REFERENCES `rrsp` (`rrsp_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `ppe_ptr_items`
+--
+ALTER TABLE `ppe_ptr_items`
+  ADD CONSTRAINT `ppe_ptr_items_ibfk_1` FOREIGN KEY (`ptr_id`) REFERENCES `ppe_ptr` (`ptr_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ppe_ptr_items_ibfk_2` FOREIGN KEY (`ppe_id`) REFERENCES `ppe_property` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `ppe_par_items`
+--
+ALTER TABLE `ppe_par_items`
+  ADD CONSTRAINT `ppe_par_items_ibfk_1` FOREIGN KEY (`par_id`) REFERENCES `ppe_par` (`par_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ppe_par_items_ibfk_2` FOREIGN KEY (`ppe_id`) REFERENCES `ppe_property` (`id`) ON DELETE CASCADE;
+
 COMMIT;
 
 CREATE Table if NOT exists `officers` (
@@ -1169,6 +1375,8 @@ CREATE Table if NOT exists `officers` (
   officer_name varchar(255) NOT NULL,
   officer_position varchar(255) NOT NULL
 ); 
+
+DROP TABLE IF EXISTS `officers`;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

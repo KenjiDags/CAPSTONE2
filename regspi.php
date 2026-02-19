@@ -105,10 +105,20 @@ if (!empty($rows)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registry of Semi-Expendable Property Issued</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link rel="stylesheet" href="css/fixed_head.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="js/regspi_script.js" defer></script>
     <style>
+        /* Page-Specific Icon */
+        .content h2::before {
+            content: "\f0f6";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+            margin-right: 12px;
+        }
+        
         /* Make the main REGSPI table scrollable */
         .rsep-table-container { margin-top: 0; }
         .rsep-table-wrapper {

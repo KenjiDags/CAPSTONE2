@@ -355,14 +355,59 @@ function generateICSNumberSimple($conn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Page-Specific Icon */
+        .content h2::before {
+            content: "\f15b";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+            margin-right: 12px;
+        }
+        
         /* Lightweight layout helpers for better UX */
-        .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
-        .section-card h3 { margin-top:0; margin-bottom:12px; }
+        .section-card { 
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section-card h3 { 
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #1e293b;
+            font-weight: 600;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
+        }
         .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
         .form-grid .form-group { display:flex; flex-direction:column; }
+        .form-grid .form-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+        .form-grid .form-group input,
+        .form-grid .form-group select,
+        .form-grid .form-group textarea {
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .form-grid .form-group input:focus,
+        .form-grid .form-group select:focus,
+        .form-grid .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
         @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
-        .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
+        .actions { display:flex; gap:12px; align-items:center; margin-top:20px; }
         /* Scrollable items table, preserve existing theme/colors */
     /* Frame: remove top border and flatten top corners to avoid a visible white strip */
     .table-frame { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
@@ -378,11 +423,11 @@ function generateICSNumberSimple($conn) {
     #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
     #itemsTable thead th { height: 44px; }
     .search-container { margin: 8px 0 12px !important; }
-    .form-grid .form-group input, .form-grid .form-group select, .form-grid .form-group textarea { padding: 8px 10px; }
     </style>
 </head>
 <body>
-    <div class="edit-ics-page content edit-ris-page">
+<?php include 'sidebar.php'; ?>
+    <div class="content">
         <h2><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></h2>
 
         <form method="post" action="">

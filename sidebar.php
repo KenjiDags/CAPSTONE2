@@ -26,7 +26,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <?php
                      $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php']);
                          $expendablesDropdownActive = in_array($currentPage, ['semi_expendible.php', 'PC.php', 'PC_semi.php', 'ics.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php']);
-                $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php']);
+                $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php']);
 
                 ?>
 
@@ -71,6 +71,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PPE.php" class="<?= $currentPage == 'PPE.php' ? 'active' : '' ?>">📋 Inventory List</a>
                             <a href="PPE_PC.php" class="<?= $currentPage == 'PPE_PC.php' ? 'active' : '' ?>">📄 PC</a>
                             <a href="PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>">📄 PTR</a>
+                            <a href="PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>">📄 PAR</a>
+                            <a href="RPCPPE.php" class="<?= $currentPage == 'RPCPPE.php' ? 'active' : '' ?>">📄 RPCPPE</a>
                         </div>
                     </div>
 

@@ -9,87 +9,121 @@ require 'auth.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PC - Property Card</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f02d";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+            margin-right: 12px;
+        }
+        
         .export-section {
-            padding: 15px;
-            border-radius: 5px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .export-btn,
+        .add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .export-btn:hover,
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-decoration: none;
         }
         
         .export-btn {
-            background-color: #17a2b8;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            margin-right: 10px;
-            cursor: pointer;
         }
         
         .export-btn:hover {
-            background-color: #138496;
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
             color: white;
-            text-decoration: none;
         }
         
         .add-btn {
-            background-color: #28a745;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            margin-right: 10px;
-            cursor: pointer;
         }
         
         .add-btn:hover {
-            background-color: #218838;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
             color: white;
-            text-decoration: none;
         }
         
         .info-section {
-            background-color: #e7f3ff;
-            border: 1px solid #b8daff;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
         }
         
         .info-section h4 {
-            color: #004085;
-            margin-bottom: 10px;
+            color: #1e40af;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
         
         .info-section p {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: 14px;
-            color: #004085;
+            color: #1e3a8a;
         }
         
         .table-responsive {
             overflow-x: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 0;
         }
         
         .table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            border: 1px solid #dee2e6;
-            padding: 8px;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 12px 8px;
             text-align: center;
-            font-size: 12px;
+            font-size: 13px;
         }
         
         .table td {
-            border: 1px solid #dee2e6;
-            padding: 6px;
-            font-size: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
         }
         
         .text-center { text-align: center; }
@@ -100,8 +134,8 @@ require 'auth.php';
 <body>
     <?php include 'sidebar.php'; ?>
 
-    <div class="content">
-        <h2>Property Card (PC) </h2>
+    <div class="container">
+        <h2>Property Card (PC)</h2>
 
         <!-- Export and Action Section -->
         <div class="export-section">

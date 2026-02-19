@@ -81,64 +81,21 @@ if ($search !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICS - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-  .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
-  .filters .control { display:flex; align-items:center; gap:10px; }
-  /* Themed fields (match site style) */
-  .filters select, .filters input {
-    height: 38px;
-    padding: 8px 14px;
-    border-radius: 9999px;
-    border: 1px solid #cbd5e1; /* slate-300 */
-    background-color: #f8fafc; /* slate-50 */
-    color: #111827; /* gray-900 */
-    font-size: 14px;
-    outline: none;
-    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
-  }
-  .filters input::placeholder { color: #9ca3af; }
-  .filters select:hover, .filters input:hover { background-color: #ffffff; }
-  .filters select:focus, .filters input:focus {
-    border-color: #3b82f6; /* primary */
-    box-shadow: 0 0 0 3px #3b82f626;
-    background-color: #ffffff;
-  }
-  /* Custom arrow for select to fit theme */
-  .filters select {
-    appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    padding-right: 38px; /* room for arrow */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 18px 18px;
-  }
-  .filters .pill-btn { height: 38px; padding: 0 16px; }
-  /* Make search box a bit longer */
-  .filters #searchInput { width: 400px; max-width: 65vw; }
-    /* Pill-style action buttons matching the sample */
-    .pill-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 9999px;
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
-    .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
-    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f15b";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
     </style>
 </head>
-<body class="ics-page">
+<body>
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Inventory Custodian Slip (ICS)</h2>
 
   <form id="ics-filters" method="get" class="filters">
@@ -204,17 +161,18 @@ if ($search !== '') {
                     echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
                     echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
-                        <a href="view_ics.php?ics_id=' . $row["ics_id"] . '" title="View ICS">
+                        <a href="view_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-view" title="View ICS">
                             <i class="fas fa-eye"></i> View
                         </a>
-                        <a href="edit_ics.php?ics_id=' . $row["ics_id"] . '" title="Edit ICS">
+                        <a href="edit_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-edit" title="Edit ICS">
                             <i class="fas fa-edit"></i> Edit
                         </a>
                         
-                        <a href="export_ics.php?ics_id=' . $row["ics_id"] . '" title="Export ICS">
+                        <a href="export_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-export" title="Export ICS">
                             <i class="fas fa-download"></i> Export
                         </a>
                         <a href="ics.php?delete_ics_id=' . $row["ics_id"] . '" 
+                           class="pill-btn pill-delete"
                            onclick="return confirm(\'Are you sure you want to delete this ICS?\')"
                            title="Delete ICS">
                             <i class="fas fa-trash"></i> Delete

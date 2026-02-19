@@ -6,6 +6,39 @@ require 'functions.php';
 $error = '';
 $success = '';
 
+// Get PTR ID from URL
+$ptr_id = isset($_GET['ptr_id']) ? intval($_GET['ptr_id']) : 0;
+
+if ($ptr_id <= 0) {
+    header("Location: PPE_PTR.php");
+    exit();
+}
+
+// Fetch existing PTR data
+$stmt = $conn->prepare("SELECT * FROM ppe_ptr WHERE ptr_id = ?");
+$stmt->bind_param("i", $ptr_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    header("Location: PPE_PTR.php");
+    exit();
+}
+
+$ptr = $result->fetch_assoc();
+$stmt->close();
+
+// Fetch existing PTR items
+$items_stmt = $conn->prepare("SELECT ppe_id FROM ppe_ptr_items WHERE ptr_id = ?");
+$items_stmt->bind_param("i", $ptr_id);
+$items_stmt->execute();
+$items_result = $items_stmt->get_result();
+$existing_item_ids = [];
+while ($row = $items_result->fetch_assoc()) {
+    $existing_item_ids[] = $row['ppe_id'];
+}
+$items_stmt->close();
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     $ptr_no = trim($_POST['ptr_no']);
@@ -30,44 +63,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     if (empty($ptr_no) || empty($from_officer) || empty($to_officer) || empty($transfer_date) || empty($item_ids)) {
         $error = "Please fill in all required fields and select at least one item.";
     } else {
-        // Insert PTR header
-        $stmt = $conn->prepare("INSERT INTO ppe_ptr (ptr_no, entity_name, fund_cluster, from_officer, to_officer, transfer_date, transfer_type, reason, approved_by, approved_by_designation, approved_by_date, released_by, released_by_designation, released_by_date, received_by, received_by_designation, received_by_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssssssssssss", $ptr_no, $entity_name, $fund_cluster, $from_officer, $to_officer, $transfer_date, $transfer_type, $reason, $approved_by, $approved_by_designation, $approved_by_date, $released_by, $released_by_designation, $released_by_date, $received_by, $received_by_designation, $received_by_date);
+        // Update PTR header
+        $stmt = $conn->prepare("UPDATE ppe_ptr SET ptr_no = ?, entity_name = ?, fund_cluster = ?, from_officer = ?, to_officer = ?, transfer_date = ?, transfer_type = ?, reason = ?, approved_by = ?, approved_by_designation = ?, approved_by_date = ?, released_by = ?, released_by_designation = ?, released_by_date = ?, received_by = ?, received_by_designation = ?, received_by_date = ? WHERE ptr_id = ?");
+        $stmt->bind_param("sssssssssssssssssi", $ptr_no, $entity_name, $fund_cluster, $from_officer, $to_officer, $transfer_date, $transfer_type, $reason, $approved_by, $approved_by_designation, $approved_by_date, $released_by, $released_by_designation, $released_by_date, $received_by, $received_by_designation, $received_by_date, $ptr_id);
         
         if ($stmt->execute()) {
-            $ptr_id = $conn->insert_id;
+            // Delete old PTR items
+            $conn->query("DELETE FROM ppe_ptr_items WHERE ptr_id = $ptr_id");
             
-            // Insert PTR items
+            // Insert new PTR items
             $item_stmt = $conn->prepare("INSERT INTO ppe_ptr_items (ptr_id, ppe_id) VALUES (?, ?)");
             foreach ($item_ids as $ppe_id) {
                 $item_stmt->bind_param("ii", $ptr_id, $ppe_id);
                 $item_stmt->execute();
             }
             $item_stmt->close();
-            
-            // Auto-create corresponding PAR (Property Acknowledgement Receipt)
-            // Generate PAR number based on PTR number
-            $par_no = str_replace('PTR', 'PAR', $ptr_no);
-            
-            // Property number is stored in individual items, not PAR header
-            $property_number = '';
-            
-            // Insert PAR using PTR data
-            $par_stmt = $conn->prepare("INSERT INTO ppe_par (par_no, entity_name, fund_cluster, date_acquired, property_number, received_by, received_by_designation, received_by_date, issued_by, issued_by_designation, issued_by_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $par_stmt->bind_param("sssssssssss", $par_no, $entity_name, $fund_cluster, $transfer_date, $property_number, $received_by, $received_by_designation, $received_by_date, $released_by, $released_by_designation, $released_by_date);
-            
-            if ($par_stmt->execute()) {
-                $par_id = $conn->insert_id;
-                
-                // Insert PAR items (link same properties to PAR)
-                $par_item_stmt = $conn->prepare("INSERT INTO ppe_par_items (par_id, ppe_id) VALUES (?, ?)");
-                foreach ($item_ids as $ppe_id) {
-                    $par_item_stmt->bind_param("ii", $par_id, $ppe_id);
-                    $par_item_stmt->execute();
-                }
-                $par_item_stmt->close();
-            }
-            $par_stmt->close();
             
             // Update officer_incharge and custodian for all transferred items
             $update_stmt = $conn->prepare("UPDATE ppe_property SET officer_incharge = ?, custodian = ?, status = 'Transferred' WHERE id = ?");
@@ -77,11 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
             }
             $update_stmt->close();
             
-            $success = "Property Transfer Report and Property Acknowledgement Receipt created successfully!";
+            $success = "Property Transfer Report updated successfully!";
             header("Location: PPE_PTR.php");
             exit();
         } else {
-            $error = "Failed to create PTR: " . $stmt->error;
+            $error = "Failed to update PTR: " . $stmt->error;
         }
         $stmt->close();
     }
@@ -98,7 +108,7 @@ include 'sidebar.php';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add Property Transfer Report</title>
+<title>Edit Property Transfer Report</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
@@ -308,8 +318,8 @@ include 'sidebar.php';
 <div class="container">
     <div class="form-container">
         <header class="page-header">
-            <h1><i class="fas fa-exchange-alt"></i> Add Property Transfer Report (PTR)</h1>
-            <p>Create a new property transfer record</p>
+            <h1><i class="fas fa-edit"></i> Edit Property Transfer Report (PTR)</h1>
+            <p>Update property transfer record</p>
         </header>
 
         <?php if ($error): ?>
@@ -328,49 +338,49 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="ptr_no">PTR No <span class="required">*</span></label>
-                    <input type="text" id="ptr_no" name="ptr_no" required>
+                    <input type="text" id="ptr_no" name="ptr_no" value="<?= htmlspecialchars($ptr['ptr_no']) ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="transfer_date">Transfer Date <span class="required">*</span></label>
-                    <input type="date" id="transfer_date" name="transfer_date" value="<?= date('Y-m-d') ?>" required>
+                    <input type="date" id="transfer_date" name="transfer_date" value="<?= htmlspecialchars($ptr['transfer_date']) ?>" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="entity_name">Entity Name <span class="required">*</span></label>
-                    <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" required>
+                    <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($ptr['entity_name']) ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="fund_cluster">Fund Cluster</label>
-                    <input type="text" id="fund_cluster" name="fund_cluster" value="101">
+                    <input type="text" id="fund_cluster" name="fund_cluster" value="<?= htmlspecialchars($ptr['fund_cluster']) ?>">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
-                    <input type="text" id="from_officer" name="from_officer" required>
+                    <input type="text" id="from_officer" name="from_officer" value="<?= htmlspecialchars($ptr['from_officer']) ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
-                    <input type="text" id="to_officer" name="to_officer" required>
+                    <input type="text" id="to_officer" name="to_officer" value="<?= htmlspecialchars($ptr['to_officer']) ?>" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="transfer_type">Transfer Type</label>
                 <select id="transfer_type" name="transfer_type">
-                    <option value="Donation">Donation</option>
-                    <option value="Relocation">Relocation</option>
-                    <option value="Reassignment">Reassignment</option>
-                    <option value="Others">Others</option>
+                    <option value="Donation" <?= $ptr['transfer_type'] == 'Donation' ? 'selected' : '' ?>>Donation</option>
+                    <option value="Relocation" <?= $ptr['transfer_type'] == 'Relocation' ? 'selected' : '' ?>>Relocation</option>
+                    <option value="Reassignment" <?= $ptr['transfer_type'] == 'Reassignment' ? 'selected' : '' ?>>Reassignment</option>
+                    <option value="Others" <?= $ptr['transfer_type'] == 'Others' ? 'selected' : '' ?>>Others</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="reason">Reason / Purpose</label>
-                <textarea id="reason" name="reason"></textarea>
+                <textarea id="reason" name="reason"><?= htmlspecialchars($ptr['reason']) ?></textarea>
             </div>
 
             <h3 style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-pen-nib"></i> Signature Details</h3>
@@ -378,33 +388,33 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="approved_by">Approved By - Name</label>
-                    <input type="text" id="approved_by" name="approved_by" placeholder="Full Name">
+                    <input type="text" id="approved_by" name="approved_by" value="<?= htmlspecialchars($ptr['approved_by']) ?>" placeholder="Full Name">
                 </div>
                 <div class="form-group">
                     <label for="approved_by_designation">Approved By - Designation</label>
-                    <input type="text" id="approved_by_designation" name="approved_by_designation" placeholder="Position/Designation">
+                    <input type="text" id="approved_by_designation" name="approved_by_designation" value="<?= htmlspecialchars($ptr['approved_by_designation']) ?>" placeholder="Position/Designation">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="released_by">Released/Issued By - Name</label>
-                    <input type="text" id="released_by" name="released_by" placeholder="Full Name">
+                    <input type="text" id="released_by" name="released_by" value="<?= htmlspecialchars($ptr['released_by']) ?>" placeholder="Full Name">
                 </div>
                 <div class="form-group">
                     <label for="released_by_designation">Released/Issued By - Designation</label>
-                    <input type="text" id="released_by_designation" name="released_by_designation" placeholder="Position/Designation">
+                    <input type="text" id="released_by_designation" name="released_by_designation" value="<?= htmlspecialchars($ptr['released_by_designation']) ?>" placeholder="Position/Designation">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="received_by">Received By - Name</label>
-                    <input type="text" id="received_by" name="received_by" placeholder="Full Name">
+                    <input type="text" id="received_by" name="received_by" value="<?= htmlspecialchars($ptr['received_by']) ?>" placeholder="Full Name">
                 </div>
                 <div class="form-group">
                     <label for="received_by_designation">Received By - Designation</label>
-                    <input type="text" id="received_by_designation" name="received_by_designation" placeholder="Position/Designation">
+                    <input type="text" id="received_by_designation" name="received_by_designation" value="<?= htmlspecialchars($ptr['received_by_designation']) ?>" placeholder="Position/Designation">
                 </div>
             </div>
 
@@ -413,17 +423,17 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="approved_by_date">Approved By - Date</label>
-                    <input type="date" id="approved_by_date" name="approved_by_date" value="<?= date('Y-m-d') ?>">
+                    <input type="date" id="approved_by_date" name="approved_by_date" value="<?= htmlspecialchars($ptr['approved_by_date']) ?>">
                 </div>
                 <div class="form-group">
                     <label for="released_by_date">Released/Issued By - Date</label>
-                    <input type="date" id="released_by_date" name="released_by_date" value="<?= date('Y-m-d') ?>">
+                    <input type="date" id="released_by_date" name="released_by_date" value="<?= htmlspecialchars($ptr['released_by_date']) ?>">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="received_by_date">Received By - Date</label>
-                <input type="date" id="received_by_date" name="received_by_date" value="<?= date('Y-m-d') ?>">
+                <input type="date" id="received_by_date" name="received_by_date" value="<?= htmlspecialchars($ptr['received_by_date']) ?>">
             </div>
 
             <div class="form-group">
@@ -431,7 +441,7 @@ include 'sidebar.php';
                 <div class="items-selection">
                     <?php while ($item = $ppe_items->fetch_assoc()): ?>
                         <div class="item-checkbox">
-                            <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>">
+                            <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" <?= in_array($item['id'], $existing_item_ids) ? 'checked' : '' ?>>
                             <label for="item_<?= $item['id'] ?>" class="item-info">
                                 <strong><?= htmlspecialchars($item['par_no']) ?></strong> - 
                                 <?= htmlspecialchars($item['item_name']) ?> - 
@@ -445,8 +455,8 @@ include 'sidebar.php';
 
             <div class="button-group">
                 <button type="submit" name="submit_ptr" class="btn btn-primary">
-                    <i class="fas fa-check-circle"></i>
-                    Create PTR
+                    <i class="fas fa-save"></i>
+                    Update PTR
                 </button>
                 <a href="PPE_PTR.php" class="btn btn-secondary">
                     <i class="fas fa-times"></i>

@@ -28,18 +28,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Semi-Expendable Property - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Match the Stock Card table structure */
-        .stock-card-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
-        .stock-card-table th, .stock-card-table td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: center; }
-        .stock-card-table th { background: #f8fafc; font-weight: 700; }
-        .property-view-section h3 { margin-top: 18px; margin-bottom: 8px; }
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f06e";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Action Buttons Container */
+        .view-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border: 1px solid rgba(203, 213, 225, 0.5) !important;
+        }
+        
+        /* Details Container */
+        .view-details {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            padding: 24px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            margin-bottom: 24px !important;
+            border: 1px solid rgba(203, 213, 225, 0.5) !important;
+        }
+        
+        .view-details p {
+            margin: 12px 0 !important;
+            font-size: 14px !important;
+            color: #1e293b !important;
+            line-height: 1.6 !important;
+        }
+        
+        .view-details p strong {
+            color: #0f172a !important;
+            font-weight: 600 !important;
+            display: inline-block !important;
+            min-width: 200px !important;
+        }
+        
+        /* Stock Card Table */
+        .stock-card-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 14px !important;
+            font-size: 13px !important;
+            background: white !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07) !important;
+        }
+        
+        .stock-card-table th {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+            color: white !important;
+            font-weight: 600 !important;
+            padding: 12px 10px !important;
+            text-align: center !important;
+            border: 1px solid rgba(30, 64, 175, 0.3) !important;
+        }
+        
+        .stock-card-table td {
+            border: 1px solid #e5e7eb !important;
+            padding: 10px !important;
+            text-align: center !important;
+            background: white !important;
+        }
+        
+        .stock-card-table tbody tr:hover {
+            background-color: #f0f9ff !important;
+        }
+        
+        .property-view-section {
+            margin-top: 24px !important;
+        }
+        
+        .property-view-section h3 {
+            margin-top: 18px !important;
+            margin-bottom: 12px !important;
+            color: #1e293b !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+        }
     </style>
 </head>
 <body class="view-semi-expendable-page">
-    <div class="content">
-        <h2>📋 Viewing Semi-Expendable Property No. <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></h2>
-        <div class="ris-actions">
+    <div class="container">
+        <h2>Viewing Semi-Expendable Property No. <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></h2>
+        <div class="view-actions">
             <?php 
               $backUrl = 'semi_expendible.php?category=' . urlencode($item['category']);
               $returnGet = $_GET['return'] ?? '';
@@ -47,13 +133,17 @@
                   $backUrl = $returnGet;
               }
             ?>
-            <a href="PC_semi.php" class="btn btn-secondary">← Back</a>
+            <a href="PC_semi.php" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Property Card
+            </a>
             <form action="semi_expendable_export.php" method="get" style="display:inline;">
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
-                <button type="submit" class="btn btn-primary">📄 Export PDF</button>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
             </form>
         </div>
-        <div class="ris-details">
+        <div class="view-details">
             <p><strong>Entity Name:</strong> TESDA</p>
             <p><strong>Property No.:</strong> <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></p>
             <p><strong>Description:</strong> <?php echo htmlspecialchars($item['item_description']); ?></p>

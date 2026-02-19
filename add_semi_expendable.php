@@ -291,15 +291,27 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Semi-Expendable Item</title>
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
         .form-container {
             max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 30px auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            backdrop-filter: blur(10px);
         }
         .form-group {
             margin-bottom: 20px;
@@ -314,10 +326,18 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
             font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         .form-group textarea {
             height: 80px;
@@ -329,21 +349,37 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             gap: 20px;
         }
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             margin-right: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         .btn-primary {
-            background: #2563eb;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
         }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
         .btn-secondary {
-            background: #6b7280;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
             color: white;
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
         }
         .alert {
             padding: 15px;
@@ -368,9 +404,12 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
 <body>
     <div class="container">
         <div class="form-container">
-            <header style="margin-bottom: 30px;">
-                <h1>Add New Semi-Expendable Property</h1>
-                <p>Register a new item in the semi-expendable property registry</p>
+            <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
+                <h1 style="color: #1e293b; display: flex; align-items: center; gap: 12px; margin: 0 0 8px 0;">
+                    <i class="fas fa-plus-circle" style="color: #3b82f6;"></i>
+                    Add New Semi-Expendable Property
+                </h1>
+                <p style="color: #64748b; margin: 0;">Register a new item in the semi-expendable property registry</p>
             </header>
 
             <?php if ($error): ?>
@@ -522,8 +561,12 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                 </div>
 
                 <div style="margin-top: 30px;">
-                    <button type="submit" class="btn btn-primary">Add Item</button>
-                    <a href="semi_expendible.php?category=<?php echo urlencode($default_category); ?>" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Add Item
+                    </button>
+                    <a href="semi_expendible.php?category=<?php echo urlencode($default_category); ?>" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
                 </div>
             </form>
         </div>

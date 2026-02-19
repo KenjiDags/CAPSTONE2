@@ -67,11 +67,6 @@ try {
             color: #3b82f6;
         }
         
-        /* Container spacing override */
-        .container {
-            margin: 20px auto;
-        }
-        
         /* Search Section Layout */
         .add-btn-section {
             flex: 0 0 auto;

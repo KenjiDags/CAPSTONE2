@@ -39,7 +39,7 @@ body {
     padding: 20px;
 }
 
-/* Header Styles */
+/* Header Styles - Basic defaults only, PPE.css handles modern styling */
 h2 {
     color: #0038a8;
     font-size: 2.5rem;
@@ -50,17 +50,6 @@ h2 {
     position: relative;
 }
 
-h2::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 4px;
-    background: linear-gradient(90deg, #0038a8, #4a90e2);
-    border-radius: 2px;
-}
 .notification {
     position: fixed;
     top: 20px;
@@ -202,8 +191,8 @@ input[readonly]:focus {
     cursor: not-allowed;
 }
 
-/* Button Styles */
-.add-btn {
+/* Button Styles - Default add button (can be overridden by more specific selectors) */
+.add-btn:not([class*="btn-"]) {
     background: linear-gradient(135deg, #0038a8 0%, #4a90e2 100%);
     color: white;
     border: none;
@@ -219,13 +208,13 @@ input[readonly]:focus {
     letter-spacing: 1px;
 }
 
-.add-btn:hover {
+.add-btn:not([class*="btn-"]):hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 56, 168, 0.4);
     background: linear-gradient(135deg, #002d80 0%, #3a7bc8 100%);
 }
 
-.add-btn:active {
+.add-btn:not([class*="btn-"]):active {
     transform: translateY(0);
 }
 
@@ -268,8 +257,8 @@ tr:hover {
     transition: background-color 0.3s ease;
 }
 
-/* Action Button Styles */
-.btn {
+/* Action Button Styles - Lower specificity to allow PPE.css overrides */
+.btn:not(.pill-btn):not(.btn-add):not(.btn-primary):not(.btn-secondary) {
     padding: 8px 16px;
     margin-right: 8px;
     border: none;
@@ -1156,17 +1145,6 @@ body {
     position: relative;
 }
 
-.content h2::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 4px;
-    background: var(--blue-gradient);
-    border-radius: 2px;
-}
 .item-row.hidden {
     display: none;
 }
@@ -2676,6 +2654,12 @@ body {
 
 .filters .export-btn i {
     font-size: 1.1em;
+}
+
+/* PAR Page Specific: Move searchbar closer to Sort dropdown */
+#par-filters {
+    justify-content: flex-start !important;
+    gap: 20px !important;
 }
 
 /* Export button styling (standalone) */

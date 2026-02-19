@@ -9,73 +9,86 @@ body {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     min-height: 100vh;
     margin: 0;
+    margin-left: 240px !important;
     padding: 0;
 }
 
 .container {
     padding: 28px;
+    margin: 0 !important;
+    max-width: 100% !important;
 }
 
 /* ===== FROSTED GLASS HEADER ===== */
 .container h2 {
-    color: #1e293b;
-    font-size: 28px;
-    font-weight: 600;
-    margin-bottom: 24px;
-    padding: 20px 20px 12px 20px;
-    border-bottom: 3px solid #3b82f6;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-    text-shadow: none;
-    text-align: left;
-    position: relative;
+    color: #1e293b !important;
+    font-size: 28px !important;
+    font-weight: 600 !important;
+    margin-bottom: 24px !important;
+    padding: 20px 20px 12px 20px !important;
+    border-bottom: 3px solid #3b82f6 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.95) 100%) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    text-shadow: none !important;
+    text-align: left !important;
+    position: relative !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
 }
 
 .container h2::after {
-    content: none;
+    content: none !important;
 }
 
 /* ===== FROSTED GLASS CONTAINERS ===== */
 .search-add-container,
 .filters {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-bottom: 24px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-    border: 1px solid rgba(255,255,255,0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+    backdrop-filter: blur(10px) !important;
+    padding: 20px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+    margin-bottom: 24px !important;
+    display: flex !important;
+    gap: 12px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    border: 1px solid rgba(203, 213, 225, 0.5) !important;
 }
 
-/* ===== BUTTONS BASE ===== */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    text-decoration: none;
-    color: #fff;
+/* ===== BUTTONS BASE - Higher specificity to override styles.css ===== */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-add {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+    text-decoration: none !important;
+    color: #fff !important;
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    text-decoration: none;
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-add:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    text-decoration: none !important;
 }
 
 .btn:active {
@@ -89,56 +102,58 @@ body {
 
 /* Button Variants */
 .btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
 }
 
-.btn-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.btn-success,
+.btn-add {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
 }
 
-.btn-success:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+.btn-success:hover,
+.btn-add:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
 }
 
 /* ===== PILL BUTTONS (Action Buttons) ===== */
 .pill-btn,
 .pill-add,
 table td a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 20px;
-    color: #fff;
-    font-weight: 600;
-    font-size: 13px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin: 2px;
-    text-decoration: none;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    border-radius: 20px !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+    margin: 2px !important;
+    text-decoration: none !important;
 }
 
 .pill-btn:hover,
 .pill-add:hover,
 table td a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    text-decoration: none;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    text-decoration: none !important;
 }
 
 .pill-btn:active,
@@ -157,40 +172,75 @@ table td a i {
 /* Pill Button Color Variants */
 .pill-view,
 table td a[href*="view_ptr"] {
-    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
 }
 
 .pill-view:hover,
 table td a[href*="view_ptr"]:hover {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
 }
 
 .pill-edit,
 table td a[href*="edit_ptr"] {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
 }
 
 .pill-edit:hover,
 table td a[href*="edit_ptr"]:hover {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
 }
 
 .pill-delete,
 table td a[href*="delete_ptr_id"] {
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
 }
 
 .pill-delete:hover,
 table td a[href*="delete_ptr_id"]:hover {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
 }
 
+.pill-export,
 table td a[href*="export_ptr"] {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+}
+
+.pill-export:hover,
+table td a[href*="export_ptr"]:hover {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+/* PAR Action Button Colors (same as PTR) */
+table td a[href*="view_par"] {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+table td a[href*="view_par"]:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+table td a[href*="edit_par"] {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+table td a[href*="edit_par"]:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+table td a[href*="export_par"] {
     background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
 
-table td a[href*="export_ptr"]:hover {
+table td a[href*="export_par"]:hover {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+table td a[href*="delete_par_id"] {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+table td a[href*="delete_par_id"]:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 /* RIS Action Button Colors */
@@ -246,29 +296,29 @@ table td a.scexport:hover {
 }
 
 .pill-add {
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
 }
 
 .pill-add:hover {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
 }
 
 /* ===== TABLE STYLES ===== */
 table {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-    border-radius: 8px;
-    overflow: hidden;
-    background: #ffffff;
-    width: 100%;
-    border-collapse: collapse;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
 }
 
 table thead th {
-    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-    color: #fff;
-    padding: 14px 12px;
-    font-weight: 600;
-    text-align: left;
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+    color: #fff !important;
+    padding: 14px 12px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
 }
 
 table thead th i {
