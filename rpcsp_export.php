@@ -16,6 +16,9 @@ $accountable_officer = htmlspecialchars($_GET['accountable_officer'] ?? '');
 $official_designation = htmlspecialchars($_GET['official_designation'] ?? '');
 $entity_name = htmlspecialchars($_GET['entity_name'] ?? '');
 $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
+$signature_name_1 = htmlspecialchars($_GET['signature_name_1'] ?? '');
+$signature_name_2 = htmlspecialchars($_GET['signature_name_2'] ?? '');
+$signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -125,17 +128,17 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
       <tr>
         <td style="width:33.33%;">
           <div style="font-weight:bold; margin-bottom:4px;">Certified Correct by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px;">&nbsp;</div>
+          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_1 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of Inventory Committee Chair and Members</div>
         </td>
         <td style="width:33.33%;">
           <div style="font-weight:bold; margin-bottom:4px;">Approved by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px;">&nbsp;</div>
+          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_2 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
         </td>
         <td style="width:33.34%;">
           <div style="font-weight:bold; margin-bottom:4px;">Verified by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px;">&nbsp;</div>
+          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_3 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of COA Representative</div>
         </td>
       </tr>

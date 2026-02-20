@@ -23,6 +23,17 @@ if ($result) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RPCSP - Report on the Physical Count of Semi-Expendable Property</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .container h2::before {
+            content: "\f15c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 12px;
+            color: #3b82f6;
+        }
+    </style>
     <script>
         function openExport() {
             const params = new URLSearchParams({
@@ -32,13 +43,16 @@ if ($result) {
                 official_designation: document.getElementById('official_designation').value,
                 entity_name: document.getElementById('entity_name').value,
                 assumption_date: document.getElementById('assumption_date').value,
+                signature_name_1: document.querySelector('input[name="signature_name_1"]').value,
+                signature_name_2: document.querySelector('input[name="signature_name_2"]').value,
+                signature_name_3: document.querySelector('input[name="signature_name_3"]').value,
             });
             window.location.href = './rpcsp_export.php?' + params.toString();
         }
     </script>
 </head>
 <body class="rpci-page">
-    <div class="content">
+    <div class="container">
         <div class="rpci-form">
             <div class="rpci-header">
                 <h2>Report on the Physical Count of Semi-Expendable Property</h2>
@@ -63,7 +77,7 @@ if ($result) {
 
                     <div class="field-group" style="grid-column: 1 / -1;">
                         <label>For which: 
-                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer">,    
+                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer" style="min-width: 300px;">,    
                             <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation">,
                             <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name">
                             is accountable, having assumed such accountability on
@@ -149,7 +163,10 @@ if ($result) {
             </div>
 
             <div style="text-align:center; margin-top: 18px;">
-                <button type="button" class="export-btn" onclick="openExport()">📄 Export to PDF</button>
+                <button type="button" class="btn pill-btn pill-export" onclick="openExport()">
+                    <i class="fas fa-file-pdf"></i>
+                    Export to PDF
+                </button>
             </div>
             </form>
         </div>

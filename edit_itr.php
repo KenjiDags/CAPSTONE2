@@ -48,8 +48,17 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit ITR Form</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    /* Page-Specific Icon */
+    .container h2::before {
+      content: "\f044";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: #3b82f6;
+    }
+    
     .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
     .section-card h3 { margin:0 0 12px; }
     .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -58,7 +67,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     .table-frame { border:1px solid #e5e7eb; border-top:0; border-radius:0 0 8px 8px; overflow:hidden; }
     .table-viewport { max-height:420px; overflow-y:auto; overflow-x:auto; scrollbar-gutter:stable; background: var(--white); }
     #itemsTable { overflow:visible !important; width:100%; border-collapse:collapse; background:transparent !important; border-radius:0 !important; margin-top:0 !important; }
-    #itemsTable thead th { position:sticky; top:0; z-index:3; background: var(--blue-gradient); color:#fff; }
+    #itemsTable thead th { position:sticky; top:0; z-index:3; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important; color:#fff; }
     .table-frame, .table-viewport, #itemsTable { border-top-left-radius:0 !important; border-top-right-radius:0 !important; }
     #itemsTable td, #itemsTable th { border:1px solid #e5e7eb; padding:6px 8px; }
     .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
@@ -68,7 +77,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
 </head>
 <body>
   <?php include 'sidebar.php'; ?>
-  <div class="edit-ics-page content edit-ris-page">
+  <div class="container">
     <h2>Edit Inventory Transfer Report (ITR)</h2>
 
     <input type="hidden" id="itr_id" value="<?= (int)$itr_id ?>" />
@@ -270,8 +279,8 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     </div>
 
     <div class="actions">
-      <button type="button" onclick="submitITREdit()"><i class="fas fa-save"></i> Save Changes</button>
-      <button type="button" onclick="cancelITR()"><i class="fas fa-times"></i> Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="submitITREdit()"><i class="fas fa-save"></i> Save Changes</button>
+      <button type="button" class="btn btn-secondary" onclick="cancelITR()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
 

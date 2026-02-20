@@ -64,8 +64,16 @@ $result = $conn->query($query);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IIRUSP - Inventory Inspection Report</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
+  .container h2::before {
+    content: "\f0ae";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 12px;
+    color: #3b82f6;
+  }
   .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
   .filters .control { display:flex; align-items:center; gap:10px; }
   .filters select, .filters input {
@@ -117,7 +125,7 @@ $result = $conn->query($query);
 </head>
 <body class="iirusp-page">
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Inventory and Inspection Report of Unserviceable Semi-Expendable Property (IIRUSP)</h2>
 
   <form id="iirusp-filters" method="get" class="filters">
@@ -165,10 +173,10 @@ $result = $conn->query($query);
                         <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
                         <td>₱<?= number_format($row['total_amount'] ?? 0, 2) ?></td>
                         <td>
-                            <a href="view_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" title="View IIRUSP"><i class="fas fa-eye"></i> View</a>
-                            <a href="edit_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" title="Edit IIRUSP"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="export_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" title="Export IIRUSP" target="_blank"><i class="fas fa-download"></i> Export</a>
-                            <a href="iirusp.php?delete_iirusp_id=<?= $row['iirusp_id'] ?>" onclick="return confirm('Are you sure you want to delete this IIRUSP?')" title="Delete IIRUSP"><i class="fas fa-trash"></i> Delete</a>
+                            <a href="view_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-view" title="View IIRUSP"><i class="fas fa-eye"></i> View</a>
+                            <a href="edit_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-edit" title="Edit IIRUSP"><i class="fas fa-edit"></i> Edit</a>
+                            <a href="export_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-export" title="Export IIRUSP" target="_blank"><i class="fas fa-download"></i> Export</a>
+                            <a href="iirusp.php?delete_iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this IIRUSP?')" title="Delete IIRUSP"><i class="fas fa-trash"></i> Delete</a>
                         </td>
                     </tr>
                 <?php endwhile; ?>

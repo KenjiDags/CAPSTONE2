@@ -238,12 +238,11 @@ try {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
-        .content h2::before {
+        .container h2::before {
             content: "\f044";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             color: #3b82f6;
-            margin-right: 12px;
         }
         
         .section-card { 
@@ -303,7 +302,7 @@ try {
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
-    <div class="content">
+    <div class="container">
         <h2>Edit ICS Form</h2>
 
         <form method="post" action="">
@@ -436,10 +435,14 @@ try {
                 </div>
             </div>
 
-            <button type="submit">Update ICS</button>
-            <a href="<?php echo 'ics.php?ics_id=' . $ics_id; ?>" style="margin-left: 10px;">
-                <button type="button">Cancel</button>
-            </a>
+            <div style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update ICS
+                </button>
+                <a href="ics.php" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
         </form>
     </div>
 

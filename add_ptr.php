@@ -15,6 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     $to_officer = trim($_POST['to_officer']);
     $transfer_date = $_POST['transfer_date'];
     $transfer_type = $_POST['transfer_type'];
+    
+    // If "Others" is selected, use the custom input value
+    if ($transfer_type === 'Others' && !empty($_POST['transfer_type_others'])) {
+        $transfer_type = 'Others: ' . trim($_POST['transfer_type_others']);
+    }
+    
     $reason = trim($_POST['reason']);
     $approved_by = trim($_POST['approved_by']);
     $approved_by_designation = trim($_POST['approved_by_designation']);
@@ -302,6 +308,60 @@ include 'sidebar.php';
     .item-info strong {
         color: #1e293b;
     }
+    .radio-group {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 10px 16px;
+        border-radius: 8px;
+        background: #fff;
+        transition: all 0.3s ease;
+    }
+    .radio-option:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .radio-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #3b82f6;
+    }
+    .radio-option input[type="radio"]:checked + label {
+        color: #3b82f6;
+        font-weight: 600;
+    }
+    .radio-option label {
+        cursor: pointer;
+        margin: 0;
+        font-weight: 500;
+        color: #333;
+    }
+    #others_input_container {
+        display: none;
+        margin-top: 12px;
+        animation: slideDown 0.3s ease;
+    }
+    #others_input_container.show {
+        display: block;
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 </head>
 <body>
@@ -359,13 +419,28 @@ include 'sidebar.php';
             </div>
 
             <div class="form-group">
-                <label for="transfer_type">Transfer Type</label>
-                <select id="transfer_type" name="transfer_type">
-                    <option value="Donation">Donation</option>
-                    <option value="Relocation">Relocation</option>
-                    <option value="Reassignment">Reassignment</option>
-                    <option value="Others">Others</option>
-                </select>
+                <label>Transfer Type</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="transfer_donation" name="transfer_type" value="Donation" checked>
+                        <label for="transfer_donation">Donation</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="transfer_relocation" name="transfer_type" value="Relocation">
+                        <label for="transfer_relocation">Relocation</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="transfer_reassignment" name="transfer_type" value="Reassignment">
+                        <label for="transfer_reassignment">Reassignment</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="transfer_others" name="transfer_type" value="Others">
+                        <label for="transfer_others">Others</label>
+                    </div>
+                </div>
+                <div id="others_input_container">
+                    <input type="text" id="others_input" name="transfer_type_others" placeholder="Please specify...">
+                </div>
             </div>
 
             <div class="form-group">
@@ -456,5 +531,26 @@ include 'sidebar.php';
         </form>
     </div>
 </div>
+
+<script>
+// Toggle "Others" input box visibility
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="transfer_type"]');
+    const othersContainer = document.getElementById('others_input_container');
+    const othersInput = document.getElementById('others_input');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'Others' && this.checked) {
+                othersContainer.classList.add('show');
+                othersInput.focus();
+            } else {
+                othersContainer.classList.remove('show');
+                othersInput.value = '';
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>

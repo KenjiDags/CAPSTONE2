@@ -108,15 +108,14 @@ if (!empty($rows)) {
     <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link rel="stylesheet" href="css/fixed_head.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="js/regspi_script.js" defer></script>
+    <script src="js/regspi_script.js?v=<?= time() ?>" defer></script>
     <style>
         /* Page-Specific Icon */
-        .content h2::before {
+        .container h2::before {
             content: "\f0f6";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             color: #3b82f6;
-            margin-right: 12px;
         }
         
         /* Make the main REGSPI table scrollable */
@@ -145,10 +144,12 @@ if (!empty($rows)) {
             position: sticky !important;
             top: 0; 
             z-index: 2;
-            background: var(--blue-gradient) !important; 
-            color: #fff;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important; 
+            color: #fff !important;
             height: 40px;
             line-height: 1.2;
+            font-weight: 600 !important;
+            text-align: center !important;
         }
     .rsep-table thead tr:nth-child(1) th { z-index: 5; }
     .rsep-table thead tr:nth-child(2) th { z-index: 4; }
@@ -167,22 +168,21 @@ if (!empty($rows)) {
             padding: 0 16px;
             line-height: 1;
         }
-            .search-container { margin-bottom: -20px; }
-            .content > .container { margin-top: 0; }
+            .container > .table-wrapper { margin-top: 0; }
             .rsep-form { margin-top: 0; margin-bottom: 8px; }
     </style>
 </head>
 <body>
-    <div class="content">
+    <div class="container">
         <h2>Registry of Semi-Expendable Property Issued</h2>
         
-        <div class="search-container">
+        <div class="search-container" style="margin-bottom: 20px;">
             <button type="button" class="export-btn" onclick="openExport()" style="margin-left: auto;">
                 <i class="fas fa-file-pdf"></i> Export to PDF
             </button>
         </div>
 
-        <div class="container">
+        <div class="table-wrapper">
             <!-- Header Form -->
             <div class="rsep-form">
                 <div class="form-fields">
@@ -483,20 +483,6 @@ if (!empty($rows)) {
             
             // Show success message
             alert('Item added successfully!');
-        });
-
-        // Clear all items
-        document.addEventListener('click', function(e) {
-            if (e.target.textContent.includes('Clear All')) {
-                if (confirm('Are you sure you want to clear all items? This action cannot be undone.')) {
-                    // Keep only the header sample row
-                    const firstRow = tableBody.rows[0];
-                    tableBody.innerHTML = '';
-                    if (firstRow) {
-                        tableBody.appendChild(firstRow);
-                    }
-                }
-            }
         });
     </script>
     <script>

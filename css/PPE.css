@@ -510,3 +510,83 @@ table tbody td[colspan] i {
     margin-bottom: 16px;
     opacity: 0.3;
 }
+
+/* ===== INVENTORY ACTION BUTTONS (inventory.php) ===== */
+/* Override general .btn styles for inventory-specific buttons */
+.btn.edit-btn,
+.btn.delete-btn,
+.btn.clear-entries-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+    margin: 2px !important;
+    white-space: nowrap !important;
+}
+
+.btn.edit-btn {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    color: #fff !important;
+}
+
+.btn.edit-btn:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.btn.delete-btn {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
+    color: #fff !important;
+}
+
+.btn.delete-btn:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.btn.clear-entries-btn {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important;
+    color: #fff !important;
+    padding: 7px 12px !important;
+}
+
+.btn.clear-entries-btn:hover {
+    background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* Action button icons */
+.btn.edit-btn i,
+.btn.delete-btn i,
+.btn.clear-entries-btn i {
+    font-size: 0.95em !important;
+}
+
+/* Actions cell layout */
+.actions-cell {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
+}
+
+.actions-row {
+    display: flex !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+}
+
+.actions-row-full {
+    width: 100% !important;
+}

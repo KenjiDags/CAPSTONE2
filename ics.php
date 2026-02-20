@@ -4,8 +4,6 @@ require 'config.php';
 require 'functions.php';
 
 // Normalize ICS number for display to the new format "NN-YY"
-// - If already in NN-YY, return as is
-// - If in old format "ICS-YYYY/MM/####", convert to "NN-YY" where NN is serial (min 2 digits) and YY is last two digits of year
 function formatICSNo($ics_no) {
     if (preg_match('/^\d+-\d{2}$/', $ics_no)) {
         return $ics_no; // already new format
@@ -17,7 +15,6 @@ function formatICSNo($ics_no) {
         if (strlen($serial) < 2) { $serial = str_pad($serial, 2, '0', STR_PAD_LEFT); }
         return $serial . '-' . $yy;
     }
-    // Fallback: return original if we can't confidently parse
     return $ics_no;
 }
 

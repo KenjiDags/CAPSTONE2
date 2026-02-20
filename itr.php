@@ -28,8 +28,17 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITR - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f0ec";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
   .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
   .filters .control { display:flex; align-items:center; gap:10px; }
   .filters select, .filters input {
@@ -60,28 +69,11 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
   }
   .filters .pill-btn { height: 38px; padding: 0 16px; }
   .filters #searchInput { width: 400px; max-width: 65vw; }
-    .pill-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 9999px;
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
-    .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
-    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
     </style>
 </head>
-<body class="itr-page">
+<body>
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Inventory Transfer Report (ITR)</h2>
 
     <?php // (delete handled before output) ?>
@@ -171,12 +163,12 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
                         echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
                     echo '<td>₱' . number_format((float)$row['total_amount'], 2) . '</td>';
                     echo '<td>';
-                    // Actions: View, Edit, Export, Delete (View added)
-                    echo '<a href="view_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="View ITR"><i class="fas fa-eye"></i> View</a> ';
-                    echo '<a href="edit_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
-                    echo '<a href="export_itr.php?itr_id=' . (int)$row['itr_id'] . '" title="Export ITR"><i class="fas fa-download"></i> Export</a> ';
+                    // Actions: View, Edit, Export, Delete with pill button classes
+                    echo '<a href="view_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-view" title="View ITR"><i class="fas fa-eye"></i> View</a> ';
+                    echo '<a href="edit_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-edit" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
+                    echo '<a href="export_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-export" title="Export ITR"><i class="fas fa-download"></i> Export</a> ';
                     echo '<a href="itr.php?delete_itr_id=' . (int)$row['itr_id'] . (isset($_GET['sort']) ? ('&sort=' . urlencode($_GET['sort'])) : '') . '" ' .
-                        'onclick="return confirm(\'Are you sure you want to delete this ITR?\')" ' .
+                        'class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this ITR?\')" ' .
                         'title="Delete ITR"><i class="fas fa-trash"></i> Delete</a>';
                     echo '</td>';
                         echo '</tr>';

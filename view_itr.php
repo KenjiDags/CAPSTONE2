@@ -109,20 +109,94 @@ $total_amount = 0.0;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View ITR - TESDA Inventory System</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Page-Specific Icon */
+    .container h2::before {
+      content: "\f06e";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: #3b82f6;
+    }
+    
+    /* Action Buttons Container */
+    .view-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+      backdrop-filter: blur(10px) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+      border: 1px solid rgba(203, 213, 225, 0.5) !important;
+    }
+    
+    /* Details Container */
+    .view-details {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+      backdrop-filter: blur(10px) !important;
+      padding: 24px !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+      margin-bottom: 24px !important;
+      border: 1px solid rgba(203, 213, 225, 0.5) !important;
+    }
+    
+    .view-details p {
+      margin: 12px 0 !important;
+      font-size: 14px !important;
+      color: #1e293b !important;
+      line-height: 1.6 !important;
+    }
+    
+    .view-details p strong {
+      color: #0f172a !important;
+      font-weight: 600 !important;
+      display: inline-block !important;
+      min-width: 200px !important;
+    }
+    
+    /* Section Headers */
+    .container h3 {
+      color: #1e293b;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 24px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .container h3:nth-of-type(1)::before {
+      content: "\\f466";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: #3b82f6;
+    }
+    
+    .container h3:nth-of-type(2)::before {
+      content: "\\f304";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: #3b82f6;
+    }
+  </style>
 </head>
-<body class="view-ris-page">
+<body>
   <?php include 'sidebar.php'; ?>
-  <div class="content">
-    <h2>📋 Viewing ITR No. <?php echo htmlspecialchars($itr['itr_no']); ?></h2>
+  <div class="container">
+    <h2>Viewing ITR No. <?php echo htmlspecialchars($itr['itr_no']); ?></h2>
 
     <!-- Action Buttons -->
-    <div class="ris-actions">
-      <a href="itr.php" class="btn btn-secondary">← Back to ITR List</a>
-      <a href="edit_itr.php?itr_id=<?php echo $itr_id; ?>" class="btn btn-primary">✏️ Edit ITR</a>
+    <div class="view-actions">
+      <a href="itr.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to ITR List</a>
+      <a href="edit_itr.php?itr_id=<?php echo $itr_id; ?>" class="btn btn-primary"><i class="fas fa-edit"></i> Edit ITR</a>
     </div>
 
     <!-- ITR Details -->
-    <div class="ris-details">
+    <div class="view-details">
       <p><strong>Entity Name:</strong> <?php echo htmlspecialchars($itr['entity_name'] ?? ''); ?></p>
       <p><strong>Fund Cluster:</strong> <?php echo htmlspecialchars($itr['fund_cluster'] ?? ''); ?></p>
       <p><strong>ITR No.:</strong> <?php echo htmlspecialchars($itr['itr_no'] ?? ''); ?></p>
@@ -141,7 +215,7 @@ $total_amount = 0.0;
       <?php endif; ?>
     </div>
 
-    <h3>📦 Items</h3>
+    <h3>Items</h3>
     <div style="overflow-x:auto;">
       <table>
         <thead>
@@ -210,8 +284,8 @@ $total_amount = 0.0;
     </div>
     <?php // (No prepared statements to clean up; all results already closed) ?>
 
-    <h3>✍️ Signatories</h3>
-    <div class="ris-details">
+    <h3>Signatories</h3>
+    <div class="view-details">
       <p><strong>Approved by:</strong> <?php echo htmlspecialchars($itr['approved_name'] ?? ''); ?></p>
       <p><strong>Designation (Approved):</strong> <?php echo htmlspecialchars($itr['approved_designation'] ?? ''); ?></p>
       <p><strong>Approved Date:</strong> <?php echo htmlspecialchars($itr['approved_date'] ?? ''); ?></p>

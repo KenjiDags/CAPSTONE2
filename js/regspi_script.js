@@ -2,25 +2,29 @@
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('tableBody');
-    const rows = tableBody.getElementsByTagName('tr');
     
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
+    // Only add search functionality if elements exist
+    if (searchInput && tableBody) {
+        const rows = tableBody.getElementsByTagName('tr');
         
-        Array.from(rows).forEach(row => {
-            const propertyNo = row.cells[2]?.textContent.toLowerCase() || '';
-            const description = row.cells[3]?.textContent.toLowerCase() || '';
-            const usefulLife = row.cells[4]?.textContent.toLowerCase() || '';
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
             
-            if (propertyNo.includes(searchTerm) || 
-                description.includes(searchTerm) || 
-                usefulLife.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            Array.from(rows).forEach(row => {
+                const propertyNo = row.cells[2]?.textContent.toLowerCase() || '';
+                const description = row.cells[3]?.textContent.toLowerCase() || '';
+                const usefulLife = row.cells[4]?.textContent.toLowerCase() || '';
+                
+                if (propertyNo.includes(searchTerm) || 
+                    description.includes(searchTerm) || 
+                    usefulLife.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
-    });
+    }
 });
 
 // Export functionality
@@ -47,15 +51,18 @@ function openExport() {
 }
 
 // Row limit handling
-document.getElementById('rsep_row_limit').addEventListener('change', function() {
-    const limit = this.value;
-    const rows = document.querySelectorAll('#tableBody tr');
-    
-    rows.forEach((row, index) => {
-        if (limit === 'all' || index < parseInt(limit)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+const rowLimitSelect = document.getElementById('rsep_row_limit');
+if (rowLimitSelect) {
+    rowLimitSelect.addEventListener('change', function() {
+        const limit = this.value;
+        const rows = document.querySelectorAll('#tableBody tr');
+        
+        rows.forEach((row, index) => {
+            if (limit === 'all' || index < parseInt(limit)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     });
-});
+}

@@ -124,21 +124,88 @@ if ($itrRes && $itrRes->num_rows > 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View ICS - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f06e";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+        
+        /* Action Buttons Container */
+        .view-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border: 1px solid rgba(203, 213, 225, 0.5) !important;
+        }
+        
+        /* Details Container */
+        .view-details {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            padding: 24px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            margin-bottom: 24px !important;
+            border: 1px solid rgba(203, 213, 225, 0.5) !important;
+        }
+        
+        .view-details p {
+            margin: 12px 0 !important;
+            font-size: 14px !important;
+            color: #1e293b !important;
+            line-height: 1.6 !important;
+        }
+        
+        .view-details p strong {
+            color: #0f172a !important;
+            font-weight: 600 !important;
+            display: inline-block !important;
+            min-width: 200px !important;
+        }
+        
+        /* Items Section */
+        .container h3 {
+            color: #1e293b;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 24px 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .container h3::before {
+            content: "\f466";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+    </style>
 </head>
-<body class="view-ris-page">
+<body>
     <?php include 'sidebar.php'; ?>
-    <div class="content">
-        <h2>📋 Viewing ICS No. <?php echo htmlspecialchars($ics['ics_no']); ?></h2>
+    <div class="container">
+        <h2>Viewing ICS No. <?php echo htmlspecialchars($ics['ics_no']); ?></h2>
 
         <!-- Action Buttons -->
-        <div class="ris-actions">
-            <a href="ics.php" class="btn btn-secondary">← Back to ICS List</a>
-            <a href="edit_ics.php?ics_id=<?php echo $ics_id; ?>" class="btn btn-primary">✏️ Edit ICS</a>
-            <a href="export_ics.php?ics_id=<?php echo $ics_id; ?>" class="btn btn-primary">📄 Export PDF</a>
+        <div class="view-actions">
+            <a href="ics.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to ICS List</a>
+            <a href="edit_ics.php?ics_id=<?php echo $ics_id; ?>" class="btn btn-primary"><i class="fas fa-edit"></i> Edit ICS</a>
+            <a href="export_ics.php?ics_id=<?php echo $ics_id; ?>" class="btn btn-success"><i class="fas fa-file-pdf"></i> Export PDF</a>
         </div>
 
         <!-- ICS Details -->
-        <div class="ris-details">
+        <div class="view-details">
             <p><strong>Entity Name:</strong> <?php echo htmlspecialchars($ics['entity_name']); ?></p>
             <p><strong>Fund Cluster:</strong> <?php echo htmlspecialchars($ics['fund_cluster']); ?></p>
             <p><strong>ICS No.:</strong> <?php echo htmlspecialchars($ics['ics_no']); ?></p>
@@ -149,7 +216,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             <p><strong>Received From Position:</strong> <?php echo htmlspecialchars($ics['received_from_position']); ?></p>
         </div>
 
-        <h3>📦 Items</h3>
+        <h3>Items</h3>
         <div style="overflow-x:auto;">
             <table>
                 <thead>

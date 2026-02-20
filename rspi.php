@@ -9,7 +9,16 @@ require 'auth.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSPI - Report of Semi-Expendable Property Issued</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        .container h2::before {
+            content: "\f15c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 12px;
+            color: #3b82f6;
+        }
         .export-section { margin-bottom: 20px; border-radius: 5px; }
         .export-btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; text-decoration: none; display: inline-block; font-weight: bold; margin-right: 10px; cursor: pointer; }
         .export-btn:hover { background-color: #218838; color: white; text-decoration: none; }
@@ -46,7 +55,7 @@ require 'auth.php';
 <body class="rspi-page">
     <?php include 'sidebar.php'; ?>
 
-    <div class="content">
+    <div class="container">
         <h2>Report of Semi-Expendable Property Issued (RSPI)</h2>
 
         <?php
@@ -64,7 +73,10 @@ require 'auth.php';
                     <a class="clear-link" href="rspi.php">Clear</a>
                 <?php endif; ?>
             </form>
-            <a href="export_rspi.php?month=<?= urlencode($selectedMonth) ?>" class="export-btn" target="_blank">📄 Export to PDF</a>
+            <a href="export_rspi.php?month=<?= urlencode($selectedMonth) ?>" class="btn pill-btn pill-export" target="_blank">
+                <i class="fas fa-file-pdf"></i>
+                Export to PDF
+            </a>
         </div>
 
         <table>

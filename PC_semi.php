@@ -77,10 +77,11 @@ require_once 'config.php';
     .pill-view { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
     .pill-export { background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
-  .actions-col { width: 1%; white-space: nowrap; }
-  table th.actions-col, table td.actions-col { padding-left: 4px; padding-right: 4px; }
-  .action-stack { display: inline-flex; flex-direction: column; gap: 8px; align-items: center; }
-    .amount-col { white-space: nowrap; min-width: 140px; }
+    .description-col { width: 280px; }
+    .actions-col { width: 300px; white-space: nowrap; }
+    table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
+    .action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .amount-col { white-space: nowrap; min-width: 100px; }
   </style>
 </head>
 <body>
@@ -105,13 +106,18 @@ require_once 'config.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or property no..." />
-        <a href="semi_expendable_export_all.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>" class="pill-btn pill-export">
-          <i class="fas fa-file-export"></i> Export All
+        <div class="control">
+            <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+                <i class="fas fa-search"></i> Search:
+            </label>
+            <input type="text" id="searchInput" name="search"
+                  value="<?= htmlspecialchars($search) ?>"
+                  placeholder="Search description or property no..." />
+        </div>
+
+        <a href="semi_expendable_export_all.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>"
+          class="pill-btn pill-export" style="margin-left:5px;">
+            <i class="fas fa-file-export"></i> Export All
         </a>
       </div>
     </form>
@@ -166,7 +172,7 @@ require_once 'config.php';
                 $balanceQty = (int)($row['quantity_balance'] ?? 0);
                 $amount = (float)($row['amount_total'] ?? 0);
                 echo '<tr>';
-                echo '<td>' . htmlspecialchars($description) . '</td>';
+                echo '<td class="description-col">' . htmlspecialchars($description) . '</td>';
                 echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
                 echo '<td>' . htmlspecialchars($txDate) . '</td>';
                 echo '<td>' . htmlspecialchars($referenceNo) . '</td>';
@@ -183,7 +189,7 @@ require_once 'config.php';
                 echo '<div class="action-stack">';
                 echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
                 echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
-                echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')">Delete</a>';
+                echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
                 echo '</div>';
                 echo '</td>';
                 echo '</tr>';

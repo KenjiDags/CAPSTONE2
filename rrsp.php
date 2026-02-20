@@ -49,8 +49,16 @@ $result = $conn->query("SELECT r.*, (
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RRSP - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+  .container h2::before {
+    content: "\f0a0";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 12px;
+    color: #3b82f6;
+  }
   .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
   .filters .control { display:flex; align-items:center; gap:10px; }
   .filters select, .filters input {
@@ -102,7 +110,7 @@ $result = $conn->query("SELECT r.*, (
 </head>
 <body class="rrsp-page">
 <?php include 'sidebar.php'; ?>
-<div class="content">
+<div class="container">
     <h2>Receipt of Returned Semi-Expendable Property (RRSP)</h2>
     
   <form id="rrsp-filters" method="get" class="filters">
@@ -153,10 +161,10 @@ $result = $conn->query("SELECT r.*, (
                 echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
                 // Actions cell (separate echoes to avoid complex escaping issues)
                 echo '<td>';
-                echo '<a href="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" title="View RRSP"><i class="fas fa-eye"></i> View</a> ';
-                echo '<a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" title="Edit RRSP"><i class="fas fa-edit"></i> Edit</a> ';
-                echo '<a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" title="Export RRSP"><i class="fas fa-download"></i> Export</a> ';
-                echo '<a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" onclick="return confirm(\'Delete this RRSP form?\')" title="Delete RRSP"><i class="fas fa-trash"></i> Delete</a>';
+                echo '<a href="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-view" title="View RRSP"><i class="fas fa-eye"></i> View</a> ';
+                echo '<a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-edit" title="Edit RRSP"><i class="fas fa-edit"></i> Edit</a> ';
+                echo '<a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-export" title="Export RRSP"><i class="fas fa-download"></i> Export</a> ';
+                echo '<a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-delete" onclick="return confirm(\'Delete this RRSP form?\')" title="Delete RRSP"><i class="fas fa-trash"></i> Delete</a>';
                 echo '</td>';
                 echo '</tr>';
             }
