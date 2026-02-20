@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add ITR Form</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
@@ -65,12 +66,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     .has-error input,
     .has-error textarea,
     .has-error select { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
+    .container h2::before {
+    content: "\f15b";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #3b82f6;
+    margin-right: 12px;
+}
   </style>
 </head>
 <body>
   <?php include 'sidebar.php'; ?>
-  <div class="edit-ics-page content edit-ris-page">
-    <h2>Add Inventory Transfer Report (ITR)</h2>
+  <div class="container">
+    <h2 >Add Inventory Transfer Report (ITR)</h2>
 
     <!-- Instructions (Annex A.5) - collapsible helper to match the reference image
     <div class="section-card" style="background:#f9fbff; border-color:#dbeafe;">
@@ -251,8 +259,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     </div>
 
     <div class="actions">
-      <button type="button" id="submitItrBtn"><i class="fas fa-paper-plane"></i> Submit ITR</button>
-      <button type="button" onclick="cancelITR()"><i class="fas fa-times"></i> Cancel</button>
+      <button type="button" id="submitItrBtn" class="pill-btn pill-add"><i class="fa-solid fa-plus"></i> Submit ITR</button>
+      <button type="button" onclick="cancelITR()" class="pill-btn pill-view"><i class="fa-solid fa-ban"></i> Cancel</button>
     </div>
   </div>
 

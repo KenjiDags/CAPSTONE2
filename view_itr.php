@@ -170,14 +170,14 @@ $total_amount = 0.0;
     }
     
     .container h3:nth-of-type(1)::before {
-      content: "\\f466";
+      content: "\f466";
       font-family: "Font Awesome 6 Free";
       font-weight: 900;
       color: #3b82f6;
     }
     
     .container h3:nth-of-type(2)::before {
-      content: "\\f304";
+      content: "\f304";
       font-family: "Font Awesome 6 Free";
       font-weight: 900;
       color: #3b82f6;

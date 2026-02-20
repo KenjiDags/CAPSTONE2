@@ -200,42 +200,66 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Add RRSP Form</title>
-<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-  /* Lightweight layout helpers for better UX */
-  .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
-  .section-card h3 { margin-top:0; margin-bottom:12px; }
+  /* Page-Specific Icon */
+  .container h2::before {
+    content: "\f46d";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #3b82f6;
+    margin-right: 12px;
+  }
+  .frosted-card, .section-card {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .frosted-card h3, .section-card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #1e293b;
+    font-weight: 600;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
+  }
   .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
   .form-grid .form-group { display:flex; flex-direction:column; }
+  .form-grid .form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #374151;
+  }
+  .form-grid .form-group input,
+  .form-grid .form-group select,
+  .form-grid .form-group textarea {
+    padding: 10px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  .form-grid .form-group input:focus,
+  .form-grid .form-group select:focus,
+  .form-grid .form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
   @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
-  .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
-  /* Scrollable items table, preserve existing theme/colors */
-  /* Frame: remove top border and flatten top corners to avoid a visible white strip */
-  .table-frame { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
-  /* Viewport: use the same gradient as header behind the sticky thead */
-  .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; scrollbar-gutter: stable; background: var(--white); }
-  /* Override global table overflow so sticky headers aren't clipped */
-  #itemsTable { overflow: visible !important; width: 100%; border-collapse: collapse; background: transparent !important; border-radius: 0 !important; margin-top: 0 !important; }
-  /* Make header stick within the scrolling viewport */
-  #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
-  /* Ensure any top corners are flat across container/viewport/table */
-  .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
-  /* Spacing improvements */
-  #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
-  #itemsTable thead th { height: 44px; }
-  .search-container { margin: 8px 0 12px !important; }
-  .form-grid .form-group input, .form-grid .form-group select, .form-grid .form-group textarea { padding: 8px 10px; }
-  .picker { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .actions { display:flex; gap:12px; align-items:center; margin-top:20px; }
 </style>
 </head>
 <body class="rrsp-page">
 <?php include 'sidebar.php'; ?>
-<div class="content edit-ics-page edit-ris-page">
-  <h2>Add RRSP Form</h2>
+<div class="container frosted-glass rrsp-add-page">
+  <h2 class="page-title">Add RRSP Form</h2>
 
-  <div class="section-card">
-    <h3>RRSP Details</h3>
+  <div class="frosted-card">
+    <h3><i class="fa-solid fa-file-lines"></i> RRSP Details</h3>
     <div class="form-grid">
       <div class="form-group">
         <label>Entity Name:</label>
@@ -250,7 +274,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       <div class="form-group">
         <label>RRSP No.:</label>
         <input type="text" id="rrsp_no" required>
-        <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+        <small class="input-hint">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
       </div>
       <div class="form-group">
         <label>Date Prepared:</label>
@@ -265,13 +289,11 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     </div>
   </div>
 
-  <div class="section-card">
-    <h3>RRSP Items</h3>
-    <!-- Search Container -->
+  <div class="frosted-card">
+    <h3><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
     <div class="search-container">
       <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items by stock number, description, or item no..." onkeyup="filterItems()">
     </div>
-
     <div class="table-frame">
       <div class="table-viewport">
         <table id="itemsTable" tabindex="-1">
@@ -290,48 +312,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
           </thead>
           <tbody>
           <?php
-          // List ICS items similar to ITR page
-          $sql = "SELECT ii.*, i.ics_no, i.date_issued
-                    FROM ics_items ii
-                    INNER JOIN ics i ON i.ics_id = ii.ics_id
-                    WHERE ii.quantity > 0
-                    ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
-          $resICS = $conn->query($sql);
-          if ($resICS && $resICS->num_rows > 0) {
-            while ($row = $resICS->fetch_assoc()) {
-              $date_issued = $row['date_issued'] ?? '';
-              $item_no = $row['inventory_item_no'] ?? ($row['stock_number'] ?? '');
-              $ics_info = ($row['ics_no'] ?? '') . (isset($row['date_issued']) ? (' / ' . $row['date_issued']) : '');
-              $desc = $row['description'] ?? '';
-              $unit_cost = isset($row['unit_cost']) ? (float)$row['unit_cost'] : 0.0;
-              if ($unit_cost <= 0 && isset($row['total_cost']) && isset($row['quantity']) && (float)$row['quantity'] > 0) {
-                $unit_cost = ((float)$row['total_cost']) / max(1, (float)$row['quantity']);
-              }
-              $qty_on_hand = isset($row['quantity']) ? (float)$row['quantity'] : 0;
-              $rowText = strtolower(($item_no ?: '') . ' ' . ($ics_info ?: '') . ' ' . ($desc ?: ''));
-              echo '<tr class="ics-row" ' .
-                   'data-text="' . htmlspecialchars($rowText) . '" ' .
-                   'data-unit-cost="' . htmlspecialchars(number_format($unit_cost,2,'.','')) . '" ' .
-                   'data-qty-on-hand="' . htmlspecialchars((string)$qty_on_hand) . '" ' .
-                   'data-ics-no="' . htmlspecialchars($row['ics_no'] ?? '') . '" ' .
-                   'data-ics-id="' . (int)$row['ics_id'] . '" ' .
-                   'data-ics-item-id="' . (int)$row['ics_item_id'] . '" ' .
-                   'data-stock-number="' . htmlspecialchars($row['stock_number'] ?? $item_no) . '">';
-              echo '<td class="itemno-cell">' . htmlspecialchars($item_no) . '</td>';
-              echo '<td class="icsinfo-cell">' . htmlspecialchars($ics_info) . '</td>';
-              echo '<td class="desc-cell">' . htmlspecialchars($desc) . '</td>';
-              echo '<td class="unitcost-cell">₱' . number_format($unit_cost, 2) . '</td>';
-              echo '<td class="qtyonhand-cell">' . htmlspecialchars((string)$qty_on_hand) . '</td>';
-              echo '<td class="returnqty-cell"><input type="number" class="qty-input" value="" min="0" max="' . htmlspecialchars((string)$qty_on_hand) . '" step="1" placeholder="0"></td>';
-              echo '<td class="amount-cell">₱0.00</td>';
-              echo '<td class="enduser-cell"><input type="text" class="enduser-input" placeholder="End-user" /></td>';
-              echo '<td class="remarks-cell"><input type="text" class="remarks-input" placeholder="Remarks" /></td>';
-              echo '</tr>';
-            }
-          } else {
-            echo '<tr id="no-items-row"><td colspan="9">No ICS items found.</td></tr>';
-          }
-          if ($resICS) { $resICS->close(); }
+          // ...existing code...
           ?>
           </tbody>
           <tfoot>
@@ -346,8 +327,8 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     </div>
   </div>
 
-  <div class="section-card">
-    <h3>Signatories</h3>
+  <div class="frosted-card">
+    <h3><i class="fa-solid fa-user-check"></i> Signatories</h3>
     <div class="form-grid">
       <div class="form-group">
         <label>Returned By:</label>
@@ -370,10 +351,10 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     </div>
   </div>
 
-  <button type="button" onclick="submitRRSP()">Submit RRSP</button>
-  <a href="rrsp.php" style="margin-left: 10px;">
-    <button type="button">Cancel</button>
-  </a>
+  <div class="actions" style="margin-top:18px;">
+    <button type="button" class="pill-btn pill-add" onclick="submitRRSP()"><i class="fa-solid fa-plus"></i> Submit RRSP</button>
+    <button type="button" class="pill-btn pill-view" onclick="window.location.href='rrsp.php'"><i class="fa-solid fa-ban"></i> Cancel</button>
+  </div>
 </div>
 <script>
 // Fetch next RRSP number from server based on selected date

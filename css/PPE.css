@@ -29,7 +29,7 @@ body {
     border-bottom: 3px solid #3b82f6 !important;
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 5px !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.95) 100%) !important;
     border-radius: 12px !important;
     backdrop-filter: blur(10px) !important;

@@ -359,7 +359,7 @@ function generateICSNumberSimple($conn) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
-        .content h2::before {
+        .container h2::before {
             content: "\f15b";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
@@ -427,7 +427,7 @@ function generateICSNumberSimple($conn) {
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
-    <div class="content">
+    <div class="container">
         <h2><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></h2>
 
         <form method="post" action="">
@@ -567,9 +567,9 @@ function generateICSNumberSimple($conn) {
                 </div>
             </div>
 
-            <button type="submit"><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
+            <button type="submit" class="pill-btn pill-add"><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
             <a href="<?php echo $is_editing ? 'ics.php?ics_id=' . $ics_id : 'ics.php'; ?>" style="margin-left: 10px;">
-                <button type="button">Cancel</button>
+                <button type="button" class="pill-btn pill-view">Cancel</button>
             </a>
         </form>
     </div>

@@ -138,6 +138,7 @@ ensure_iirusp_tables($conn);
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Add IIRUSP Form</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" /> 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
     .section-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -167,12 +168,19 @@ ensure_iirusp_tables($conn);
     .button-group button { padding: 12px 25px; margin-left: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     .btn-submit { background: #28a745; color: white; }
     .btn-submit:hover { background: #218838; }
+    .container h2::before {
+        content: "\f1f8";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        color: #3b82f6;
+        margin-right: 12px;
+    }
 </style>
 </head>
 <body class="iirusp-page">
 <?php include 'sidebar.php'; ?>
 
-<div class="content">
+<div class="container">
     <h2>Add IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h2>
 
     <!-- HEADER FORM -->
