@@ -53,59 +53,47 @@ require 'auth.php';
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-button active" data-tab="office-supplies">Office Supplies</button>
-    <button class="tab-button" data-tab="semi-expendables">Semi Expendables</button>
-    <button class="tab-button" data-tab="ppe">PPE</button>
+    <button class="tab-button active" data-tab="market-performance">MPS & MRP Market Performance</button>
+  </div>
+  <!-- Market Performance Tab (Merged MPS & MRP) -->
+  <div class="tab-content" id="market-performance">
+    <section>
+      <h3>MPS & MRP Market Performance Dashboard</h3>
+      <div style="margin-bottom:12px;">
+        <span style="display:inline-block;width:12px;height:12px;background:#e53935;border-radius:50%;margin-right:4px;"></span> Restock Immediately
+        <span style="display:inline-block;width:12px;height:12px;background:#ffc107;border-radius:50%;margin-left:16px;margin-right:4px;"></span> Low Stock
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="marketItemSelect"><b>Select Item:</b></label>
+        <select id="marketItemSelect" style="padding:8px;border-radius:6px;border:1px solid #ddd; min-width:200px;"></select>
+      </div>
+      <div class="chart-wrapper"><canvas id="marketChart"></canvas></div>
+      <div style="margin-top:32px;margin-bottom:8px;"><b>Material Requirements Planning (MRP) Graph</b></div>
+      <div class="chart-wrapper"><canvas id="mrpChart"></canvas></div>
+      <div id="marketTable"></div>
+      <p style="color:#888;">Select an item to view its Market Performance (MPS) and Material Requirements Planning (MRP) graphs.</p>
+    </section>
   </div>
 
-  <!-- Office Supplies Tab -->
-  <div class="tab-content active" id="office-supplies">
-  <!-- Supply Chart -->
-  <section style="margin-bottom:28px;">
-    <h3>Supply List (Top items by quantity)</h3>
-    <div class="chart-wrapper"><canvas id="supplyChart"></canvas></div>
-  </section>
 
-  <!-- Stock Card -->
-  <section style="margin-bottom:28px;">
-    <h3>Stock Card (select item)</h3>
-    <div style="display:flex;gap:12px;align-items:center;">
-      <select id="itemSelect" style="padding:8px;border-radius:6px;border:1px solid #ddd;">
-        <option value="">-- Select item --</option>
-      </select>
-      <div id="selectedInfo" style="color:#666;font-weight:600"></div>
-    </div>
-    <div class="chart-wrapper" style="margin-top:12px;"><canvas id="stockCardChart"></canvas></div>
-  </section>
-
-  <!-- Low Stock Items -->
-  <section>
-    <h3>Low Stock Items</h3>
-    <!-- Severity legend -->
-    <div class="stock-legend">
-      <span class="legend-critical"></span><span class="legend-label">Critical</span>
-      <span class="legend-warning"></span><span class="legend-label">Warning</span>
-      <span class="legend-ok"></span><span class="legend-label">OK</span>
-    </div>
-    <div style="margin-bottom:8px;color:#666;font-weight:600;">Items at or below reorder point</div>
-    <div id="lowStock"></div>
-  </section>
-  </div>
-
-  <!-- Semi Expendables Tab -->
-  <div class="tab-content" id="semi-expendables">
-  <section>
-    <h3>Semi Expendable Items</h3>
-    <div id="semiTable"></div>
-  </section>
-  </div>
-
-  <!-- PPE Tab -->
-  <div class="tab-content" id="ppe">
-  <section>
-    <h3>PPE Items</h3>
-    <div id="ppeTable"></div>
-  </section>
+  <!-- Market Performance Tab (Only Section Left) -->
+  <div class="tab-content active" id="market-performance">
+    <section>
+      <h3>MPS & MRP Market Performance Dashboard</h3>
+      <div style="margin-bottom:12px;">
+        <span style="display:inline-block;width:12px;height:12px;background:#e53935;border-radius:50%;margin-right:4px;"></span> Restock Immediately
+        <span style="display:inline-block;width:12px;height:12px;background:#ffc107;border-radius:50%;margin-left:16px;margin-right:4px;"></span> Low Stock
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="marketItemSelect"><b>Select Item:</b></label>
+        <select id="marketItemSelect" style="padding:8px;border-radius:6px;border:1px solid #ddd; min-width:200px;"></select>
+      </div>
+      <div class="chart-wrapper"><canvas id="marketChart"></canvas></div>
+      <div style="margin-top:32px;margin-bottom:8px;"><b>Material Requirements Planning (MRP) Graph</b></div>
+      <div class="chart-wrapper"><canvas id="mrpChart"></canvas></div>
+      <div id="marketTable"></div>
+      <p style="color:#888;">Select an item to view its Market Performance (MPS) and Material Requirements Planning (MRP) graphs.</p>
+    </section>
   </div>
 
 </div>
@@ -114,9 +102,109 @@ require 'auth.php';
 const CRITICAL_THRESHOLD = 0.25;
 const WARNING_THRESHOLD = 0.5;
 
-// Tab switching logic
+// Tab switching logic (only one tab now)
 const tabButtons = document.querySelectorAll('.tab-button');
 const tabContents = document.querySelectorAll('.tab-content');
+
+// Load Market Performance data (merged MPS/MRP)
+function loadMarketPerformanceData() {
+  fetch('analytics_data.php?category=office-supplies')
+    .then(res => res.json())
+    .then(json => {
+      const supply = json.supply_list || [];
+      const marketItemSelect = document.getElementById('marketItemSelect');
+      const marketCtx = document.getElementById('marketChart').getContext('2d');
+      const mrpCtx = document.getElementById('mrpChart').getContext('2d');
+      let marketChart = null;
+      let mrpChart = null;
+
+      // Populate dropdown
+      marketItemSelect.innerHTML = '<option value="">-- Select item --</option>';
+      supply.forEach(it => {
+        const opt = document.createElement('option');
+        opt.value = it.item_id;
+        opt.textContent = `${it.stock_number} — ${it.item_name}`;
+        marketItemSelect.appendChild(opt);
+      });
+
+      function renderMarketChart(item) {
+        if (!item) {
+          if (marketChart) { marketChart.destroy(); marketChart = null; }
+          if (mrpChart) { mrpChart.destroy(); mrpChart = null; }
+          return;
+        }
+        // MPS Chart
+        const labels = ['Quantity', 'Reorder Point'];
+        const data = [item.quantity, item.reorder_point || 0];
+        const barColors = [
+          (item.reorder_point === 0) ? '#3a7bc8' : (item.quantity === 0 || (item.quantity / item.reorder_point) <= CRITICAL_THRESHOLD) ? '#e53935' : ((item.quantity / item.reorder_point) <= WARNING_THRESHOLD) ? '#ffc107' : '#3a7bc8',
+          '#1976d2'
+        ];
+        if (marketChart) marketChart.destroy();
+        marketChart = new Chart(marketCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: item.stock_number + ' — ' + item.item_name,
+              data: data,
+              backgroundColor: barColors,
+              borderColor: barColors,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true } },
+            scales: {
+              x: { ticks: { maxRotation: 0, minRotation: 0 } },
+              y: { beginAtZero: true, suggestedMax: Math.max(5, Math.ceil(Math.max(...data) * 1.15)) }
+            },
+            animation: false
+          }
+        });
+
+        // MRP Chart (Placeholder: Simulate monthly usage and forecast)
+        // In real use, fetch historical usage for the item
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        const usage = [20, 18, 22, 17, 19, 21].map(v => Math.max(0, v - Math.floor(Math.random() * 5))); // Simulated
+        const forecast = usage.map(u => u + Math.floor(Math.random() * 3));
+        if (mrpChart) mrpChart.destroy();
+        mrpChart = new Chart(mrpCtx, {
+          type: 'line',
+          data: {
+            labels: months,
+            datasets: [
+              { label: 'Historical Usage', data: usage, borderColor: '#1976d2', backgroundColor: 'rgba(25,118,210,0.1)', fill: true, tension: 0.2 },
+              { label: 'Forecast', data: forecast, borderColor: '#43a047', borderDash: [5,5], fill: false, tension: 0.2 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true } },
+            scales: {
+              y: { beginAtZero: true }
+            },
+            animation: false
+          }
+        });
+      }
+
+      marketItemSelect.addEventListener('change', () => {
+        const id = marketItemSelect.value;
+        const selected = supply.find(s => s.item_id == id);
+        renderMarketChart(selected);
+      });
+
+      // Optionally auto-select first item
+      if (supply.length > 0) {
+        marketItemSelect.value = supply[0].item_id;
+        marketItemSelect.dispatchEvent(new Event('change'));
+      }
+    });
+}
 
 function switchToTab(targetTab) {
   // Remove active class from all buttons and contents
@@ -140,6 +228,9 @@ function switchToTab(targetTab) {
   } else if (targetTab === 'ppe' && !window.ppeDataLoaded) {
     loadPPEData();
     window.ppeDataLoaded = true;
+  } else if (targetTab === 'market-performance' && !window.marketPerformanceLoaded) {
+    loadMarketPerformanceData();
+    window.marketPerformanceLoaded = true;
   }
 }
 
@@ -150,11 +241,8 @@ tabButtons.forEach(button => {
   });
 });
 
-// Restore last active tab on page load
-const savedTab = localStorage.getItem('analyticsActiveTab');
-if (savedTab && document.getElementById(savedTab)) {
-  switchToTab(savedTab);
-}
+// Only one tab, always active
+switchToTab('market-performance');
 
 // Load Office Supplies data (default)
 fetch('analytics_data.php?category=office-supplies')
@@ -163,37 +251,69 @@ fetch('analytics_data.php?category=office-supplies')
     const supply = json.supply_list || [];
     const low = json.low_stock || [];
 
-    // --- Supply Chart ---
-    const supplyLabels = supply.map(i => i.stock_number + ' - ' + i.item_name);
-    const supplyData = supply.map(i => i.quantity);
+    // --- MPS Market Performance Chart ---
+    // --- MPS Market Performance Chart with Dropdown ---
+    const mpsItemSelect = document.getElementById('mpsItemSelect');
     const supplyCtx = document.getElementById('supplyChart').getContext('2d');
-    const maxSupply = supplyData.length ? Math.max(...supplyData) : 0;
-    const supplyGradient = supplyCtx.createLinearGradient(0, 0, 0, 300);
-    supplyGradient.addColorStop(0, 'rgba(58,123,200,0.85)');
-    supplyGradient.addColorStop(1, 'rgba(58,123,200,0.25)');
+    let mpsChart = null;
 
-    new Chart(supplyCtx, {
-      type: 'bar',
-      data: {
-        labels: supplyLabels,
-        datasets: [{
-          label: 'Quantity',
-          data: supplyData,
-          backgroundColor: supplyGradient,
-          borderColor: 'rgba(58,123,200,0.9)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { maxRotation: 45, minRotation: 0 } },
-          y: { beginAtZero: true, suggestedMax: Math.max(5, Math.ceil(maxSupply * 1.15)) }
-        }
-      }
+    // Populate dropdown
+    mpsItemSelect.innerHTML = '<option value="">-- Select item --</option>';
+    supply.forEach(it => {
+      const opt = document.createElement('option');
+      opt.value = it.item_id;
+      opt.textContent = `${it.stock_number} — ${it.item_name}`;
+      mpsItemSelect.appendChild(opt);
     });
+
+    function renderMPSChart(item) {
+      if (!item) {
+        if (mpsChart) { mpsChart.destroy(); mpsChart = null; }
+        return;
+      }
+      const labels = ['Quantity', 'Reorder Point'];
+      const data = [item.quantity, item.reorder_point || 0];
+      const barColors = [
+        (item.reorder_point === 0) ? '#3a7bc8' : (item.quantity === 0 || (item.quantity / item.reorder_point) <= CRITICAL_THRESHOLD) ? '#e53935' : ((item.quantity / item.reorder_point) <= WARNING_THRESHOLD) ? '#ffc107' : '#3a7bc8',
+        '#888'
+      ];
+      if (mpsChart) mpsChart.destroy();
+      mpsChart = new Chart(supplyCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: item.stock_number + ' — ' + item.item_name,
+            data: data,
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: {
+            x: { ticks: { maxRotation: 0, minRotation: 0 } },
+            y: { beginAtZero: true, suggestedMax: Math.max(5, Math.ceil(Math.max(...data) * 1.15)) }
+          },
+          animation: false
+        }
+      });
+    }
+
+    mpsItemSelect.addEventListener('change', () => {
+      const id = mpsItemSelect.value;
+      const selected = supply.find(s => s.item_id == id);
+      renderMPSChart(selected);
+    });
+
+    // Optionally auto-select first item
+    if (supply.length > 0) {
+      mpsItemSelect.value = supply[0].item_id;
+      mpsItemSelect.dispatchEvent(new Event('change'));
+    }
 
     // --- Stock Card Chart ---
     const itemSelect = document.getElementById('itemSelect');
