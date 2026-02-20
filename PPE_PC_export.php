@@ -1,125 +1,158 @@
+<?php
+require 'config.php';
+require 'functions.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Property Card</title>
 <style>
-    body {
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 12px;
-        margin: 25px;
-    }
     @media print {
-        .no-print { display: none; }
-    }
-    .page-wrapper {
-        max-width: 780px;
-        margin: 0 auto;
-        border: 2px solid #000;
-        padding: 25px;
-        position: relative;
-    }
-    .appendix {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 11px;
-        font-style: italic;
-    }
-    .title {
-        text-align: center;
-        font-weight: bold;
-        font-size: 15px;
-        margin-bottom: 30px;
+      .no-print { display:none !important; }
     }
 
-    /* Header labels */
-    .header-row div {
-        margin-bottom: 5px;
+    body { 
+        font-family: Arial, sans-serif; 
+        font-size: 12px; 
+        margin-top:25px;
     }
+
+    .instruction-box {
+        background: #fffacd;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 12px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .page-wrapper {
+        width: 850px;
+        border: 2px solid #000;
+        padding: 20px;
+        position: relative;
+        margin: 0 auto;
+    }
+
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 11px; 
+    }
+    th, td { 
+        border: 1px solid #000; 
+        padding: 4px; 
+    }
+    th { background: #f2f2f2; }
+
+    .no-border { border: none !important; }
+    .header-label { background: #f2f2f2; font-weight:bold; }
     .underline {
         display: inline-block;
-        border-bottom: 1px solid #000;
         width: 250px;
-        height: 14px;
-        vertical-align: bottom;
-        margin-left: 5px;
+        border-bottom: 1px solid #000;
+        height: 12px;
+        vertical-align: middle;
+        margin-left: 4px;
     }
 
-    /* Table */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 11px;
+    .small-underline { width:150px; }
+    .large-underline { width:400px; }
+
+    .appendix {
+        position:absolute;
+        top:10px;
+        right:10px;
+        font-size:11px;
+        font-style:italic;
     }
-    th, td {
-        border: 1px solid black;
-        padding: 4px;
-        text-align: center;
-        vertical-align: top;
+
+    h2 { text-align:center; margin:0 0 15px 0; }
+
+    .print-button {
+        background: #007cba;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        margin-right: 8px;
     }
-    th {
-        font-weight: bold;
-        background: #f2f2f2;
+
+    .back-link {
+        background: #6c757d;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 13px;
+        text-decoration: none;
+        display: inline-block;
     }
 </style>
 </head>
 
 <body>
-
-<div class="no-print" style="margin-bottom:15px;">
-    <button onclick="window.print()" style="padding:8px 15px;">🖨 Print / Save PDF</button>
-</div>
+    <div class="no-print">
+        <div class="instruction-box">
+        <strong>📄 Export Instructions:</strong>
+        <div>1. Click the Print/Save button below.</div>
+        <div>2. In the print dialog choose "Save as PDF" or your printer.</div>
+        <div>3. Save or print the document.</div>
+        </div>
+        <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <a href="PPE_PTR.php" class="back-link">← Back to List</a>
+        <hr style="margin:14px 0;">
+    </div>
 
 <div class="page-wrapper">
     <div class="appendix">Appendix 69</div>
+    <h2>PROPERTY CARD</h2>
 
-    <div class="title">PROPERTY CARD</div>
-
-    <!-- Header -->
-    <div class="header-row" style="font-size:12px;">
-
-        <div>
-            <strong>Entity Name:</strong>
-            <span class="underline" style="width:350px;">Sample Entity Name</span>
-        </div>
-
-        <div>
-            <strong>Property, Plant, and Equipment:</strong>
-            <span class="underline" style="width:300px;">Office Equipment</span>
-        </div>
-
-        <div style="display:flex; justify-content:space-between;">
-            <div>
-                <strong>Fund Cluster:</strong>
-                <span class="underline" style="width:180px;">01-Regular</span>
-            </div>
-
-            <div>
-                <strong>Property Number:</strong>
-                <span class="underline" style="width:150px;">P-2024-001</span>
-            </div>
-        </div>
-
-        <div>
-            <strong>Description:</strong>
-            <span class="underline" style="width:500px;">Laptop - Dell Latitude 5520</span>
-        </div>
-
-    </div>
-
-    <br>
-
-    <!-- Property Card Table -->
     <table>
+        <!-- ENTITY NAME + FUND CLUSTER -->
         <tr>
-            <th rowspan="2" style="width:10%;">Date</th>
-            <th rowspan="2" style="width:12%;">Reference / PAR No.</th>
-            <th colspan="2" style="width:14%;">Receipt</th>
-            <th colspan="2" style="width:20%;">Issue / Transfer / Disposal</th>
-            <th rowspan="2" style="width:8%;">Balance Qty.</th>
-            <th rowspan="2" style="width:12%;">Amount</th>
-            <th rowspan="2" style="width:12%;">Remarks</th>
+            <td colspan="6" class="no-border">
+                <strong>Entity Name:</strong>
+                <span class="underline large-underline">Sample Entity Name</span>
+            </td>
+            <td colspan="3" class="no-border">
+                <strong>Fund Cluster:</strong>
+                <span class="underline small-underline">01-Regular</span>
+            </td>
+        </tr>
+
+        <!-- PPE + PROPERTY NUMBER -->
+        <tr>
+            <td colspan="6" class="header-label">
+                Property, Plant and Equipment:
+                <span class="underline large-underline">Office Equipment</span>
+            </td>
+            <td colspan="3" class="header-label">
+                Property Number:
+                <span class="underline small-underline">P-2024-001</span>
+            </td>
+        </tr>
+
+        <!-- DESCRIPTION -->
+        <tr>
+            <td colspan="9" class="header-label">
+                Description:
+                <span class="underline large-underline">Laptop - Dell Latitude 5520</span>
+            </td>
+        </tr>
+
+        <!-- MAIN HEADER -->
+        <tr>
+            <th rowspan="2">Date</th>
+            <th rowspan="2">Reference / PAR No.</th>
+            <th colspan="2">Receipt</th>
+            <th colspan="2">Issue / Transfer / Disposal</th>
+            <th rowspan="2">Balance Qty.</th>
+            <th rowspan="2">Amount</th>
+            <th rowspan="2">Remarks</th>
         </tr>
 
         <tr>
@@ -129,7 +162,7 @@
             <th>Qty.</th>
         </tr>
 
-        <!-- SAMPLE DATA ROWS -->
+        <!-- SAMPLE DATA ROW -->
         <tr>
             <td>01/05/2024</td>
             <td>PAR-2024-001</td>
@@ -142,25 +175,25 @@
             <td>Newly acquired</td>
         </tr>
 
-        <tr>
-            <td>03/01/2024</td>
-            <td>TR-2024-010</td>
-            <td></td>
-            <td></td>
-            <td>Juan Dela Cruz</td>
-            <td>1</td>
-            <td>0</td>
-            <td>0.00</td>
-            <td>Issued</td>
-        </tr>
+        <!-- 15 BLANK ROWS -->
+        <!-- (Exact count requested) -->
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 
-        <!-- Blank Rows -->
-        <!-- Add as many as needed -->
-        <?php for ($i=0; $i<15; $i++): ?>
-        <tr>
-            <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        </tr>
-        <?php endfor; ?>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
 
     </table>
 

@@ -56,7 +56,7 @@ foreach ($items as $item) {
         .no-print { display: none; }
     }
     .page-wrapper {
-        max-width: 780px;
+        max-width: 850px;
         margin: 0 auto;
         border: 2px solid #000;
         padding: 25px;
@@ -78,6 +78,7 @@ foreach ($items as $item) {
 
     /* Header labels */
     .header-row {
+        margin-bottom: 15px;
         font-size: 13px;
     }
     .header-row div {
@@ -137,12 +138,51 @@ foreach ($items as $item) {
         text-align: center;
         font-size: 11px;
     }
+    
+    .print-button {
+        background: #007cba;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        margin-right: 8px;
+    }
+    .print-button:hover { 
+        background: #005a87;
+    }
+    .back-link {
+        background: #6c757d;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 13px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .instruction-box {
+        background: #fffacd;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 12px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
 </style>
 </head>
 <body>
 
-<div class="no-print" style="margin-bottom:15px;">
-    <button onclick="window.print()" style="padding:8px 15px;">🖨 Print / Save PDF</button>
+<div class="no-print">
+    <div class="instruction-box">
+        <strong>📄 Export Instructions:</strong>
+        <div>1. Click the Print/Save button below.</div>
+        <div>2. In the print dialog choose "Save as PDF" or your printer.</div>
+        <div>3. Save or print the document.</div>
+    </div>
+    <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <a href="PPE_PAR.php" class="back-link">← Back to PAR List</a>
+    <hr style="margin:14px 0;">
 </div>
 
 <div class="page-wrapper">
@@ -161,7 +201,7 @@ foreach ($items as $item) {
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <strong>Fund Cluster:</strong>
-                <span class="underline" style="width:180px;"><?php echo htmlspecialchars($par['fund_cluster']); ?></span>
+                <span class="underline" style="width:300px;"><?php echo htmlspecialchars($par['fund_cluster']); ?></span>
             </div>
 
             <div>
