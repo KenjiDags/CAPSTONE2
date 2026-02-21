@@ -427,20 +427,25 @@ function generateICSNumberSimple($conn) {
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
-    <div class="container">
-        <h2><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></h2>
-
+<div class="add-ris-page content">
+    <div class="form-container">
+        <header class="page-header">
+            <h1>
+                <i class="fas fa-file-invoice"></i>
+                <?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?>
+            </h1>
+            <p><?php echo $is_editing ? 'Update inventory custody slip details' : 'Create a new inventory custody slip'; ?></p>
+        </header>
         <form method="post" action="">
             <?php if ($is_editing): ?>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
                 <input type="hidden" name="is_editing" value="1">
             <?php endif; ?>
-            
             <div class="section-card">
-                <h3>ICS Details</h3>
+                <h3><i class="fas fa-info-circle"></i> ICS Details</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Entity Name:</label>
+                        <label>Entity Name: <span class="required">*</span></label>
                         <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ics_data['entity_name'] ?? 'TESDA Regional Office'); ?>" required>
                     </div>
                     <div class="form-group">
@@ -459,69 +464,64 @@ function generateICSNumberSimple($conn) {
                     </div>
                 </div>
             </div>
-
             <div class="section-card">
-            <h3>ICS Items</h3>
-            <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-                <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
-                <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
-                    <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
-                    <?php foreach ($category_options as $cat): ?>
-                        <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($selected_category===$cat)?'selected':''; ?>><?php echo htmlspecialchars($cat); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div id="clamp-notice" style="display:none; margin:0 0 10px; padding:8px 10px; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:4px;"></div>
-            
-            <!-- Search Container -->
-            <div class="search-container">
-                <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()">
-            </div>
-            
-            <div class="table-frame">
-                <div class="table-viewport">
-                    <table id="itemsTable" tabindex="-1">
-                    <thead>
-                        <tr>
-                            <th>Item No.</th>
-                            <th>Description</th>
-                            <th>Unit</th>
-                            <th>Quantity on Hand</th>
-                            <th>Unit Cost</th>
-                            <th>Total Cost</th>
-                            <th>Issued Qty</th>
-                            <th>Estimated Useful Life</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        // Read from semi_expendable_property, filter by category if selected
-                        if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
-                            $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? ORDER BY date DESC, id DESC");
-                            $stmt->bind_param("s", $selected_category);
-                            $stmt->execute();
-                            $result = $stmt->get_result();
-                            $stmt->close();
-                        } else {
-                            $result = $conn->query("SELECT * FROM semi_expendable_property ORDER BY date DESC, id DESC");
-                        }
-                        if ($result && $result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                $stock_number = $row['semi_expendable_property_no'];
-                                $existing_item = $ics_items[$stock_number] ?? null;
-                                $qtyOnHand = (int)$row['quantity_balance'];
-                                $unitCost = (float)($row['amount'] ?? 0);
-                                $remarks = $row['remarks'] ?? '';
-                                $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
-                                // Per request: do not use remarks in display; prefer existing description or item_description
-                                $displayDesc = $existingDesc !== '' ? $existingDesc : $row['item_description'];
+                <h3><i class="fas fa-box"></i> ICS Items</h3>
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                    <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
+                    <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
+                        <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
+                        <?php foreach ($category_options as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($selected_category===$cat)?'selected':''; ?>><?php echo htmlspecialchars($cat); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="search-container" style="margin-left:16px;">
+                        <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()" style="width:320px; max-width:100%;">
+                    </div>
+                </div>
+                <div id="clamp-notice" style="display:none; margin:0 0 10px; padding:8px 10px; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:4px;"></div>
+                <div class="table-frame">
+                    <div class="table-viewport">
+                        <table id="itemsTable" tabindex="-1">
+                            <thead>
+                                <tr>
+                                    <th>Item No.</th>
+                                    <th>Description</th>
+                                    <th>Unit</th>
+                                    <th>Quantity on Hand</th>
+                                    <th>Unit Cost</th>
+                                    <th>Total Cost</th>
+                                    <th>Issued Qty</th>
+                                    <th>Estimated Useful Life</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                // Read from semi_expendable_property, filter by category if selected
+                                if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
+                                    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? ORDER BY date DESC, id DESC");
+                                    $stmt->bind_param("s", $selected_category);
+                                    $stmt->execute();
+                                    $result = $stmt->get_result();
+                                    $stmt->close();
+                                } else {
+                                    $result = $conn->query("SELECT * FROM semi_expendable_property ORDER BY date DESC, id DESC");
+                                }
+                                if ($result && $result->num_rows > 0) {
+                                    while ($row = $result->fetch_assoc()) {
+                                        $stock_number = $row['semi_expendable_property_no'];
+                                        $existing_item = $ics_items[$stock_number] ?? null;
+                                        $qtyOnHand = (int)$row['quantity_balance'];
+                                        $unitCost = (float)($row['amount'] ?? 0);
+                                        $remarks = $row['remarks'] ?? '';
+                                        $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
+                                        // Per request: do not use remarks in display; prefer existing description or item_description
+                                        $displayDesc = $existingDesc !== '' ? $existingDesc : $row['item_description'];
 
-                                $catVal = isset($row['category']) ? $row['category'] : '';
-                                $unitDisp = isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-';
-                                echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '" data-unit-cost="' . htmlspecialchars(number_format($unitCost,2,'.','')) . '">';
-                                // First column is Item No. (stock number) and hidden input for submission
-                                echo '<td>'  . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
+                                        $catVal = isset($row['category']) ? $row['category'] : '';
+                                        $unitDisp = isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-';
+                                        echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '" data-unit-cost="' . htmlspecialchars(number_format($unitCost,2,'.','')) . '">';
+                                        // First column is Item No. (stock number) and hidden input for submission
+                                        echo '<td>'  . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
                                 echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
                                 echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
                                 echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
@@ -568,11 +568,13 @@ function generateICSNumberSimple($conn) {
             </div>
 
             <button type="submit" class="pill-btn pill-add"><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
-            <a href="<?php echo $is_editing ? 'ics.php?ics_id=' . $ics_id : 'ics.php'; ?>" style="margin-left: 10px;">
+            <a href="<?php echo $is_editing ? 'ics.php?ics_id=' . $ics_id : 'ics.php'; ?>">
                 <button type="button" class="pill-btn pill-view">Cancel</button>
             </a>
         </form>
+
     </div>
+</div>
 
     <script>
         // Show a temporary notice when we clamp an input value

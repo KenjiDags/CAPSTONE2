@@ -128,6 +128,9 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         .form-group { 
             margin-bottom: 20px; 
         }
+        .form-group input[type="checkbox"] {
+            width: auto !important;
+        }
         label { 
             display: block; 
             margin-bottom: 8px; 

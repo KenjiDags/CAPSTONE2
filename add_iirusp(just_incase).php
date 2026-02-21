@@ -252,44 +252,115 @@ ensure_iirusp_tables($conn);
                     </thead>
                     <tbody>
                     <?php
-                        // Pull items directly from semi_expendable_property for disposal
-                        $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
+                        // --- NEW LOGIC: Calculate Balances per Officer (Like RegSPI) ---
+                        $sql = "
+                            SELECT 
+                                h.date, 
+                                p.semi_expendable_property_no, 
+                                p.item_description, 
+                                p.amount,
+                                p.unit,
+                                h.quantity_issued, h.office_officer_issued,
+                                h.quantity_returned, h.office_officer_returned,
+                                h.quantity_reissued, h.office_officer_reissued,
+                                h.quantity_disposed
+                            FROM semi_expendable_history h
+                            JOIN semi_expendable_property p ON h.semi_id = p.id
+                            WHERE (h.quantity_issued > 0 OR h.quantity_reissued > 0 OR h.quantity_returned > 0 OR h.quantity_disposed > 0)
+                            ORDER BY p.item_description
+                        ";
+                        
                         $res = $conn->query($sql);
-                        if ($res && $res->num_rows > 0) {
+                        $accountability_map = [];
+
+                        if ($res) {
                             while ($row = $res->fetch_assoc()) {
-                                $search = strtolower($row['semi_expendable_property_no'] . " " . $row['item_description']);
-?>
-    <tr class="item-row" data-search="<?= $search ?>">
-        <td><?= htmlspecialchars($row['date']) ?></td>
-        <td class="prop-cell"><?= htmlspecialchars($row['semi_expendable_property_no']) ?></td>
-        <td class="desc-cell"><?= htmlspecialchars($row['item_description']) ?></td>
-        <td class="holder-cell" style="font-weight:bold; color:#0056b3;">Inventory</td>
-        <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
-            <?= (int)$row['quantity'] ?>
-        </td>
-        <td class="cost-cell" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
-        <td>
-            <input type="number" class="disposal-qty" min="0" max="<?= (int)$row['quantity_balance'] ?>" placeholder="0">
-        </td>
-        <td>
-            <input type="text" class="remarks-input" placeholder="e.g. Broken">
-        </td>
-        <td>
-            <select class="mode-select">
-                <option value="Destruction">Destruction</option>
-                <option value="Sale">Sale</option>
-                <option value="Transfer">Transfer</option>
-            </select>
-        </td>
-        <td class="unit-cell" style="display:none;">
-            <?= htmlspecialchars($row['unit']) ?>
-        </td>
-    </tr>
-<?php
+                                $p_no = $row['semi_expendable_property_no'];
+                                
+                                // Logic to find WHO moved the item
+                                $officer = '';
+                                $change = 0;
+
+                                if ($row['quantity_issued'] > 0) {
+                                    $officer = $row['office_officer_issued']; 
+                                    $change = (int)$row['quantity_issued'];
+                                } 
+                                elseif ($row['quantity_reissued'] > 0) {
+                                    // REISSUED means a Transfer TO someone (Like Gasmon)
+                                    $officer = $row['office_officer_reissued'];
+                                    $change = (int)$row['quantity_reissued'];
+                                }
+                                elseif ($row['quantity_returned'] > 0) {
+                                    // RETURN means deducting from someone (Like Darylle)
+                                    $officer = $row['office_officer_returned'] ?: $row['office_officer_issued'];
+                                    $change = -1 * (int)$row['quantity_returned'];
+                                }
+                                elseif ($row['quantity_disposed'] > 0) {
+                                    // DISPOSED means removing liability
+                                    $officer = $row['office_officer_issued'];
+                                    $change = -1 * (int)$row['quantity_disposed'];
+                                }
+
+                                // Standardize Key: "PropertyNo + Name"
+                                if (!$officer) $officer = "Unassigned"; 
+                                $key = $p_no . '||' . strtolower(trim($officer));
+
+                                // Initialize
+                                if (!isset($accountability_map[$key])) {
+                                    $accountability_map[$key] = [
+                                        'prop' => $p_no,
+                                        'desc' => $row['item_description'],
+                                        'holder' => $officer,
+                                        'balance' => 0,
+                                        'cost' => $row['amount'],
+                                        'date' => $row['date'],
+                                        'unit' => $row['unit']
+                                    ];
+                                }
+
+                                // Apply Math
+                                $accountability_map[$key]['balance'] += $change;
                             }
-                        } else {
-                            echo '<tr><td colspan="10">No items available for disposal.</td></tr>';
                         }
+
+                        // --- RENDER ROWS ONLY FOR THOSE WHO HAVE ITEMS ---
+                        foreach ($accountability_map as $item) {
+                            if ($item['balance'] > 0) { // Only show if they actually hold items
+                                $search = strtolower($item['prop'] . " " . $item['desc'] . " " . $item['holder']);
+                    ?>
+                        <tr class="item-row" data-search="<?= $search ?>">
+                            <td><?= $item['date'] ?></td>
+                            <td class="prop-cell"><?= htmlspecialchars($item['prop']) ?></td>
+                            <td class="desc-cell"><?= htmlspecialchars($item['desc']) ?></td>
+                            <td class="holder-cell" style="font-weight:bold; color:#0056b3;"><?= htmlspecialchars($item['holder']) ?></td>
+                            
+                            <!-- This now shows SPECIFIC QUANTITY for that Person -->
+                            <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
+                                <?= $item['balance'] ?>
+                            </td>
+                            
+                            <td class="cost-cell" data-val="<?= $item['cost'] ?>">₱<?= number_format($item['cost'], 2) ?></td>
+                            
+                            <td>
+                                <!-- Max allows disposal only up to what they own -->
+                                <input type="number" class="disposal-qty" min="0" max="<?= $item['balance'] ?>" placeholder="0">
+                            </td>
+                            <td>
+                                <input type="text" class="remarks-input" placeholder="e.g. Broken">
+                            </td>
+                            <td>
+                                <select class="mode-select">
+                                    <option value="Destruction">Destruction</option>
+                                    <option value="Sale">Sale</option>
+                                    <option value="Transfer">Transfer</option>
+                                </select>
+                            </td>
+
+                            <td class="unit-cell" style="display:none;"><?= $item['unit'] ?></td>
+                        </tr>
+                    <?php 
+                            } 
+                        } 
                     ?>
                     </tbody>
                 </table>

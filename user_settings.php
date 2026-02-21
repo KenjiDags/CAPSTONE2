@@ -269,7 +269,6 @@ if ($officers_result && $officers_result->num_rows > 0) {
             padding: 12px 16px;
             border-radius: 6px;
             border: 1px solid #e2e8f0;
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -306,6 +305,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
             font-size: 14px;
             transition: all 0.3s ease;
             background-color: #fff;
+            margin-bottom: 10px;
         }
         
         .form-row input:hover {
@@ -450,69 +450,38 @@ if ($officers_result && $officers_result->num_rows > 0) {
             
             <!-- Full Name Section -->
             <section class="settings-section">
-                <h2>
-                    <i class="fas fa-id-card"></i>
-                    Full Name
-                </h2>
-                
-                <div class="current-value">
-                    <strong>Current Full Name:</strong>
-                    <span><?= htmlspecialchars($current_full_name) ?></span>
-                </div>
-                
-                <form method="POST">
+                <form method="POST" id="inlineNameForm" autocomplete="off">
+                    <i class="fas fa-id-card"></i> Full Name:
                     <div class="form-row">
-                        <label for="new_full_name">New Full Name</label>
                         <input 
                             type="text" 
-                            id="new_full_name" 
+                            id="inline_full_name" 
                             name="new_full_name" 
                             value="<?= htmlspecialchars($current_full_name) ?>"
-                            required
-                            autocomplete="name"
+                            onfocus="this.select()"
+                            onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+                            required 
                         >
-                        <p class="help-text">Enter your complete legal name</p>
                     </div>
-                    
-                    <button type="submit" name="update_full_name" class="btn-update">
-                        <i class="fas fa-save"></i>
-                        Update Full Name
-                    </button>
+                    <input type="hidden" name="update_full_name" value="1">
                 </form>
-            </section>
-            
-            <!-- Username Section -->
-            <section class="settings-section">
-                <h2>
-                    <i class="fas fa-user"></i>
-                    Username
-                </h2>
-                
-                <div class="current-value">
-                    <strong>Current Username:</strong>
-                    <span><?= htmlspecialchars($current_username) ?></span>
-                </div>
-                
+
                 <form method="POST">
                     <div class="form-row">
-                        <label for="new_username">New Username</label>
+                        <i class="fas fa-user"></i> Username:
                         <input 
                             type="text" 
-                            id="new_username" 
+                            id="inline_username" 
                             name="new_username" 
                             value="<?= htmlspecialchars($current_username) ?>"
-                            required
-                            autocomplete="username"
+                            onfocus="this.select()"
+                            onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+                            required 
                         >
-                        <p class="help-text">Choose a unique username for your account</p>
-                    </div>
-                    
-                    <button type="submit" name="update_username" class="btn-update">
-                        <i class="fas fa-save"></i>
-                        Update Username
-                    </button>
-                </form>
+                    </div>            
+
             </section>
+            
             
             <!-- Password Section -->
             <section class="settings-section">

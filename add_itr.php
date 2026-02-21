@@ -77,107 +77,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 </head>
 <body>
   <?php include 'sidebar.php'; ?>
-  <div class="container">
-    <h2 >Add Inventory Transfer Report (ITR)</h2>
-
-    <!-- Instructions (Annex A.5) - collapsible helper to match the reference image
-    <div class="section-card" style="background:#f9fbff; border-color:#dbeafe;">
-      <details>
-        <summary style="cursor:pointer; font-weight:600; color:#0038a8;">Instructions (Annex A.5)</summary>
-        <div style="margin-top:10px; color:#374151; font-size:0.95rem; line-height:1.5;">
-          <p style="margin:6px 0;">A. Use this form for inventory transfers such as donation, reassignment, relocation, etc.</p>
-          <p style="margin:6px 0;">B. Accomplish as follows:</p>
-          <ol style="padding-left:20px; margin:6px 0;">
-            <li>Entity Name – name of the agency/entity</li>
-            <li>Fund Cluster – based on UACS</li>
-            <li>From Accountable Officer/Agency/Fund Cluster – where the inventory is located</li>
-            <li>To Accountable Officer/Agency/Fund Cluster – where the inventory is transferred</li>
-            <li>ITR No. – Serial-Month-Year (e.g., 0001-<?= date('m') ?>-<?= date('Y') ?>)</li>
-            <li>Date – date of preparation of the ITR</li>
-            <li>Transfer Type – check one</li>
-            <li>Date Acquired, Item No., ICS No./Date, Description, Amount, Condition of Inventory</li>
-            <li>Reason/s for Transfer</li>
-            <li>Approved by, Released/Issued by, Received by – with names/designations and dates</li>
-          </ol>
-        </div>
-      </details>
-    </div> -->
-
-    <!-- Header: Entity, Fund, From/To, ITR No/Date, Transfer Type -->
-    <div class="section-card">
-      <h3>ITR Details</h3>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Entity Name:</label>
-          <input type="text" id="entity_name" value="TESDA Regional Office" />
-        </div>
-        <div class="form-group">
-          <label>Fund Cluster:</label>
-          <input type="text" id="fund_cluster" value="" />
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>From Accountable Officer/Agency/Fund Cluster:</label>
-          <input type="text" id="from_accountable" placeholder="From..." />
-        </div>
-        <div class="form-group">
-          <label>To Accountable Officer/Agency/Fund Cluster:</label>
-          <input type="text" id="to_accountable" placeholder="To..." />
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-      
-          <div class="form-group">
-            <label>ITR No.:</label>
-            <input type="text" id="itr_no" required>
-            <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+  <div class="add-ics-page content">
+    <div class="form-container">
+      <header class="page-header">
+        <h1><i class="fas fa-file-invoice"></i> Add Inventory Transfer Report (ITR)</h1>
+        <p>Create a new inventory transfer report</p>
+      </header>
+      <form method="post" action="">
+        <div class="section-card">
+          <h3><i class="fas fa-info-circle"></i> ITR Details</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Entity Name:</label>
+              <input type="text" id="entity_name" value="TESDA Regional Office" />
+            </div>
+            <div class="form-group">
+              <label>Fund Cluster:</label>
+              <input type="text" id="fund_cluster" value="" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>From Accountable Officer/Agency/Fund Cluster:</label>
+              <input type="text" id="from_accountable" placeholder="From..." />
+            </div>
+            <div class="form-group">
+              <label>To Accountable Officer/Agency/Fund Cluster:</label>
+              <input type="text" id="to_accountable" placeholder="To..." />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>ITR No.:</label>
+              <input type="text" id="itr_no" required>
+              <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+            </div>
+            <div class="form-group">
+              <label>Date:</label>
+              <input type="date" id="itr_date" value="<?= date('Y-m-d'); ?>" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Transfer Type (check only one):</label>
+              <div style="display:flex; gap:16px; flex-wrap:wrap; padding-top:6px;">
+                <label><input type="radio" name="transfer_type" value="Donation"> Donation</label>
+                <label><input type="radio" name="transfer_type" value="Reassignment"> Reassignment</label>
+                <label><input type="radio" name="transfer_type" value="Relocate"> Relocate</label>
+                <label><input type="radio" name="transfer_type" value="Others"> Others</label>
+                <input type="text" id="transfer_other" placeholder="Specify (if Others)" style="min-width:220px;" />
+              </div>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label>Date:</label>
-          <input type="date" id="itr_date" value="<?= date('Y-m-d'); ?>" />
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Transfer Type (check only one):</label>
-          <div style="display:flex; gap:16px; flex-wrap:wrap; padding-top:6px;">
-            <label><input type="radio" name="transfer_type" value="Donation"> Donation</label>
-            <label><input type="radio" name="transfer_type" value="Reassignment"> Reassignment</label>
-            <label><input type="radio" name="transfer_type" value="Relocate"> Relocate</label>
-            <label><input type="radio" name="transfer_type" value="Others"> Others</label>
-            <input type="text" id="transfer_other" placeholder="Specify (if Others)" style="min-width:220px;" />
+        <div class="section-card">
+          <h3><i class="fas fa-box"></i> Items (from ICS)</h3>
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+            <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
+            <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
+              <option value="All">All</option>
+              <!-- Dynamically populate categories if needed -->
+            </select>
+            <div class="search-container" style="margin-left:16px;">
+              <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()" style="width:320px; max-width:100%;">
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Items from ICS -->
-    <div class="section-card">
-      <h3>Items (from ICS)</h3>
-      <div class="search-container" style="margin-bottom:10px;">
-        <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()">
-      </div>
-      <div class="table-frame">
-        <div class="table-viewport">
-          <table id="itemsTable">
-            <thead>
-              <tr>
-                <th>Date Acquired</th>
-                <th>Item No.</th>
-                <th>ICS No./Date</th>
-                <th>Description</th>
-                <th>Unit Cost</th>
-                <th>Qty on Hand</th>
-                <th>Transfer Qty</th>
-                <th>Balance</th>
-                <th>Amount</th>
-                <th>Condition of Inventory</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div class="table-frame">
+            <div class="table-viewport">
+              <table id="itemsTable">
+                <thead>
+                  <tr>
+                    <th>Date Acquired</th>
+                    <th>Item No.</th>
+                    <th>ICS No./Date</th>
+                    <th>Description</th>
+                    <th>Unit Cost</th>
+                    <th>Qty on Hand</th>
+                    <th>Transfer Qty</th>
+                    <th>Balance</th>
+                    <th>Amount</th>
+                    <th>Condition of Inventory</th>
+                  </tr>
+                </thead>
+                <tbody>
               <?php
               // Pull items from ICS + ICS Items
               $sql = "SELECT ii.*, i.ics_no, i.date_issued

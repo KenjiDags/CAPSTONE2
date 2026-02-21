@@ -252,6 +252,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $is_editing ? 'Edit RIS Form' : 'Add RIS Form'; ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-specific: smaller max-width for RIS forms */
@@ -494,16 +495,13 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                     </div>
                 </div>
 
-                <div class="actions">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="pill-btn pill-add">
                         <i class="fas fa-save"></i>
                         <?php echo $is_editing ? 'Update RIS' : 'Submit RIS'; ?>
                     </button>
-                    <a href="<?php echo $is_editing ? 'view_ris.php?ris_id=' . $ris_id : 'ris.php'; ?>" class="btn btn-secondary">
-                        <i class="fas fa-times"></i>
-                        Cancel
-                    </a>
-                </div>
+                <a href="ics.php">
+                    <button type="button" class="pill-btn pill-view"> <i class="fas fa-times"></i> Cancel </button>
+                </a>
             </form>
         </div>
     </div>
