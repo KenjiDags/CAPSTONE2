@@ -448,11 +448,17 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </div>
             <?php endif; ?>
             
-            <!-- Full Name Section -->
+            <!-- User Info -->
+           <section class="settings-section">
+                <h2>
+                    <i class="fas fa-user-circle"></i>
+                    User Information
+                </h2>
+
             <section class="settings-section">
                 <form method="POST" id="inlineNameForm" autocomplete="off">
-                    <i class="fas fa-id-card"></i> Full Name:
                     <div class="form-row">
+                    <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
                         <input 
                             type="text" 
                             id="inline_full_name" 
@@ -468,7 +474,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
 
                 <form method="POST">
                     <div class="form-row">
-                        <i class="fas fa-user"></i> Username:
+                        <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
                         <input 
                             type="text" 
                             id="inline_username" 

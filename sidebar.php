@@ -78,9 +78,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         </div>
                     </div>
 
-                    <a href="analytics.php" class="no-italic <?= $currentPage == 'analytics.php' ? 'active' : '' ?>">
+                    <button class="dropdown-toggle no-arrow<?= $currentPage == 'analytics.php' ? ' active' : '' ?>" onclick="location.href='analytics.php'">
                         📊 Analytics
-                    </a>
+                    </button>
 
                     <a href="add_iirusp(just_incase).php" class="no-italic <?= $currentPage == 'add_iirusp(just_incase).php' ? 'active' : '' ?>">
                         add iirusp (old)
