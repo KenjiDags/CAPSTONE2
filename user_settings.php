@@ -2,20 +2,42 @@
 require 'auth.php';
 require 'config.php';
 
+
 $user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 
-// Fetch current full name from database
-$stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ? LIMIT 1");
+// Fetch current full name and user_position from database
+$stmt = $conn->prepare("SELECT full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $current_full_name = '';
+$current_user_position = '';
 if ($result && $result->num_rows > 0) {
     $user_data = $result->fetch_assoc();
     $current_full_name = $user_data['full_name'] ?? '';
+    $current_user_position = $user_data['user_position'] ?? '';
 }
 $stmt->close();
+// Handle user_position update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user_position'])) {
+    $new_user_position = trim($_POST['new_user_position'] ?? '');
+    if (empty($new_user_position)) {
+        $_SESSION['error_message'] = 'User position cannot be empty.';
+    } else {
+        // Update user_position
+        $update = $conn->prepare("UPDATE users SET user_position = ? WHERE user_id = ?");
+        $update->bind_param("si", $new_user_position, $user_id);
+        if ($update->execute()) {
+            $_SESSION['success_message'] = 'User position updated successfully!';
+        } else {
+            $_SESSION['error_message'] = 'Failed to update user position. Please try again.';
+        }
+        $update->close();
+    }
+    header('Location: user_settings.php');
+    exit;
+}
 
 // Get messages from session
 $success_message = $_SESSION['success_message'] ?? '';
@@ -410,7 +432,6 @@ if ($officers_result && $officers_result->num_rows > 0) {
             margin-top: 6px;
         }
         
-        /* Officers table hover effect */
         .officers-table tbody tr:hover {
             background-color: #f9fafb;
         }
@@ -449,44 +470,57 @@ if ($officers_result && $officers_result->num_rows > 0) {
             <?php endif; ?>
             
             <!-- User Info -->
-           <section class="settings-section">
+            <section class="settings-section">
                 <h2>
                     <i class="fas fa-user-circle"></i>
                     User Information
                 </h2>
+                    <form method="POST" id="inlineNameForm" autocomplete="off">
+                        <div class="form-row">
+                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
+                            <input 
+                                type="text" 
+                                id="inline_full_name" 
+                                name="new_full_name" 
+                                value="<?= htmlspecialchars($current_full_name) ?>"
+                                onfocus="this.select()"
+                                onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+                                required 
+                            >
+                        </div>
+                        <input type="hidden" name="update_full_name" value="1">
+                    </form>
 
-            <section class="settings-section">
-                <form method="POST" id="inlineNameForm" autocomplete="off">
-                    <div class="form-row">
-                    <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
-                        <input 
-                            type="text" 
-                            id="inline_full_name" 
-                            name="new_full_name" 
-                            value="<?= htmlspecialchars($current_full_name) ?>"
-                            onfocus="this.select()"
-                            onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
-                            required 
-                        >
-                    </div>
-                    <input type="hidden" name="update_full_name" value="1">
-                </form>
+                    <form method="POST" id="inlineUserPositionForm" autocomplete="off">
+                        <div class="form-row">
+                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position:</label>
+                            <input 
+                                type="text" 
+                                id="inline_user_position" 
+                                name="new_user_position" 
+                                value="<?= htmlspecialchars($current_user_position) ?>"
+                                onfocus="this.select()"
+                                onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+                                required 
+                            >
+                        </div>
+                        <input type="hidden" name="update_user_position" value="1">
+                    </form>
 
-                <form method="POST">
-                    <div class="form-row">
-                        <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
-                        <input 
-                            type="text" 
-                            id="inline_username" 
-                            name="new_username" 
-                            value="<?= htmlspecialchars($current_username) ?>"
-                            onfocus="this.select()"
-                            onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
-                            required 
-                        >
-                    </div>            
-
-            </section>
+                    <form method="POST">
+                        <div class="form-row">
+                            <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
+                            <input 
+                                type="text" 
+                                id="inline_username" 
+                                name="new_username" 
+                                value="<?= htmlspecialchars($current_username) ?>"
+                                onfocus="this.select()"
+                                onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+                                required 
+                            >
+                        </div>
+                </section>
             
             
             <!-- Password Section -->

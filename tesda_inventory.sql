@@ -1093,6 +1093,8 @@ ADD remember_token VARCHAR(255) NULL;
 ALTER TABLE users
 ADD full_name VARCHAR(255) NULL;
 
+ALTER TABLE users
+ADD user_position VARCHAR(255) NULL;
 -- --------------------------------------------------------
 
 --
