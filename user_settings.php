@@ -848,7 +848,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
 
         // Cancel officer name edit when clicking outside
         document.addEventListener('mousedown', function(event) {
-            // Support multiple edit forms (should only be one, but future-proof)
+            // Support multiple edit forms 
             const editForms = document.querySelectorAll('form[id^="editOfficerFieldsForm"]');
             if (editForms.length > 0) {
                 let insideAny = false;

@@ -88,23 +88,10 @@ require_once 'config.php';
 	<div class="container">
 		<h2>Property Card (PPE)</h2>
 
-		<form id="ppe-filters" method="get" class="filters">
+		<form id="ppe-filters" method="get" class="filters" style="justify-content: center;">
 			<?php
-				$category = isset($_GET['category']) ? $_GET['category'] : '';
 				$search = isset($_GET['search']) ? $_GET['search'] : '';
-				$valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communication Equipment', 'Furniture and Fixtures'];
 			?>
-			<div class="control">
-				<label for="category-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-					<i class="fas fa-filter"></i> Category:
-				</label>
-				<select id="category-select" name="category" onchange="this.form.submit()">
-					<option value="">All</option>
-					<?php foreach ($valid_categories as $cat): ?>
-						<option value="<?= htmlspecialchars($cat) ?>" <?= $cat === $category ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
 			<div class="control">
 				<label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
 					<i class="fas fa-search"></i> Search:
@@ -114,7 +101,7 @@ require_once 'config.php';
 							placeholder="Search description or property no..." />
 			</div>
 
-			<a href="PPE_PTR_export.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>"
+			<a href="PPE_PC_export_all.php?export_all=1"
 				class="pill-btn pill-export" style="margin-left:5px;">
 					<i class="fas fa-file-export"></i> Export All
 			</a>
@@ -127,7 +114,7 @@ require_once 'config.php';
 						<th>Description</th>
 						<th>Property Number</th>
 						<th>Date</th>
-						<th>Reference/ICS No.</th>
+						<th>Reference/PAR No.</th>
 						<th>Receipt Qty.</th>
 						<th>Issue Qty.</th>
 						<th>Balance Qty.</th>
@@ -140,11 +127,15 @@ require_once 'config.php';
 						$params = [];
 						$types = '';
 						$where = [];
-						if ($category !== '') { $where[] = 'category = ?'; $params[] = $category; $types .= 's'; }
-						if ($search !== '') { $where[] = '(item_description LIKE ? OR ppe_property_no LIKE ? OR ics_rrsp_no LIKE ?)'; $like = "%$search%"; $params[] = $like; $params[] = $like; $params[] = $like; $types .= 'sss'; }
-						$sql = "SELECT id, date, ics_rrsp_no, ppe_property_no, item_description, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount_total, category, fund_cluster, remarks FROM ppe_property";
+						if ($search !== '') {
+							$where[] = '(item_name LIKE ? OR description LIKE ? OR PAR_number LIKE ? OR officer_incharge LIKE ?)';
+							$like = "%$search%";
+							$params = array_fill(0, 4, $like);
+							$types = str_repeat('s', 4);
+						}
+						$sql = "SELECT * FROM item_history_ppe";
 						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-						$sql .= ' ORDER BY date DESC, id DESC';
+						$sql .= ' ORDER BY changed_at DESC, id DESC';
 
 						if (!empty($params)) {
 							$stmt = $conn->prepare($sql);
@@ -161,14 +152,14 @@ require_once 'config.php';
 
 						if ($result && $result->num_rows > 0) {
 							while ($row = $result->fetch_assoc()) {
-								$description = $row['item_description'] ?? '';
-								$propertyNo = $row['ppe_property_no'] ?? '';
-								$txDate = $row['date'] ?? '';
-								$referenceNo = $row['ics_rrsp_no'] ?? '';
-								$receiptQty = (int)($row['quantity'] ?? 0);
-								$issueQty = (int)($row['quantity_issued'] ?? 0);
-								$balanceQty = (int)($row['quantity_balance'] ?? 0);
-								$amount = (float)($row['amount_total'] ?? 0);
+								$description = $row['description'] ?? '';
+								$propertyNo = $row['property_no'] ?? '';
+								$txDate = $row['changed_at'] ?? '';
+								$referenceNo = $row['PAR_number'] ?? $row['refference_no'] ?? '';
+								$receiptQty = (int)($row['receipt_qty'] ?? 0);
+								$issueQty = (int)($row['issue_qty'] ?? 0);
+								$balanceQty = (int)($row['balance_qty'] ?? 0);
+								$amount = (float)($row['unit_cost'] ?? 0) * (int)($row['quantity_on_hand'] ?? 0);
 								echo '<tr>';
 								echo '<td class="description-col">' . htmlspecialchars($description) . '</td>';
 								echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
@@ -180,20 +171,18 @@ require_once 'config.php';
 								echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
 								$returnUrl = 'PPE_PC.php';
 								$qs = [];
-								if ($category !== '') { $qs['category'] = $category; }
 								if ($search !== '') { $qs['search'] = $search; }
 								if (!empty($qs)) { $returnUrl .= '?' . http_build_query($qs); }
 								echo '<td class="text-center actions-col">';
 								echo '<div class="action-stack">';
-								echo '<a href="view_ppe.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
-								echo '<a href="PPE_PTR_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
+								echo '<a href="PPE_PC_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
 								echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
 								echo '</div>';
 								echo '</td>';
 								echo '</tr>';
 							}
 						} else {
-							echo '<tr><td colspan="9" class="text-center">No PPE entries found.</td></tr>';
+							echo '<tr><td colspan="9" class="text-center">No PPE history entries found.</td></tr>';
 						}
 					?>
 				</tbody>

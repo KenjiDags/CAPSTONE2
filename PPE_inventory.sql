@@ -147,3 +147,25 @@ CREATE TABLE IF NOT EXISTS rpcppe_items (
     FOREIGN KEY (rpcppe_id) REFERENCES rpcppe(rpcppe_id) ON DELETE CASCADE,
     FOREIGN KEY (ppe_id) REFERENCES ppe_property(id) ON DELETE CASCADE
 );
+
+/* Table for PPE history log (to track changes in PPE items) */
+CREATE TABLE IF NOT EXISTS item_history_ppe (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    property_no INT NOT NULL,
+    PAR_number VARCHAR(100) NULL,
+    refference_no VARCHAR(100) NULL,
+    item_name VARCHAR(255) NULL,
+    description TEXT NULL,
+    unit VARCHAR(50) NULL,
+    unit_cost DECIMAL(15,2) NULL,
+    quantity_on_hand INT NULL,
+    quantity_change INT NULL,
+    receipt_qty INT NULL,
+    issue_qty INT NULL,
+    balance_qty INT NULL,
+    officer_incharge VARCHAR(255) NULL,
+    change_direction VARCHAR(20) NULL,
+    change_type VARCHAR(50) NULL,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_property_no (property_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

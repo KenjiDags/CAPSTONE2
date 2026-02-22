@@ -31,6 +31,7 @@ if (!empty($search)) {
 
 $sql .= " ORDER BY id DESC"; // no date_acquired, using id as newest first
 
+require_once 'functions.php';
 try {
     $stmt = $conn->prepare($sql);
     if (!$stmt) throw new Exception("Prepare failed: " . $conn->error);
@@ -42,6 +43,52 @@ try {
     $result = $stmt->get_result();
     $items = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+
+    // If redirected from add_ppe.php with ?added=1, log initial add to history for the last inserted item
+    if (isset($_GET['added']) && $_GET['added'] == 1 && !empty($items)) {
+        $latest = $items[0];
+        // Check if already logged to avoid duplicate
+        $check = $conn->prepare("SELECT COUNT(*) as cnt FROM item_history_ppe WHERE property_no = ? AND change_type = 'add'");
+        $check->bind_param("i", $latest['id']);
+        $check->execute();
+        $res = $check->get_result()->fetch_assoc();
+        $check->close();
+        if ($res['cnt'] == 0) {
+            // Insert to item_history_ppe using correct fields
+            $insert = $conn->prepare("
+                INSERT INTO item_history_ppe 
+                (property_no, PAR_number, refference_no, item_name, description, unit, 
+                unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, 
+                balance_qty, officer_incharge, change_direction, change_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $change_direction = 'increase';
+            $change_type = 'add';
+            $receipt_qty = $latest['quantity'];
+            $balance_qty = $latest['quantity'];
+            $quantity_change = $latest['quantity'];
+            $refference_no = null; // no reference on initial add
+
+            $insert->bind_param(
+                "isssssdi iiisss",
+                $latest['id'],           // property_no
+                $latest['par_no'],       // PAR_number
+                $refference_no,          // refference_no
+                $latest['item_name'],    // item_name
+                $latest['item_description'], // description
+                $latest['unit'],         // unit
+                $latest['amount'],       // unit_cost
+                $latest['quantity'],     // quantity_on_hand
+                $quantity_change,        // quantity_change
+                $receipt_qty,            // receipt_qty
+                $issue_qty,              // issue_qty
+                $balance_qty,            // balance_qty
+                $latest['custodian'],    // officer_incharge
+                $change_direction,       // change_direction
+                $change_type             // change_type
+            );
+        }
+    }
 } catch (Exception $e) {
     $items = [];
     $error = "Database error: " . $e->getMessage();

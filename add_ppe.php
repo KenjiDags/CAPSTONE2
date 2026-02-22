@@ -44,6 +44,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         if ($stmt_insert->execute()) {
             $success = "PPE item added successfully!";
+            // Log history for initial addition to item_history_ppe
+            $new_id = $conn->insert_id;
+            $change_direction = 'increase';
+            $change_type = 'add';
+            $receipt_qty = $quantity;
+            $balance_qty = $quantity;
+            $quantity_change = $quantity;
+            $issue_qty = 0;
+            $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, PAR_number, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $insert->bind_param(
+                "issssdiiiiisss",
+                $new_id,
+                $par_no,
+                $item_name,
+                $item_description,
+                $unit,
+                $amount,
+                $quantity,
+                $quantity_change,
+                $receipt_qty,
+                $issue_qty,
+                $balance_qty,
+                $custodian,
+                $change_direction,
+                $change_type
+            );
+            $insert->execute();
+            $insert->close();
             $stmt_insert->close();
         } else {
             $error = "Failed to add item: " . $stmt_insert->error;
