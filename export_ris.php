@@ -186,10 +186,9 @@ $item_result = $conn->query($item_query);
         }
         
         .signatures .signature-name {
+            padding-top: 10px;
             border-bottom: 1px solid #000;
-            margin-bottom: 5px;
-            padding-bottom: 2px;
-            min-height: 20px;
+            margin-bottom: 0px;
         }
         
         .signatures .signature-label {

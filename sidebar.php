@@ -37,7 +37,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <button class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>">
                             🗂️ Office Supplies
                         </button>
-                        <div class="dropdown-menu">
+                        <div class="dropdown-menu animated">
                             <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>">📋 Supply List</a>
                             <a href="ris.php" class="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'active' : '' ?>">📑 RIS</a>
                             <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>">📑 RSMI</a>
@@ -51,7 +51,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <button class="dropdown-toggle <?= $expendablesDropdownActive ? 'active' : '' ?>">
                             🗂️ Semi Expendables
                         </button>
-                        <div class="dropdown-menu">
+                        <div class="dropdown-menu animated">
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>">📋 Inventory List</a>
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>">📄 SPC</a>
                             <a href="ics.php" class="<?= in_array($currentPage, ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php']) ? 'active' : '' ?>">📦 ICS</a>

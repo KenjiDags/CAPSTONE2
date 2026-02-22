@@ -147,6 +147,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_password'])) {
 }
 
 // Handle add officer
+// Handle edit officer (inline update for name and position)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_officer_fields'])) {
+    $officer_id = (int)$_POST['officer_id'];
+    $new_name = trim($_POST['new_officer_name'] ?? '');
+    $new_position = trim($_POST['new_officer_position'] ?? '');
+    if (empty($new_name) || empty($new_position)) {
+        $_SESSION['error_message'] = 'Officer name and position cannot be empty.';
+    } else {
+        $update = $conn->prepare("UPDATE officers SET officer_name = ?, officer_position = ? WHERE officer_id = ?");
+        $update->bind_param("ssi", $new_name, $new_position, $officer_id);
+        if ($update->execute()) {
+            $_SESSION['success_message'] = 'Officer updated successfully!';
+        } else {
+            $_SESSION['error_message'] = 'Failed to update officer.';
+        }
+        $update->close();
+    }
+    header('Location: user_settings.php');
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_officer'])) {
     $officer_name = trim($_POST['officer_name'] ?? '');
     $officer_position = trim($_POST['officer_position'] ?? '');
@@ -169,6 +189,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_officer'])) {
 }
 
 // Handle delete officer
+// Handle edit officer (inline update)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_officer_name'])) {
+    $officer_id = (int)$_POST['officer_id'];
+    $new_name = trim($_POST['new_officer_name'] ?? '');
+    if (empty($new_name)) {
+        $_SESSION['error_message'] = 'Officer name cannot be empty.';
+    } else {
+        $update = $conn->prepare("UPDATE officers SET officer_name = ? WHERE officer_id = ?");
+        $update->bind_param("si", $new_name, $officer_id);
+        if ($update->execute()) {
+            $_SESSION['success_message'] = 'Officer name updated successfully!';
+        } else {
+            $_SESSION['error_message'] = 'Failed to update officer name.';
+        }
+        $update->close();
+    }
+    header('Location: user_settings.php');
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_officer'])) {
     $officer_id = (int)$_POST['officer_id'];
     
@@ -650,22 +689,65 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 <tbody>
                                     <?php foreach ($officers as $index => $officer): ?>
                                         <tr class="<?= $index >= 4 ? 'officer-row-hidden' : '' ?>" style="border-bottom: 1px solid #e5e7eb; transition: background-color 0.2s ease; <?= $index >= 4 ? 'display: none;' : '' ?>">
-                                            <td style="padding: 12px; font-size: 14px;"><?= htmlspecialchars($officer['officer_name']) ?></td>
-                                            <td style="padding: 12px; font-size: 14px;"><?= htmlspecialchars($officer['officer_position']) ?></td>
-                                            <td style="padding: 12px; text-align: center;">
-                                                <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this officer?');">
-                                                    <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                    <button 
-                                                        type="submit" 
-                                                        name="delete_officer" 
-                                                        style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
-                                                        onmouseover="this.style.background='linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'"
-                                                        onmouseout="this.style.background='linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'"
-                                                    >
-                                                        <i class="fas fa-trash"></i> Delete
-                                                    </button>
+                                            <?php if (isset($_POST['edit_officer']) && $_POST['officer_id'] == $officer['officer_id']): ?>
+                                                <form method="POST" id="editOfficerFieldsForm<?= $officer['officer_id'] ?>" style="display:contents;">
+                                                    <td style="padding: 12px; font-size: 14px; width: 190px;">
+                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
+                                                        <input type="text" name="new_officer_name" value="<?= htmlspecialchars($officer['officer_name']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" autofocus onkeydown="if(event.key==='Enter'){this.form.submit();return false;}" required>
+                                                    </td>
+                                                    <td style="padding: 10px; font-size: 14px; width: 140px;">
+                                                        <input type="text" name="new_officer_position" value="<?= htmlspecialchars($officer['officer_position']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" onkeydown="if(event.key==='Enter'){this.form.submit();return false;}" required>
+                                                        <input type="hidden" name="edit_officer_fields" value="1">
+                                                    </td>
+                                                    <td style="padding: 10px; text-align: center;" width="150px">
+                                                        <form method="POST" style="display: inline; margin-left: 6px;">
+                                                            <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
+                                                            <button 
+                                                                type="submit" 
+                                                                name="edit_officer" 
+                                                                style="background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
+                                                                onmouseover="this.style.background='linear-gradient(135deg, #f59e42 0%, #d97706 100%)'"
+                                                                onmouseout="this.style.background='linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)'"
+                                                            >
+                                                                <i class="fas fa-edit"></i> Edit
+                                                            </button>
+                                                        </form>
+                                                    </td>
                                                 </form>
-                                            </td>
+                                            <?php else: ?>
+                                                <td style="padding: 12px; font-size: 14px; width: 190px;">
+                                                    <?= htmlspecialchars($officer['officer_name']) ?>
+                                                </td>
+                                                <td style="padding: 10px; font-size: 14px; width: 140px;">
+                                                    <?= htmlspecialchars($officer['officer_position']) ?>
+                                                </td>
+                                                <td style="padding: 10px; text-align: center;" width="150px">
+                                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this officer?');">
+                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
+                                                        <button 
+                                                            type="submit" 
+                                                            name="delete_officer" 
+                                                            style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
+                                                            onmouseover="this.style.background='linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'"
+                                                            onmouseout="this.style.background='linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'"
+                                                        >
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                    <form method="POST" style="display: inline; margin-left: 6px;">
+                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
+                                                        <button 
+                                                            type="submit" 
+                                                            name="edit_officer" 
+                                                            style="background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
+                                                            onmouseover="this.style.background='linear-gradient(135deg, #f59e42 0%, #d97706 100%)'"
+                                                            onmouseout="this.style.background='linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)'"
+                                                        >
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -748,12 +830,42 @@ if ($officers_result && $officers_result->num_rows > 0) {
             });
         });
 
+        // Also save scroll position for inline officer edit form (which is dynamically created)
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.id && e.target.id.startsWith('editOfficerFieldsForm')) {
+                sessionStorage.setItem('scrollPosition', window.scrollY);
+            }
+        });
+
         // Restore scroll position after page load
         window.addEventListener('load', function() {
             const scrollPos = sessionStorage.getItem('scrollPosition');
             if (scrollPos) {
                 window.scrollTo(0, parseInt(scrollPos));
                 sessionStorage.removeItem('scrollPosition');
+            }
+        });
+
+        // Cancel officer name edit when clicking outside
+        document.addEventListener('mousedown', function(event) {
+            // Support multiple edit forms (should only be one, but future-proof)
+            const editForms = document.querySelectorAll('form[id^="editOfficerFieldsForm"]');
+            if (editForms.length > 0) {
+                let insideAny = false;
+                editForms.forEach(function(form) {
+                    if (form.contains(event.target)) {
+                        insideAny = true;
+                    }
+                });
+                if (!insideAny) {
+                    // Save scroll position before canceling
+                    sessionStorage.setItem('scrollPosition', window.scrollY);
+                    // Submit a hidden cancel form to reload the page without saving
+                    const cancelForm = document.createElement('form');
+                    cancelForm.method = 'GET';
+                    document.body.appendChild(cancelForm);
+                    cancelForm.submit();
+                }
             }
         });
     </script>

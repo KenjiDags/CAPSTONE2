@@ -82,7 +82,7 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
         }
 
         .form-fields {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .field-row {
@@ -150,7 +150,6 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
         .signatures {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
         }
 
         .signatures td {
@@ -237,11 +236,12 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
                 <span class="field-input long"><?= $fund_cluster ?></span>
             </div>
             
-            <div class="accountability-text" style="margin-top: 15px;">
-                For which <span style="text-decoration: underline;"><?= $accountable_officer ?></span>, 
-                <em></em> <span style="text-decoration: underline;"><?= $official_designation ?></span>, 
-                <span style="text-decoration: underline;"><?= $entity_name ?></span> is accountable, having assumed such accountability on 
-                <span style="text-decoration: underline;"><?= $assumption_date ?></span>.
+            <div class="accountability-text" style="margin-top: 15px; margin-bottom: 0;">
+                For which 
+                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $accountable_officer ?></span>,
+                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $official_designation ?></span>,
+                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having assumed such accountability on 
+                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 120px; text-align: center;"><?= $assumption_date ?></span>.
             </div>
         </div>
 

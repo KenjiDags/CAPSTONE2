@@ -347,102 +347,74 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         <!-- Appendix 64 Label -->
         <div class="appendix-label">Appendix 64</div>
         
-        <!-- Header Section -->
-        <div class="form-title">
-            REPORT ON THE STOCK OF MATERIALS AND SUPPLIES ISSUED (RSMI)
-        </div>
-        
-        <div class="header-section">
-            <div class="header-left">
-                <div class="header-field">
-                    <strong>Entity Name:</strong>
-                    <div class="header-value"><?= htmlspecialchars($entity_info['entity_name'] ?? '') ?></div>
-                </div>
-                <div class="header-field">
-                    <strong>Fund Cluster:</strong>
-                    <div class="header-value"><?= htmlspecialchars($entity_info['fund_cluster'] ?? '') ?></div>
-                </div>
-                <div class="header-field">
-                    <strong>Division:</strong>
-                    <div class="header-value"><?= htmlspecialchars($entity_info['division'] ?? '') ?></div>
-                </div>
-                <div class="header-field">
-                    <strong>Office:</strong>
-                    <div class="header-value"><?= htmlspecialchars($entity_info['office'] ?? '') ?></div>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="header-field">
-                    <strong>Serial No.:</strong>
-                    <div class="header-value">RSMI-<?= date('Y') ?>-001</div>
-                </div>
-                <div class="header-field">
-                    <strong>Date:</strong>
-                    <div class="header-value"><?= date('F d, Y') ?></div>
-                </div>
-                <div class="header-field">
-                    <strong>Responsibility Code:</strong>
-                    <div class="header-value"><?= htmlspecialchars($entity_info['responsibility_center_code'] ?? '') ?></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Instructions -->
-        <div class="instructions">
-            To be filled up by the Supply and/or Property Division/Unit
-        </div>
-        <div class="instructions">
-            To be filled up by the Accounting Division/Unit
-        </div>
-
-        <!-- Main Table -->
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th style="width: 8%;">RIS No.</th>
-                    <th style="width: 15%;">Responsibility Center</th>
-                    <th style="width: 10%;">Stock No.</th>
-                    <th style="width: 25%;">Item</th>
-                    <th style="width: 8%;">Unit</th>
-                    <th style="width: 10%;">Quantity Issued</th>
-                    <th style="width: 12%;">Unit Cost</th>
-                    <th style="width: 12%;">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $row_count = 0;
-                if ($rsmi_result && $rsmi_result->num_rows > 0) {
-                    while ($row = $rsmi_result->fetch_assoc()) {
-                        echo '<tr>';
-                        echo '<td>' . htmlspecialchars($row['ris_no']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['responsibility_center_code']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['stock_number']) . '</td>';
-                        echo '<td class="text-left">' . htmlspecialchars($row['item_name']) . '-' . htmlspecialchars($row['description']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['unit']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['issued_quantity']) . '</td>';
-                        echo '<td class="text-right">₱ ' . number_format($row['unit_cost'], 2) . '</td>';
-                        echo '<td class="text-right">₱ ' . number_format($row['amount'], 2) . '</td>';
-                        echo '</tr>';
-                        $row_count++;
-                    }
-                }
-                
-                // Fill remaining rows with empty cells (up to 25 rows total)
-                for ($i = $row_count; $i < 25; $i++) {
+        <!-- Combined Header and Main Table -->
+        <table class="main-table" style="width: 100%;">
+            <tr>
+                <td colspan="8" style="text-align: center; font-weight: bold; font-size: 14px; background-color: #f8f9fa; padding: 8px; border-bottom: 1px solid black; height: 60px;">
+                    REPORT ON THE STOCK OF MATERIALS AND SUPPLIES ISSUED (RSMI)
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: left;">
+                    <strong>Entity Name:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['entity_name'] ?? '') ?> </span><br>
+                    <strong>Fund Cluster:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['fund_cluster'] ?? '') ?> </span><br>
+                    <strong>Division:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['division'] ?? '') ?> </span><br>
+                    <strong>Office:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['office'] ?? '') ?> </span>
+                </td>
+                <td colspan="4" style="text-align: left;">
+                    <strong>Serial No.:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> RSMI-<?= date('Y') ?>-001 </span><br>
+                    <strong>Date:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= date('F d, Y') ?> </span><br>
+                    <strong>Responsibility Code:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['responsibility_center_code'] ?? '') ?> </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8" class="instructions">To be filled up by the Supply and/or Property Division/Unit</td>
+            </tr>
+            <tr>
+                <td colspan="8" class="instructions">To be filled up by the Accounting Division/Unit</td>
+            </tr>
+            <tr>
+                <th style="width: 8%;">RIS No.</th>
+                <th style="width: 15%;">Responsibility Center</th>
+                <th style="width: 10%;">Stock No.</th>
+                <th style="width: 25%;">Item</th>
+                <th style="width: 8%;">Unit</th>
+                <th style="width: 10%;">Quantity Issued</th>
+                <th style="width: 12%;">Unit Cost</th>
+                <th style="width: 12%;">Amount</th>
+            </tr>
+            <?php 
+            $row_count = 0;
+            if ($rsmi_result && $rsmi_result->num_rows > 0) {
+                while ($row = $rsmi_result->fetch_assoc()) {
                     echo '<tr>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
+                    echo '<td>' . htmlspecialchars($row['ris_no']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['responsibility_center_code']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['stock_number']) . '</td>';
+                    echo '<td class="text-left">' . htmlspecialchars($row['item_name']) . '-' . htmlspecialchars($row['description']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['unit']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['issued_quantity']) . '</td>';
+                    echo '<td class="text-right">₱ ' . number_format($row['unit_cost'], 2) . '</td>';
+                    echo '<td class="text-right">₱ ' . number_format($row['amount'], 2) . '</td>';
                     echo '</tr>';
+                    $row_count++;
                 }
-                ?>
-            </tbody>
+            }
+            // Fill remaining rows with empty cells (up to 25 rows total)
+            for ($i = $row_count; $i < 25; $i++) {
+                echo '<tr>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '</tr>';
+            }
+            ?>
         </table>
 
         <!-- Recapitulation Section -->
