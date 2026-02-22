@@ -133,6 +133,7 @@ require 'functions.php';
     .currency { 
         text-align:right; 
     }
+
 </style>
 </head>
 
@@ -208,7 +209,21 @@ foreach ($ppe_items as $ppe) {
         <tr class="header-row">
             <td colspan="6" class="header-label">
                 Description:
-                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_description'] ?? '') ?></span>
+                <span style="font-weight: lighter;">
+                <?php
+                    $desc_item_name = $ppe['item_name'] ?? '';
+                    $desc_item_desc = $ppe['item_description'] ?? '';
+                    $desc = $desc_item_name;
+                    if ($desc_item_desc) {
+                        if ($desc) {
+                            $desc .= ', ' . $desc_item_desc;
+                        } else {
+                            $desc = $desc_item_desc;
+                        }
+                    }
+                    echo htmlspecialchars($desc);
+                ?>
+                </span>
             </td>
             <td colspan="3" class="header-label" style="border-top: none !important;"></td>
         </tr>

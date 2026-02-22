@@ -45,9 +45,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
             
             // Insert PTR items
             $item_stmt = $conn->prepare("INSERT INTO ppe_ptr_items (ptr_id, ppe_id) VALUES (?, ?)");
+
             foreach ($item_ids as $ppe_id) {
                 $item_stmt->bind_param("ii", $ptr_id, $ppe_id);
                 $item_stmt->execute();
+
+                // Fetch PPE item details
+                $ppe_q = $conn->prepare("SELECT * FROM ppe_property WHERE id = ? LIMIT 1");
+                $ppe_q->bind_param("i", $ppe_id);
+                $ppe_q->execute();
+                $ppe_res = $ppe_q->get_result();
+                if ($ppe_row = $ppe_res->fetch_assoc()) {
+                    $property_no = $ppe_row['id'];
+                    $par_no = $ppe_row['par_no'] ?? '';
+                    $item_name = $ppe_row['item_name'] ?? '';
+                    $item_description = $ppe_row['item_description'] ?? '';
+                    $unit = $ppe_row['unit'] ?? '';
+                    $unit_cost = $ppe_row['amount'] ?? 0;
+                    $quantity_on_hand = $ppe_row['quantity'] ?? 0;
+                    $officer_incharge = $to_officer;
+                    $change_direction = 'transfer';
+                    $change_type = $transfer_type;
+                    $quantity_change = 0;
+                    $receipt_qty = 0;
+                    $issue_qty = 0;
+                    $balance_qty = $quantity_on_hand;
+
+                    $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, PAR_number, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $insert->bind_param(
+                        "issssdiiiiisss",
+                        $property_no,
+                        $par_no,
+                        $item_name,
+                        $item_description,
+                        $unit,
+                        $unit_cost,
+                        $quantity_on_hand,
+                        $quantity_change,
+                        $receipt_qty,
+                        $issue_qty,
+                        $balance_qty,
+                        $officer_incharge,
+                        $change_direction,
+                        $change_type
+                    );
+                    $insert->execute();
+                    $insert->close();
+                }
+                $ppe_q->close();
             }
             $item_stmt->close();
             
@@ -410,7 +455,7 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
-                    <input type="text" id="from_officer" name="from_officer" required>
+                    <input type="text" id="from_officer" name="from_officer" required readonly style="background:#f3f4f6;cursor:not-allowed;">
                 </div>
                 <div class="form-group">
                     <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
@@ -506,7 +551,7 @@ include 'sidebar.php';
                 <div class="items-selection">
                     <?php while ($item = $ppe_items->fetch_assoc()): ?>
                         <div class="item-checkbox">
-                            <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>">
+                            <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" data-officer="<?= htmlspecialchars($item['officer_incharge']) ?>">
                             <label for="item_<?= $item['id'] ?>" class="item-info">
                                 <strong><?= htmlspecialchars($item['par_no']) ?></strong> - 
                                 <?= htmlspecialchars($item['item_name']) ?> - 
@@ -538,7 +583,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const radioButtons = document.querySelectorAll('input[name="transfer_type"]');
     const othersContainer = document.getElementById('others_input_container');
     const othersInput = document.getElementById('others_input');
-    
+    const fromOfficerInput = document.getElementById('from_officer');
+    const itemCheckboxes = document.querySelectorAll('input[name="item_ids[]"]');
+
+    // Set from_officer to officer_incharge of first checked item
+    function updateFromOfficer() {
+        let found = false;
+        itemCheckboxes.forEach(cb => {
+            if (cb.checked && !found) {
+                fromOfficerInput.value = cb.getAttribute('data-officer') || '';
+                found = true;
+            }
+        });
+        if (!found) fromOfficerInput.value = '';
+    }
+
+    itemCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateFromOfficer);
+    });
+
+    // On page load, set if any are checked
+    updateFromOfficer();
+
     radioButtons.forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'Others' && this.checked) {

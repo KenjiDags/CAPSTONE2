@@ -135,7 +135,14 @@ require_once 'config.php';
 						}
 						$sql = "SELECT * FROM item_history_ppe";
 						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-						$sql .= ' ORDER BY changed_at DESC, id DESC';
+						// Only show latest entry per property_no
+						$sql = "SELECT h.* FROM item_history_ppe h INNER JOIN (
+							SELECT property_no, MAX(changed_at) AS max_changed_at
+							FROM item_history_ppe
+							GROUP BY property_no
+						) latest ON h.property_no = latest.property_no AND h.changed_at = latest.max_changed_at";
+						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
+						$sql .= ' ORDER BY h.changed_at DESC, h.id DESC';
 
 						if (!empty($params)) {
 							$stmt = $conn->prepare($sql);
@@ -152,7 +159,8 @@ require_once 'config.php';
 
 						if ($result && $result->num_rows > 0) {
 							while ($row = $result->fetch_assoc()) {
-								$description = $row['description'] ?? '';
+								$itemName = $row['item_name'] ?? '';
+								$itemDescription = $row['description'] ?? '';
 								$propertyNo = $row['property_no'] ?? '';
 								$txDate = $row['changed_at'] ?? '';
 								$referenceNo = $row['PAR_number'] ?? $row['refference_no'] ?? '';
@@ -161,7 +169,11 @@ require_once 'config.php';
 								$balanceQty = (int)($row['balance_qty'] ?? 0);
 								$amount = (float)($row['unit_cost'] ?? 0) * (int)($row['quantity_on_hand'] ?? 0);
 								echo '<tr>';
-								echo '<td class="description-col">' . htmlspecialchars($description) . '</td>';
+								echo '<td class="description-col">' . htmlspecialchars($itemName);
+								if ($itemDescription) {
+									echo ', ' . htmlspecialchars($itemDescription);
+								}
+								echo '</td>';
 								echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
 								echo '<td>' . htmlspecialchars($txDate) . '</td>';
 								echo '<td>' . htmlspecialchars($referenceNo) . '</td>';
