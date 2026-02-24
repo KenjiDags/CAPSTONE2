@@ -95,7 +95,7 @@ switch ($sort_by) {
         
         .sort-container label {
             font-weight: 600;
-            color: #334155;
+            color: #001F80;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -129,12 +129,8 @@ switch ($sort_by) {
 <div class="container">
     <h2>Requisition and Issue Slip (RIS)</h2>
     
-    <div class="search-add-container">
-        <button class="btn btn-success" onclick="window.location.href='add_ris.php'">
-            <i class="fas fa-plus"></i> Add RIS Form
-        </button>
-        
-        <div class="sort-container">
+    <div class="search-add-container" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div class="sort-container" style="order: 1;">
             <label for="sort-select">
                 <i class="fas fa-sort"></i> Sort by:
             </label>
@@ -144,6 +140,9 @@ switch ($sort_by) {
                 <option value="ris_no" <?= ($sort_by == 'ris_no') ? 'selected' : '' ?>>RIS No. (A-Z)</option>
             </select>
         </div>
+        <button class="btn btn-success" style="order: 2; margin-left: auto;" onclick="window.location.href='add_ris.php'">
+            <i class="fas fa-plus"></i> Add RIS Form
+        </button>
     </div>
     
     <div class="table-container">

@@ -9,7 +9,7 @@ $success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $par_no = $_POST['par_no'];
+    // $par_no removed
     $item_name = $_POST['item_name'];
     $item_description = $_POST['item_description'];
     $amount = floatval($_POST['amount']);
@@ -18,66 +18,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $officer_incharge = $_POST['officer_incharge'];
     $custodian = $_POST['custodian'];
     $entity_name = $_POST['entity_name'];
-    $ptr_no = $_POST['ptr_no'];
+    // $ptr_no removed
     $status = $_POST['status'];
     $condition = $_POST['condition'];
     $fund_cluster = $_POST['fund_cluster'] ?? '101';
     $remarks = $_POST['remarks'];
 
-    // Check duplicate PAR No.
-    $stmt_check = $conn->prepare("SELECT id FROM ppe_property WHERE par_no = ? LIMIT 1");
-    $stmt_check->bind_param('s', $par_no);
-    $stmt_check->execute();
-    $res_check = $stmt_check->get_result();
-    if ($res_check && $res_check->num_rows > 0) {
-        $error = "A PPE item with this PAR No. already exists.";
-    } else {
-        $stmt_insert = $conn->prepare("
-            INSERT INTO ppe_property 
-            (par_no, item_name, item_description, amount, quantity, unit, officer_incharge, custodian, entity_name, ptr_no, status, `condition`, fund_cluster, remarks) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt_insert->bind_param(
-            "sssdisssssssss",
-            $par_no, $item_name, $item_description, $amount, $quantity, $unit,
-            $officer_incharge, $custodian, $entity_name, $ptr_no, $status, $condition, $fund_cluster, $remarks
+    // Insert PPE item without PAR No.
+    $stmt_insert = $conn->prepare("
+        INSERT INTO ppe_property 
+        (item_name, item_description, amount, quantity, unit, officer_incharge, custodian, entity_name, status, `condition`, fund_cluster, remarks) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt_insert->bind_param(
+        "ssdissssssss",
+        $item_name, $item_description, $amount, $quantity, $unit,
+        $officer_incharge, $custodian, $entity_name, $status, $condition, $fund_cluster, $remarks
+    );
+    if ($stmt_insert->execute()) {
+        $success = "PPE item added successfully!";
+        // Log history for initial addition to item_history_ppe
+        $new_id = $conn->insert_id;
+        $change_direction = 'increase';
+        $change_type = 'add';
+        $receipt_qty = $quantity;
+        $balance_qty = $quantity;
+        $quantity_change = $quantity;
+        $issue_qty = 0;
+        $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $insert->bind_param(
+            "isssdiiiiisss",
+            $new_id,
+            $item_name,
+            $item_description,
+            $unit,
+            $amount,
+            $quantity,
+            $quantity_change,
+            $receipt_qty,
+            $issue_qty,
+            $balance_qty,
+            $custodian,
+            $change_direction,
+            $change_type
         );
-        if ($stmt_insert->execute()) {
-            $success = "PPE item added successfully!";
-            // Log history for initial addition to item_history_ppe
-            $new_id = $conn->insert_id;
-            $change_direction = 'increase';
-            $change_type = 'add';
-            $receipt_qty = $quantity;
-            $balance_qty = $quantity;
-            $quantity_change = $quantity;
-            $issue_qty = 0;
-            $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, PAR_number, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $insert->bind_param(
-                "issssdiiiiisss",
-                $new_id,
-                $par_no,
-                $item_name,
-                $item_description,
-                $unit,
-                $amount,
-                $quantity,
-                $quantity_change,
-                $receipt_qty,
-                $issue_qty,
-                $balance_qty,
-                $custodian,
-                $change_direction,
-                $change_type
-            );
-            $insert->execute();
-            $insert->close();
-            $stmt_insert->close();
-        } else {
-            $error = "Failed to add item: " . $stmt_insert->error;
-        }
+        $insert->execute();
+        $insert->close();
+        $stmt_insert->close();
+    } else {
+        $error = "Failed to add item: " . $stmt_insert->error;
     }
-    $stmt_check->close();
 }
 ?>
 
@@ -87,6 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add New PPE Item</title>
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
 <style>
     .form-container {
         max-width: 800px;
@@ -183,10 +175,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST">
             <div class="form-row">
                 <div class="form-group">
-                    <label for="par_no">PAR No <span class="required">*</span></label>
-                    <input type="text" id="par_no" name="par_no" required>
-                </div>
-                <div class="form-group">
                     <label for="item_name">Item Name <span class="required">*</span></label>
                     <input type="text" id="item_name" name="item_name" required>
                 </div>
@@ -232,17 +220,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="ptr_no">PTR No</label>
-                    <input type="text" id="ptr_no" name="ptr_no">
-                </div>
-                <div class="form-group">
-                    <label for="fund_cluster">Fund Cluster</label>
-                    <input type="text" id="fund_cluster" name="fund_cluster" value="101">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
                     <label for="status">Status</label>
                     <select id="status" name="status">
                         <option value="Active">Active</option>
@@ -253,6 +230,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="Disposed">Disposed</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="fund_cluster">Fund Cluster</label>
+                    <input type="text" id="fund_cluster" name="fund_cluster" value="101">
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label for="condition">Condition</label>
                     <select id="condition" name="condition">
@@ -270,8 +254,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div style="margin-top: 20px;">
-                <button type="submit" class="btn btn-primary">Add Item</button>
-                <a href="PPE.php" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="pill-btn pill-add"><i class="fas fa-plus"></i> Add Item</button>
+                <a href="PPE.php">
+                    <button type="button" class="pill-btn pill-view">
+                        <i class="fas fa-ban"></i> Cancel
+                    </button>
+                </a>
             </div>
         </form>
     </div>

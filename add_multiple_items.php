@@ -30,6 +30,7 @@ $items = $conn->query("SELECT i.*,
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restock Items - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link href="css/PPE.css?v=<?= time() ?>" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Table styling specific to restock page */
@@ -176,16 +177,16 @@ $items = $conn->query("SELECT i.*,
                 </table>
             </div>
 
-            <div class="button-group">
-                <button class="save-btn" type="submit">
-                    <i class="fas fa-save"></i>
-                    Save Restock Entries
+                <button class="pill-btn pill-add" type="submit">
+                    <i class="fas fa-plus"></i>
+                    Save Entries
                 </button>
-                <a href="inventory.php" class="cancel-btn">
-                    <i class="fas fa-times"></i>
-                    Cancel
+                <a href="inventory.php">
+                    <button type="button" class="pill-btn pill-view">
+                        <i class="fas fa-ban"></i>
+                        Cancel
+                    </button>
                 </a>
-            </div>
         </form>
     </div>
 </div>

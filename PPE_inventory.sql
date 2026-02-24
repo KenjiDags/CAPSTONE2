@@ -17,7 +17,6 @@ CREATE TABLE ppe_property (
     custodian VARCHAR(255) NOT NULL,
     entity_name VARCHAR(255) NOT NULL,
 
-    ptr_no VARCHAR(50) NULL,
     date_acquired DATE NULL,
 
     `condition` ENUM('Good', 'Fair', 'Poor', 'Unserviceable') DEFAULT 'Good',
@@ -169,3 +168,4 @@ CREATE TABLE IF NOT EXISTS item_history_ppe (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_property_no (property_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

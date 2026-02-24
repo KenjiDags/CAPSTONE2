@@ -52,7 +52,7 @@ table th { background: #f0f0f0; font-weight: bold; }
 <body>
 <div class="no-print" style="margin-bottom:20px;">
     <button onclick="window.print()">Print</button>
-    <button onclick="window.close()">Close</button>
+    <button class="btn-back"><a href="iirusp.php">Close</a></button>
 </div>
 
 <div class="header">

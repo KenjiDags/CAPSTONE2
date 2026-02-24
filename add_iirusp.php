@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $total = $qty * $cost;
             
             // 1. Validate: Get current balance and check disposal qty
-            $check_stmt = $conn->prepare("SELECT id, quantity_balance, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+            $check_stmt = $conn->prepare("SELECT id, quantity, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
             $check_stmt->bind_param("s", $prop_no);
             $check_stmt->execute();
             $result = $check_stmt->get_result();
@@ -77,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $row = $result->fetch_assoc();
             $semi_id = $row['id'];
-            $available_qty = (int)$row['quantity_balance'];
+            $available_qty = (int)$row['quantity'];
+            $unit_val = isset($item['unit']) && $item['unit'] !== '' ? $item['unit'] : ($row['unit'] ?? '');
             $check_stmt->close();
             
             if ($qty > $available_qty) {
@@ -90,8 +91,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $d_destr = (float)$item['disposal_destruction'];
             $d_tot = (float)$qty; // Total disposed (must be float for bind_param 'd')
             
+            $unit_val = isset($item['unit']) ? $item['unit'] : '';
             $item_stmt->bind_param("isssisdddddds", 
-                $iirusp_id, $item['date_acquired'], $item['particulars'], $prop_no, $qty, $item['unit'], 
+                $iirusp_id, $item['date_acquired'], $item['particulars'], $prop_no, $qty, $unit_val, 
                 $cost, $total, $d_sale, $d_trans, $d_destr, $d_tot, $item['remarks']
             );
             
@@ -253,7 +255,7 @@ ensure_iirusp_tables($conn);
                     <tbody>
                     <?php
                         // Pull items directly from semi_expendable_property for disposal
-                        $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
+                        $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
                         $res = $conn->query($sql);
                         if ($res && $res->num_rows > 0) {
                             while ($row = $res->fetch_assoc()) {

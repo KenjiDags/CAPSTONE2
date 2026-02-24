@@ -387,8 +387,7 @@ header('Content-Type: text/html; charset=UTF-8');
 
 <div class="button-section">
     <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
-    <button class="btn-back" onclick="window.history.back()">⬅️ Back</button>
+    <button class="btn-back"><a href="iirusp.php">⬅️ Back</a></button>
 </div>
-
 </body>
 </html>

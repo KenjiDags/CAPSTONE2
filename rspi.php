@@ -65,19 +65,19 @@ require 'auth.php';
             $periodEnd = date('Y-m-t', strtotime($periodStart));
         ?>
         <!-- Filters & Export -->
-        <div class="export-section">
-            <form method="get" class="rspi-filters">
-                <label for="month">Month</label>
-                <input type="month" id="month" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" />
-                <?php if (!empty($_GET['month'])): ?>
-                    <a class="clear-link" href="rspi.php">Clear</a>
-                <?php endif; ?>
+
+            <form method="get" class="filters" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+                    <label for="month" style="color: #001F80; font-weight:600;">Month</label>
+                    <input type="month" id="month" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" />
+                    <?php if (!empty($_GET['month'])): ?>
+                        <a class="clear-link" href="rspi.php">Clear</a>
+                    <?php endif; ?>
+                </div>
+                <button type="submit" formaction="export_rspi.php" formmethod="get" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" class="btn pill-btn pill-export" style="margin-left:auto; border-radius: 8px !important; height: 38px; min-width: 160px; font-size: 1.1rem; display: flex; align-items: center;">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                </button>
             </form>
-            <a href="export_rspi.php?month=<?= urlencode($selectedMonth) ?>" class="btn pill-btn pill-export" target="_blank">
-                <i class="fas fa-file-pdf"></i>
-                Export to PDF
-            </a>
-        </div>
 
         <table>
             <thead>
@@ -145,7 +145,7 @@ require 'auth.php';
             </tbody>
         </table>
 
-        <h2>Recapitulation</h2>
+        <h2 style="margin-top: 30px;">Recapitulation</h2>
         <table>
             <thead>
                 <tr>

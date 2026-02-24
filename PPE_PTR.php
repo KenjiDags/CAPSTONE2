@@ -197,13 +197,6 @@ if ($search !== '') {
         max-width: 65vw; 
     }
     
-    /* Amount Column Styling */
-    table td:nth-child(6) {
-        font-family: 'Courier New', monospace;
-        font-weight: 600;
-        color: #059669;
-    }
-    
     /* Date Column Styling */
     table td:nth-child(2) {
         color: #64748b;
@@ -222,29 +215,31 @@ if ($search !== '') {
 <div class="container">
     <h2>Property Transfer Report (PTR)</h2>
 
-  <form id="ptr-filters" method="get" class="filters">
-      <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
-          <i class="fas fa-sort"></i> Sort by:
-        </label>
-        <select id="sort-select" name="sort" onchange="this.form.submit()">
-          <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
-          <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
-          <option value="ptr_no" <?= ($sort_by == 'ptr_no') ? 'selected' : '' ?>>PTR No. (A-Z)</option>
-          <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
-          <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
-        </select>
-      </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#111827;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search PTR no, officer, or type..." />
-        <a href="add_ptr.php" class="pill-btn pill-add">
-          <i class="fas fa-plus"></i> Add PTR Form
-        </a>
-      </div>
-    </form>
+    <form id="ptr-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+                <div class="control">
+                    <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                        <i class="fas fa-sort"></i> Sort by:
+                    </label>
+                    <select id="sort-select" name="sort" onchange="this.form.submit()">
+                        <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+                        <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+                        <option value="ptr_no" <?= ($sort_by == 'ptr_no') ? 'selected' : '' ?>>PTR No. (A-Z)</option>
+                        <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
+                        <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
+                    </select>
+                </div>
+                <div class="control">
+                    <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#111827;color:#001f80;">
+                        <i class="fas fa-search"></i> Search:
+                    </label>
+                    <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search PTR no, officer, or type..." />
+                </div>
+            </div>
+            <a href="add_ptr.php" class="pill-btn pill-add" style="margin-left:auto; border-radius: 8px !important;">
+                <i class="fas fa-plus"></i> Add PTR Form
+            </a>
+        </form>
     
     <table>
         <thead>
@@ -282,7 +277,7 @@ if ($search !== '') {
                     echo '<td>' . htmlspecialchars($row['from_officer']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['to_officer']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['transfer_type']) . '</td>';
-                    echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                    echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
                         <a href="edit_ptr.php?ptr_id=' . $row["ptr_id"] . '" title="Edit PTR">
                             <i class="fas fa-edit"></i> Edit
@@ -310,10 +305,6 @@ if ($search !== '') {
         </tbody>
     </table>
 </div>
-
-<script>
-// Form auto-submits on sort change via onchange event
-</script>
 
 </body>
 </html>

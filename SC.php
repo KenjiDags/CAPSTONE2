@@ -79,7 +79,7 @@ if ($search !== '') {
             <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by stock number, item, description, or unit..." />
         </div>
         <div class="control" style="display: flex; align-items: center; gap: 10px;">
-            <a href="sc_export_all.php" class="export-btn" title="Export All Items">
+            <a href="sc_export_all.php" class="pill-btn pill-export" title="Export All Items" style=" border-radius: 8px !important;">
                 <i class="fas fa-file-export"></i> Export All
             </a>
         </div>

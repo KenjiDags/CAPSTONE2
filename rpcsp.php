@@ -33,6 +33,19 @@ if ($result) {
             margin-right: 12px;
             color: #3b82f6;
         }
+
+        .table-controls label {
+            font-weight: 600;
+            color: #001F80;
+        }
+
+        .table-controls select {
+            padding: 8px 8px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
     </style>
     <script>
         function openExport() {
@@ -86,19 +99,21 @@ if ($result) {
                             </label>
                     </div>
                 </div>
-                <div class="table-controls" style="margin: 12px 0; display:flex; gap:8px; align-items:center;">
-                    <label for="row_limit">Show:</label>
-                    <select id="row_limit" aria-label="Rows to display">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="25">25</option>
-                        <option value="all">All</option>
-                    </select>
-                </div>
+        </div>
+        
+                <div class="table-controls">
+                        <label for="row_limit">Show:</label>
+                        <select id="row_limit" aria-label="Rows to display">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="all">All</option>
+                        </select>
 
-                    <div class="search-container">
-                                <input type="text" id="searchInput" class="search-input-rpci" placeholder="Search by property no., category, or description...">
-                    </div>
+                        <div class="search-container" style="margin-left: 24px; margin:12px;">
+                                    <input type="text" id="searchInput" class="search-input" placeholder="Search by property no., category, or description...">
+                        </div>`
+                </div>
 
             <div class="rpci-table-wrapper">
                 <table class="rpci-table" id="rpci-table">
@@ -131,7 +146,7 @@ if ($result) {
                                     <td class="text-left"><?= htmlspecialchars($row['item_description'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['semi_expendable_property_no'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['unit'] ?? '') ?></td>
-                                    <td class="currency"><?= htmlspecialchars(isset($row['amount']) ? number_format((float)$row['amount'], 2) : '') ?></td>
+                                    <td class="currency">₱ <?= htmlspecialchars(isset($row['amount']) ? number_format((float)$row['amount'], 2) : '') ?></td>
                                     <td><?= htmlspecialchars((string)($row['quantity_balance'] ?? '')) ?></td>
                                     <td></td>
                                     <td></td>
@@ -143,6 +158,7 @@ if ($result) {
                     </tbody>
                 </table>
             </div>
+        
 
             <div class="signature-section" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; margin-top: 16px;">
                 <div class="signature-box">
@@ -169,7 +185,6 @@ if ($result) {
                 </button>
             </div>
             </form>
-        </div>
     </div>
 
     <script>

@@ -113,28 +113,30 @@ $result = $conn->query("SELECT r.*, (
 <div class="container">
     <h2>Receipt of Returned Semi-Expendable Property (RRSP)</h2>
     
-  <form id="rrsp-filters" method="get" class="filters">
-      <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-sort"></i> Sort by:
-        </label>
-        <select id="sort-select" name="sort" onchange="this.form.submit()">
-          <option value="date_newest" <?= ($sort_by==='date_newest')?'selected':''; ?>>Date (Newest First)</option>
-          <option value="date_oldest" <?= ($sort_by==='date_oldest')?'selected':''; ?>>Date (Oldest First)</option>
-          <option value="rrsp_no" <?= ($sort_by==='rrsp_no')?'selected':''; ?>>RRSP No. (A-Z)</option>
-          <option value="amount_highest" <?= ($sort_by==='amount_highest')?'selected':''; ?>>Total Amount (Highest)</option>
-          <option value="amount_lowest" <?= ($sort_by==='amount_lowest')?'selected':''; ?>>Total Amount (Lowest)</option>
-        </select>
+  <form id="rrsp-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+        <div class="control">
+          <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+            <i class="fas fa-sort"></i> Sort by:
+          </label>
+          <select id="sort-select" name="sort" onchange="this.form.submit()">
+            <option value="date_newest" <?= ($sort_by==='date_newest')?'selected':''; ?>>Date (Newest First)</option>
+            <option value="date_oldest" <?= ($sort_by==='date_oldest')?'selected':''; ?>>Date (Oldest First)</option>
+            <option value="rrsp_no" <?= ($sort_by==='rrsp_no')?'selected':''; ?>>RRSP No. (A-Z)</option>
+            <option value="amount_highest" <?= ($sort_by==='amount_highest')?'selected':''; ?>>Total Amount (Highest)</option>
+            <option value="amount_lowest" <?= ($sort_by==='amount_lowest')?'selected':''; ?>>Total Amount (Lowest)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+            <i class="fas fa-search"></i> Search:
+          </label>
+          <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or RRSP no..." />
+        </div>
       </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or RRSP no..." />
-        <a href="add_rrsp.php" class="pill-btn pill-add">
-          <i class="fas fa-plus"></i> Add RRSP Form
-        </a>
-      </div>
+      <a href="add_rrsp.php" class="pill-btn pill-add" style="border-radius: 8px !important; margin-left:auto;">
+        <i class="fas fa-plus"></i> Add RRSP Form
+      </a>
     </form>
     <table id="rrsp-list">
         <thead>

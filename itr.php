@@ -92,15 +92,17 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
           <option value="amount_lowest" <?= ($sort == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
         </select>
       </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ITR no..." />
-        <a href="add_itr.php" class="pill-btn pill-add">
-          <i class="fas fa-plus"></i> Add ITR Form
-        </a>
-      </div>
+        <div class="control">
+            <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+            <i class="fas fa-search"></i> Search:
+            </label>
+            <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ITR no..." />
+        </div> 
+        <div style="margin-left:auto;">
+            <a href="add_itr.php" class="pill-btn pill-add" style="border-radius: 8px !important;">
+            <i class="fas fa-plus"></i> Add ITR Form
+            </a>
+        </div>
     </form>
 
     <table>
@@ -161,7 +163,7 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
                         echo '<td>' . htmlspecialchars($row['itr_date']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['from_accountable']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
-                    echo '<td>₱' . number_format((float)$row['total_amount'], 2) . '</td>';
+                    echo '<td class="currency">₱' . number_format((float)$row['total_amount'], 2) . '</td>';
                     echo '<td>';
                     // Actions: View, Edit, Export, Delete with pill button classes
                     echo '<a href="view_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-view" title="View ITR"><i class="fas fa-eye"></i> View</a> ';

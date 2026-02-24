@@ -95,29 +95,31 @@ if ($search !== '') {
 <div class="container">
     <h2>Inventory Custodian Slip (ICS)</h2>
 
-  <form id="ics-filters" method="get" class="filters">
-      <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
-          <i class="fas fa-sort"></i> Sort by:
-        </label>
-        <select id="sort-select" name="sort" onchange="this.form.submit()">
-          <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
-          <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
-          <option value="ics_no" <?= ($sort_by == 'ics_no') ? 'selected' : '' ?>>ICS No. (A-Z)</option>
-          <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
-          <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
-        </select>
-      </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#111827;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ICS no..." />
-        <a href="add_ics.php" class="pill-btn pill-add">
-          <i class="fas fa-plus"></i> Add ICS Form
-        </a>
-      </div>
-    </form>
+    <form id="ics-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+                <div class="control">
+                    <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                        <i class="fas fa-sort"></i> Sort by:
+                    </label>
+                    <select id="sort-select" name="sort" onchange="this.form.submit()">
+                        <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+                        <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+                        <option value="ics_no" <?= ($sort_by == 'ics_no') ? 'selected' : '' ?>>ICS No. (A-Z)</option>
+                        <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
+                        <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
+                    </select>
+                </div>
+                <div class="control">
+                    <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#111827;color:#001f80;">
+                        <i class="fas fa-search"></i> Search:
+                    </label>
+                    <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ICS no..." />
+                </div>
+            </div>
+            <a href="add_ics.php" class="pill-btn pill-add" style="margin-left:auto; border-radius: 8px !important;">
+                 <i class="fas fa-plus"></i> Add ICS Form
+            </a>
+        </form>
     
     <table>
         <thead>
@@ -156,7 +158,7 @@ if ($search !== '') {
                     echo '<td>' . date('M d, Y', strtotime($row['date_issued'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
-                    echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                    echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
                         <a href="view_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-view" title="View ICS">
                             <i class="fas fa-eye"></i> View

@@ -175,19 +175,21 @@ try {
 <div class="container">
     <h2>PPE Inventory List</h2>
 
-    <!-- Search and Add -->
-    <div class="search-add-container">
-        <div class="add-btn-section">
-            <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
-        </div>
-        <div class="search-section">
-            <form method="GET" class="search-form">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer" class="search-input">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+    <!-- Search and Add (Semi-Expendable style) -->
+    <div class="search-add-container" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div class="control" style="flex: 1;">
+            <form method="GET" class="search-form" style="display: flex; align-items: center; gap: 10px;">
+                <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                    <i class="fas fa-search"></i> Search:
+                </label>
+                <input type="text" id="searchInput" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer" class="search-input">
                 <?php if (!empty($search)): ?>
                     <a href="PPE.php" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
                 <?php endif; ?>
             </form>
+        </div>
+        <div class="add-btn-section" style="margin-left: auto;">
+            <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
         </div>
     </div>
 

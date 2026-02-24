@@ -229,7 +229,7 @@ foreach ($items as $item) {
             <td>1</td>
             <td><?php echo htmlspecialchars($item['unit'] ?? 'unit'); ?></td>
             <td class="desc"><?php echo htmlspecialchars($item['item_name'] . ' - ' . $item['item_description']); ?></td>
-            <td><?php echo htmlspecialchars($item['par_no']); ?></td>
+            <td><?php echo htmlspecialchars($par['par_no']); ?></td>
             <td><?php echo $par['received_by_date'] ? date('m/d/Y', strtotime($par['received_by_date'])) : ''; ?></td>
             <td><?php echo number_format($item['amount'], 2); ?></td>
         </tr>

@@ -346,29 +346,28 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         </div>
 
         <!-- Search and Add Container -->
-        <div class="search-add-container">
-        <div class="add-btn-section">
-            <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-add">
-                <i class="fas fa-plus"></i> Add New Item
-            </a>
+        <div class="search-add-container" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div class="control" style="flex: 1;">
+                <form method="GET" class="search-form" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                        <i class="fas fa-search"></i> Search:
+                    </label>
+                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
+                           placeholder="Search by description, property number, or officer..." 
+                           class="search-input">
+                    <?php if (!empty($search)): ?>
+                        <a href="?category=<?php echo urlencode($category); ?>" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+            <div class="add-btn-section" style="margin-left: auto;">
+                <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-add">
+                    <i class="fas fa-plus"></i> Add New Item
+                </a>
+            </div>
         </div>
-        <div class="search-section">
-            <form method="GET" class="search-form">
-                <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
-                       placeholder="Search by description, property number, or officer..." 
-                       class="search-input">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Search
-                </button>
-                <?php if (!empty($search)): ?>
-                    <a href="?category=<?php echo urlencode($category); ?>" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Clear
-                    </a>
-                <?php endif; ?>
-            </form>
-        </div>
-    </div>
 
     <!-- Statistics Cards -->
     <div class="stats-cards">
@@ -462,7 +461,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                 ?>
                                 <td title="<?php echo htmlspecialchars($list_label); ?>"><?php echo htmlspecialchars($list_officer); ?></td>
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
-                                <td>₱<?php echo number_format($item['amount_total'], 2); ?></td>
+                                <td class="currency">₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td class="actions-cell">
                                     <div class="action-stack">
                                         <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="pill-btn pill-edit" title="Edit" aria-label="Edit">

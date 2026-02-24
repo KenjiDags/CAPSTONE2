@@ -8,7 +8,31 @@ $success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
-    $ptr_no = trim($_POST['ptr_no']);
+    // Auto-generate PTR No if not editing
+    $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
+    if (!$is_editing) {
+        $current_yy = date('y');
+        $current_mm = date('m');
+        // Find latest increment for this month/year
+        $stmt = $conn->prepare("SELECT ptr_no FROM ppe_ptr WHERE ptr_no LIKE ? ORDER BY ptr_no DESC LIMIT 1");
+        $prefix = $current_yy . '-' . $current_mm . '-%';
+        $stmt->bind_param('s', $prefix);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $next_num = 1;
+        if ($res && $row = $res->fetch_assoc()) {
+            // Extract last number
+            $last_ptr_no = $row['ptr_no'];
+            $parts = explode('-', $last_ptr_no);
+            if (count($parts) === 3 && is_numeric($parts[2])) {
+                $next_num = intval($parts[2]) + 1;
+            }
+        }
+        $stmt->close();
+        $ptr_no = sprintf('%s-%s-%02d', $current_yy, $current_mm, $next_num);
+    } else {
+        $ptr_no = trim($_POST['ptr_no']);
+    }
     $entity_name = trim($_POST['entity_name']);
     $fund_cluster = trim($_POST['fund_cluster']);
     $from_officer = trim($_POST['from_officer']);
@@ -33,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     $received_by_date = $_POST['received_by_date'];
     $item_ids = isset($_POST['item_ids']) ? $_POST['item_ids'] : [];
 
-    if (empty($ptr_no) || empty($from_officer) || empty($to_officer) || empty($transfer_date) || empty($item_ids)) {
+    if (empty($from_officer) || empty($to_officer) || empty($transfer_date) || empty($item_ids)) {
         $error = "Please fill in all required fields and select at least one item.";
     } else {
         // Insert PTR header
@@ -433,7 +457,7 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="ptr_no">PTR No <span class="required">*</span></label>
-                    <input type="text" id="ptr_no" name="ptr_no" required>
+                    <input type="text" id="ptr_no" name="ptr_no" value="<?php echo isset($ptr_no) ? htmlspecialchars($ptr_no) : ''; ?>" readonly>
                 </div>
                 <div class="form-group">
                     <label for="transfer_date">Transfer Date <span class="required">*</span></label>

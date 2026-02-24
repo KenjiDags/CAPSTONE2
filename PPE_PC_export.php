@@ -240,16 +240,29 @@ require 'functions.php';
             $balance_qty = (int)($r['balance_qty'] ?? 0);
             $amount = ((float)($r['unit_cost'] ?? 0)) * ((int)($r['quantity_on_hand'] ?? 0));
 
+            // Lookup PAR No for this movement (if any)
+            $par_no_ref = '';
+            if (!empty($r['property_no'])) {
+                $qpar = $conn->prepare("SELECT ppe_par.par_no FROM ppe_par_items INNER JOIN ppe_par ON ppe_par_items.par_id = ppe_par.par_id WHERE ppe_par_items.ppe_id = ? LIMIT 1");
+                $qpar->bind_param("i", $r['property_no']);
+                $qpar->execute();
+                $respar = $qpar->get_result();
+                if ($prow = $respar->fetch_assoc()) {
+                    $par_no_ref = $prow['par_no'];
+                }
+                $qpar->close();
+            }
+
             echo '<tr>';
             echo '<td>' . htmlspecialchars(date('Y-m-d', strtotime($r['changed_at']))) . '</td>';
-            echo '<td>' . htmlspecialchars($r['PAR_number'] ?? $r['refference_no'] ?? '') . '</td>';
+            echo '<td>' . htmlspecialchars($par_no_ref ?: ($r['PAR_number'] ?? $r['refference_no'] ?? '')) . '</td>';
             echo '<td class="text-center">' . ($receipt_qty ?: '') . '</td>';
             echo '<td class="text-center"></td>'; // second Receipt Qty column (if needed)
             echo '<td>' . htmlspecialchars($r['officer_incharge'] ?? '') . '</td>';
             echo '<td class="text-center">' . ($issue_qty ?: '') . '</td>';
-                    echo '<td class="text-center" style="width:70px;">' . ($balance_qty ?: '') . '</td>';
-                    echo '<td class="currency" style="width:90px;">' . ($amount ? number_format($amount, 2) : '') . '</td>';
-                    echo '<td style="width:90px;">' . htmlspecialchars($r['remarks'] ?? '') . '</td>';
+            echo '<td class="text-center" style="width:70px;">' . ($balance_qty ?: '') . '</td>';
+            echo '<td class="currency" style="width:90px;">' . ($amount ? number_format($amount, 2) : '') . '</td>';
+            echo '<td style="width:90px;">' . htmlspecialchars($r['remarks'] ?? '') . '</td>';
             echo '</tr>';
 
             $row_count++;

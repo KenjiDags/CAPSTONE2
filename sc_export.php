@@ -162,7 +162,11 @@ $ris = ['entity_name' => 'TESDA'];
       margin-right: 6px;
       text-decoration: none;
     }
-    .print-button:hover { filter: brightness(0.95); }
+
+    .print-button:hover { 
+      filter: brightness(0.95); 
+    }
+
     .back-link {
       background: #6c757d;
       color: white;
@@ -171,6 +175,7 @@ $ris = ['entity_name' => 'TESDA'];
       font-size: 12px;
       text-decoration: none;
     }
+    
     .instruction-box {
       background: #fffacd;
       border: 1px solid #ddd;

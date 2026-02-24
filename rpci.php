@@ -17,6 +17,21 @@ if ($result) {
     error_log("Database error: " . $conn->error);
     $inventory_items = [];
 }
+
+// Fetch logged-in user's full_name for Accountable Officer
+$current_user_full_name = '';
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ? LIMIT 1");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $current_user_full_name = $user_data['full_name'] ?? '';
+    }
+    $stmt->close();
+}
 ?>
 
 <!DOCTYPE html>
@@ -112,7 +127,6 @@ if ($result) {
         }
         
         .table-controls {
-            margin: 12px 0;
             display: flex;
             gap: 8px;
             align-items: center;
@@ -124,7 +138,7 @@ if ($result) {
         }
         
         .table-controls select {
-            padding: 8px 12px;
+            padding: 8px 8px;
             border: 2px solid #cbd5e1;
             border-radius: 8px;
             background: white;
@@ -133,14 +147,6 @@ if ($result) {
         
         .search-container {
             margin: 12px 0;
-        }
-        
-        .search-input-rpci {
-            width: 100%;
-            padding: 10px 16px;
-            font-size: 14px;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
         }
         
         .search-input-rpci:focus {
@@ -153,7 +159,6 @@ if ($result) {
             overflow-x: auto;
             overflow-y: auto;
             border-radius: 12px;
-            margin: 20px 0;
             box-shadow: 0 4px 6px rgba(0,0,0,0.07);
         }
         
@@ -262,7 +267,7 @@ if ($result) {
 
                     <div class="field-group" style="grid-column: 1 / -1;">
                         <label>For which: 
-                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer" style="min-width: 350px;">,    
+                            <input type="text" id="accountable_officer" name="accountable_officer" value="<?= htmlspecialchars($current_user_full_name) ?>" placeholder="Name of Accountable Officer" style="min-width: 350px;">,    
                             <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation" style="min-width: 250px;">,
                             <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name" style="min-width: 250px;">
                             is accountable, having assumed such accountability on
@@ -273,19 +278,18 @@ if ($result) {
                     </div>
                 </div>
 
-                <div class="table-controls" style="margin: 12px 0; display:flex; gap:8px; align-items:center;">
-                    <label for="row_limit">Show:</label>
+                <div class="table-controls" style="display:flex; gap:12px; align-items:center; justify-content: flex-start;">
+                    <label for="row_limit" style="color: #001F80;">Show:</label>
                     <select id="row_limit" aria-label="Rows to display">
                         <option value="5" selected>5</option>
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="all">All</option>
                     </select>
-                </div>
-
-                    <div class="search-container">
-                                <input type="text" id="searchInput" class="search-input-rpci" placeholder="Search by stock number, item, or unit...">
+                    <div class="search-container" style="margin-left: 24px;">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search by stock number, item, or unit...">
                     </div>
+                </div>
 
             <div class="rpci-table-wrapper">
                 <table class="rpci-table" id="rpci-table">
@@ -325,7 +329,7 @@ if ($result) {
                                 echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
                                 // Empty cells for manual input or future database integration
                                 echo '<td>' . htmlspecialchars($item['unit' ?? '']) . '</td>'; // Unit of Measure
-                                echo '<td class="currency">' . htmlspecialchars($item['unit_cost' ?? '']) . '</td>'; // Unit Value
+                                echo '<td class="currency">₱ ' . htmlspecialchars($item['unit_cost' ?? '']) . '</td>'; // Unit Value
                                 echo '<td></td>'; // Balance Per Card
                                 echo '<td></td>'; // On Hand Per Count
                                 echo '<td></td>'; // Shortage/Overage Quantity

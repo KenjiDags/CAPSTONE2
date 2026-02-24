@@ -3,6 +3,27 @@ require 'auth.php';
 require 'config.php';
 require 'functions.php';
 
+// Generates a PAR No in YY-MM-## format, where ## increments for each new PAR in the current month/year
+function generate_par_id($conn) {
+    $current_yy = date('y');
+    $current_mm = date('m');
+    $prefix = $current_yy . '-' . $current_mm . '-%';
+    $stmt = $conn->prepare("SELECT par_no FROM ppe_par WHERE par_no LIKE ? ORDER BY par_no DESC LIMIT 1");
+    $stmt->bind_param('s', $prefix);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $next_num = 1;
+    if ($res && $row = $res->fetch_assoc()) {
+        $last_par_no = $row['par_no'];
+        $parts = explode('-', $last_par_no);
+        if (count($parts) === 3 && is_numeric($parts[2])) {
+            $next_num = intval($parts[2]) + 1;
+        }
+    }
+    $stmt->close();
+    return sprintf('%s-%s-%02d', $current_yy, $current_mm, $next_num);
+}
+
 // Ensure PAR table exists with complete structure
 $conn->query("CREATE TABLE IF NOT EXISTS ppe_par (
     par_id INT AUTO_INCREMENT PRIMARY KEY,

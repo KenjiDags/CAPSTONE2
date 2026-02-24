@@ -1,3 +1,7 @@
+/* Remove underline from TESDA Inventory link */
+.logo-text {
+    text-decoration: none !important;
+}
 .dropdown-toggle.no-arrow::after {
     display: none !important;
 }
@@ -229,7 +233,6 @@ table {
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 56, 168, 0.1);
-    margin-bottom: 30px;
 }
 
 th {
@@ -447,8 +450,8 @@ tr:hover {
 
 /* Currency Formatting */
 .currency {
-    font-weight: 600;
-    color: #0038a8;
+    font-family: 'Courier New';
+    color: #059669;
 }
 
 /* Responsive Design */
@@ -546,7 +549,6 @@ tbody tr:hover {
 
 /* Search and Filter Styles */
 .search-container {
-    margin-bottom: 20px;
     display: block;
     gap: 15px;
     align-items: center;
@@ -1061,58 +1063,6 @@ body {
     box-shadow: 0 6px 20px rgba(255, 167, 38, 0.4);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .content {
-        padding: 15px;
-    }
-
-    .form-fields {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .rsep-header h2 {
-        font-size: 1.5rem;
-    }
-
- 
-
-    .rsep-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .rsep-btn {
-        width: 100%;
-        max-width: 300px;
-    }
-}
-
-@media (max-width: 480px) {
-    .rsep-header h2 {
-        font-size: 1.3rem;
-    }
-
-    .rsep-table {
-        min-width: 2200px; /* Adjusted for mobile */
-    }
-
-    .rsep-table th,
-    .rsep-table td {
-        padding: 6px 3px; /* Reduced padding for mobile */
-    }
-
-    .rsep-table th {
-        font-size: 0.7rem; /* Even smaller on mobile */
-    }
-
-    .rsep-table input {
-        font-size: 0.7rem; /* Smaller input text on mobile */
-        padding: 4px 2px;
-    }
-}
-
 /* Loading animation for future use */
 .loading {
     display: inline-block;
@@ -1324,7 +1274,6 @@ body {
     z-index: 1000;
     transition: all 0.3s ease;
     overflow-y: auto;
-    padding-bottom: 20px;
 }
 
 /* ---------------- Logo ---------------- */
@@ -1957,7 +1906,6 @@ body {
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 8px 25px var(--shadow-blue);
-    margin: 25px 0;
     border-left: 5px solid var(--primary-blue);
 }
 
@@ -2063,18 +2011,18 @@ body {
     transition: background-color 0.3s ease;
 }
 
+
 .rpci-table-wrapper {
     width: 100%;
     overflow-y: auto;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     box-sizing: border-box;
-    scrollbar-gutter: stable;
     max-height: unset;
 }
 
 .rpci-table-wrapper .rpci-table {
-    margin: 0; /* let the wrapper control spacing */
+    margin: 0; 
 }
 
 .rpci-table thead th {
@@ -2098,8 +2046,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 30px;
-    margin-top: 40px;
-    padding-top: 30px;
+    padding-top: 20px;
     border-top: 2px solid var(--border-gray);
 }
 
@@ -2149,7 +2096,6 @@ body {
     box-shadow: 0 4px 15px var(--shadow-blue-hover);
     text-transform: uppercase;
     letter-spacing: 1px;    
-    margin-bottom: 20px;
 }
 
 
@@ -2208,46 +2154,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .form-fields {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .signature-section {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .rpci-table {
-        font-size: 0.7rem;
-    }
-    
-    .rpci-table th,
-    .rpci-table td {
-        padding: 8px 4px;
-    }
-}
-
-/* Responsive styles for mobile */
-@media (max-width: 768px) {
-    .ris-page .header-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
-    .ris-page .sort-container {
-        justify-content: center;
-        padding: 10px 15px;
-    }
-
-    .ris-page .sort-container select {
-        min-width: auto;
-        flex: 1;
-    }
-}
 .signature-input {
     border: none;
     border-bottom: 2px solid var(--primary-blue);
@@ -2262,167 +2168,6 @@ body {
 .signature-input:focus {
     outline: none;
     border-bottom-color: var(--dark-blue);
-}
-
-
-/* Responsive Design for Edit RIS */
-@media (max-width: 768px) {
-    .edit-ris-page.content form {
-        padding: 20px;
-        margin: 15px 0;
-    }
-    
-    .edit-ris-page.content table {
-        font-size: 0.8rem;
-    }
-    
-    .edit-ris-page.content table th,
-    .edit-ris-page.content table td {
-        padding: 10px 8px;
-    }
-    
-    .edit-ris-page.content button[type="submit"] {
-        width: 100%;
-        margin-top: 20px;
-    }
-}
-
-/* Responsive Design for RIS View */
-@media (max-width: 768px) {
-    .ris-details strong {
-        min-width: auto;
-        display: block;
-        margin-bottom: 5px;
-    }
-    
-    .ris-details p {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .ris-actions {
-        flex-direction: column;
-    }
-    
-    .ris-actions .btn {
-        text-align: center;
-        justify-content: center;
-    }
-}
-/* Responsive Design - Consolidated */
-@media (max-width: 1200px) {
-    .container {
-        padding: 15px;
-    }
-    
-    table {
-        font-size: 0.9rem;
-    }
-    
-    th, td {
-        padding: 12px 10px;
-    }
-    
-    .content {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        margin-left: 0;
-    }
-    
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-    
-    .sidebar.active {
-        transform: translateX(0);
-    }
-    
-    .content {
-        margin-left: 0;
-        padding: 15px;
-    }
-    
-    .container {
-        padding: 15px;
-    }
-    
-    h2 {
-        font-size: 2rem;
-    }
-    
-    .content h2 {
-        font-size: 2rem;
-    }
-    
-    .content h3 {
-        font-size: 1.5rem;
-        margin: 30px 0 15px 0;
-    }
-    
-    .add-btn, .content button {
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    
-    table {
-        font-size: 0.8rem;
-    }
-    
-    th, td {
-        padding: 10px 8px;
-    }
-    
-    .btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        margin-right: 5px;
-        margin-bottom: 5px;
-    }
-    
-    .content td a {
-        display: block;
-        margin: 2px 0;
-        text-align: center;
-    }
-    
-    .modal-content {
-        margin: 15% auto;
-        width: 95%;
-        padding: 30px 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    h2 {
-        font-size: 1.5rem;
-    }
-    
-    .content h2 {
-        font-size: 1.5rem;
-    }
-    
-    .content h3 {
-        font-size: 1.3rem;
-        margin: 25px 0 10px 0;
-    }
-    
-    table {
-        font-size: 0.7rem;
-    }
-    
-    th, td {
-        padding: 8px 5px;
-    }
-    
-    .btn {
-        padding: 5px 10px;
-        font-size: 0.7rem;
-    }
 }
 
 .scexport {
@@ -2453,24 +2198,18 @@ body {
     width: 100%;
     padding: 12px 15px;
     border: 2px solid var(--border-gray);
-    border-radius: 10px;
+    border-radius: 9999px;
     font-size: 1rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     background-color: var(--light-gray);
     box-sizing: border-box;
 }
 
-
-
-
 .table-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     align-items: center;
-    margin-bottom: 12px;
-    /* optional: space between if you want search stretched */
-    justify-content: flex-start;
 }
 
 .limit-wrapper {
@@ -2523,8 +2262,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-items: center; /* centers the content horizontally */
-    justify-content: center; /* centers the content vertically if needed */
+    align-items: center; 
+    justify-content: center; 
 }
 
 .sidebar-footer .sidebar-user {
@@ -2536,9 +2275,6 @@ body {
     text-overflow: ellipsis;
     text-align: center; 
 }
-
-/* Analytics link style override to match dropdown buttons */
-
 
 /* ============================================
    COMMON PAGE STYLES
@@ -2689,7 +2425,7 @@ body {
 
 /* Currency cell styling */
 .currency {
-    text-align: right;
+    text-align: left;
     font-weight: 600;
 }
 
@@ -3128,7 +2864,6 @@ body {
 h3 {
     color: #1e293b;
     font-size: 1.3rem;
-    margin: 30px 0 15px 0;
     display: flex;
     align-items: center;
     gap: 8px;

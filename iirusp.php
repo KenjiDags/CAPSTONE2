@@ -128,28 +128,30 @@ $result = $conn->query($query);
 <div class="container">
     <h2>Inventory and Inspection Report of Unserviceable Semi-Expendable Property (IIRUSP)</h2>
 
-  <form id="iirusp-filters" method="get" class="filters">
-      <div class="control">
-        <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-sort"></i> Sort by:
-        </label>
-        <select id="sort-select" name="sort" onchange="this.form.submit()">
-          <option value="date_newest" <?= ($sort_by==='date_newest')?'selected':''; ?>>Date (Newest First)</option>
-          <option value="date_oldest" <?= ($sort_by==='date_oldest')?'selected':''; ?>>Date (Oldest First)</option>
-          <option value="iirusp_no" <?= ($sort_by==='iirusp_no')?'selected':''; ?>>IIRUSP No. (A-Z)</option>
-          <option value="amount_highest" <?= ($sort_by==='amount_highest')?'selected':''; ?>>Total Amount (Highest)</option>
-          <option value="amount_lowest" <?= ($sort_by==='amount_lowest')?'selected':''; ?>>Total Amount (Lowest)</option>
-        </select>
+  <form id="iirusp-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+        <div class="control">
+          <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+            <i class="fas fa-sort"></i> Sort by:
+          </label>
+          <select id="sort-select" name="sort" onchange="this.form.submit()">
+            <option value="date_newest" <?= ($sort_by==='date_newest')?'selected':''; ?>>Date (Newest First)</option>
+            <option value="date_oldest" <?= ($sort_by==='date_oldest')?'selected':''; ?>>Date (Oldest First)</option>
+            <option value="iirusp_no" <?= ($sort_by==='iirusp_no')?'selected':''; ?>>IIRUSP No. (A-Z)</option>
+            <option value="amount_highest" <?= ($sort_by==='amount_highest')?'selected':''; ?>>Total Amount (Highest)</option>
+            <option value="amount_lowest" <?= ($sort_by==='amount_lowest')?'selected':''; ?>>Total Amount (Lowest)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+            <i class="fas fa-search"></i> Search:
+          </label>
+          <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or IIRUSP no..." />
+        </div>
       </div>
-      <div class="control">
-        <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-          <i class="fas fa-search"></i> Search:
-        </label>
-        <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or IIRUSP no..." />
-        <a href="add_iirusp.php" class="pill-btn pill-add">
-          <i class="fas fa-plus"></i> Add IIRUSP
-        </a>
-      </div>
+      <a href="add_iirusp.php" class="pill-btn pill-add" style="margin-left:auto; border-radius: 8px !important;">
+        <i class="fas fa-plus"></i> Add IIRUSP
+      </a>
     </form>
 
     <table>
@@ -171,11 +173,11 @@ $result = $conn->query($query);
                         <td><?= date('M d, Y', strtotime($row['as_at'])) ?></td>
                         <td><?= htmlspecialchars($row['entity_name']) ?></td>
                         <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
-                        <td>₱<?= number_format($row['total_amount'] ?? 0, 2) ?></td>
+                        <td class="currency">₱ <?= number_format($row['total_amount'] ?? 0, 2) ?></td>
                         <td>
                             <a href="view_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-view" title="View IIRUSP"><i class="fas fa-eye"></i> View</a>
                             <a href="edit_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-edit" title="Edit IIRUSP"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="export_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-export" title="Export IIRUSP" target="_blank"><i class="fas fa-download"></i> Export</a>
+                            <a href="export_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-export" title="Export IIRUSP"><i class="fas fa-download"></i> Export</a>
                             <a href="iirusp.php?delete_iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this IIRUSP?')" title="Delete IIRUSP"><i class="fas fa-trash"></i> Delete</a>
                         </td>
                     </tr>

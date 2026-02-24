@@ -1,6 +1,17 @@
 <?php
 require 'auth.php';
 require_once 'config.php';
+
+// DELETE LOGIC (moved from pc_delete.php)
+if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
+	$id = (int)$_GET['delete_id'];
+	// Delete the entry from item_history_ppe
+	$conn->query("DELETE FROM item_history_ppe WHERE id = $id");
+	// Redirect back to the return URL or PPE_PC.php
+	$return = isset($_GET['return']) ? $_GET['return'] : 'PPE_PC.php';
+	header('Location: ' . $return);
+	exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +40,6 @@ require_once 'config.php';
 		}
 		.text-center { text-align: center; }
 		.text-right { text-align: right; }
-		.currency { text-align: right; }
 		.filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
 		.filters .control { display:flex; align-items:center; gap:10px; }
 		.filters select, .filters input {
@@ -88,27 +98,41 @@ require_once 'config.php';
 	<div class="container">
 		<h2>Property Card (PPE)</h2>
 
-		<form id="ppe-filters" method="get" class="filters" style="justify-content: center;">
+		<form id="ppe-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
 			<?php
 				$search = isset($_GET['search']) ? $_GET['search'] : '';
+				$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'date_newest';
 			?>
-			<div class="control">
-				<label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-					<i class="fas fa-search"></i> Search:
-				</label>
-				<input type="text" id="searchInput" name="search"
-							value="<?= htmlspecialchars($search) ?>"
-							placeholder="Search description or property no..." />
+			<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+				<div class="control">
+					<label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+						<i class="fas fa-sort"></i> Sort by:
+					</label>
+					<select id="sort-select" name="sort" onchange="this.form.submit()">
+						<option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+						<option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+						<option value="property_no" <?= ($sort_by == 'property_no') ? 'selected' : '' ?>>Property No. (A-Z)</option>
+						<option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Amount (Highest)</option>
+						<option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Amount (Lowest)</option>
+					</select>
+				</div>
+				<div class="control">
+					<label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
+						<i class="fas fa-search"></i> Search:
+					</label>
+					<input type="text" id="searchInput" name="search"
+								value="<?= htmlspecialchars($search) ?>"
+								placeholder="Search description or property no..." />
+				</div>
 			</div>
-
 			<a href="PPE_PC_export_all.php?export_all=1"
-				class="pill-btn pill-export" style="margin-left:5px;">
+				class="pill-btn pill-export" style="margin-left:auto; border-radius: 8px !important;">
 					<i class="fas fa-file-export"></i> Export All
 			</a>
 		</form>
 
 		<div class="table-wrapper">
-			<table>
+			<table  style="margin-bottom: 0px !important;">
 				<thead>
 					<tr>
 						<th>Description</th>
@@ -163,6 +187,11 @@ require_once 'config.php';
 								$itemDescription = $row['description'] ?? '';
 								$propertyNo = $row['property_no'] ?? '';
 								$txDate = $row['changed_at'] ?? '';
+								// Format to show only date (YYYY-MM-DD)
+								$displayDate = '';
+								if ($txDate) {
+									$displayDate = date('Y-m-d', strtotime($txDate));
+								}
 								$referenceNo = $row['PAR_number'] ?? $row['refference_no'] ?? '';
 								$receiptQty = (int)($row['receipt_qty'] ?? 0);
 								$issueQty = (int)($row['issue_qty'] ?? 0);
@@ -175,7 +204,7 @@ require_once 'config.php';
 								}
 								echo '</td>';
 								echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
-								echo '<td>' . htmlspecialchars($txDate) . '</td>';
+								echo '<td>' . htmlspecialchars($displayDate) . '</td>';
 								echo '<td>' . htmlspecialchars($referenceNo) . '</td>';
 								echo '<td class="text-center">' . ($receiptQty ?: '') . '</td>';
 								echo '<td class="text-center">' . ($issueQty ?: '') . '</td>';
@@ -188,7 +217,7 @@ require_once 'config.php';
 								echo '<td class="text-center actions-col">';
 								echo '<div class="action-stack">';
 								echo '<a href="PPE_PC_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
-								echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
+								echo '<a href="PPE_PC.php?delete_id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
 								echo '</div>';
 								echo '</td>';
 								echo '</tr>';
