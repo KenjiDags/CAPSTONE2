@@ -79,6 +79,7 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     <?php // (delete handled before output) ?>
 
   <form id="itr-filters" method="get" class="filters">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
       <div class="control">
         <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
           <i class="fas fa-sort"></i> Sort by:
@@ -97,7 +98,8 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
             <i class="fas fa-search"></i> Search:
             </label>
             <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search description or ITR no..." />
-        </div> 
+        </div>
+    </div> 
         <div style="margin-left:auto;">
             <a href="add_itr.php" class="pill-btn pill-add" style="border-radius: 8px !important;">
             <i class="fas fa-plus"></i> Add ITR Form

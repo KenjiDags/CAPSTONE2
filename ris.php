@@ -117,7 +117,6 @@ switch ($sort_by) {
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
         
-        /* Make Add RIS button bigger */
         .search-add-container .btn-success {
             padding: 12px 24px;
             font-size: 15px;
@@ -128,22 +127,25 @@ switch ($sort_by) {
 <?php include 'sidebar.php'; ?>
 <div class="container">
     <h2>Requisition and Issue Slip (RIS)</h2>
-    
-    <div class="search-add-container" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
-        <div class="sort-container" style="order: 1;">
-            <label for="sort-select">
-                <i class="fas fa-sort"></i> Sort by:
-            </label>
-            <select id="sort-select" onchange="sortTable(this.value)">
-                <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
-                <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
-                <option value="ris_no" <?= ($sort_by == 'ris_no') ? 'selected' : '' ?>>RIS No. (A-Z)</option>
-            </select>
+
+
+    <form class="filters" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; flex: 1;">
+            <div class="control">
+                <label for="sort-select">
+                    <i class="fas fa-sort"></i> Sort by:
+                </label>
+                <select id="sort-select" onchange="sortTable(this.value)" style="width: 170px;">
+                    <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+                    <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+                    <option value="ris_no" <?= ($sort_by == 'ris_no') ? 'selected' : '' ?>>RIS No. (A-Z)</option>
+                </select>
+            </div>
         </div>
-        <button class="btn btn-success" style="order: 2; margin-left: auto;" onclick="window.location.href='add_ris.php'">
+        <button class="btn btn-success" style="margin-left: auto; display: flex; align-items: center;" type="button" onclick="window.location.href='add_ris.php'">
             <i class="fas fa-plus"></i> Add RIS Form
         </button>
-    </div>
+    </form>
     
     <div class="table-container">
         <table id="risTable">

@@ -346,7 +346,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         </div>
 
         <!-- Search and Add Container -->
-        <div class="search-add-container" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
             <div class="control" style="flex: 1;">
                 <form method="GET" class="search-form" style="display: flex; align-items: center; gap: 10px;">
                     <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">

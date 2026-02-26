@@ -198,33 +198,6 @@ input[readonly]:focus {
     cursor: not-allowed;
 }
 
-/* Button Styles - Default add button (can be overridden by more specific selectors) */
-.add-btn:not([class*="btn-"]) {
-    background: linear-gradient(135deg, #0038a8 0%, #4a90e2 100%);
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 50px;
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 56, 168, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.add-btn:not([class*="btn-"]):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 56, 168, 0.4);
-    background: linear-gradient(135deg, #002d80 0%, #3a7bc8 100%);
-}
-
-.add-btn:not([class*="btn-"]):active {
-    transform: translateY(0);
-}
-
 /* Table Styles */
 table {
     width: 100%;
@@ -261,46 +234,6 @@ tr:nth-child(even) {
 tr:hover {
     background-color: #e8f0fe;
     transition: background-color 0.3s ease;
-}
-
-/* Action Button Styles - Lower specificity to allow PPE.css overrides */
-.btn:not(.pill-btn):not(.btn-add):not(.btn-primary):not(.btn-secondary) {
-    padding: 8px 16px;
-    margin-right: 8px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    min-width: 70px;
-}
-
-.edit-btn {
-    background: linear-gradient(135deg, #4a90e2 0%, #74b9ff 100%);
-    color: white;
-    box-shadow: 0 3px 10px rgba(74, 144, 226, 0.3);
-}
-
-.edit-btn:hover {
-    background: linear-gradient(135deg, #357abd 0%, #5a9cdd 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
-}
-
-.delete-btn {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-    color: white;
-    box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
-}
-
-.delete-btn:hover {
-    background: linear-gradient(135deg, #ff5252 0%, #ff7575 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
 }
 
 /* Modal Styles */
@@ -724,7 +657,6 @@ body {
 }
 
 
-/* Improved column widths for better text fitting */
 .rsep-table th:nth-child(1) { width: 110px; } /* Date - slightly wider */
 .rsep-table th:nth-child(2) { width: 130px; } /* ICS/RRSP No. - wider */
 .rsep-table th:nth-child(3) { width: 160px; } /* Semi-Expendable Property No. - wider */
@@ -809,31 +741,6 @@ body {
   transition: transform 0.1s ease;
   display: inline-block;
   width: max-content;
-}
-
-
-/* Add Items Button */
-.add-items-btn {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: var(--white);
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 25px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.add-items-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
 }
 
 /* Modal Styles */
@@ -1106,56 +1013,6 @@ body {
     display: table-row;
 }
 
-/* RIS Action Links */
-.content td a {
-    color: var(--primary-blue);
-    text-decoration: none;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 15px;
-    transition: all 0.3s ease;
-    display: inline-block;
-    margin: 0 2px;
-}
-
-.content td a:hover {
-    background: var(--border-gray);
-    color: var(--dark-blue);
-    transform: translateY(-1px);
-}
-
-.content td a:nth-child(1) { /* View */
-    background: linear-gradient(135deg, var(--light-blue) 0%, var(--secondary-blue) 100%);
-    color: var(--white);
-    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.3);
-}
-
-.content td a:nth-child(3) { /* Edit */
-    background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
-    color: var(--white);
-    box-shadow: 0 2px 8px rgba(255, 167, 38, 0.3);
-}
-
-.content td a:nth-child(5) { /* Export */
-    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
-    color: var(--white);
-    box-shadow: 0 2px 8px rgba(102, 187, 106, 0.3);
-}
-
-.content td a:nth-child(7) { /* Delete */
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-    color: var(--white);
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-}
-
-.content td a:nth-child(1):hover,
-.content td a:nth-child(3):hover,
-.content td a:nth-child(5):hover,
-.content td a:nth-child(7):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
 /* ris.php */
 .content table {
     width: 100%;
@@ -1200,29 +1057,6 @@ body {
     box-shadow: 0 4px 12px var(--shadow-blue);
 }
 
-/* Add RIS Button - Override the existing button styles for this page */
-.content button {
-    background: var(--blue-gradient);
-    color: var(--white);
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 50px;
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px var(--shadow-blue-hover);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.content button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 56, 168, 0.4);
-    background: var(--blue-gradient-hover);
-}
-
 /* Empty state styling */
 .content td[colspan="5"] {
     text-align: center;
@@ -1231,29 +1065,6 @@ body {
     padding: 40px;
 }
 
-.clear-entries-btn {
-    background: linear-gradient(135deg, #ff9800 0%, #ffc04d 100%);
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 5px;
-    display: block;
-    width: 100%;
-    text-align: center;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-    box-shadow: 0 4px 10px rgba(255,152,0,0.15);
-}
-
-.clear-entries-btn:hover {
-    background: linear-gradient(135deg, #f57c00 0%, #ffb84d 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(255,152,0,0.25);
-    opacity: 0.95;
-}
 /* ---------------- Sidebar Base ---------------- */
 .sidebar {
     width: var(--sidebar-width);
@@ -1533,13 +1344,6 @@ body {
     height: 30px;
     background: var(--blue-gradient);
     border-radius: 3px;
-}
-
-/* Currency formatting for RSMI */
-.content .currency {
-    font-weight: 600;
-    color: var(--primary-blue);
-    font-family: 'Segoe UI', monospace;
 }
 
 /* Summary section styling */
@@ -2078,23 +1882,6 @@ body {
     line-height: 1.4;
 }
 
-.export-btn {
-    background: var(--blue-gradient);
-    color: var(--white);
-    border: none;
-    padding: 12px 30px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 25px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px var(--shadow-blue-hover);
-    text-transform: uppercase;
-    letter-spacing: 1px;    
-}
-
-
-
 .export-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 56, 168, 0.4);
@@ -2171,35 +1958,6 @@ body {
     box-shadow: 0 2px 8px rgba(255, 167, 38, 0.3)!important;
 }
 
-.search-input-sc {
-    width: 800px;
-    padding: 12px 20px;
-    border: 2px solid #e8f0fe;
-    border-radius: 25px;
-    font-size: 1rem;
-    background-color: white;
-    transition: border-color 0.3s ease;
-}
-
-.search-container-sc {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.search-input-rpci{
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid var(--border-gray);
-    border-radius: 9999px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    background-color: var(--light-gray);
-    box-sizing: border-box;
-}
-
 .table-controls {
     display: flex;
     flex-wrap: wrap;
@@ -2243,11 +2001,6 @@ body {
 
 .limit-option:hover {
     background: #f0f4fb;
-}
-
-.search-container-sc {
-    flex: 1 1 200px; 
-    min-width: 180px;
 }
 
 .sidebar-footer {
@@ -2423,85 +2176,6 @@ body {
     font-weight: 600;
 }
 
-/* Action buttons styling */
-.btn.edit-btn, .btn.delete-btn, .btn.clear-entries-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-.btn.edit-btn i, .btn.delete-btn i, .btn.clear-entries-btn i {
-    font-size: 0.95em;
-}
-
-.btn.clear-entries-btn {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    max-width: 175px;
-    justify-content: center;
-}
-
-/* Table action buttons use pill style */
-.btn.edit-btn {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #fff;
-    padding: 7px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin: 2px;
-}
-
-.btn.edit-btn:hover {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.btn.delete-btn {
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-    color: #fff;
-    padding: 7px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin: 2px;
-}
-
-.btn.delete-btn:hover {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.btn.clear-entries-btn {
-    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-    color: #fff;
-    padding: 7px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin: 2px;
-}
-
-.btn.clear-entries-btn:hover {
-    background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
 
 /* Sub-entries styling */
 .sub-entry {
@@ -2797,7 +2471,7 @@ body {
    VIEW PAGES COMMON STYLES
    ============================================ */
 
-/* Action buttons styling */
+/* Action buttons styling (TO BE REMOVED AFTER UPDATE)*/
 .ris-actions {
     display: flex;
     gap: 12px;
