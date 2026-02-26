@@ -437,7 +437,6 @@ if ($result) {
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
-                    <button type="submit" name="save_report" class="export-btn" style="background: #10b981;">💾 Save Report</button>
                     <button type="button" class="export-btn" onclick="openExport()">📄 Export to PDF</button>
                 </div>
             </form>

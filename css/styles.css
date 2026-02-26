@@ -2888,3 +2888,12 @@ h3 {
     text-align: center;
     padding: 40px;
 }
+
+/* Print instructions */
+.print-instructions {
+    background: #fffacd;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+}

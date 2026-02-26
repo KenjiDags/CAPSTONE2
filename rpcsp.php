@@ -179,7 +179,7 @@ if ($result) {
             </div>
 
             <div style="text-align:center; margin-top: 18px;">
-                <button type="button" class="btn pill-btn pill-export" onclick="openExport()">
+                <button type="button" class="export-btn" onclick="openExport()">
                     <i class="fas fa-file-pdf"></i>
                     Export to PDF
                 </button>

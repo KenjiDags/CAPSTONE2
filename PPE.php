@@ -231,7 +231,7 @@ try {
                     <td><?= htmlspecialchars($item['custodian']); ?></td>
                     <td><?= htmlspecialchars($item['status']); ?></td>
                     <td><?= htmlspecialchars($item['condition']); ?></td>
-                    <td>₱<?= number_format($item['amount'],2); ?></td>
+                    <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                     <td class="actions-cell">
                         <div class="action-buttons">
                             <button class="pill-btn pill-view" onclick="viewItem(<?= $item['id']; ?>)"><i class="fas fa-eye"></i> View</button>
