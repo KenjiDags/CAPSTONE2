@@ -500,7 +500,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                         <?php echo $is_editing ? 'Update RIS' : 'Submit RIS'; ?>
                     </button>
                 <a href="ics.php">
-                    <button type="button" class="pill-btn pill-view"> <i class="fas fa-times"></i> Cancel </button>
+                    <button type="button" class="pill-btn pill-view"> <i class="fas fa-ban"></i> Cancel </button>
                 </a>
             </form>
         </div>

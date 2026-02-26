@@ -105,7 +105,6 @@ $items = $conn->query("SELECT i.*,
                 <i class="fas fa-boxes"></i>
                 Restock Inventory
             </h1>
-            <p>Add new stock to multiple items at once</p>
         </header>
 
         <!-- FILTER DROPDOWN -->

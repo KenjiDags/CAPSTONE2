@@ -352,7 +352,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
   </div>
 
   <div class="actions" style="margin-top:18px;">
-    <button type="button" class="pill-btn pill-add" onclick="submitRRSP()"><i class="fa-solid fa-plus"></i> Submit RRSP</button>
+    <button type="button" class="pill-btn pill-add" onclick="submitRRSP()"><i class="fa-solid fa-save"></i> Submit RRSP</button>
     <button type="button" class="pill-btn pill-view" onclick="window.location.href='rrsp.php'"><i class="fa-solid fa-ban"></i> Cancel</button>
   </div>
 </div>

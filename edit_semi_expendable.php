@@ -1,12 +1,10 @@
 <?php
 // edit_semi_expendable.php - Edit form for semi-expendable property
-// Start output buffering to allow safe redirects even if sidebar outputs content
 ob_start();
 require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
 require_once 'sidebar.php'; 
-// Ensure 'unit' column exists on semi_expendable_property (idempotent)
 try {
     if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {
         @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");
@@ -18,7 +16,6 @@ $item = null;
 $error = '';
 $success = '';
 
-// Valid categories
 $valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communication Equipment', 'Furniture and Fixtures'];
 
 // Fetch item details
@@ -536,11 +533,11 @@ if (!$item && empty($error)) {
                     </div>
 
                     <div style="margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="pill-btn pill-add">
                             <i class="fas fa-save"></i> Update Item
                         </button>
-                        <a href="<?php echo htmlspecialchars($cancelUrl); ?>" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
+                        <a href="<?php echo htmlspecialchars($cancelUrl); ?>">
+                            <button class="pill-btn pill-view"><i class="fas fa-times"></i> Cancel</button>
                         </a>
                     </div>
                 </form>

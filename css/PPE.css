@@ -472,17 +472,6 @@ table tbody td[colspan] {
     font-size: 16px;
 }
 
-table tbody td[colspan]::before {
-    content: "\f1b2";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 48px;
-    display: block;
-    margin-bottom: 16px;
-    opacity: 0.3;
-    color: #3b82f6;
-}
-
 table tbody td[colspan] i {
     font-size: 48px;
     display: block;

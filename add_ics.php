@@ -567,7 +567,7 @@ function generateICSNumberSimple($conn) {
                 </div>
             </div>
 
-            <button type="submit" class="pill-btn pill-add"> <i class="fas fa-plus"></i><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
+            <button type="submit" class="pill-btn pill-add"> <i class="fas fa-save"></i><?php echo $is_editing ? 'Update ICS' : 'Submit ICS'; ?></button>
             <a href="<?php echo $is_editing ? 'ics.php?ics_id=' . $ics_id : 'ics.php'; ?>">
                 <button type="button" class="pill-btn pill-view"><i class="fas fa-ban"></i>Cancel</button>
             </a>

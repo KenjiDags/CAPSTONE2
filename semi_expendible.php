@@ -4,9 +4,12 @@ require 'auth.php';
 include 'config.php'; 
 include 'sidebar.php';
 
-// Handle delete action
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
-    $delete_id = (int)$_POST['delete_id'];
+// Handle delete action (POST or GET)
+if ((
+        ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) ||
+        (isset($_GET['delete_id']))
+    )) {
+    $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_id'];
     if ($delete_id > 0) {
         if ($stmt = $conn->prepare("DELETE FROM semi_expendable_property WHERE id = ?")) {
             $stmt->bind_param("i", $delete_id);
@@ -202,57 +205,6 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
-        /* Action buttons */
-        .actions-cell {
-            white-space: nowrap;
-        }
-        .action-stack {
-            display: inline-flex;
-            flex-direction: column;
-            gap: 6px;
-            align-items: center;
-        }
-        .pill-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 12px;
-            width: 110px;
-            border-radius: 9999px;
-            color: #fff;
-            font-weight: 600;
-            font-size: 13px;
-            border: none;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-            cursor: pointer;
-        }
-        .pill-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
-            opacity: 0.96;
-            text-decoration: none;
-        }
-        .pill-edit {
-            background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%);
-        }
-        .pill-delete {
-            background: linear-gradient(135deg, #ff9aa2 0%, #ef4444 100%);
-        }
-        .pill-btn .fas {
-            font-size: 0.9em;
-        }
-        
-        /* Add button styling */
-        .btn-add {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-        }
-        .btn-add:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        }
-        
         /* Alerts */
         .alert {
             padding: 15px;
@@ -426,8 +378,8 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                     </a>
                                 <?php else: ?>
                                     <p>No items found in this category.</p>
-                                    <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-success">
-                                        <i class="fas fa-plus"></i> Add First Item
+                                    <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-success" style="height: 70px;">
+                                        <i class="fas fa-plus" style="margin-bottom: 0 !important;"></i> Add First Item
                                     </a>
                                 <?php endif; ?>
                             </td>
@@ -463,17 +415,14 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
                                 <td class="currency">₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td class="actions-cell">
-                                    <div class="action-stack">
-                                        <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="pill-btn pill-edit" title="Edit" aria-label="Edit">
+                                    <div class="action-row">
+                                        <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="btn edit-btn" title="Edit" aria-label="Edit" style="height: 30px;">
                                             <i class="fas fa-pen"></i> Edit
                                         </a>
-                                        <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="margin:0;">
-                                            <input type="hidden" name="delete_id" value="<?php echo (int)$item['id']; ?>">
-                                            <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
-                                            <button type="submit" class="pill-btn pill-delete" title="Delete" aria-label="Delete">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn delete-btn" title="Delete" aria-label="Delete"
+                                            onclick="deleteItem(<?php echo (int)$item['id']; ?>, '<?php echo htmlspecialchars($category, ENT_QUOTES); ?>')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -498,6 +447,13 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
     </div>
 
     <script>
+        function deleteItem(id, category) {
+            if (confirm('Delete this item permanently?')) {
+                // Redirect with delete_id and category as GET params
+                let url = `semi_expendible.php?delete_id=${encodeURIComponent(id)}&category=${encodeURIComponent(category)}`;
+                window.location.href = url;
+            }
+        }
     function viewItem(id) {
         // Fetch item details via AJAX
         fetch(`get_item_details.php?id=${id}`)

@@ -186,7 +186,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
     .signature-row {
         display: flex;
         align-items: center;
-        margin: 2px 0;
+        margin: 5px 0;
         white-space: nowrap;
     }
 
@@ -432,11 +432,11 @@ $received_by_date = $ptr['received_by_date'] ?? '';
             <td colspan="5" class="signature-cell">
 
                 <!-- Titles row -->
-                <div class="signature-row">
-                    <div class="signature-label"></div> <!-- empty for labels -->
-                    <div class="signature-title">Approved by</div>
-                    <div class="signature-title">Released/Issued by</div>
-                    <div class="signature-title">Received by</div>
+                <div class="signature-row" style="margin: 8px 0 !important;">
+                    <div class="signature-label" style="width:40px;"></div> <!-- empty for labels, reduced width -->
+                    <div class="signature-title" style="margin-left: -20px;">Approved by:</div>
+                    <div class="signature-title" style="margin-right: -30px;">Released/Issued by:</div>
+                    <div class="signature-title" style="margin-right: 75px;">Received by:</div>
                 </div>
 
                 <!-- Signature -->

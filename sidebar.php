@@ -75,6 +75,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>">📄 PTR</a>
                             <a href="PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>">📄 PAR</a>
                             <a href="RPCPPE.php" class="<?= $currentPage == 'RPCPPE.php' ? 'active' : '' ?>">📄 RPCPPE</a>
+                            <a href="PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>">📄 IIRUP (U_CONs)</a>
                         </div>
                     </div>
 

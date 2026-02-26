@@ -60,9 +60,15 @@
         border-color: #eab308 !important;
         color: #1e293b !important;
     }
+
     #clearHistoryBtn:hover {
         background-color: #eab308 !important;
     }
+
+    .actions a {
+        margin-right: 0 !important;
+    }
+
     </style>
 </head>
 <body>
@@ -111,31 +117,23 @@
     <div class="container">
         <h2>Viewing Stock Card - Item No. <?php echo htmlspecialchars($items['item_id']); ?></h2>
 
-        <div class="ris-actions">
-            <a href="SC.php" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to SC List
-            </a>
-            <form action="sc_export.php" method="get">
-                <input type="hidden" name="item_id" value="<?php echo $item_id; ?>">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </button>
-            </form>
+        <div class="actions" style="margin-bottom:20px;">
+			<a href="SC.php" class="btn btn-secondary">
+				<i class="fas fa-arrow-left"></i> Back to SC List
+			</a>
+			<a href="sc_export.php?item_id=<?php echo $item_id; ?>" class="btn btn-success">
+				<i class="fas fa-file-pdf"></i> Export PDF
+			</a>
 
-            <form method="POST" 
-                action="" 
-                onsubmit="return confirm('Are you sure you want to delete this item\'s history?')">
-                <input type="hidden" name="clear_history" value="1">
-                <input type="hidden" name="item_id" value="<?= $item_id ?>">
-                <?php if (!empty($history_rows)): ?>
-                    <button id="clearHistoryBtn" 
-                            class="btn btn-danger"
-                            data-item-id="<?= $item_id ?>">
-                        <i class="fas fa-trash"></i> Clear History
-                    </button>
-                    
-                <?php endif; ?>
-            </form>
+            <?php if (!empty($history_rows)): ?>
+                <a href="view_sc.php?item_id=<?= $item_id ?>&clear_history=1" 
+                   class="btn btn-danger"
+                   id="clearHistoryBtn"
+                   data-item-id="<?= $item_id ?>"
+                   onclick="return confirm('Are you sure you want to delete this item\'s history?')">
+                    <i class="fas fa-trash"></i> Clear History
+                </a>
+            <?php endif; ?>
         </div>
 
         <h3><i class="fas fa-info-circle"></i> Item Details</h3>

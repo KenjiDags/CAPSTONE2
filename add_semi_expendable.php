@@ -561,11 +561,11 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                 </div>
 
                 <div style="margin-top: 30px;">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="pill-btn pill-add">
                         <i class="fas fa-save"></i> Add Item
                     </button>
-                    <a href="semi_expendible.php?category=<?php echo urlencode($default_category); ?>" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Cancel
+                    <a href="semi_expendible.php?category=<?php echo urlencode($default_category); ?>">
+                        <button class="pill-btn pill-view" type="button"><i class="fas fa-ban"></i> Cancel</button>
                     </a>
                 </div>
             </form>

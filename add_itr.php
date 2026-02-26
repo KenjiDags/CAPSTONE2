@@ -241,8 +241,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     </div>
 
     <div class="actions">
-      <button type="button" id="submitItrBtn" class="pill-btn pill-add"><i class="fa-solid fa-plus"></i> Submit ITR</button>
-      <button type="button" onclick="cancelITR()" class="pill-btn pill-view"><i class="fa-solid fa-ban"></i> Cancel</button>
+      <button type="button" id="submitItrBtn" class="pill-btn pill-add"><i class="fas fa-save"></i> Submit ITR</button>
+      <button type="button" onclick="cancelITR()" class="pill-btn pill-view"><i class="fas fa-ban"></i> Cancel</button>
     </div>
   </div>
 

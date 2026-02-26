@@ -169,3 +169,8 @@ CREATE TABLE IF NOT EXISTS item_history_ppe (
     INDEX idx_property_no (property_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE item_history_ppe 
+    ADD COLUMN unserviceable_qty INT NULL;
+
+
+

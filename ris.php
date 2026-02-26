@@ -132,7 +132,7 @@ switch ($sort_by) {
     <form class="filters" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; flex: 1;">
             <div class="control">
-                <label for="sort-select">
+                <label for="sort-select" style="font-weight: 600; color: #001F80; gap: 6px; display: flex; align-items: center;">
                     <i class="fas fa-sort"></i> Sort by:
                 </label>
                 <select id="sort-select" onchange="sortTable(this.value)" style="width: 170px;">

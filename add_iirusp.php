@@ -301,9 +301,6 @@ ensure_iirusp_tables($conn);
     
     <div style="text-align:right; margin-bottom:30px;">
         <h3 style="display:inline-block; margin-right:20px;">Total Value: <span id="grand_total_display" style="color:#0056b3;">₱0.00</span></h3>
-        <button onclick="submitIIRUSP()" style="padding:15px 30px; background:#28a745; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">
-            SUBMIT IIRUSP
-        </button>
     </div>
 
     <!-- FOOTER SIGNATORIES -->
@@ -329,7 +326,15 @@ ensure_iirusp_tables($conn);
         </div>
     </div>
 
+        <button onclick="submitIIRUSP()" class="pill-btn pill-add" type="submit">
+            <i class="fas fa-save"></i>SUBMIT IIRUSP
+        </button>
+        <a href="iirusp.php">
+            <button type="button" class="pill-btn pill-view"><i class="fas fa-ban"></i>Cancel</button>
+        </a>
 </div>
+
+
 
 <!-- JS LOGIC -->
 <script>

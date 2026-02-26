@@ -17,7 +17,7 @@
             content: "\f15b";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
-            color: #10b981;
+            color: #3b82f6;
             margin-right: 10px;
         }
     </style>
@@ -91,7 +91,7 @@
         </div>
 
         <h3><i class="fas fa-box"></i> Property Items</h3>
-        <div class="table-container">
+        <div class="table-container" style="margin: 25px 0;">
             <table>
                 <thead>
                     <tr>
@@ -134,7 +134,7 @@
         </div>
 
         <!-- Signatories Section -->
-        <h3><i class="fas fa-user-check"></i> Signatories</h3>
+        <h3><i class="fas fa-pen-nib"></i> Signatories</h3>
         <div class="ris-details">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>

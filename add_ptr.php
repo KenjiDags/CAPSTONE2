@@ -175,6 +175,7 @@ include 'sidebar.php';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add Property Transfer Report</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
     .form-container {
@@ -587,16 +588,12 @@ include 'sidebar.php';
                 </div>
             </div>
 
-            <div class="button-group">
-                <button type="submit" name="submit_ptr" class="btn btn-primary">
-                    <i class="fas fa-check-circle"></i>
-                    Create PTR
+                <button type="submit" name="submit_ptr" class="pill-btn btn-add">
+                    <i class="fas fa-save"></i>SUBMIT PTR
                 </button>
-                <a href="PPE_PTR.php" class="btn btn-secondary">
-                    <i class="fas fa-times"></i>
-                    Cancel
+                <a href="PPE_PTR.php">
+                    <button class="pill-btn pill-view" type="button"><i class="fas fa-ban"></i> Cancel</button>
                 </a>
-            </div>
         </form>
     </div>
 </div>

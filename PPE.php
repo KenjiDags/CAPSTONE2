@@ -133,55 +133,12 @@ try {
             font-weight: 900;
             color: #3b82f6;
         }
-        
-        /* Search Section Layout */
-        .add-btn-section {
-            flex: 0 0 auto;
-        }
-        
-        .search-section {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .search-form { 
-            display: flex; 
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .search-input { 
-            padding: 12px 16px; 
-            border-radius: 8px; 
-            border: 2px solid #e5e7eb; 
-            width: 400px; 
-            max-width: 100%;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        
-        .search-input:hover {
-            border-color: #cbd5e1;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
+
         /* Status and Condition Badges */
         table tbody td:nth-child(7),
         table tbody td:nth-child(8) {
             font-size: 13px;
             font-weight: 600;
-        }
-        
-        /* Status column colors */
-        table tbody tr:has(td:nth-child(7):contains("Active")) td:nth-child(7),
-        table tbody td:nth-child(7) {
-            color: #047857;
         }
         
         /* Condition column colors */
@@ -270,7 +227,7 @@ try {
                     <td class="actions-cell">
                         <div class="action-buttons">
                             <button class="pill-btn pill-view" onclick="viewItem(<?= $item['id']; ?>)"><i class="fas fa-eye"></i> View</button>
-                            <a href="edit_ppe.php?id=<?= $item['id']; ?>" class="pill-btn pill-edit"><i class="fas fa-edit"></i> Edit</a>
+                            <a href="edit_ppe.php?id=<?= $item['id']; ?>" class="pill-btn pill-edit" style="height: 30px;"><i class="fas fa-edit"></i> Edit</a>
                             <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="display: inline;">
                                 <input type="hidden" name="delete_id" value="<?= $item['id']; ?>">
                                 <button type="submit" class="pill-btn pill-delete"><i class="fas fa-trash"></i> Delete</button>
