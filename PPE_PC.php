@@ -104,18 +104,18 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 				$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'date_newest';
 			?>
 			<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
-				<div class="control">
-					<label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
-						<i class="fas fa-sort"></i> Sort by:
-					</label>
-					<select id="sort-select" name="sort" onchange="this.form.submit()">
-						<option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
-						<option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
-						<option value="property_no" <?= ($sort_by == 'property_no') ? 'selected' : '' ?>>Property No. (A-Z)</option>
-						<option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Amount (Highest)</option>
-						<option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Amount (Lowest)</option>
-					</select>
-				</div>
+                <div class="control">
+                    <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                        <i class="fas fa-sort"></i> Sort by:
+                    </label>
+                    <select id="sort-select" name="sort" onchange="this.form.submit()">
+                        <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+                        <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+                        <option value="property_no" <?= ($sort_by == 'property_no') ? 'selected' : '' ?>>Property No. (A-Z)</option>
+                        <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
+                        <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
+                    </select>
+                </div>
 				<div class="control">
 					<label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
 						<i class="fas fa-search"></i> Search:

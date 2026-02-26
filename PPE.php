@@ -17,7 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
 }
 
 // Search functionality
+
 $search = $_GET['search'] ?? '';
+$sort_by = $_GET['sort'] ?? 'date_newest';
 $sql = "SELECT * FROM ppe_property";
 $params = [];
 $types = "";
@@ -29,7 +31,26 @@ if (!empty($search)) {
     $types = "ssss";
 }
 
-$sql .= " ORDER BY id DESC"; // no date_acquired, using id as newest first
+// Sorting logic
+switch ($sort_by) {
+    case 'date_newest':
+        $sql .= " ORDER BY id DESC";
+        break;
+    case 'date_oldest':
+        $sql .= " ORDER BY id ASC";
+        break;
+    case 'property_no':
+        $sql .= " ORDER BY par_no ASC";
+        break;
+    case 'amount_highest':
+        $sql .= " ORDER BY amount DESC";
+        break;
+    case 'amount_lowest':
+        $sql .= " ORDER BY amount ASC";
+        break;
+    default:
+        $sql .= " ORDER BY id DESC";
+}
 
 require_once 'functions.php';
 try {
@@ -106,7 +127,6 @@ try {
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* Page-Specific Icon */
         .container h2::before {
             content: "\f1b3";
             font-family: "Font Awesome 6 Free";
@@ -175,23 +195,38 @@ try {
 <div class="container">
     <h2>PPE Inventory List</h2>
 
-    <!-- Search and Add (Semi-Expendable style) -->
-    <div class="search-add-container" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
-        <div class="control" style="flex: 1;">
-            <form method="GET" class="search-form" style="display: flex; align-items: center; gap: 10px;">
+
+    <!-- Search, Sort, and Add -->
+    <form method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+            <div class="control">
+                <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+                    <i class="fas fa-sort"></i> Sort by:
+                </label>
+                <select id="sort-select" name="sort" onchange="this.form.submit()">
+                    <option value="date_newest" <?= ($sort_by == 'date_newest') ? 'selected' : '' ?>>Date (Newest First)</option>
+                    <option value="date_oldest" <?= ($sort_by == 'date_oldest') ? 'selected' : '' ?>>Date (Oldest First)</option>
+                    <option value="property_no" <?= ($sort_by == 'property_no') ? 'selected' : '' ?>>Property No. (A-Z)</option>
+                    <option value="amount_highest" <?= ($sort_by == 'amount_highest') ? 'selected' : '' ?>>Total Amount (Highest)</option>
+                    <option value="amount_lowest" <?= ($sort_by == 'amount_lowest') ? 'selected' : '' ?>>Total Amount (Lowest)</option>
+                </select>
+            </div>
+
+            <div class="control">
                 <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
                     <i class="fas fa-search"></i> Search:
                 </label>
-                <input type="text" id="searchInput" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer" class="search-input">
+                <input type="text" id="searchInput" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer">
                 <?php if (!empty($search)): ?>
                     <a href="PPE.php" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
                 <?php endif; ?>
-            </form>
+            </div>
+            <div class="add-btn-section" style="margin-left: auto;">
+                <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
+            </div>
         </div>
-        <div class="add-btn-section" style="margin-left: auto;">
-            <a href="add_ppe.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Item</a>
-        </div>
-    </div>
+    </form>
+
 
     <?php if (isset($_GET['deleted'])): ?>
         <div class="alert alert-success">Item deleted successfully.</div>
@@ -202,7 +237,7 @@ try {
     <table>
         <thead>
             <tr>
-                <th><i class="fas fa-hashtag"></i> PAR No</th>
+                <th><i class="fas fa-hashtag"></i> Property No</th>
                 <th><i class="fas fa-box"></i> Item Name</th>
                 <th><i class="fas fa-align-left"></i> Description</th>
                 <th><i class="fas fa-list-ol"></i> Quantity</th>
@@ -223,7 +258,7 @@ try {
             <?php else: ?>
                 <?php foreach ($items as $item): ?>
                 <tr>
-                    <td><?= htmlspecialchars($item['par_no']); ?></td>
+                    <td><?= htmlspecialchars($item['par_no']); ?></td> <!-- TO BE FIXED -->
                     <td><?= htmlspecialchars($item['item_name']); ?></td>
                     <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
                     <td><?= number_format($item['quantity']); ?></td>

@@ -177,24 +177,6 @@ if ($result) {
             cursor: pointer;
         }
         
-        .search-container {
-            margin: 12px 0;
-        }
-        
-        .search-input-rpcppe {
-            width: 100%;
-            padding: 10px 16px;
-            font-size: 14px;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
-        }
-        
-        .search-input-rpcppe:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
         .rpcppe-table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
@@ -337,18 +319,17 @@ if ($result) {
                     </div>
                 </div>
 
-                <div class="table-controls" style="margin: 12px 0; display:flex; gap:8px; align-items:center;">
-                    <label for="row_limit">Show:</label>
-                    <select id="row_limit" aria-label="Rows to display">
-                        <option value="5" selected>5</option>
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="all">All</option>
-                    </select>
-                </div>
-
-                    <div class="search-container">
-                                <input type="text" id="searchInput" class="search-input-rpcppe" placeholder="Search by PAR number, item name, or description...">
+                    <div class="table-controls" style="display: flex; gap: 12px; align-items: center; justify-content: flex-start;">
+                            <label for="row_limit" style="color: #001F80;">Show:</label>
+                            <select id="row_limit" aria-label="Rows to display">
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="all">All</option>
+                            </select>
+                            <div class="search-container" style="margin-left: 24px;">
+                                <input type="text" id="searchInput" class="search-input" placeholder="Search by PAR number, item name, or description...">
+                            </div>
                     </div>
 
             <div class="rpcppe-table-wrapper">
