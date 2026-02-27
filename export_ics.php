@@ -225,7 +225,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             @page { size: A4 portrait; margin: 12mm; }
             body { margin: 0; padding: 0; }
             .no-print { display: none !important; }
-            .print-container { page-break-inside: avoid; }
+            .print-container { page-break-inside: avoid; border: none !important; }
         }
         
         /* General styles */
@@ -307,8 +307,8 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             border-right: 1px solid #000;
             border-top: 0;
             border-bottom: 0;
-            padding-top: 10px;
-            padding-bottom: 10px; /* make rows taller so columns look longer */
+            padding-top: 5px;
+            padding-bottom: 5px; 
         }
         
         .items-table th {
@@ -428,14 +428,14 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
     </div>
 
     <div class="print-container">
-        <div style="text-align:right; font-style:italic; font-size:11px;">Annex A.3</div>
+        <div style="text-align:right; font-style:italic; font-size:11px;">Appendix 59</div> <!-- (OLD) Annex A.3 -->
         <div class="header-title">INVENTORY CUSTODIAN SLIP</div>
 
         <table class="info-section" style="border:0;">
             <tr>
                 <td style="border:0; padding:2px 0;">
                     <strong>Entity Name:</strong>
-                    <span style="display:inline-block; min-width:260px; border-bottom:1px solid #000; padding:0 4px;">
+                    <span style="display:inline-block; min-width:205px; border-bottom:1px solid #000; padding:0 4px;">
                         <?php echo htmlspecialchars($ics['entity_name']); ?>
                     </span>
                 </td>
@@ -444,13 +444,13 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             <tr>
                 <td style="border:0; padding:2px 0;">
                     <strong>Fund Cluster :</strong>
-                    <span style="display:inline-block; min-width:260px; border-bottom:1px solid #000; padding:0 4px;">
+                    <span style="display:inline-block; min-width:200px; border-bottom:1px solid #000; padding:0 4px;">
                         <?php echo htmlspecialchars($ics['fund_cluster']); ?>
                     </span>
                 </td>
                 <td style="border:0; padding:2px 0; text-align:right;">
                     <strong>ICS No :</strong>
-                    <span style="display:inline-block; min-width:160px; border-bottom:1px solid #000; padding:0 4px;">
+                    <span style="display:inline-block; min-width:70px; border-bottom:1px solid #000; padding:0 4px;">
                         <?php echo htmlspecialchars($ics['ics_no']); ?>
                     </span>
                 </td>
@@ -670,16 +670,38 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                     }
                 }
 
-                for ($i = $row_count; $i < 14; $i++) {
-                    echo '<tr>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '<td>&nbsp;</td>';
-                    echo '</tr>';
+                // Add '*** NOTHING FOLLOWS ***' only in the description column
+                echo '<tr>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td class="description" style="text-align:left; font-weight:bold;">*** NOTHING FOLLOWS ***</td>';
+                echo '<td>&nbsp;</td>';
+                echo '<td>&nbsp;</td>';
+                echo '</tr>';
+                for ($i = $row_count + 1; $i < 14; $i++) {
+                    if ($i === 13) {
+                        echo '<tr>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td class="description" style="text-align:left;">** Purchased from (for future data) under (for future data ) dated (date)</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '</tr>';
+                    } else {
+                        echo '<tr>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '<td>&nbsp;</td>';
+                        echo '</tr>';
+                    }
                 }
                 ?>
             </tbody>
@@ -687,7 +709,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
 
         <table class="signatures">
             <tr>
-                <td style="border-top: none !important;">
+                <td style="border-top: none !important; width: 40%;">
                     <div class="signature-title">Received from:</div>
                     <div class="signature-line">
                         <span><?php echo htmlspecialchars($ics['received_from'] ?? ''); ?></span>
@@ -702,7 +724,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                     </div>
                     <div class="signature-label" style="text-align:center;">Date</div>
                 </td>
-                <td style="border-top: none !important;">
+                <td style="border-top: none !important; width: 75%;">
                     <div class="signature-title">Received by:</div>
                     <div class="signature-line">
                         <span><?php echo htmlspecialchars($ics['received_by'] ?? ''); ?></span>
