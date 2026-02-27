@@ -331,7 +331,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
     </style>
 </head>
 <body>
-    <div class="edit-ris-page content">
+    <div class="content">
         <div class="form-container">
             <header class="page-header">
                 <h1>

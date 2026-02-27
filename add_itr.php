@@ -217,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 
     <!-- Signatories (Approved / Released / Received) to match Annex A.5 -->
     <div class="section-card">
-      <h3>Signatories</h3>
+      <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Approved by (Agency/Entity Head):</label>

@@ -82,11 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
     .form-container {
         max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 30px auto;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(10px);
     }
     .form-group {
         margin-bottom: 20px;
@@ -155,9 +156,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="container">
     <div class="form-container">
-        <header style="margin-bottom: 30px;">
-            <h1>Add New PPE Item</h1>
-            <p>Register a new PPE item in the system</p>
+        <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
+            <h1 style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px;"><i class="fas fa-plus-circle" style="color: #3b82f6;"></i> Add New PPE Item</h1>
+            <p style="color: #64748b; margin: 0;">Register a new PPE item in the system</p>
         </header>
 
         <?php if ($error): ?>

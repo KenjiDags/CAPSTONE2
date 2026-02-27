@@ -2245,7 +2245,8 @@ body {
     border: 2px solid #e5e7eb; 
     border-radius: 8px; 
     padding: 20px; 
-    margin-bottom: 20px; 
+    margin-bottom: 20px;
+     
 }
 
 .section-card h3 { 
@@ -2256,6 +2257,8 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 20px;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
 }
 
 .section-card h3 i {
@@ -2291,9 +2294,9 @@ body {
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border: 2px solid #e5e7eb;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
     background-color: #fff;

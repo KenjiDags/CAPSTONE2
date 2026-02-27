@@ -207,56 +207,19 @@ include 'sidebar.php';
         color: #64748b;
         font-size: 15px;
     }
-    h3, h4 {
-        color: #1e293b;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    h3 i, h4 i {
-        color: #3b82f6;
-        font-size: 0.9em;
-    }
-    .form-group {
-        margin-bottom: 20px;
-    }
-    .form-group label {
+
+    .form-grid .form-group label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: 600;
-        color: #333;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px 14px;
-        border: 2px solid #e5e7eb;
-        border-radius: 6px;
         font-size: 14px;
-        transition: all 0.3s ease;
-        background-color: #fff;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #374151;
     }
-    .form-group input:hover,
-    .form-group select:hover,
-    .form-group textarea:hover {
-        border-color: #cbd5e1;
-    }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .form-group textarea {
-        height: 80px;
-        resize: vertical;
-    }
+
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 10px;
     }
     .btn {
         padding: 12px 28px;
@@ -340,7 +303,6 @@ include 'sidebar.php';
     .items-selection {
         border: 2px solid #e5e7eb;
         border-radius: 8px;
-        padding: 15px;
         max-height: 400px;
         overflow-y: auto;
         background: #f9fafb;
@@ -435,7 +397,7 @@ include 'sidebar.php';
 </style>
 </head>
 <body>
-<div class="container">
+<div class="content">
     <div class="form-container">
         <header class="page-header">
             <h1><i class="fas fa-exchange-alt"></i> Add Property Transfer Report (PTR)</h1>
@@ -455,136 +417,157 @@ include 'sidebar.php';
         <?php endif; ?>
 
         <form method="POST">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="ptr_no">PTR No <span class="required">*</span></label>
-                    <input type="text" id="ptr_no" name="ptr_no" value="<?php echo isset($ptr_no) ? htmlspecialchars($ptr_no) : ''; ?>" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="transfer_date">Transfer Date <span class="required">*</span></label>
-                    <input type="date" id="transfer_date" name="transfer_date" value="<?= date('Y-m-d') ?>" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="entity_name">Entity Name <span class="required">*</span></label>
-                    <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" required>
-                </div>
-                <div class="form-group">
-                    <label for="fund_cluster">Fund Cluster</label>
-                    <input type="text" id="fund_cluster" name="fund_cluster" value="101">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
-                    <input type="text" id="from_officer" name="from_officer" required readonly style="background:#f3f4f6;cursor:not-allowed;">
-                </div>
-                <div class="form-group">
-                    <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
-                    <input type="text" id="to_officer" name="to_officer" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Transfer Type</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="transfer_donation" name="transfer_type" value="Donation" checked>
-                        <label for="transfer_donation">Donation</label>
+            <div class="section-card">
+                <h3><i class="fas fa-info-circle"></i> PTR Details </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ptr_no">PTR No <span class="required">*</span></label>
+                        <input type="text" id="ptr_no" name="ptr_no" value="<?php echo isset($ptr_no) ? htmlspecialchars($ptr_no) : ''; ?>" readonly>
                     </div>
-                    <div class="radio-option">
-                        <input type="radio" id="transfer_relocation" name="transfer_type" value="Relocation">
-                        <label for="transfer_relocation">Relocation</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="transfer_reassignment" name="transfer_type" value="Reassignment">
-                        <label for="transfer_reassignment">Reassignment</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="transfer_others" name="transfer_type" value="Others">
-                        <label for="transfer_others">Others</label>
+                    <div class="form-group">
+                        <label for="transfer_date">Transfer Date <span class="required">*</span></label>
+                        <input type="date" id="transfer_date" name="transfer_date" value="<?= date('Y-m-d') ?>" required>
                     </div>
                 </div>
-                <div id="others_input_container">
-                    <input type="text" id="others_input" name="transfer_type_others" placeholder="Please specify...">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="entity_name">Entity Name <span class="required">*</span></label>
+                        <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fund_cluster">Fund Cluster</label>
+                        <input type="text" id="fund_cluster" name="fund_cluster" value="101">
+                    </div>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label for="reason">Reason / Purpose</label>
-                <textarea id="reason" name="reason"></textarea>
-            </div>
-
-            <h3 style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-pen-nib"></i> Signature Details</h3>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="approved_by">Approved By - Name</label>
-                    <input type="text" id="approved_by" name="approved_by" placeholder="Full Name">
-                </div>
-                <div class="form-group">
-                    <label for="approved_by_designation">Approved By - Designation</label>
-                    <input type="text" id="approved_by_designation" name="approved_by_designation" placeholder="Position/Designation">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="released_by">Released/Issued By - Name</label>
-                    <input type="text" id="released_by" name="released_by" placeholder="Full Name">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
+                        <input type="text" id="from_officer" name="from_officer" required readonly style="background:#f3f4f6;cursor:not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
+                        <input type="text" id="to_officer" name="to_officer" required>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="released_by_designation">Released/Issued By - Designation</label>
-                    <input type="text" id="released_by_designation" name="released_by_designation" placeholder="Position/Designation">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="received_by">Received By - Name</label>
-                    <input type="text" id="received_by" name="received_by" placeholder="Full Name">
-                </div>
-                <div class="form-group">
-                    <label for="received_by_designation">Received By - Designation</label>
-                    <input type="text" id="received_by_designation" name="received_by_designation" placeholder="Position/Designation">
-                </div>
-            </div>
-
-            <h4 style="margin-top: 20px; margin-bottom: 15px;"><i class="fas fa-calendar-alt"></i> Signature Dates</h4>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="approved_by_date">Approved By - Date</label>
-                    <input type="date" id="approved_by_date" name="approved_by_date" value="<?= date('Y-m-d') ?>">
-                </div>
-                <div class="form-group">
-                    <label for="released_by_date">Released/Issued By - Date</label>
-                    <input type="date" id="released_by_date" name="released_by_date" value="<?= date('Y-m-d') ?>">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="received_by_date">Received By - Date</label>
-                <input type="date" id="received_by_date" name="received_by_date" value="<?= date('Y-m-d') ?>">
-            </div>
-
-            <div class="form-group">
-                <label>Select PPE Items to Transfer <span class="required">*</span></label>
-                <div class="items-selection">
-                    <?php while ($item = $ppe_items->fetch_assoc()): ?>
-                        <div class="item-checkbox">
-                            <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" data-officer="<?= htmlspecialchars($item['officer_incharge']) ?>">
-                            <label for="item_<?= $item['id'] ?>" class="item-info">
-                                <strong><?= htmlspecialchars($item['par_no']) ?></strong> - 
-                                <?= htmlspecialchars($item['item_name']) ?> - 
-                                <?= htmlspecialchars($item['item_description']) ?> 
-                                (₱<?= number_format($item['amount'], 2) ?>)
-                            </label>
+                    <label>Transfer Type</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="transfer_donation" name="transfer_type" value="Donation" checked>
+                            <label for="transfer_donation">Donation</label>
                         </div>
-                    <?php endwhile; ?>
+                        <div class="radio-option">
+                            <input type="radio" id="transfer_relocation" name="transfer_type" value="Relocation">
+                            <label for="transfer_relocation">Relocation</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="transfer_reassignment" name="transfer_type" value="Reassignment">
+                            <label for="transfer_reassignment">Reassignment</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="transfer_others" name="transfer_type" value="Others">
+                            <label for="transfer_others">Others</label>
+                        </div>
+                    </div>
+                    <div id="others_input_container">
+                        <input type="text" id="others_input" name="transfer_type_others" placeholder="Please specify...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Reason / Purpose</label>
+                    <textarea id="reason" name="reason"></textarea>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3><i class="fas fa-boxes"></i> Available Items</h3>
+                <div class="form-group">
+                    <label>Select PPE Items to Transfer <span class="required"></span></label>
+                    <div class="items-selection" style="overflow-x:auto;">
+                        <table class="table table-bordered" style="width:100%; min-width:700px; border-collapse:collapse; margin-top: 0 !important;">
+                            <thead>
+                                <tr style="background:#f8f8f8;">
+                                    <th style="width:40px;"></th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Current Officer</th>
+                                    <th>Amount</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $ppe_items->data_seek(0); while ($item = $ppe_items->fetch_assoc()): ?>
+                                <tr>
+                                    <td style="text-align:center;">
+                                        <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" data-officer="<?= htmlspecialchars($item['officer_incharge']) ?>">
+                                    </td>
+                                    <td><?= htmlspecialchars($item['item_name']) ?></td>
+                                    <td><?= htmlspecialchars($item['item_description']) ?></td>
+                                    <td><?= htmlspecialchars($item['officer_incharge']) ?></td>
+                                    <td class="currency">₱<?= number_format($item['amount'], 2) ?></td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; justify-content:center;">
+                                            <input type="number" name="quantity[<?= $item['id'] ?>]" min="1" max="<?= htmlspecialchars($item['quantity']) ?>" value="1" style="width:60px; text-align:center; padding:4px !important; border-radius:4px;" <?= ($item['quantity'] <= 0 ? 'disabled' : '') ?>>
+                                            <span style="font-size:11px; color:#888; margin-left:4px;">/ <?= htmlspecialchars($item['quantity']) ?></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> 
+
+            <div class="section-card">
+                <h3><i class="fas fa-pen-nib"></i> Signature Details</h3>
+                <div class="form-row" style="row-gap: 0px !important;">
+                    <div class="form-group" style="display: flex; gap: 16px; align-items: flex-end;">
+                        <div>
+                            <label for="approved_by">Approved By - Name</label>
+                            <input type="text" id="approved_by" name="approved_by" placeholder="Full Name" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="approved_by_designation">Approved By - Designation</label>
+                            <input type="text" id="approved_by_designation" name="approved_by_designation" placeholder="Position/Designation" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="approved_by_date">Approved By - Date</label>
+                            <input type="date" id="approved_by_date" name="approved_by_date" value="<?= date('Y-m-d') ?>" style="width: 160px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="row-gap: 0px !important;">
+                    <div class="form-group" style="display: flex; gap: 16px; align-items: flex-end;">
+                        <div>
+                            <label for="released_by">Released/Issued By - Name</label>
+                            <input type="text" id="released_by" name="released_by" placeholder="Full Name" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="released_by_designation">Released/Issued By - Designation</label>
+                            <input type="text" id="released_by_designation" name="released_by_designation" placeholder="Position/Designation" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="released_by_date">Released/Issued By - Date</label>
+                            <input type="date" id="released_by_date" name="released_by_date" value="<?= date('Y-m-d') ?>" style="width: 160px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="row-gap: 0px !important;">
+                    <div class="form-group" style="display: flex; gap: 16px; align-items: flex-end;">
+                        <div>
+                            <label for="received_by">Received By - Name</label>
+                            <input type="text" id="received_by" name="received_by" placeholder="Full Name" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="received_by_designation">Received By - Designation</label>
+                            <input type="text" id="received_by_designation" name="received_by_designation" placeholder="Position/Designation" style="width: 350px;">
+                        </div>
+                        <div>
+                            <label for="received_by_date">Received By - Date</label>
+                            <input type="date" id="received_by_date" name="received_by_date" value="<?= date('Y-m-d') ?>" style="width: 160px;">
+                        </div>
+                    </div>
                 </div>
             </div>
 

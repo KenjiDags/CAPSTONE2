@@ -85,7 +85,6 @@ if (!empty($binds)) {
     }
 }
 
-// Helper: safe html
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
 ?>
@@ -110,39 +109,223 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
             .main-table tr { page-break-inside: avoid; page-break-after: auto; }
             .annex-reference { page-break-before: avoid; }
         }
-        body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; background-color: #f5f5f5; }
-        .export-instructions { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
-        .export-instructions h3 { margin: 0 0 10px 0; color: #856404; }
-        .export-instructions ol { margin: 10px 0; padding-left: 20px; }
-        .export-instructions p { margin: 10px 0 0 0; font-weight: bold; color: #856404; }
-        .button-container { margin: 20px 0; display: flex; gap: 10px; }
-        .print-btn { background: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        .back-btn { background: #6c757d; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        .print-btn:hover { background: #0056b3; }
-        .back-btn:hover { background: #545b62; }
-        .form-container { background: #fff; border: none; padding: 15px; margin-bottom: 20px; }
-        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .header-left { flex: 1; }
-        .header-right { text-align: right; }
-        .annex-reference { font-style: italic; font-size: 11px; margin: 0; padding: 0; }
-        .sheet-number { font-weight: bold; font-size: 11px; margin: 0; padding: 0; }
-        .form-title { text-align: center; font-weight: bold; margin: 15px 0; font-size: 13px; text-transform: uppercase; }
-        .info-line { margin: 5px 0; font-size: 11px; }
-        .info-line span { display: inline-block; border-bottom: 1px solid #000; min-width: 200px; padding: 0 5px; }
-        .form-header { display: none; } /* Hide old header tables */
-        .main-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .main-table th, .main-table td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; font-size: 10px; }
-        .main-table td { font-size: 9px; }
-        .main-table th { background: #fff; font-weight: normal; }
-        .main-table .text-left { text-align: left; }
-        .main-table .text-right { text-align: right; }
-        /* Adjust column widths to match image */
-        .date-col{width:55px;} .ics-col{width:65px;} .property-col{width:70px;} .item-col{width:200px;}
-        .life-col{width:55px;} .issued-qty-col{width:40px;} .officer-col{width:110px;}
-        .returned-qty-col{width:40px;} .returned-officer-col{width:110px;}
-        .reissued-qty-col{width:40px;} .reissued-officer-col{width:110px;}
-        .disposed-qty-col{width:40px;} .balance-col{width:50px;}
-        .amount-col{width:70px;} .remarks-col{width:70px;}
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 12px;
+            background-color: #f5f5f5;
+        }
+
+        .export-instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .export-instructions h3 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+
+        .export-instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .export-instructions p {
+            margin: 10px 0 0 0;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .button-container {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .print-button {
+            background: #007cba;
+            color: #fff;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 6px;
+            text-decoration: none;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .print-button:hover {
+            background: #0056b3;
+        }
+
+        .back-btn:hover {
+            background: #545b62;
+        }
+
+        .form-container {
+            background: #fff;
+            border: none;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .annex-reference {
+            font-style: italic;
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sheet-number {
+            font-weight: bold;
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-title {
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .info-line {
+            margin: 5px 0;
+            font-size: 11px;
+        }
+
+        .info-line span {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 200px;
+            padding: 0 5px;
+        }
+
+        .form-header {
+            display: none;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .main-table th,
+        .main-table td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 10px;
+        }
+
+        .main-table td {
+            font-size: 9px;
+        }
+
+        .main-table th {
+            background: #fff;
+            font-weight: normal;
+        }
+
+        .main-table .text-left {
+            text-align: left;
+        }
+
+        .main-table .text-right {
+            text-align: right;
+        }
+
+        /* Column widths */
+        .date-col {
+            width: 55px;
+        }
+
+        .ics-col {
+            width: 65px;
+        }
+
+        .property-col {
+            width: 70px;
+        }
+
+        .item-col {
+            width: 200px;
+        }
+
+        .life-col {
+            width: 55px;
+        }
+
+        .issued-qty-col {
+            width: 40px;
+        }
+
+        .officer-col {
+            width: 110px;
+        }
+
+        .returned-qty-col {
+            width: 40px;
+        }
+
+        .returned-officer-col {
+            width: 110px;
+        }
+
+        .reissued-qty-col {
+            width: 40px;
+        }
+
+        .reissued-officer-col {
+            width: 110px;
+        }
+
+        .disposed-qty-col {
+            width: 40px;
+        }
+
+        .balance-col {
+            width: 50px;
+        }
+
+        .amount-col {
+            width: 70px;
+        }
+
+        .remarks-col {
+            width: 70px;
+        }
         
     </style>
 <?php /* keep head clean */ ?>
@@ -159,10 +342,9 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
             </ol>
             <p>For best results: Use Chrome or Edge for optimal PDF formatting.</p>
         </div>
-        <div class="button-container">
-            <button class="print-btn" onclick="window.print()">🖨️ Print/Save as PDF</button>
+            <button class="print-button" onclick="window.print()">Print/Save as PDF</button>
             <a href="regspi.php" class="back-btn">← Back to Registry</a>
-        </div>
+            <hr style="margin:14px 0;">
     </div>
 
     <div class="form-container">

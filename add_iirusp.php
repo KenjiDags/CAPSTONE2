@@ -144,7 +144,6 @@ ensure_iirusp_tables($conn);
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
     .section-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .section-card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #0056b3; display: inline-block; padding-bottom: 5px; margin-bottom: 15px; }
     
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .form-group label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 5px; color: #555; }
@@ -153,7 +152,10 @@ ensure_iirusp_tables($conn);
     .table-frame { border: 1px solid #ccc; max-height: 400px; overflow: hidden; border-radius: 4px; }
     .table-viewport { overflow-y: auto; max-height: 400px; }
     
-    #itemsTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+    #itemsTable { 
+        font-size: 12px;
+        margin-top: 0 !important;
+     }
     #itemsTable thead tr { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #0056b3 0%, #004494 100%); color: white; }
     #itemsTable th { padding: 10px; text-align: left; font-weight: normal; }
     #itemsTable td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
@@ -170,170 +172,178 @@ ensure_iirusp_tables($conn);
     .button-group button { padding: 12px 25px; margin-left: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     .btn-submit { background: #28a745; color: white; }
     .btn-submit:hover { background: #218838; }
-    .container h2::before {
+    .form-container h2::before {
         content: "\f1f8";
         font-family: "Font Awesome 6 Free";
         font-weight: 900;
         color: #3b82f6;
         margin-right: 12px;
     }
+    .section-card h3 {
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+    }
 </style>
 </head>
 <body class="iirusp-page">
 <?php include 'sidebar.php'; ?>
 
-<div class="container">
-    <h2>Add IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h2>
+<div class="content">
+    <div class="form-container">
+        <header class="page-header">
+            <h1> <i class="fas fa-file-invoice"></i>Add IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h1>
+            <p>Create a new Inventory & Inspection Report</p>
+        </header>   
 
-    <!-- HEADER FORM -->
-    <div class="section-card">
-        <h3>IIRUSP Details</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label>IIRUSP No.:</label>
-                <input type="text" id="iirusp_no" value="<?php echo date('Y-m').'-0001'; ?>">
+        <!-- HEADER FORM -->
+        <div class="section-card">
+            <h3> <i class="fas fa-info-circle"></i>IIRUSP Details</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>IIRUSP No.:</label>
+                    <input type="text" id="iirusp_no" value="<?php echo date('Y-m').'-0001'; ?>">
+                </div>
+                <div class="form-group">
+                    <label>As At (Date):</label>
+                    <input type="date" id="as_at" value="<?= date('Y-m-d') ?>">
+                </div>
+                <div class="form-group">
+                    <label>Entity Name:</label>
+                    <input type="text" id="entity_name" value="TESDA Regional Office">
+                </div>
+                <div class="form-group">
+                    <label>Fund Cluster:</label>
+                    <input type="text" id="fund_cluster" value="101">
+                </div>
             </div>
-            <div class="form-group">
-                <label>As At (Date):</label>
-                <input type="date" id="as_at" value="<?= date('Y-m-d') ?>">
-            </div>
-            <div class="form-group">
-                <label>Entity Name:</label>
-                <input type="text" id="entity_name" value="TESDA Regional Office">
-            </div>
-            <div class="form-group">
-                <label>Fund Cluster:</label>
-                <input type="text" id="fund_cluster" value="101">
+            
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Accountable Officer:</label>
+                    <input type="text" id="accountable_officer_name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Designation:</label>
+                    <input type="text" id="accountable_officer_designation" placeholder="Position">
+                </div>
+                <div class="form-group">
+                    <label>Station:</label>
+                    <input type="text" id="accountable_officer_station" placeholder="Office/Station">
+                </div>
             </div>
         </div>
-        
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Accountable Officer:</label>
-                <input type="text" id="accountable_officer_name" placeholder="Name">
-            </div>
-            <div class="form-group">
-                <label>Designation:</label>
-                <input type="text" id="accountable_officer_designation" placeholder="Position">
-            </div>
-            <div class="form-group">
-                <label>Station:</label>
-                <input type="text" id="accountable_officer_station" placeholder="Office/Station">
-            </div>
-        </div>
-    </div>
 
-    <!-- GRID STYLE UI FOR SELECTING ITEMS -->
-    <div class="section-card">
-        <h3>Unserviceable Items (Search & Select)</h3>
+        <!-- GRID STYLE UI FOR SELECTING ITEMS -->
+        <div class="section-card">
+            <h3> <i class="fas fa-list"></i>Unserviceable Items (Search & Select)</h3>
 
-        <!-- Search Bar -->
-        <div style="margin-bottom: 10px;">
-            <input type="text" id="itemSearch" class="search-input" 
-                   placeholder="Search Property No, Item Description, or Holder Name..." 
-                   onkeyup="filterTable()">
-        </div>
+            <!-- Search Bar -->
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="itemSearch" class="search-input" 
+                    placeholder="Search Property No, Item Description, or Holder Name..." 
+                    onkeyup="filterTable()">
+            </div>
 
-        <div class="table-frame">
-            <div class="table-viewport">
-                <table id="itemsTable">
-                    <thead>
-                        <tr>
-                            <th style="min-width:90px;">Date Acq.</th>
-                            <th>Property No.</th>
-                            <th>Description</th>
-                            <th style="width:120px;">Held By</th>
-                            <th style="width:60px;">On Hand</th>
-                            <th style="width:100px;">Cost</th>
-                            <th style="width:80px; background-color:#ef4444;">Disposal Qty</th>
-                            <th>Remarks</th>
-                            <th style="width:100px;">Mode</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                        // Pull items directly from semi_expendable_property for disposal
-                        $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
-                        $res = $conn->query($sql);
-                        if ($res && $res->num_rows > 0) {
-                            while ($row = $res->fetch_assoc()) {
-                                $search = strtolower($row['semi_expendable_property_no'] . " " . $row['item_description']);
-?>
-    <tr class="item-row" data-search="<?= $search ?>">
-        <td><?= htmlspecialchars($row['date']) ?></td>
-        <td class="prop-cell"><?= htmlspecialchars($row['semi_expendable_property_no']) ?></td>
-        <td class="desc-cell"><?= htmlspecialchars($row['item_description']) ?></td>
-        <td class="holder-cell" style="font-weight:bold; color:#0056b3;">Inventory</td>
-        <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
-            <?= (int)$row['quantity'] ?>
-        </td>
-        <td class="cost-cell" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
-        <td>
-            <input type="number" class="disposal-qty" min="0" max="<?= (int)$row['quantity_balance'] ?>" placeholder="0">
-        </td>
-        <td>
-            <input type="text" class="remarks-input" placeholder="e.g. Broken">
-        </td>
-        <td>
-            <select class="mode-select">
-                <option value="Destruction">Destruction</option>
-                <option value="Sale">Sale</option>
-                <option value="Transfer">Transfer</option>
-            </select>
-        </td>
-        <td class="unit-cell" style="display:none;">
-            <?= htmlspecialchars($row['unit']) ?>
-        </td>
-    </tr>
-<?php
+            <div class="table-frame">
+                <div class="table-viewport">
+                    <table id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th style="min-width:90px;">Date Acq.</th>
+                                <th>Property No.</th>
+                                <th>Description</th>
+                                <th style="width:120px;">Held By</th>
+                                <th style="width:60px;">On Hand</th>
+                                <th style="width:100px;">Cost</th>
+                                <th style="width:80px; background-color:#ef4444;">Disposal Qty</th>
+                                <th>Remarks</th>
+                                <th style="width:100px;">Mode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                            // Pull items directly from semi_expendable_property for disposal
+                            $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
+                            $res = $conn->query($sql);
+                            if ($res && $res->num_rows > 0) {
+                                while ($row = $res->fetch_assoc()) {
+                                    $search = strtolower($row['semi_expendable_property_no'] . " " . $row['item_description']);
+    ?>
+        <tr class="item-row" data-search="<?= $search ?>">
+            <td><?= htmlspecialchars($row['date']) ?></td>
+            <td class="prop-cell"><?= htmlspecialchars($row['semi_expendable_property_no']) ?></td>
+            <td class="desc-cell"><?= htmlspecialchars($row['item_description']) ?></td>
+            <td class="holder-cell" style="font-weight:bold; color:#0056b3;">Inventory</td>
+            <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
+                <?= (int)$row['quantity'] ?>
+            </td>
+            <td class="cost-cell" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
+            <td>
+                <input type="number" class="disposal-qty" min="0" max="<?= (int)$row['quantity_balance'] ?>" placeholder="0">
+            </td>
+            <td>
+                <input type="text" class="remarks-input" placeholder="e.g. Broken">
+            </td>
+            <td>
+                <select class="mode-select">
+                    <option value="Destruction">Destruction</option>
+                    <option value="Sale">Sale</option>
+                    <option value="Transfer">Transfer</option>
+                </select>
+            </td>
+            <td class="unit-cell" style="display:none;">
+                <?= htmlspecialchars($row['unit']) ?>
+            </td>
+        </tr>
+    <?php
+                                }
+                            } else {
+                                echo '<tr><td colspan="10">No items available for disposal.</td></tr>';
                             }
-                        } else {
-                            echo '<tr><td colspan="10">No items available for disposal.</td></tr>';
-                        }
-                    ?>
-                    </tbody>
-                </table>
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div style="text-align:right; margin-bottom:30px;">
-        <h3 style="display:inline-block; margin-right:20px;">Total Value: <span id="grand_total_display" style="color:#0056b3;">₱0.00</span></h3>
-    </div>
+        
+        <div style="text-align:right; margin-bottom:30px;">
+            <h3 style="display:inline-block; font-size:18px; margin: 0 !important;">Total Value: <span id="grand_total_display" style="color:#0056b3;">₱0.00</span></h3>
+        </div>
 
-    <!-- FOOTER SIGNATORIES -->
-    <div class="section-card">
-        <h3>Signatories</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Requested By:</label>
-                <input type="text" id="requested_by">
-            </div>
-            <div class="form-group">
-                <label>Approved By:</label>
-                <input type="text" id="approved_by">
-            </div>
-            <div class="form-group">
-                <label>Inspection Officer:</label>
-                <input type="text" id="inspection_officer">
-            </div>
-            <div class="form-group">
-                <label>Witness:</label>
-                <input type="text" id="witness">
+        <!-- FOOTER SIGNATORIES -->
+        <div class="section-card">
+            <h3> <i class="fas fa-pen-nib"></i>Signatories</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Requested By:</label>
+                    <input type="text" id="requested_by">
+                </div>
+                <div class="form-group">
+                    <label>Approved By:</label>
+                    <input type="text" id="approved_by">
+                </div>
+                <div class="form-group">
+                    <label>Inspection Officer:</label>
+                    <input type="text" id="inspection_officer">
+                </div>
+                <div class="form-group">
+                    <label>Witness:</label>
+                    <input type="text" id="witness">
+                </div>
             </div>
         </div>
-    </div>
 
-        <button onclick="submitIIRUSP()" class="pill-btn pill-add" type="submit">
-            <i class="fas fa-save"></i>SUBMIT IIRUSP
-        </button>
-        <a href="iirusp.php">
-            <button type="button" class="pill-btn pill-view"><i class="fas fa-ban"></i>Cancel</button>
-        </a>
+            <button onclick="submitIIRUSP()" class="pill-btn pill-add" type="submit">
+                <i class="fas fa-save"></i>SUBMIT IIRUSP
+            </button>
+            <a href="iirusp.php">
+                <button type="button" class="pill-btn pill-view"><i class="fas fa-ban"></i>Cancel</button>
+            </a>
+    </div>
 </div>
-
 
 
 <!-- JS LOGIC -->

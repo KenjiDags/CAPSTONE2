@@ -204,28 +204,12 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
   /* Page-Specific Icon */
-  .container h2::before {
+  .container h1::before {
     content: "\f46d";
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
     color: #3b82f6;
     margin-right: 12px;
-  }
-  .frosted-card, .section-card {
-    background: rgba(255,255,255,0.95);
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .frosted-card h3, .section-card h3 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    color: #1e293b;
-    font-weight: 600;
-    border-bottom: 2px solid #3b82f6;
-    padding-bottom: 8px;
   }
   .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
   .form-grid .form-group { display:flex; flex-direction:column; }
@@ -249,113 +233,125 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
-  .actions { display:flex; gap:12px; align-items:center; margin-top:20px; }
+  @media (max-width: 800px) {
+     .form-grid { grid-template-columns: 1fr; } 
+    }
+  .actions { display:flex; 
+    gap:12px; 
+    align-items:center; 
+    margin-top:20px; 
+  }
 </style>
+
 </head>
 <body class="rrsp-page">
 <?php include 'sidebar.php'; ?>
-<div class="container frosted-glass rrsp-add-page">
-  <h2 class="page-title">Add RRSP Form</h2>
 
-  <div class="frosted-card">
-    <h3><i class="fa-solid fa-file-lines"></i> RRSP Details</h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Entity Name:</label>
-        <input type="text" id="entity_name" value="TESDA Regional Office" />
+<div class="content">
+  <div class="form-container rrsp-add-page">
+      <header class="page-header">
+        <h1><i class="fa-solid fa-file-invoice"></i>Add RRSP Form</h1>
+    </header>
+
+    <div class="section-card">
+      <h3><i class="fa-solid fa-info-circle"></i> RRSP Details</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Entity Name:</label>
+          <input type="text" id="entity_name" value="TESDA Regional Office" />
+        </div>
+        <div class="form-group">
+          <label>Fund Cluster:</label>
+          <input type="text" id="fund_cluster" />
+        </div>
       </div>
-      <div class="form-group">
-        <label>Fund Cluster:</label>
-        <input type="text" id="fund_cluster" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>RRSP No.:</label>
+          <input type="text" id="rrsp_no" required>
+          <small class="input-hint">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+        </div>
+        <div class="form-group">
+          <label>Date Prepared:</label>
+          <input type="date" id="date_prepared" value="<?= date('Y-m-d') ?>" />
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>General Remarks:</label>
+          <textarea id="remarks" rows="3" placeholder="Reason / context for returns..."></textarea>
+        </div>
       </div>
     </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>RRSP No.:</label>
-        <input type="text" id="rrsp_no" required>
-        <small class="input-hint">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+
+    <div class="section-card">
+      <h3><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
+      <div class="search-container">
+        <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items by stock number, description, or item no..." onkeyup="filterItems()">
       </div>
-      <div class="form-group">
-        <label>Date Prepared:</label>
-        <input type="date" id="date_prepared" value="<?= date('Y-m-d') ?>" />
+      <div class="table-frame">
+        <div class="table-viewport">
+          <table id="itemsTable" tabindex="-1">
+            <thead>
+              <tr>
+                <th>Item No.</th>
+                <th>ICS No./Date</th>
+                <th>Description</th>
+                <th>Unit Cost</th>
+                <th>Qty on Hand</th>
+                <th>Return Qty</th>
+                <th>Amount</th>
+                <th>End-user</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+            <?php
+            
+            ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" style="text-align:right;font-weight:600;">Grand Total:</td>
+                <td id="grand_total" style="font-weight:700;">₱0.00</td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>General Remarks:</label>
-        <textarea id="remarks" rows="3" placeholder="Reason / context for returns..."></textarea>
+
+    <div class="section-card">
+      <h3><i class="fa-solid fa-pen-nib"></i> Signatories</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Returned By:</label>
+          <input type="text" id="returned_by" />
+        </div>
+        <div class="form-group">
+          <label>Returned Date:</label>
+          <input type="date" id="returned_date" />
+        </div>
       </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Received By:</label>
+          <input type="text" id="received_by" />
+        </div>
+        <div class="form-group">
+          <label>Received Date:</label>
+          <input type="date" id="received_date" />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:18px;">
+      <button type="button" class="pill-btn pill-add" onclick="submitRRSP()"><i class="fa-solid fa-save"></i> Submit RRSP</button>
+      <button type="button" class="pill-btn pill-view" onclick="window.location.href='rrsp.php'"><i class="fa-solid fa-ban"></i> Cancel</button>
     </div>
   </div>
-
-  <div class="frosted-card">
-    <h3><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
-    <div class="search-container">
-      <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items by stock number, description, or item no..." onkeyup="filterItems()">
-    </div>
-    <div class="table-frame">
-      <div class="table-viewport">
-        <table id="itemsTable" tabindex="-1">
-          <thead>
-            <tr>
-              <th>Item No.</th>
-              <th>ICS No./Date</th>
-              <th>Description</th>
-              <th>Unit Cost</th>
-              <th>Qty on Hand</th>
-              <th>Return Qty</th>
-              <th>Amount</th>
-              <th>End-user</th>
-              <th>Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-          <?php
-          // ...existing code...
-          ?>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="6" style="text-align:right;font-weight:600;">Grand Total:</td>
-              <td id="grand_total" style="font-weight:700;">₱0.00</td>
-              <td colspan="2"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="frosted-card">
-    <h3><i class="fa-solid fa-user-check"></i> Signatories</h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Returned By:</label>
-        <input type="text" id="returned_by" />
-      </div>
-      <div class="form-group">
-        <label>Returned Date:</label>
-        <input type="date" id="returned_date" />
-      </div>
-    </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Received By:</label>
-        <input type="text" id="received_by" />
-      </div>
-      <div class="form-group">
-        <label>Received Date:</label>
-        <input type="date" id="received_date" />
-      </div>
-    </div>
-  </div>
-
-  <div class="actions" style="margin-top:18px;">
-    <button type="button" class="pill-btn pill-add" onclick="submitRRSP()"><i class="fa-solid fa-save"></i> Submit RRSP</button>
-    <button type="button" class="pill-btn pill-view" onclick="window.location.href='rrsp.php'"><i class="fa-solid fa-ban"></i> Cancel</button>
-  </div>
-</div>
+</div>  
 <script>
 // Fetch next RRSP number from server based on selected date
 async function generateRRSPNo(){

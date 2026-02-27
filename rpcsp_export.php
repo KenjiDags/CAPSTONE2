@@ -27,25 +27,138 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RPCSP - Export</title>
   <style>
-    @media print { .no-print { display:none !important; } body { margin:0; padding:10px; } }
-    body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.2; margin:0; padding:20px; background:#fff; color:#000; }
-    .container { max-width: 1000px; margin: 0 auto; border: 1px solid #000; padding: 16px; box-sizing: border-box; position: relative; }
-    .appendix { position:absolute; top:10px; right:15px; font-style: italic; font-size:12px; }
-    .header { text-align:center; margin-bottom: 15px; }
-    .title { font-weight:bold; font-size:16px; margin:0; text-decoration: underline; }
-    .subtitle { font-style: italic; margin: 4px 0 12px; font-size:12px; }
-    .field-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
-    .field-input { border-bottom:1px solid #000; min-width: 120px; padding:0 4px; }
-    .field-input.long { min-width: 200px; }
-    table { width:100%; border-collapse: collapse; font-size: 9px; }
-    th, td { border:1px solid #000; padding: 4px 6px; vertical-align: top; text-align: center; }
-    th { background:#f5f5f5; font-weight:bold; }
-    .text-left { text-align: left; }
-    .signatures { width:100%; border-collapse: collapse; margin-top: 25px; }
-    .signatures td { border:1px solid #000; padding:8px; vertical-align:top; height:100px; font-size:10px; }
-    .btn { display:inline-block; padding:8px 16px; border:none; border-radius:4px; cursor:pointer; font-size:12px; text-decoration:none; }
-    .btn-print { background:#007cba; color:#fff; }
-    .btn-back { background:#6c757d; color:#fff; }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 10px;
+      }
+      .container {
+        border: none !important;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.2;
+      margin: 0;
+      padding: 20px;
+      background: #fff;
+      color: #000;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      border: 1px solid #000;
+      padding: 16px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .appendix {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-style: italic;
+      font-size: 12px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+      margin-top: 40px;
+    }
+
+    .title {
+      font-weight: bold;
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-style: italic;
+      margin: 4px 0 12px;
+      font-size: 12px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .field-input {
+      border-bottom: 1px solid #000;
+      min-width: 120px;
+      padding: 0 4px;
+    }
+
+    .field-input.long {
+      min-width: 200px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+      vertical-align: top;
+      text-align: center;
+    }
+
+    th {
+      background: #f5f5f5;
+      font-weight: bold;
+    }
+
+    .text-left {
+      text-align: left;
+    }
+
+    .signatures {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .signatures td {
+      border: 1px solid #000;
+      padding: 8px;
+      vertical-align: top;
+      height: 100px;
+      font-size: 10px;
+      border-top: none !important;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .btn-print {
+      background: #007cba;
+      color: #fff;
+    }
+
+    .btn-back {
+      background: #6c757d;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -128,17 +241,17 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
       <tr>
         <td style="width:33.33%;">
           <div style="font-weight:bold; margin-bottom:4px;">Certified Correct by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_1 ?: '&nbsp;' ?></div>
+          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center; margin-top: 10px;"><?= $signature_name_1 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of Inventory Committee Chair and Members</div>
         </td>
         <td style="width:33.33%;">
           <div style="font-weight:bold; margin-bottom:4px;">Approved by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_2 ?: '&nbsp;' ?></div>
+          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center; margin-top: 10px;"><?= $signature_name_2 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
         </td>
         <td style="width:33.34%;">
           <div style="font-weight:bold; margin-bottom:4px;">Verified by:</div>
-          <div style="border-bottom:1px solid #000; min-height:20px; margin-bottom:6px; text-align:center;"><?= $signature_name_3 ?: '&nbsp;' ?></div>
+          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center;  margin-top: 10px;"><?= $signature_name_3 ?: '&nbsp;' ?></div>
           <div style="font-size:10px;">Signature over Printed Name of COA Representative</div>
         </td>
       </tr>

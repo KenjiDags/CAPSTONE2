@@ -175,12 +175,6 @@ if (!empty($rows)) {
 <body>
     <div class="container">
         <h2>Registry of Semi-Expendable Property Issued</h2>
-        
-        <div class="search-container" style="margin-bottom: 20px;">
-            <button type="button" class="export-btn" onclick="openExport()" style="margin-left: auto;">
-                <i class="fas fa-file-pdf"></i> Export to PDF
-            </button>
-        </div>
 
         <div class="table-wrapper">
             <!-- Header Form -->
@@ -295,7 +289,16 @@ if (!empty($rows)) {
                 </div>
             </div>
         </div>
+
+            <div class="search-container" style="display:flex; justify-content:center;">
+                <button type="button" class="export-btn" onclick="openExport()">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                </button>
+            </div>
+
     </div>
+
+
 
     <!-- Modal for Adding Items -->
     <div class="modal-overlay" id="itemModal">

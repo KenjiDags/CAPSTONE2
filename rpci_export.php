@@ -36,6 +36,7 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
         @media print {
             .no-print { display: none !important; }
             body { margin: 0; padding: 10px; }
+            .container {border: none !important;}
         }
 
         body {
@@ -69,13 +70,13 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
         .header {
             text-align: center;
             margin-bottom: 15px;
+            margin-top: 40px;
         }
 
         .title {
             font-weight: bold;
             font-size: 16px;
             margin: 0;
-            text-decoration: underline;
         }
 
         .subtitle {
@@ -117,7 +118,6 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
         .accountability-text {
             font-size: 12px;
             margin-bottom: 15px;
-            line-height: 1.4;
         }
 
         .table-wrapper {
@@ -170,8 +170,8 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
 
         .sig-name {
             border-bottom: 1px solid #000;
-            min-height: 20px;
             margin-bottom: 6px;
+            margin-top: 20px; ;
         }
 
         .instructions {
@@ -243,7 +243,8 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
                 For which 
                 <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $accountable_officer ?></span>,
                 <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $official_designation ?></span>,
-                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having assumed such accountability on 
+                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having 
+                <span style="margin-top: 10px; display: inline-block;">assumed such accountability on </span> <!-- temporary change to make print spacing better -->
                 <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 120px; text-align: center;"><?= $assumption_date ?></span>.
             </div>
         </div>

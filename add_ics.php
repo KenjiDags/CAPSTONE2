@@ -544,7 +544,7 @@ function generateICSNumberSimple($conn) {
             </div>
 
             <div class="section-card">
-                <h3>Signatories</h3>
+                <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Received By:</label>

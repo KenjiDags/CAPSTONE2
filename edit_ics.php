@@ -238,7 +238,7 @@ try {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
-        .container h2::before {
+        .form-container h2::before {
             content: "\f044";
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
@@ -302,148 +302,150 @@ try {
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
-    <div class="container">
-        <h2>Edit ICS Form</h2>
+    <div class="content">
+        <div class="form-container">
+            <header class="page-header">
+                <h1><i class="fas fa-pen"></i>Edit ICS Form</h1>
+                <p>Editing ICS details and items</p>
+            </header>
 
-        <form method="post" action="">
-            <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
-            <input type="hidden" name="is_editing" value="1">
-            
-            <div class="section-card">
-                <h3>ICS Details</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Entity Name:</label>
-                        <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ics_data['entity_name'] ?? 'TESDA Regional Office'); ?>" required>
+            <form method="post" action="">
+                <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
+                <input type="hidden" name="is_editing" value="1">
+                
+                <div class="section-card">
+                    <h3><i class="fas fa-info-circle"></i>ICS Details</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Entity Name:</label>
+                            <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ics_data['entity_name'] ?? 'TESDA Regional Office'); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fund Cluster:</label>
+                            <input type="text" name="fund_cluster" value="<?php echo htmlspecialchars($ics_data['fund_cluster'] ?? ''); ?>">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Fund Cluster:</label>
-                        <input type="text" name="fund_cluster" value="<?php echo htmlspecialchars($ics_data['fund_cluster'] ?? ''); ?>">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>ICS No.:</label>
+                            <input type="text" name="ics_no" value="<?php echo htmlspecialchars($ics_data['ics_no'] ?? ''); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date Issued:</label>
+                            <input type="date" name="date_issued" value="<?php echo $ics_data['date_issued'] ?? date('Y-m-d'); ?>" required>
+                        </div>
                     </div>
                 </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>ICS No.:</label>
-                        <input type="text" name="ics_no" value="<?php echo htmlspecialchars($ics_data['ics_no'] ?? ''); ?>" required>
+
+                <div class="section-card">
+                    <h3><i class="fas fa-box"></i>ICS Items</h3>
+                    <div style="display:flex; gap:16px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                        <label for="filter_category" style="font-weight:600; color:#0038a8; margin-bottom:0;">Category:</label>
+                        <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff; min-width:120px;">
+                            <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
+                            <?php foreach ($category_options as $cat): ?>
+                                <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($selected_category===$cat)?'selected':''; ?>><?php echo htmlspecialchars($cat); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="search-container" style="margin-left: 16px;">
+                            <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()" style="flex:1; width:320px; max-width:100%;">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Date Issued:</label>
-                        <input type="date" name="date_issued" value="<?php echo $ics_data['date_issued'] ?? date('Y-m-d'); ?>" required>
-                    </div>
-                </div>
-            </div>
 
-            <div class="section-card">
-                <h3>ICS Items</h3>
-                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-                    <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
-                    <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
-                        <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
-                        <?php foreach ($category_options as $cat): ?>
-                            <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($selected_category===$cat)?'selected':''; ?>><?php echo htmlspecialchars($cat); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <div id="clamp-notice" style="display:none; margin:0 0 10px; padding:8px 10px; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:4px;"></div>
 
-                <div id="clamp-notice" style="display:none; margin:0 0 10px; padding:8px 10px; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:4px;"></div>
-
-                <div class="search-container">
-                    <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()">
-                </div>
-
-                <div class="table-frame">
-                    <div class="table-viewport">
-                        <table id="itemsTable" tabindex="-1">
-                            <thead>
-                                <tr>
-                                    <th>Item No.</th>
-                                    <th>Description</th>
-                                    <th>Unit</th>
-                                    <th>Quantity on Hand</th>
-                                    <th>Unit Cost</th>
-                                    <th>Issued Qty</th>
-                                    <th>Estimated Useful Life</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php 
-                                if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
-                                    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? ORDER BY date DESC, id DESC");
-                                    $stmt->bind_param("s", $selected_category);
-                                    $stmt->execute();
-                                    $result = $stmt->get_result();
-                                    $stmt->close();
-                                } else {
-                                    $result = $conn->query("SELECT * FROM semi_expendable_property ORDER BY date DESC, id DESC");
-                                }
-                                if ($result && $result->num_rows > 0) {
-                                    while ($row = $result->fetch_assoc()) {
-                                        $stock_number = $row['semi_expendable_property_no'];
-                                        $existing_item = $ics_items[$stock_number] ?? null;
-                                        $qtyOnHand = (int)$row['quantity_balance'];
-                                        $unitCost = (float)($row['amount'] ?? 0);
-                                        $remarks = $row['remarks'] ?? '';
-                                        $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
-                                        // Per request: do not use remarks in display; prefer existing description or item_description
-                                        $displayDesc = $existingDesc !== '' ? $existingDesc : $row['item_description'];
-
-                                        $catVal = isset($row['category']) ? $row['category'] : '';
-                                        $unitDisp = isset($ics_items[$stock_number]['unit']) && $ics_items[$stock_number]['unit'] !== ''
-                                            ? $ics_items[$stock_number]['unit']
-                                            : (isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-');
-                                        echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
-                                        echo '<td>' . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
-                                        echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
-                                        echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
-                                        echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
-                                        echo '<td>₱' . number_format($unitCost, 2) . '</td>';
-                                        echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1"></td>';
-                                        echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
-                                        echo '</tr>';
+                    <div class="table-frame">
+                        <div class="table-viewport">
+                            <table id="itemsTable" tabindex="-1">
+                                <thead>
+                                    <tr>
+                                        <th>Item No.</th>
+                                        <th>Description</th>
+                                        <th>Unit</th>
+                                        <th>Quantity on Hand</th>
+                                        <th>Unit Cost</th>
+                                        <th>Issued Qty</th>
+                                        <th>Estimated Useful Life</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
+                                        $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? ORDER BY date DESC, id DESC");
+                                        $stmt->bind_param("s", $selected_category);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+                                        $stmt->close();
+                                    } else {
+                                        $result = $conn->query("SELECT * FROM semi_expendable_property ORDER BY date DESC, id DESC");
                                     }
-                                } else {
-                                    echo '<tr id="no-items-row"><td colspan="7">No semi-expendable items found.</td></tr>';
-                                }
-                                ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                                    if ($result && $result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            $stock_number = $row['semi_expendable_property_no'];
+                                            $existing_item = $ics_items[$stock_number] ?? null;
+                                            $qtyOnHand = (int)$row['quantity_balance'];
+                                            $unitCost = (float)($row['amount'] ?? 0);
+                                            $remarks = $row['remarks'] ?? '';
+                                            $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
+                                            // Per request: do not use remarks in display; prefer existing description or item_description
+                                            $displayDesc = $existingDesc !== '' ? $existingDesc : $row['item_description'];
 
-            <div class="section-card">
-                <h3>Signatories</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Received By:</label>
-                        <input type="text" name="received_by" value="<?php echo htmlspecialchars($ics_data['received_by'] ?? ''); ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Received By Position:</label>
-                        <input type="text" name="received_by_position" value="<?php echo htmlspecialchars($ics_data['received_by_position'] ?? ''); ?>" required>
+                                            $catVal = isset($row['category']) ? $row['category'] : '';
+                                            $unitDisp = isset($ics_items[$stock_number]['unit']) && $ics_items[$stock_number]['unit'] !== ''
+                                                ? $ics_items[$stock_number]['unit']
+                                                : (isset($row['unit']) && $row['unit'] !== '' ? $row['unit'] : '-');
+                                            echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_description'])) . '" data-description="' . htmlspecialchars(strtolower($displayDesc)) . '" data-unit="' . htmlspecialchars(strtolower($unitDisp)) . '" data-category="' . htmlspecialchars(strtolower($catVal)) . '">';
+                                            echo '<td>' . htmlspecialchars($stock_number) . '<input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '"></td>';
+                                            echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
+                                            echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
+                                            echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
+                                            echo '<td>₱' . number_format($unitCost, 2) . '</td>';
+                                            echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['quantity']) : '') . '" min="0" max="' . htmlspecialchars($qtyOnHand) . '" step="1"></td>';
+                                            echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
+                                            echo '</tr>';
+                                        }
+                                    } else {
+                                        echo '<tr id="no-items-row"><td colspan="7">No semi-expendable items found.</td></tr>';
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Received From:</label>
-                        <input type="text" name="received_from" value="<?php echo htmlspecialchars($ics_data['received_from'] ?? ''); ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Received From Position:</label>
-                        <input type="text" name="received_from_position" value="<?php echo htmlspecialchars($ics_data['received_from_position'] ?? ''); ?>" required>
-                    </div>
-                </div>
-            </div>
 
-            <div style="margin-top: 30px;">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Update ICS
-                </button>
-                <a href="ics.php" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </a>
-            </div>
-        </form>
+                <div class="section-card">
+                    <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Received By:</label>
+                            <input type="text" name="received_by" value="<?php echo htmlspecialchars($ics_data['received_by'] ?? ''); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Received By Position:</label>
+                            <input type="text" name="received_by_position" value="<?php echo htmlspecialchars($ics_data['received_by_position'] ?? ''); ?>" required>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Received From:</label>
+                            <input type="text" name="received_from" value="<?php echo htmlspecialchars($ics_data['received_from'] ?? ''); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Received From Position:</label>
+                            <input type="text" name="received_from_position" value="<?php echo htmlspecialchars($ics_data['received_from_position'] ?? ''); ?>" required>
+                        </div>
+                    </div>
+                </div>
+
+                    <button type="submit" class="pill-btn pill-add">
+                        <i class="fas fa-save"></i> Update ICS
+                    </button>
+                    <a href="ics.php" class="pill-btn pill-view" style="height: 30px;">
+                        <i class="fas fa-ban"></i> Cancel
+                    </a>
+            </form>
+        </div>
     </div>
 
     <script>
