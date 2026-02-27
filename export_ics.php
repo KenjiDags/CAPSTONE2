@@ -287,7 +287,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
             border: 2px solid #000;
         }
         
@@ -331,7 +330,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         .signatures {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
         
         .signatures td {
@@ -689,7 +687,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
 
         <table class="signatures">
             <tr>
-                <td>
+                <td style="border-top: none !important;">
                     <div class="signature-title">Received from:</div>
                     <div class="signature-line">
                         <span><?php echo htmlspecialchars($ics['received_from'] ?? ''); ?></span>
@@ -704,7 +702,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                     </div>
                     <div class="signature-label" style="text-align:center;">Date</div>
                 </td>
-                <td>
+                <td style="border-top: none !important;">
                     <div class="signature-title">Received by:</div>
                     <div class="signature-line">
                         <span><?php echo htmlspecialchars($ics['received_by'] ?? ''); ?></span>

@@ -20,6 +20,9 @@ $accountable_officer = htmlspecialchars($_GET['accountable_officer'] ?? '');
 $official_designation = htmlspecialchars($_GET['official_designation'] ?? '');
 $entity_name = htmlspecialchars($_GET['entity_name'] ?? '');
 $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
+$signature_name_1 = htmlspecialchars($_GET['signature_name_1'] ?? '');
+$signature_name_2 = htmlspecialchars($_GET['signature_name_2'] ?? '');
+$signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
 ?>
 
 <!DOCTYPE html>
@@ -304,17 +307,17 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
             <tr>
                 <td style="width: 33.33%;">
                     <div class="sig-title">Certified Correct by:</div>
-                    <div class="sig-name">&nbsp;</div>
+                    <div class="sig-name"><?php echo !empty($signature_name_1) ? htmlspecialchars($signature_name_1) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Inventory Committee Chair and Members</div>
                 </td>
                 <td style="width: 33.33%;">
                     <div class="sig-title">Approved by:</div>
-                    <div class="sig-name">&nbsp;</div>
+                    <div class="sig-name"><?php echo !empty($signature_name_2) ? htmlspecialchars($signature_name_2) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
                 </td>
                 <td style="width: 33.34%;">
                     <div class="sig-title">Verified by:</div>
-                    <div class="sig-name">&nbsp;</div>
+                    <div class="sig-name"><?php echo !empty($signature_name_3) ? htmlspecialchars($signature_name_3) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of COA Representative</div>
                 </td>
             </tr>

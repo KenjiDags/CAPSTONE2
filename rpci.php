@@ -387,6 +387,9 @@ if (isset($_SESSION['user_id'])) {
                 official_designation: document.getElementById('official_designation').value,
                 entity_name: document.getElementById('entity_name').value,
                 assumption_date: document.getElementById('assumption_date').value,
+                signature_name_1: document.getElementsByName('signature_name_1')[0].value,
+                signature_name_2: document.getElementsByName('signature_name_2')[0].value,
+                signature_name_3: document.getElementsByName('signature_name_3')[0].value,
             });
             window.location.href = './rpci_export.php?' + params.toString();
         }
