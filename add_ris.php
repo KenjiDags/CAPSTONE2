@@ -582,42 +582,6 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         }
     </script>
 
-    <style>
-        .autocomplete-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            margin-top: 4px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            width: 100%;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: none;
-        }
-        
-        .autocomplete-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s;
-        }
-        
-        .autocomplete-item:hover {
-            background-color: #f0f7ff;
-        }
-        
-        .autocomplete-item.selected {
-            background-color: #dbeafe;
-        }
-        
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-    </style>
 
     <script>
         // Officer names from database

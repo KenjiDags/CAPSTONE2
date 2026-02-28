@@ -85,8 +85,11 @@
         padding: 5px;
         text-align: center;
         font-weight: 400;
-        border: 1px solid #000; /* keep row and table borders */
         position: relative; /* ensures line overlays correctly */
+    }
+
+    #remarksCol {
+        border-right: 2px solid #000;
     }
 
 </style>
@@ -105,7 +108,7 @@
     <div class="table-container">
         <table id="inventoryTable" style="border-right: 2px solid #000;">
             <tr style="border: 2px solid #000;">
-                <th colspan="10">INVENTORY</th>
+                <th colspan="10" style="border: 2px solid #000;">INVENTORY</th>
                 <th colspan="8">INSPECTION and DISPOSAL</th>
             </tr>
 
@@ -119,7 +122,7 @@
                 <th rowspan="2">Accum. Depreciation</th>
                 <th rowspan="2">Accum. Impairment Losses</th>
                 <th rowspan="2">Carrying Amount</th>
-                <th rowspan="2">Remarks</th>
+                <th rowspan="2" id="remarksCol">Remarks</th>
 
                 <th colspan="5">Disposal</th>
                 <th rowspan="2">Appraised Value</th>
@@ -145,7 +148,7 @@
                 <th></th>
                 <th></th>
                 <th></th>
-                <th></th>
+                <th id="remarksCol"></th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -158,6 +161,24 @@
         </tr>
 
         <!-- your data rows here (2 sample rows + 18 generated) -->
+        <?php
+        // Example: replace with your actual data rows rendering
+        $dataRows = 2; // Set this to the number of actual data rows rendered
+        // for ($i = 0; $i < count($yourDataArray); $i++) { ... }
+        $totalRows = 20;
+        $emptyRows = $totalRows - $dataRows;
+        for ($i = 0; $i < $emptyRows; $i++) {
+            echo "<tr>";
+            for ($c = 0; $c < 18; $c++) {
+                if ($c == 9) {
+                    echo '<td id="remarksCol">&nbsp;</td>';
+                } else {
+                    echo '<td>&nbsp;</td>';
+                }
+            }
+            echo "</tr>";
+        }
+        ?>
     </table>
 </div>
 
@@ -179,7 +200,7 @@ for (let i = 0; i < rowsToAdd; i++) {
     table.appendChild(tr);
 }
 
-// Add the SIGNATORIES HEADER ROW inside the table (perfect alignment)
+// Add the SIGNATORIES ROW inside the table
 let signRow = document.createElement("tr");
 signRow.innerHTML = `
     <th colspan="10" style="border: 2px solid #000;">
@@ -190,22 +211,6 @@ signRow.innerHTML = `
     <th colspan="8" style="border: 2px solid #000;">SIGNATORIES 2</th>
 `;
 table.appendChild(signRow);
-
-// Select the first "Inspection and Disposal" column header
-const tableContainer = document.querySelector('.table-container');
-const firstInspectionTh = document.querySelector('#inventoryTable tr th[colspan="8"]');
-
-// Create the vertical line div
-const verticalLine = document.createElement('div');
-verticalLine.style.position = 'absolute';
-verticalLine.style.top = '0';
-verticalLine.style.bottom = '0';
-verticalLine.style.width = '1px';
-verticalLine.style.backgroundColor = '#000';
-verticalLine.style.left = firstInspectionTh.offsetLeft + 'px'; // align perfectly
-verticalLine.style.zIndex = '1';
-
-tableContainer.appendChild(verticalLine);
 </script>
 
 

@@ -62,6 +62,9 @@ $received_by_date = $ptr['received_by_date'] ?? '';
   <style>
     @media print {
       .no-print { display:none !important; }
+      .page-wrapper {
+        border: none !important;
+      }
     }
     body {
       margin: 20px;
@@ -357,8 +360,23 @@ $received_by_date = $ptr['received_by_date'] ?? '';
                     </div>
 
                     <div class="option">
-                        <div class="checkbox"><?= $transfer_type=='Others'?'✓':'' ?></div>
-                        Others (Specify) _____________
+                        <div class="checkbox">
+                            <?php 
+                            $isOthers = false;
+                            $othersValue = '';
+                            if (strpos($transfer_type, 'Others') === 0) {
+                                $isOthers = true;
+                                $othersValue = trim(str_replace('Others:', '', $transfer_type));
+                            }
+                            echo $isOthers ? '✓' : '';
+                            ?>
+                        </div>
+                        Others (Specify)
+                        <?php if ($isOthers && $othersValue !== ''): ?>
+                            <span style="border-bottom:1px solid #000; padding:0 6px; min-width:80px; display:inline-block;"> <?= htmlspecialchars($othersValue) ?> </span>
+                        <?php else: ?>
+                            <span style="border-bottom:1px solid #000; padding:0 6px; min-width:80px; display:inline-block;"></span>
+                        <?php endif; ?>
                     </div>
 
                 </div>

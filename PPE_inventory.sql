@@ -173,4 +173,55 @@ ALTER TABLE item_history_ppe
     ADD COLUMN unserviceable_qty INT NULL;
 
 
+CREATE TABLE IF NOT EXISTS ppe_iirup (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date_reported DATE NOT NULL,
+    particulars TEXT NOT NULL,
+    property_number VARCHAR(100) NULL,
+    quantity INT NULL,
+    unit_cost DECIMAL(15,2) NULL,
+    depreciation DECIMAL(15,2) NULL,
+    impairment_loss DECIMAL(15,2) NULL,
+    carrying_amount DECIMAL(15,2) NULL,
+    remarks TEXT NULL,
+    sale INT NULL,
+    transfer INT NULL,
+    destruction INT NULL,
+    other INT NULL,
+    total INT NULL,
+    appraised_value DECIMAL(15,2) NULL,
+    or_no VARCHAR(100) NULL,
+    amount DECIMAL(15,2) NULL,
+    entity_name VARCHAR(255) NULL,
+    total_cost DECIMAL(15,2) NULL
+);
 
+ALTER TABLE ppe_iirup 
+    ADD COLUMN iirup_id VARCHAR(100) NOT NULL UNIQUE;
+
+
+CREATE TABLE IF NOT EXISTS ppe_iirup_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ppe_iirup_id INT NOT NULL,
+    date_acquired DATE NULL,
+    particulars TEXT NOT NULL,
+    property_number VARCHAR(100) NULL,
+    quantity INT NULL,
+    unit_cost DECIMAL(15,2) NULL,
+    depreciation DECIMAL(15,2) NULL,
+    impairment_loss DECIMAL(15,2) NULL,
+    carrying_amount DECIMAL(15,2) NULL,
+    remarks TEXT NULL,
+    sale INT NULL,
+    transfer INT NULL,
+    destruction INT NULL,
+    other INT NULL,
+    total INT NULL,
+    appraised_value DECIMAL(15,2) NULL,
+    or_no VARCHAR(100) NULL,
+    amount DECIMAL(15,2) NULL,
+    FOREIGN KEY (ppe_iirup_id) REFERENCES ppe_iirup(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS ppe_iirup_items;
