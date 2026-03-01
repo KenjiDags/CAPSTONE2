@@ -10,9 +10,7 @@ require 'functions.php';
 <title>All Property Cards</title>
 <style>
     @media print { 
-        .no-print { 
-            display:none !important; 
-        } 
+        .no-print { display:none !important; } 
     }
 
     body { 
@@ -50,90 +48,20 @@ require 'functions.php';
         padding: 4px; 
     }
     
-    th { 
-        background: #f2f2f2; 
-        font-weight: bold;
-    }
-
-    .no-border { 
-        border: none !important; 
-        background: #f2f2f2;
-        font-weight: bold;
-    }
-
-    .header-label { 
-        background: #f2f2f2; 
-        font-weight:bold; 
-    }
-    
-    .underline { 
-        display: inline-block; 
-        width: 250px; 
-        border-bottom: 1px solid #000; 
-        height: 12px; 
-        vertical-align: middle; 
-        margin-left: 4px; 
-    }
-
-    .small-underline { 
-        width:189px; 
-    }
-
-    .large-underline { 
-        width:300px; 
-    }
-
-    .appendix { 
-        position:absolute; 
-        top:10px; 
-        right:10px; 
-        font-size:11px; 
-        font-style:italic; 
-    }
-
-    .prop-no-underline { 
-        width: 165px; 
-        display: inline-block; 
-        box-sizing: border-box; 
-    }
-
-    h2 { 
-        text-align:center; 
-        margin:0 0 15px 0; 
-    }
-
-    .print-button { 
-        background: #007cba; 
-        color: white; 
-        padding: 8px 16px; 
-        border: none; 
-        border-radius: 4px; 
-        cursor: pointer; 
-        font-size: 13px; 
-        margin-right: 8px; 
-    }
-
-    .back-link { 
-        background: #6c757d; 
-        color: white; padding: 8px 16px; 
-        border-radius: 4px; 
-        font-size: 13px; 
-        text-decoration: none; 
-        display: inline-block; 
-    }
-
-    .header-row td { 
-        height: 20px; 
-    }
-
-    .text-center { 
-        text-align:center; 
-    }
-
-    .currency { 
-        text-align:right; 
-    }
-
+    th { background: #f2f2f2; font-weight: bold; }
+    .no-border { border: none !important; background: #f2f2f2; font-weight: bold; }
+    .header-label { background: #f2f2f2; font-weight:bold; }
+    .underline { display: inline-block; width: 250px; border-bottom: 1px solid #000; height: 12px; vertical-align: middle; margin-left: 4px; }
+    .small-underline { width:189px; }
+    .large-underline { width:300px; }
+    .appendix { position:absolute; top:10px; right:10px; font-size:11px; font-style:italic; }
+    .prop-no-underline { width: 165px; display: inline-block; box-sizing: border-box; }
+    h2 { text-align:center; margin:0 0 15px 0; }
+    .print-button { background: #007cba; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 8px; }
+    .back-link { background: #6c757d; color: white; padding: 8px 16px; border-radius: 4px; font-size: 13px; text-decoration: none; display: inline-block; }
+    .header-row td { height: 20px; }
+    .text-center { text-align:center; }
+    .currency { text-align:right; }
 </style>
 </head>
 
@@ -153,30 +81,34 @@ require 'functions.php';
 <?php
 // Fetch all PPE properties that have at least one history record
 $ppe_items = [];
-$sql = "SELECT p.*
-        FROM ppe_property p
-        INNER JOIN item_history_ppe h ON h.property_no = p.id
-        GROUP BY p.id
+$sql = "SELECT p.* FROM ppe_property p
+        LEFT JOIN item_history_ppe h ON h.PPE_no = p.PPE_no
+        GROUP BY p.PPE_no
         ORDER BY p.id ASC";
-
 $res = $conn->query($sql);
 while ($row = $res->fetch_assoc()) {
     $ppe_items[] = $row;
 }
 
 foreach ($ppe_items as $ppe) {
-    $property_no = $ppe['id'];
+    $ppe_no = $ppe['PPE_no'];
 
-    // Fetch item history
+    // Fetch history per PPE_no
     $rows = [];
-    $q2 = $conn->prepare("SELECT * FROM item_history_ppe WHERE property_no = ? ORDER BY changed_at ASC, id ASC");
-    $q2->bind_param("i", $property_no);
-    $q2->execute();
-    $res2 = $q2->get_result();
+    $stmt = $conn->prepare("
+        SELECT h.*, p.property_no, p.item_name AS ppe_name, p.item_description AS ppe_description, p.remarks AS ppe_property_remarks
+        FROM item_history_ppe h
+        LEFT JOIN ppe_property p ON h.PPE_no = p.PPE_no
+        WHERE h.PPE_no = ?
+        ORDER BY h.changed_at ASC, h.id ASC
+    ");
+    $stmt->bind_param("s", $ppe_no);
+    $stmt->execute();
+    $res2 = $stmt->get_result();
     while ($r = $res2->fetch_assoc()) {
         $rows[] = $r;
     }
-    $q2->close();
+    $stmt->close();
 ?>
 
 <div class="page-wrapper">
@@ -184,6 +116,7 @@ foreach ($ppe_items as $ppe) {
     <h2>PROPERTY CARD</h2>
 
     <table>
+        <!-- Entity + Fund -->
         <tr>
             <td colspan="6" class="no-border">
                 <strong>Entity Name:</strong>
@@ -191,43 +124,32 @@ foreach ($ppe_items as $ppe) {
             </td>
             <td colspan="3" class="no-border">
                 <strong>Fund Cluster:</strong>
-                <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? 'N/A') ?></span>
+                <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? '') ?></span>
             </td>
         </tr>
 
+        <!-- PPE + Property Number -->
         <tr class="header-row">
             <td colspan="6" class="header-label">
                 Property, Plant and Equipment:
-                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_name'] ?? 'N/A') ?></span>
+                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_name'] ?? '') ?></span>
             </td>
             <td colspan="3" class="header-label" style="border-bottom: none !important; padding-bottom: 0 !important;">
                 Property Number:
-                <span class="underline prop-no-underline"><?= htmlspecialchars($ppe['id'] ?? '') ?></span>
+                <span class="underline prop-no-underline"><?= htmlspecialchars($ppe['property_no'] ?? '') ?></span>
             </td>
         </tr>
 
+        <!-- Description -->
         <tr class="header-row">
             <td colspan="6" class="header-label">
                 Description:
-                <span style="font-weight: lighter;">
-                <?php
-                    $desc_item_name = $ppe['item_name'] ?? '';
-                    $desc_item_desc = $ppe['item_description'] ?? '';
-                    $desc = $desc_item_name;
-                    if ($desc_item_desc) {
-                        if ($desc) {
-                            $desc .= ', ' . $desc_item_desc;
-                        } else {
-                            $desc = $desc_item_desc;
-                        }
-                    }
-                    echo htmlspecialchars($desc);
-                ?>
-                </span>
+                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_description'] ?? '') ?></span>
             </td>
             <td colspan="3" class="header-label" style="border-top: none !important;"></td>
         </tr>
 
+        <!-- Main header -->
         <tr>
             <th rowspan="2">Date</th>
             <th rowspan="2">Reference / PAR No.</th>
@@ -252,22 +174,31 @@ foreach ($ppe_items as $ppe) {
             $balance_qty = (int)($r['balance_qty'] ?? 0);
             $amount = ((float)($r['unit_cost'] ?? 0)) * ((int)($r['quantity_on_hand'] ?? 0));
 
+            // Reference logic: PPE_no for addition, PAR_number for transfer
+            $reference_no = '';
+            if (isset($r['change_direction']) && $r['change_direction'] === 'add') {
+                $reference_no = $r['PPE_no'] ?? '';
+            } elseif (isset($r['change_direction']) && $r['change_direction'] === 'transfer') {
+                $reference_no = $r['PAR_number'] ?? '';
+            } else {
+                $reference_no = $r['PAR_number'] ?? $r['PPE_no'] ?? '';
+            }
+
             echo '<tr>';
             echo '<td>' . htmlspecialchars(date('Y-m-d', strtotime($r['changed_at']))) . '</td>';
-            echo '<td>' . htmlspecialchars($r['PAR_number'] ?? $r['refference_no'] ?? '') . '</td>';
+            echo '<td>' . htmlspecialchars($reference_no) . '</td>';
             echo '<td class="text-center">' . ($receipt_qty ?: '') . '</td>';
-            echo '<td class="text-center"></td>'; 
+            echo '<td class="text-center"></td>';
             echo '<td>' . htmlspecialchars($r['officer_incharge'] ?? '') . '</td>';
             echo '<td class="text-center">' . ($issue_qty ?: '') . '</td>';
             echo '<td class="text-center">' . ($balance_qty ?: '') . '</td>';
             echo '<td class="currency">' . ($amount ? number_format($amount, 2) : '') . '</td>';
-            echo '<td>' . htmlspecialchars($r['remarks'] ?? '') . '</td>';
+            echo '<td>' . htmlspecialchars($r['ppe_property_remarks'] ?? '') . '</td>';
             echo '</tr>';
 
             $row_count++;
         }
 
-        // Fill remaining rows to 15
         for ($i = $row_count; $i < 15; $i++) {
             echo '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         }

@@ -224,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
                                 <?= (int)$row['quantity'] ?>
                             </td>
-                            <td class="cost-cell" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
+                            <td class="currency" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
                             <td>
                                 <input type="number" class="disposal-qty" min="0" max="<?= (int)$row['quantity'] ?>" placeholder="0">
                             </td>

@@ -5,8 +5,23 @@ require_once 'config.php';
 // DELETE LOGIC (moved from pc_delete.php)
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 	$id = (int)$_GET['delete_id'];
-	// Delete the entry from item_history_ppe
-	$conn->query("DELETE FROM item_history_ppe WHERE id = $id");
+	// Get PPE_no for the selected entry
+	$ppe_no = '';
+	$ppe_q = $conn->prepare("SELECT PPE_no FROM item_history_ppe WHERE id = ? LIMIT 1");
+	$ppe_q->bind_param("i", $id);
+	$ppe_q->execute();
+	$ppe_res = $ppe_q->get_result();
+	if ($ppe_row = $ppe_res->fetch_assoc()) {
+		$ppe_no = $ppe_row['PPE_no'];
+	}
+	$ppe_q->close();
+	if ($ppe_no !== '') {
+		// Delete all history for this PPE_no
+		$del_q = $conn->prepare("DELETE FROM item_history_ppe WHERE PPE_no = ?");
+		$del_q->bind_param("s", $ppe_no);
+		$del_q->execute();
+		$del_q->close();
+	}
 	// Redirect back to the return URL or PPE_PC.php
 	$return = isset($_GET['return']) ? $_GET['return'] : 'PPE_PC.php';
 	header('Location: ' . $return);
@@ -136,7 +151,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 				<thead>
 					<tr>
 						<th>Description</th>
-						<th>Property Number</th>
+						<th>Property No.</th>
 						<th>Date</th>
 						<th>Reference/PAR No.</th>
 						<th>Receipt Qty.</th>
@@ -159,12 +174,12 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 						}
 						$sql = "SELECT * FROM item_history_ppe";
 						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-						// Only show latest entry per property_no
-						$sql = "SELECT h.* FROM item_history_ppe h INNER JOIN (
-							SELECT property_no, MAX(changed_at) AS max_changed_at
+						$sql = "SELECT h.*, p.property_no FROM item_history_ppe h INNER JOIN (
+							SELECT PPE_no, MAX(changed_at) AS max_changed_at
 							FROM item_history_ppe
-							GROUP BY property_no
-						) latest ON h.property_no = latest.property_no AND h.changed_at = latest.max_changed_at";
+							GROUP BY PPE_no
+						) latest ON h.PPE_no = latest.PPE_no AND h.changed_at = latest.max_changed_at
+						LEFT JOIN ppe_property p ON h.PPE_no = p.PPE_no";
 						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
 						$sql .= ' ORDER BY h.changed_at DESC, h.id DESC';
 
@@ -187,12 +202,11 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 								$itemDescription = $row['description'] ?? '';
 								$propertyNo = $row['property_no'] ?? '';
 								$txDate = $row['changed_at'] ?? '';
-								// Format to show only date (YYYY-MM-DD)
 								$displayDate = '';
 								if ($txDate) {
 									$displayDate = date('Y-m-d', strtotime($txDate));
 								}
-								$referenceNo = $row['PAR_number'] ?? $row['refference_no'] ?? '';
+								$referenceNo = $row['PAR_number'] ?? $row['PPE_no'] ?? '';
 								$receiptQty = (int)($row['receipt_qty'] ?? 0);
 								$issueQty = (int)($row['issue_qty'] ?? 0);
 								$balanceQty = (int)($row['balance_qty'] ?? 0);

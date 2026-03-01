@@ -31,7 +31,7 @@ if (!$item) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $par_no = $_POST['par_no'];
+    $PPE_no = $_POST['PPE_no'];
     $item_name = $_POST['item_name'];
     $item_description = $_POST['item_description'];
     $amount = floatval($_POST['amount']);
@@ -40,50 +40,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $officer_incharge = $_POST['officer_incharge'];
     $custodian = $_POST['custodian'];
     $entity_name = $_POST['entity_name'];
-    $ptr_no = $_POST['ptr_no'];
+    // PTR No removed
     $status = $_POST['status'];
     $condition = $_POST['condition'];
     $fund_cluster = $_POST['fund_cluster'] ?? '101';
     $remarks = $_POST['remarks'];
 
-    // Check if PAR No already exists for a different item
-    $stmt_check = $conn->prepare("SELECT id FROM ppe_property WHERE par_no = ? AND id != ? LIMIT 1");
-    $stmt_check->bind_param('si', $par_no, $id);
-    $stmt_check->execute();
-    $res_check = $stmt_check->get_result();
-    
-    if ($res_check && $res_check->num_rows > 0) {
-        $error = "Another PPE item with this PAR No. already exists.";
+    $stmt_update = $conn->prepare("
+        UPDATE ppe_property 
+        SET PPE_no = ?, item_name = ?, item_description = ?, amount = ?, quantity = ?, 
+            unit = ?, officer_incharge = ?, custodian = ?, entity_name = ?, 
+            status = ?, `condition` = ?, fund_cluster = ?, remarks = ?
+        WHERE id = ?
+    ");
+    $stmt_update->bind_param(
+        "sssdissssssssi",
+        $PPE_no, $item_name, $item_description, $amount, $quantity, $unit,
+        $officer_incharge, $custodian, $entity_name, $status, $condition, 
+        $fund_cluster, $remarks, $id
+    );
+    if ($stmt_update->execute()) {
+        $success = "PPE item updated successfully!";
+        // Refresh item data
+        $stmt = $conn->prepare("SELECT * FROM ppe_property WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $item = $result->fetch_assoc();
+        $stmt->close();
     } else {
-        $stmt_update = $conn->prepare("
-            UPDATE ppe_property 
-            SET par_no = ?, item_name = ?, item_description = ?, amount = ?, quantity = ?, 
-                unit = ?, officer_incharge = ?, custodian = ?, entity_name = ?, ptr_no = ?, 
-                status = ?, `condition` = ?, fund_cluster = ?, remarks = ?
-            WHERE id = ?
-        ");
-        $stmt_update->bind_param(
-            "sssdisssssssssi",
-            $par_no, $item_name, $item_description, $amount, $quantity, $unit,
-            $officer_incharge, $custodian, $entity_name, $ptr_no, $status, $condition, 
-            $fund_cluster, $remarks, $id
-        );
-        
-        if ($stmt_update->execute()) {
-            $success = "PPE item updated successfully!";
-            // Refresh item data
-            $stmt = $conn->prepare("SELECT * FROM ppe_property WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $item = $result->fetch_assoc();
-            $stmt->close();
-        } else {
-            $error = "Failed to update item: " . $stmt_update->error;
-        }
-        $stmt_update->close();
+        $error = "Failed to update item: " . $stmt_update->error;
     }
-    $stmt_check->close();
+    $stmt_update->close();
 }
 ?>
 
@@ -93,14 +81,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit PPE Item</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/ppe.css">
 <style>
     .form-container {
         max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 30px auto;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(10px);
     }
     .form-group {
         margin-bottom: 20px;
@@ -169,9 +160,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="container">
     <div class="form-container">
-        <header style="margin-bottom: 30px;">
-            <h1>Edit PPE Item</h1>
-            <p>Update PPE item details</p>
+        <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
+            <h1 style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px;"><i class="fas fa-edit" style="color: #3b82f6;"></i>Edit PPE Item</h1>
+            <p style="color: #64748b; margin: 0;">Update PPE item details</p>
         </header>
 
         <?php if ($error): ?>
@@ -189,12 +180,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST">
             <div class="form-row">
                 <div class="form-group">
-                    <label for="par_no">PAR No <span class="required">*</span></label>
-                    <input type="text" id="par_no" name="par_no" value="<?= htmlspecialchars($item['par_no']) ?>" required>
-                </div>
-                <div class="form-group">
                     <label for="item_name">Item Name <span class="required">*</span></label>
                     <input type="text" id="item_name" name="item_name" value="<?= htmlspecialchars($item['item_name']) ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="PPE_no">PPE No. <span class="required">*</span></label>
+                    <input type="text" id="PPE_no" name="PPE_no" value="<?= htmlspecialchars($item['PPE_no']) ?>" required>
                 </div>
             </div>
 
@@ -238,17 +229,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="ptr_no">PTR No</label>
-                    <input type="text" id="ptr_no" name="ptr_no" value="<?= htmlspecialchars($item['ptr_no']) ?>">
-                </div>
-                <div class="form-group">
-                    <label for="fund_cluster">Fund Cluster</label>
-                    <input type="text" id="fund_cluster" name="fund_cluster" value="<?= htmlspecialchars($item['fund_cluster']) ?>">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
                     <label for="status">Status</label>
                     <select id="status" name="status">
                         <option value="Active" <?= $item['status'] == 'Active' ? 'selected' : '' ?>>Active</option>
@@ -259,6 +239,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="Disposed" <?= $item['status'] == 'Disposed' ? 'selected' : '' ?>>Disposed</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="fund_cluster">Fund Cluster</label>
+                    <input type="text" id="fund_cluster" name="fund_cluster" value="<?= htmlspecialchars($item['fund_cluster']) ?>">
+                </div>
+            </div>
+
+            <div class="form-row">
+
                 <div class="form-group">
                     <label for="condition">Condition</label>
                     <select id="condition" name="condition">
@@ -276,8 +264,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div style="margin-top: 20px;">
-                <button type="submit" class="btn btn-primary">Update Item</button>
-                <a href="PPE.php" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="pill-btn pill-add"><i class="fas fa-save"></i>Update Item</button>
+                <a href="PPE.php">
+                    <button type="button" class="pill-btn pill-view"><i class="fas fa-ban"></i>Cancel</button>
+                </a>
             </div>
         </form>
     </div>

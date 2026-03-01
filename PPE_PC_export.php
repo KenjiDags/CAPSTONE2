@@ -99,11 +99,12 @@ require 'functions.php';
     }
 
     .header-row td {
-        height: 20px; /* or whatever height you want */
+        height: 20px; 
     }
 
-    .text-center { text-align:center; }
-    .currency { text-align:right; }
+    .text-center { 
+        text-align:center; 
+    }
 </style>
 </head>
 
@@ -126,43 +127,49 @@ require 'functions.php';
 
     <?php
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-    $main = null;
     $rows = [];
-    $property_no = 0;
     $ppe = null;
+    $main_ppe_no = '';
 
     if ($id > 0) {
-        $q = $conn->prepare("SELECT * FROM item_history_ppe WHERE id = ? LIMIT 1");
-        $q->bind_param("i", $id);
-        $q->execute();
-        $res = $q->get_result();
-        if ($main_row = $res->fetch_assoc()) {
-            $main = $main_row;
-            $property_no = $main_row['property_no'];
+        // Get main PPE_no from selected row
+        $stmt = $conn->prepare("SELECT PPE_no FROM item_history_ppe WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $main_ppe_no = $row['PPE_no'];
         }
-        $q->close();
-    }
+        $stmt->close();
 
-    if ($property_no > 0) {
-        // Fetch all history rows
-        $q2 = $conn->prepare("SELECT * FROM item_history_ppe WHERE property_no = ? ORDER BY changed_at ASC, id ASC");
-        $q2->bind_param("i", $property_no);
-        $q2->execute();
-        $res2 = $q2->get_result();
-        while ($r = $res2->fetch_assoc()) {
-            $rows[] = $r;
-        }
-        $q2->close();
+        if ($main_ppe_no) {
+            // Fetch all history rows for this PPE_no
+            $stmt2 = $conn->prepare("
+                SELECT h.*, p.property_no, p.item_name AS ppe_name, p.item_description AS ppe_description, 
+                       p.entity_name, p.fund_cluster, p.remarks AS ppe_property_remarks
+                FROM item_history_ppe h
+                LEFT JOIN ppe_property p ON h.PPE_no = p.PPE_no
+                WHERE h.PPE_no = ?
+                ORDER BY h.changed_at ASC, h.id ASC
+            ");
+            $stmt2->bind_param("s", $main_ppe_no);
+            $stmt2->execute();
+            $res2 = $stmt2->get_result();
+            while ($r = $res2->fetch_assoc()) {
+                $rows[] = $r;
+            }
+            $stmt2->close();
 
-        // Fetch ppe_property info
-        $q3 = $conn->prepare("SELECT * FROM ppe_property WHERE id = ? LIMIT 1");
-        $q3->bind_param("i", $property_no);
-        $q3->execute();
-        $res3 = $q3->get_result();
-        if ($ppe_row = $res3->fetch_assoc()) {
-            $ppe = $ppe_row;
+            // Fetch PPE info for header
+            $stmt3 = $conn->prepare("SELECT * FROM ppe_property WHERE PPE_no = ? LIMIT 1");
+            $stmt3->bind_param("s", $main_ppe_no);
+            $stmt3->execute();
+            $res3 = $stmt3->get_result();
+            if ($ppe_row = $res3->fetch_assoc()) {
+                $ppe = $ppe_row;
+            }
+            $stmt3->close();
         }
-        $q3->close();
     }
     ?>
 
@@ -171,11 +178,11 @@ require 'functions.php';
         <tr>
             <td colspan="6" class="no-border">
                 <strong>Entity Name:</strong>
-                <span class="underline large-underline"><?= htmlspecialchars($ppe['entity_name'] ?? ($main['officer_incharge'] ?? '')) ?></span>
+                <span class="underline large-underline"><?= htmlspecialchars($ppe['entity_name'] ?? '') ?></span>
             </td>
             <td colspan="3" class="no-border">
                 <strong>Fund Cluster:</strong>
-                <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? 'N/A') ?></span>
+                <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? '') ?></span>
             </td>
         </tr>
 
@@ -183,11 +190,11 @@ require 'functions.php';
         <tr class="header-row">
             <td colspan="6" class="header-label">
                 Property, Plant and Equipment:
-                        <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_name'] ?? 'N/A') ?></span>
+                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_name'] ?? '') ?></span>
             </td>
             <td colspan="3" class="header-label" style="border-bottom: none !important; padding-bottom: 0 !important;">
                 Property Number:
-                <span class="underline prop-no-underline"><?= htmlspecialchars($ppe['id'] ?? ($main['property_no'] ?? '')) ?></span>
+                <span class="underline prop-no-underline"><?= htmlspecialchars($ppe['property_no'] ?? '') ?></span>
             </td>
         </tr>
 
@@ -195,35 +202,20 @@ require 'functions.php';
         <tr class="header-row">
             <td colspan="6" class="header-label">
                 Description:
-                <span style="font-weight: lighter;">
-                <?php
-                    $desc_item_name = $ppe['item_name'] ?? ($main['item_name'] ?? '');
-                    $desc_item_desc = $ppe['item_description'] ?? ($main['description'] ?? '');
-                    $desc = $desc_item_name;
-                    if ($desc_item_desc) {
-                        if ($desc) {
-                            $desc .= ', ' . $desc_item_desc;
-                        } else {
-                            $desc = $desc_item_desc;
-                        }
-                    }
-                    echo htmlspecialchars($desc);
-                ?>
-                </span>
+                <span style="font-weight: lighter;"><?= htmlspecialchars($ppe['item_description'] ?? '') ?></span>
             </td>
-            <td colspan="3" class="header-label" style="border-top: none !important;">
-            </td>
+            <td colspan="3" class="header-label" style="border-top: none !important;"></td>
         </tr>
 
-        <!-- MAIN HEADER (9 columns) -->
+        <!-- MAIN HEADER -->
         <tr>
             <th rowspan="2">Date</th>
             <th rowspan="2">Reference / PAR No.</th>
             <th colspan="2">Receipt</th>
             <th colspan="2">Issue / Transfer / Disposal</th>
-                    <th rowspan="2" style="width:70px;">Balance Qty.</th>
-                    <th rowspan="2" style="width:90px;">Amount</th>
-                    <th rowspan="2" style="width:90px;">Remarks</th>
+            <th rowspan="2" style="width:70px;">Balance Qty.</th>
+            <th rowspan="2" style="width:90px;">Amount</th>
+            <th rowspan="2" style="width:90px;">Remarks</th>
         </tr>
         <tr>
             <th>Qty.</th>
@@ -240,35 +232,24 @@ require 'functions.php';
             $balance_qty = (int)($r['balance_qty'] ?? 0);
             $amount = ((float)($r['unit_cost'] ?? 0)) * ((int)($r['quantity_on_hand'] ?? 0));
 
-            // Lookup PAR No for this movement (if any)
-            $par_no_ref = '';
-            if (!empty($r['property_no'])) {
-                $qpar = $conn->prepare("SELECT ppe_par.par_no FROM ppe_par_items INNER JOIN ppe_par ON ppe_par_items.par_id = ppe_par.par_id WHERE ppe_par_items.ppe_id = ? LIMIT 1");
-                $qpar->bind_param("i", $r['property_no']);
-                $qpar->execute();
-                $respar = $qpar->get_result();
-                if ($prow = $respar->fetch_assoc()) {
-                    $par_no_ref = $prow['par_no'];
-                }
-                $qpar->close();
-            }
+            // Show PPE_no for initial addition, PAR_number for transfers
+            $reference_no = $r['PAR_number'] ?? $r['PPE_no'] ?? '';
 
             echo '<tr>';
             echo '<td>' . htmlspecialchars(date('Y-m-d', strtotime($r['changed_at']))) . '</td>';
-            echo '<td>' . htmlspecialchars($par_no_ref ?: ($r['PAR_number'] ?? $r['refference_no'] ?? '')) . '</td>';
+            echo '<td>' . htmlspecialchars($reference_no) . '</td>';
             echo '<td class="text-center">' . ($receipt_qty ?: '') . '</td>';
-            echo '<td class="text-center"></td>'; // second Receipt Qty column (if needed)
+            echo '<td class="text-center"></td>';
             echo '<td>' . htmlspecialchars($r['officer_incharge'] ?? '') . '</td>';
             echo '<td class="text-center">' . ($issue_qty ?: '') . '</td>';
-            echo '<td class="text-center" style="width:70px;">' . ($balance_qty ?: '') . '</td>';
-            echo '<td class="currency" style="width:90px;">' . ($amount ? number_format($amount, 2) : '') . '</td>';
-            echo '<td style="width:90px;">' . htmlspecialchars($r['remarks'] ?? '') . '</td>';
+            echo '<td class="text-center">' . ($balance_qty ?: '') . '</td>';
+            echo '<td class="currency" style="width:90px;">' . ($amount ? number_format($amount,2) : '') . '</td>';
+            echo '<td>' . htmlspecialchars($r['ppe_property_remarks'] ?? '') . '</td>';
             echo '</tr>';
 
             $row_count++;
         }
 
-        // Fill remaining rows to 15
         for ($i = $row_count; $i < 15; $i++) {
             echo '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         }

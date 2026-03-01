@@ -9,46 +9,77 @@ $success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // $par_no removed
     $item_name = $_POST['item_name'];
-    $item_description = $_POST['item_description'];
-    $amount = floatval($_POST['amount']);
-    $quantity = intval($_POST['quantity']);
-    $unit = $_POST['unit'];
-    $officer_incharge = $_POST['officer_incharge'];
-    $custodian = $_POST['custodian'];
-    $entity_name = $_POST['entity_name'];
-    // $ptr_no removed
-    $status = $_POST['status'];
-    $condition = $_POST['condition'];
-    $fund_cluster = $_POST['fund_cluster'] ?? '101';
-    $remarks = $_POST['remarks'];
+    $PPE_no = $_POST['PPE_no'];
 
-    // Insert PPE item without PAR No.
-    $stmt_insert = $conn->prepare("
-        INSERT INTO ppe_property 
-        (item_name, item_description, amount, quantity, unit, officer_incharge, custodian, entity_name, status, `condition`, fund_cluster, remarks) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt_insert->bind_param(
-        "ssdissssssss",
-        $item_name, $item_description, $amount, $quantity, $unit,
-        $officer_incharge, $custodian, $entity_name, $status, $condition, $fund_cluster, $remarks
-    );
-    if ($stmt_insert->execute()) {
-        $success = "PPE item added successfully!";
-        // Log history for initial addition to item_history_ppe
-        $new_id = $conn->insert_id;
+    // Check for duplicate PPE_no
+    $stmt_check = $conn->prepare("SELECT COUNT(*) FROM ppe_property WHERE PPE_no = ?");
+    $stmt_check->bind_param('s', $PPE_no);
+    $stmt_check->execute();
+    $stmt_check->bind_result($ppe_no_count);
+    $stmt_check->fetch();
+    $stmt_check->close();
+
+    if ($ppe_no_count > 0) {
+        $error = "Item with PPE No already exists";
+    } else {
+        // Autogenerate property_no as YY-MM-000# (unique)
+        $now = new DateTime();
+        $yy = $now->format('y');
+        $mm = $now->format('m');
+        $prefix = $yy . '-' . $mm . '-';
+        $stmt = $conn->prepare("SELECT property_no FROM ppe_property WHERE property_no LIKE ? ORDER BY property_no DESC LIMIT 1");
+        $like = $prefix . '%';
+        $stmt->bind_param('s', $like);
+        $stmt->execute();
+        $stmt->bind_result($last_no);
+        $stmt->fetch();
+        $stmt->close();
+        if ($last_no) {
+            $last_seq = intval(substr($last_no, 6));
+            $new_seq = $last_seq + 1;
+        } else {
+            $new_seq = 1;
+        }
+        $property_no = sprintf('%s%04d', $prefix, $new_seq);
+        $item_description = $_POST['item_description'];
+        $amount = floatval($_POST['amount']);
+        $quantity = intval($_POST['quantity']);
+        $unit = $_POST['unit'];
+        $officer_incharge = $_POST['officer_incharge'];
+        $custodian = $_POST['custodian'];
+        $entity_name = $_POST['entity_name'];
+        $status = $_POST['status'];
+        $condition = $_POST['condition'];
+        $fund_cluster = $_POST['fund_cluster'] ?? '101';
+        $remarks = $_POST['remarks'];
+
+        // Insert PPE item without PAR No.
+        $stmt_insert = $conn->prepare("
+            INSERT INTO ppe_property
+            (PPE_no, property_no, item_name, item_description, amount, quantity, unit,
+            officer_incharge, custodian, entity_name, `condition`, status, fund_cluster, remarks)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ");
+        $stmt_insert->bind_param(
+            "sssssdisssssss",
+            $PPE_no, $property_no, $item_name, $item_description, $amount, $quantity, $unit,
+            $officer_incharge, $custodian, $entity_name, $condition, $status, $fund_cluster, $remarks
+        );
+        if ($stmt_insert->execute()) {
+            $success = "PPE item added successfully!";
+            // Log history for initial addition to item_history_ppe
+            $new_id = $conn->insert_id;
         $change_direction = 'increase';
         $change_type = 'add';
         $receipt_qty = $quantity;
         $balance_qty = $quantity;
         $quantity_change = $quantity;
         $issue_qty = 0;
-        $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $insert = $conn->prepare("INSERT INTO item_history_ppe (PPE_no, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $insert->bind_param(
-            "isssdiiiiisss",
-            $new_id,
+            "ssssdiiiiisss",
+            $PPE_no,
             $item_name,
             $item_description,
             $unit,
@@ -67,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_insert->close();
     } else {
         $error = "Failed to add item: " . $stmt_insert->error;
+    }
     }
 }
 ?>
@@ -178,6 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="item_name">Item Name <span class="required">*</span></label>
                     <input type="text" id="item_name" name="item_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="PPE_no">PPE No. <span class="required">*</span></label>
+                    <input type="text" id="PPE_no" name="PPE_no" required>
                 </div>
             </div>
 

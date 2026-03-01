@@ -194,7 +194,7 @@ try {
     <table>
         <thead>
             <tr>
-                <th><i class="fas fa-hashtag"></i> Property No</th>
+                <th><i class="fas fa-hashtag"></i> PPE No.</th>
                 <th><i class="fas fa-box"></i> Item Name</th>
                 <th><i class="fas fa-align-left"></i> Description</th>
                 <th><i class="fas fa-list-ol"></i> Quantity</th>
@@ -215,7 +215,7 @@ try {
             <?php else: ?>
                 <?php foreach ($items as $item): ?>
                 <tr>
-                    <td><?= htmlspecialchars($item['par_no']); ?></td> <!-- TO BE FIXED -->
+                    <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
                     <td><?= htmlspecialchars($item['item_name']); ?></td>
                     <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
                     <td><?= number_format($item['quantity']); ?></td>
@@ -269,7 +269,7 @@ function viewItem(id){
         if(data.success){
             const item = data.item;
             details.innerHTML = `
-                <div class="detail-row"><strong>PAR No:</strong> ${item.par_no}</div>
+                <div class="detail-row"><strong>PPE No:</strong> ${item.PPE_no}</div>
                 <div class="detail-row"><strong>Item Name:</strong> ${item.item_name}</div>
                 <div class="detail-row"><strong>Description:</strong> ${item.item_description}</div>
                 <div class="detail-row"><strong>Quantity:</strong> ${item.quantity}</div>

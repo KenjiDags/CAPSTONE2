@@ -3,7 +3,7 @@ require 'auth.php';
 require 'config.php';
 require 'functions.php';
 
-// Fetch officers for autocomplete (JS array with positions)
+// Fetch officers for autocomplete
 $officers = [];
 $officer_result = $conn->query("SELECT officer_name, officer_position FROM officers ORDER BY officer_name ASC");
 if ($officer_result) {
@@ -16,7 +16,7 @@ if ($officer_result) {
 }
 $officer_data_json = json_encode($officers);
 
-// Always generate PTR No before form loads
+// Generate PTR No
 $current_yy = date('y');
 $current_mm = date('m');
 $stmt = $conn->prepare("SELECT ptr_no FROM ppe_ptr WHERE ptr_no LIKE ? ORDER BY ptr_no DESC LIMIT 1");
@@ -26,9 +26,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 $next_num = 1;
 if ($res && $row = $res->fetch_assoc()) {
-    // Extract last number
-    $last_ptr_no = $row['ptr_no'];
-    $parts = explode('-', $last_ptr_no);
+    $parts = explode('-', $row['ptr_no']);
     if (count($parts) === 3 && is_numeric($parts[2])) {
         $next_num = intval($parts[2]) + 1;
     }
@@ -41,23 +39,18 @@ $success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
-    // If editing, use submitted PTR No
     $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
-    if ($is_editing) {
-        $ptr_no = trim($_POST['ptr_no']);
-    }
+    if ($is_editing) $ptr_no = trim($_POST['ptr_no']);
+
     $entity_name = trim($_POST['entity_name']);
     $fund_cluster = trim($_POST['fund_cluster']);
     $from_officer = trim($_POST['from_officer']);
     $to_officer = trim($_POST['to_officer']);
     $transfer_date = $_POST['transfer_date'];
     $transfer_type = $_POST['transfer_type'];
-    
-    // If "Others" is selected, use the custom input value
     if ($transfer_type === 'Others' && !empty($_POST['transfer_type_others'])) {
         $transfer_type = 'Others: ' . trim($_POST['transfer_type_others']);
     }
-    
     $reason = trim($_POST['reason']);
     $approved_by = trim($_POST['approved_by']);
     $approved_by_designation = trim($_POST['approved_by_designation']);
@@ -73,98 +66,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     if (empty($from_officer) || empty($to_officer) || empty($transfer_date) || empty($item_ids)) {
         $error = "Please fill in all required fields and select at least one item.";
     } else {
-        // Insert PTR header
-        $stmt = $conn->prepare("INSERT INTO ppe_ptr (ptr_no, entity_name, fund_cluster, from_officer, to_officer, transfer_date, transfer_type, reason, approved_by, approved_by_designation, approved_by_date, released_by, released_by_designation, released_by_date, received_by, received_by_designation, received_by_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssssssssssss", $ptr_no, $entity_name, $fund_cluster, $from_officer, $to_officer, $transfer_date, $transfer_type, $reason, $approved_by, $approved_by_designation, $approved_by_date, $released_by, $released_by_designation, $released_by_date, $received_by, $received_by_designation, $received_by_date);
-        
+        // --- Insert PTR header ---
+        $stmt = $conn->prepare("
+            INSERT INTO ppe_ptr 
+            (ptr_no, entity_name, fund_cluster, from_officer, to_officer, transfer_date, transfer_type, reason, approved_by, approved_by_designation, approved_by_date, released_by, released_by_designation, released_by_date, received_by, received_by_designation, received_by_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("sssssssssssssssss",
+            $ptr_no, $entity_name, $fund_cluster, $from_officer, $to_officer, $transfer_date, $transfer_type, $reason,
+            $approved_by, $approved_by_designation, $approved_by_date,
+            $released_by, $released_by_designation, $released_by_date,
+            $received_by, $received_by_designation, $received_by_date
+        );
+
         if ($stmt->execute()) {
             $ptr_id = $conn->insert_id;
-            
-            // Insert PTR items
-            $item_stmt = $conn->prepare("INSERT INTO ppe_ptr_items (ptr_id, ppe_id) VALUES (?, ?)");
 
+            // --- Insert PTR items ---
+            $item_stmt = $conn->prepare("INSERT INTO ppe_ptr_items (ptr_id, ppe_id) VALUES (?, ?)");
             foreach ($item_ids as $ppe_id) {
                 $item_stmt->bind_param("ii", $ptr_id, $ppe_id);
                 $item_stmt->execute();
-
-                // Fetch PPE item details
-                $ppe_q = $conn->prepare("SELECT * FROM ppe_property WHERE id = ? LIMIT 1");
-                $ppe_q->bind_param("i", $ppe_id);
-                $ppe_q->execute();
-                $ppe_res = $ppe_q->get_result();
-                if ($ppe_row = $ppe_res->fetch_assoc()) {
-                    $property_no = $ppe_row['id'];
-                    $par_no = $ppe_row['par_no'] ?? '';
-                    $item_name = $ppe_row['item_name'] ?? '';
-                    $item_description = $ppe_row['item_description'] ?? '';
-                    $unit = $ppe_row['unit'] ?? '';
-                    $unit_cost = $ppe_row['amount'] ?? 0;
-                    $quantity_on_hand = $ppe_row['quantity'] ?? 0;
-                    $officer_incharge = $to_officer;
-                    $change_direction = 'transfer';
-                    $change_type = $transfer_type;
-                    $quantity_change = 0;
-                    $receipt_qty = 0;
-                    $issue_qty = 0;
-                    $balance_qty = $quantity_on_hand;
-
-                    $insert = $conn->prepare("INSERT INTO item_history_ppe (property_no, PAR_number, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $insert->bind_param(
-                        "issssdiiiiisss",
-                        $property_no,
-                        $par_no,
-                        $item_name,
-                        $item_description,
-                        $unit,
-                        $unit_cost,
-                        $quantity_on_hand,
-                        $quantity_change,
-                        $receipt_qty,
-                        $issue_qty,
-                        $balance_qty,
-                        $officer_incharge,
-                        $change_direction,
-                        $change_type
-                    );
-                    $insert->execute();
-                    $insert->close();
-                }
-                $ppe_q->close();
             }
             $item_stmt->close();
-            
-            // Auto-create corresponding PAR (Property Acknowledgement Receipt)
-            // Generate PAR number based on PTR number
-            $par_no = str_replace('PTR', 'PAR', $ptr_no);
-            
-            // Property number is stored in individual items, not PAR header
-            $property_number = '';
-            
-            // Insert PAR using PTR data
-            $par_stmt = $conn->prepare("INSERT INTO ppe_par (par_no, entity_name, fund_cluster, date_acquired, property_number, received_by, received_by_designation, received_by_date, issued_by, issued_by_designation, issued_by_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $par_stmt->bind_param("sssssssssss", $par_no, $entity_name, $fund_cluster, $transfer_date, $property_number, $received_by, $received_by_designation, $received_by_date, $released_by, $released_by_designation, $released_by_date);
-            
-            if ($par_stmt->execute()) {
-                $par_id = $conn->insert_id;
-                
-                // Insert PAR items (link same properties to PAR)
-                $par_item_stmt = $conn->prepare("INSERT INTO ppe_par_items (par_id, ppe_id) VALUES (?, ?)");
-                foreach ($item_ids as $ppe_id) {
-                    $par_item_stmt->bind_param("ii", $par_id, $ppe_id);
-                    $par_item_stmt->execute();
-                }
-                $par_item_stmt->close();
-            }
-            $par_stmt->close();
-            
-            // Update officer_incharge and custodian for all transferred items
+
+            // --- Update officer_incharge for transferred items ---
             $update_stmt = $conn->prepare("UPDATE ppe_property SET officer_incharge = ?, custodian = ?, status = 'Transferred' WHERE id = ?");
             foreach ($item_ids as $ppe_id) {
                 $update_stmt->bind_param("ssi", $to_officer, $to_officer, $ppe_id);
                 $update_stmt->execute();
             }
             $update_stmt->close();
-            
+
+            // --- Auto-create PAR ---
+            $par_no = str_replace('PTR', 'PAR', $ptr_no);
+            $par_stmt = $conn->prepare("
+                INSERT INTO ppe_par 
+                (par_no, entity_name, fund_cluster, date_acquired, property_number, received_by, received_by_designation, received_by_date, issued_by, issued_by_designation, issued_by_date) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $property_number = ''; // create a variable
+            $par_stmt->bind_param(
+                "sssssssssss",
+                $par_no,
+                $entity_name,
+                $fund_cluster,
+                $transfer_date,
+                $property_number, // use variable instead of ''
+                $received_by,
+                $received_by_designation,
+                $received_by_date,
+                $released_by,
+                $released_by_designation,
+                $released_by_date
+            );
+
+            if ($par_stmt->execute()) {
+                $par_id = $conn->insert_id;
+
+                // --- Link PAR items ---
+                $par_item_stmt = $conn->prepare("INSERT INTO ppe_par_items (par_id, ppe_id) VALUES (?, ?)");
+                foreach ($item_ids as $ppe_id) {
+                    $par_item_stmt->bind_param("ii", $par_id, $ppe_id);
+                    $par_item_stmt->execute();
+
+                    // --- Insert into item_history_ppe for PAR ---
+                    $ppe_q = $conn->prepare("SELECT * FROM ppe_property WHERE id = ? LIMIT 1");
+                    $ppe_q->bind_param("i", $ppe_id);
+                    $ppe_q->execute();
+                    $ppe_res = $ppe_q->get_result();
+                    if ($ppe_row = $ppe_res->fetch_assoc()) {
+                        $ppe_no = $ppe_row['PPE_no'];
+                        $property_no = $ppe_row['property_no'];
+                        $item_name = $ppe_row['item_name'] ?? '';
+                        $item_description = $ppe_row['item_description'] ?? '';
+                        $unit = $ppe_row['unit'] ?? '';
+                        $unit_cost = $ppe_row['amount'] ?? 0;
+                        $quantity_on_hand = $ppe_row['quantity'] ?? 0;
+                        $officer_incharge = $received_by;
+                        $change_direction = 'receipt';
+                        $change_type = $transfer_type;
+                        $quantity_change = 0;
+                        $receipt_qty = $quantity_on_hand;
+                        $issue_qty = 0;
+                        $balance_qty = $quantity_on_hand;
+
+                        $insert = $conn->prepare("
+                            INSERT INTO item_history_ppe 
+                            (PPE_no, property_no, PAR_number, item_name, description, unit, unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, balance_qty, officer_incharge, change_direction, change_type)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ");
+                        $insert->bind_param(
+                            "ssssssdiiiiisss",
+                            $ppe_no,
+                            $property_no,
+                            $par_no,
+                            $item_name,
+                            $item_description,
+                            $unit,
+                            $unit_cost,
+                            $quantity_on_hand,
+                            $quantity_change,
+                            $receipt_qty,
+                            $issue_qty,
+                            $balance_qty,
+                            $officer_incharge,
+                            $change_direction,
+                            $change_type
+                        );
+                        $insert->execute();
+                        $insert->close();
+                    }
+                    $ppe_q->close();
+                }
+                $par_item_stmt->close();
+            }
+            $par_stmt->close();
+
             $success = "Property Transfer Report and Property Acknowledgement Receipt created successfully!";
             header("Location: PPE_PTR.php");
             exit();

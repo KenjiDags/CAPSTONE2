@@ -5,12 +5,12 @@ USE tesda_inventory;
 CREATE TABLE ppe_property (
     id INT PRIMARY KEY AUTO_INCREMENT,
 
-    par_no VARCHAR(50) NOT NULL,                    
+    -- par_no removed
     item_name TEXT NOT NULL,        
     item_description TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     officer_incharge VARCHAR(255) NOT NULL,
-
+    PPE_no VARCHAR(50) NOT NULL UNIQUE,
     quantity INT DEFAULT 1,
     unit VARCHAR(50) DEFAULT 'unit',
     
@@ -29,29 +29,25 @@ CREATE TABLE ppe_property (
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
+ALTER TABLE ppe_property 
+    ADD COLUMN property_no VARCHAR(100) NULL;
+
 /* Table for Property Custodian Slip (PCS) */
 CREATE TABLE ppe_pc (
     id INT PRIMARY KEY AUTO_INCREMENT,
 
     date_created DATE NOT NULL,
-    par_no VARCHAR(50) NOT NULL,                    
     ppe_property_no VARCHAR(50) NOT NULL UNIQUE,
     item_name TEXT NOT NULL,        
     item_description TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-
     quantity INT DEFAULT 1,
     unit VARCHAR(50) DEFAULT 'unit',
-    
     custodian VARCHAR(255) NOT NULL,
     officer VARCHAR(255) NOT NULL,
     entity_name VARCHAR(255) NOT NULL,
-
-    ptr_no VARCHAR(50) NULL,
-
     fund_cluster VARCHAR(10) DEFAULT '101',
     remarks TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -172,6 +168,12 @@ CREATE TABLE IF NOT EXISTS item_history_ppe (
 ALTER TABLE item_history_ppe 
     ADD COLUMN unserviceable_qty INT NULL;
 
+ALTER TABLE item_history_ppe
+CHANGE COLUMN property_no PPE_no VARCHAR(50) NULL ;
+
+ALTER TABLE item_history_ppe
+    ADD COLUMN property_no VARCHAR(100) NULL;
+
 
 CREATE TABLE IF NOT EXISTS ppe_iirup (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -224,4 +226,3 @@ CREATE TABLE IF NOT EXISTS ppe_iirup_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-DROP TABLE IF EXISTS ppe_iirup_items;
