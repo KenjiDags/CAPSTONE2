@@ -344,7 +344,6 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
 
     <!-- RSMI Form -->
     <div class="form-container">
-        <!-- Appendix 64 Label -->
         <div class="appendix-label">Appendix 64</div>
         
 

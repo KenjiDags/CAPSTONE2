@@ -155,7 +155,7 @@ if (isset($_GET['action'])) {
                             'message' => 'New inventory entry added',
                             'updated' => true,
                             'item_id' => $existing_item['item_id'],
-                            'has_multiple_entries' => true  // ADD THIS LINE
+                            'has_multiple_entries' => true  
                         ]);
                     } else {
                         echo json_encode(['success' => false, 'message' => 'Error adding inventory entry']);
