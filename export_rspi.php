@@ -123,8 +123,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px; /* match RSMI export base font-size */
-            line-height: 1.3; /* match RSMI export line-height */
+            font-size: 12px; 
+            line-height: 1.3; 
             color: #000;
             background: #fff;
             margin: 0;
@@ -139,43 +139,35 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         }
 
         @media screen {
-            .print-container { max-width: 720px; }
+            .print-container { max-width: 900px; }
         }
 
-    .header-title { text-align:center; font-weight:bold; font-size:14px; margin-bottom:8px; letter-spacing:0.3px; }
+    .header-title { text-align:center; font-weight:bold; font-size:14px; margin-bottom:16px; letter-spacing:0.3px; }
     .annex { text-align:right; font-style:italic; font-size:12px; }
-
-        table.header { width:100%; border-collapse: collapse; margin-bottom:6px; }
-        table.header td { border:none; padding:6px 8px; vertical-align:top; }
-        .label { font-weight:700; width:160px; }
-        .value { min-width:220px; border-bottom:1px solid #000; }
-        .spacer { width:40px; }
-
-        /* Main grid with thick outer border similar to ITR */
-        .form-frame { border:2px solid #000; padding:0; }
-        table.main { width:100%; border-collapse: collapse; border: none; border-bottom:2px solid #000; }
-    table.main th, table.main td { border:1px solid #000; padding:4px; text-align:center; vertical-align:middle; font-size:10px; }
+    .label { font-weight:700; width:160px; }
+    .value { min-width:220px; border-bottom:1px solid #000; }
+        /* Main grid */
+    table.main { width:100%; border-collapse: collapse; }
+    table.main th, table.main td {  padding:4px; vertical-align:middle; font-size:10px; }
     table.main th { font-weight:700; }
-    /* Remove horizontal row lines in body, keep vertical lines and make rows taller */
-    table.main thead th { border:1px solid #000; }
-    table.main tbody td { border-left:1px solid #000; border-right:1px solid #000; border-top:0; border-bottom:0; padding-top:10px; padding-bottom:10px; }
-        table.main thead tr.group th { font-weight:700; background:#f8f8f8; font-style: italic; }
-        .text-left { text-align:left; }
+        /* Remove horizontal row lines in body, keep vertical lines and make rows taller */
+    table.main thead th { border:2px solid #000; }
+    table.main tbody td { border-left:2px solid #000; border-right:2px solid #000; border-top:0; border-bottom:0; padding-top:5px; padding-bottom:5px; }
+    table.main thead tr.group th { font-weight:700; background:#f8f8f8; font-style: italic; }
+    .text-left { text-align:left; }
         /* Column widths */
-        .w-ics{width:70px;} .w-rcc{width:120px;} .w-prop{width:120px;} .w-item{width:260px;} .w-unit{width:60px;} .w-qty{width:80px;} .w-uc{width:90px;} .w-amt{width:100px;}
+    .w-ics{width:70px;} .w-rcc{width:100px;} .w-prop{width:130px;} .w-item{width:210px;} .w-unit{width:60px;} .w-qty{width:80px;} .w-uc{width:220px;} .w-amt{width:150px;}
+        /* Footer certification section aligned to column grid */
+    .sig-line { border-top:1px solid #000; margin:22px auto 0; padding-top:4px; text-align:center; font-size:10px; }
+        /* Print Instructions */
+    .print-instructions { background: #fffacd; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+    .print-button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 10px; }
+    .print-button:hover { background: #005a87; }
+    .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
+    .back-button:hover { background: #545b62; }
 
-    /* Footer certification section aligned to column grid */
-    table.footer { border-collapse: collapse; width: auto; }
-    table.footer td { padding:10px; vertical-align:bottom; }
-    table.footer td.right { border-left:1px solid #000; }
-    .sig-line { border-top:1px solid #000; margin:22px auto 0; padding-top:4px; text-align:center; width:85%; font-size:10px; }
-        .date-line { text-align:right; margin-top:8px; }
+    .underline { display:inline-block; border-bottom:1px solid #000; width: 60%;}
 
-        .print-instructions { background: #fffacd; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        .print-button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 10px; }
-        .print-button:hover { background: #005a87; }
-        .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
-        .back-button:hover { background: #545b62; }
     </style>
 </head>
 <body>
@@ -207,26 +199,17 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <div class="annex">Annex A.7</div>
         <div class="header-title">REPORT OF SEMI-EXPENDABLE PROPERTY ISSUED</div>
 
-        <table class="header">
-            <tr>
-                <td class="label">Entity Name:</td>
-                <td class="value" contenteditable="true"><?= h($entity_name) ?></td>
-                <td class="spacer"></td>
-                <td class="label">Serial No.:</td>
-                <td class="value" contenteditable="true" title="Format: 0000-00-0000"><?= h($serial_no) ?></td>
-            </tr>
-            <tr>
-                <td class="label">Fund Cluster:</td>
-                <td class="value" contenteditable="true"><?= h($fund_cluster) ?></td>
-                <td class="spacer"></td>
-                <td class="label">Date:</td>
-                <td class="value" contenteditable="true"><?= h($date_hint) ?></td>
-            </tr>
-        </table>
-
-        <div class="form-frame">
             <table class="main">
                 <thead>
+                        <tr>
+                            <td colspan="6" class="label">Entity Name:<span class="underline"> <?= h($entity_name) ?></span></td>
+                            <td colspan="2" class="label">Serial No.:<span class="underline"> <?= h($serial_no) ?></span></td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" class="label" contenteditable="true">Fund Cluster:<span class="underline"><?= h($fund_cluster) ?></span> </td>
+                            <td colspan="2" class="label">Date: <span class="underline"><?= h($date_hint) ?></span></td>
+                        </tr>
+
                     <tr class="group">
                         <th colspan="6">To be filled out by the Property and/or Supply Division/Unit</th>
                         <th colspan="2">To be filled out by the Accounting Division/Unit</th>
@@ -268,39 +251,28 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                         <td class="text-right" contenteditable="true"></td>
                     </tr>
                     <?php endfor; ?>
+
+                    <tr>
+                        <!-- Left footer -->
+                        <td colspan="4" style="border-top: 2px solid #000; border-right: none !important; text-align: left !important; border-bottom: 2px solid #000;">
+                            I hereby certify to the correctness of the above information.
+                            <div class="sig-line" style="width: 75%;">Signature over Printed Name of Property and/or Supply Custodian</div>
+                        </td>
+                        <!-- Right footer -->
+                        <td class="right" colspan="3" style="border-top: 2px solid #000; border-left: none !important; text-align: left !important; border-right: none !important; border-bottom: 2px solid #000;">
+                            <span style="display:block; margin-left:50px; margin-top:0; margin-bottom:2px; position:relative; top:-6px;">Posted by:</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding-left: 15px;">
+                                <div class="sig-line" style="margin-bottom: 0; width: 75%;">Signature over Printed Name of Designated Accounting Staff</div>
+                            </div>
+                        </td>
+                        <td style="border-top: 2px solid #000; border-left: none !important; border-bottom: 2px solid #000;">
+                            <div class="sig-line" style="width: 70%;"><span class="date-line" style="margin-left: 16px; white-space: nowrap;"></span></div>
+                        </td>
+                    </tr>
+
                 </tbody>
             </table>
-
-            <table class="footer">
-                <colgroup>
-                    <col style="width:70px;" />
-                    <col style="width:120px;" />
-                    <col style="width:120px;" />
-                    <col style="width:260px;" />
-                    <col style="width:60px;" />
-                    <col style="width:80px;" />
-                    <col style="width:90px;" />
-                    <col style="width:100px;" />
-                </colgroup>
-                <tr>
-                    <!-- Left footer spans first five columns: aligns vertical split with line between Unit and Quantity Issued -->
-                    <td colspan="5">
-                        I hereby certify to the correctness of the above information.
-                        <div class="sig-line">Signature over Printed Name of Property and/or Supply Custodian</div>
-                    </td>
-                    <!-- Right footer spans last three columns -->
-                    <td class="right" colspan="3">
-                        Posted by:
-                        <div class="sig-line">Signature over Printed Name of Designated Accounting Staff</div>
-                        <div class="date-line">Date: ____________</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
     </div>
 
-    <script>
-        // window.addEventListener('load', function() { setTimeout(function(){ window.print(); }, 400); });
-    </script>
 </body>
 </html>

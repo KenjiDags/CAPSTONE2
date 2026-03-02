@@ -47,9 +47,7 @@ require 'auth.php';
             min-width: 180px;
             transition: all 0.3s ease;
         }
-        .rspi-filters input[type="month"]:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(0, 56, 168, 0.1); background-color: var(--white); }
-        .rspi-filters .clear-link { color: var(--text-gray); text-decoration: none; font-size: 0.9rem; padding: 6px 10px; border-radius: 14px; border: 1px solid var(--border-gray); background: var(--light-gray); }
-        .rspi-filters .clear-link:hover { color: var(--primary-blue); border-color: var(--primary-blue); background: var(--white); }
+        .filters input[type="month"]:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(0, 56, 168, 0.1); background-color: var(--white); }
     </style>
 </head>
 <body class="rspi-page">
@@ -71,7 +69,7 @@ require 'auth.php';
                     <label for="month" style="color: #001F80; font-weight:600;">Month</label>
                     <input type="month" id="month" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" />
                     <?php if (!empty($_GET['month'])): ?>
-                        <a class="clear-link" href="rspi.php">Clear</a>
+                        <a class="btn edit-btn" href="rspi.php" style="height: 35px;"><i class="fas fa-trash-alt"></i> Clear</a>
                     <?php endif; ?>
                 </div>
                 <button type="submit" formaction="export_rspi.php" formmethod="get" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" class="btn pill-btn pill-export" style="margin-left:auto; border-radius: 8px !important; height: 38px; min-width: 160px; font-size: 1.1rem; display: flex; align-items: center;">

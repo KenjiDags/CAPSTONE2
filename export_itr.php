@@ -108,10 +108,10 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
     /* Header grid built entirely with tables */
     .hdr-grid { width:100%; border-collapse: collapse; }
     .label-table { width:100%; border-collapse: collapse; }
-    .label-table .label { font-weight:bold; padding:2px 6px 0 6px; }
+    .label-table .label { font-weight:bold; }
     .label-table .line-cell { border-bottom:none; padding:2px 6px 4px 6px; height:18px; }
     .label-table .line-cell .line-inner { display:inline-block; border-bottom:1px solid #000; padding:0 2px 2px 2px; height:16px; width:85%; vertical-align:bottom; }
-    .uline-inline { display:inline-block; border-bottom:1px solid #000; padding:0 2px 2px 2px; min-height:16px; line-height:16px; margin-left:6px; vertical-align:baseline; width:auto; min-width:0; }
+    .uline-inline { display: inline-block; border-bottom:1px solid #000; padding:0 2px; line-height: 1; width:auto; margin: 4px 0px; }
     .hb-left .uline-inline { min-width: 200px; }
     .hb-right .uline-inline { min-width: 130px; }
     /* Fine tune underline lengths per side */
@@ -260,6 +260,7 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
                     <th style="width: 10%">Amount</th>
                     <th style="width: 12%">Condition of<br>Inventory</th>
                 </tr>
+
             </thead>
             <tbody>
                 <?php
