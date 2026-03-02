@@ -50,47 +50,28 @@ $conn->close();
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title></title>
+<title>Export All Stock Cards</title>
 <style>
-/* Print-specific rules */
 @media print {
-    .no-print { display: none !important; }
-    body { margin: 0; }
-    
-    .top-spacer {
-        height: 20mm;   
-        visibility: hidden; 
-    }
-
-    /* Each card starts with consistent top margin */
-    .card-wrapper {
-        page-break-inside: avoid; 
-        page-break-after: always; 
-        margin: 20mm auto 0 auto;
-        padding: 10px 12px;
-        border: 2px solid #000;
-        max-width: 1000px;
-        position: relative;
-    }
-
-    table { page-break-inside: auto; }
-    tr { page-break-inside: avoid; page-break-after: auto; }
+    .no-print { display:none !important; }
+    .card-wrapper { page-break-inside: avoid; page-break-after: always; border: none !important;}
 }
 
-/* Screen view styling */
 body {
     font-family: "Times New Roman", serif;
     font-size: 12px;
     color: #000;
     margin: 20px;
 }
+
 .card-wrapper {
-    border: 2px solid #000;
-    padding: 10px 12px;
-    position: relative;
-    max-width: 1000px;
+    max-width: 800px;
     margin: 0 auto 40px auto;
+    border: 2px solid #000;
+    padding: 8px 12px 16px;
+    position: relative;
 }
+
 .appendix {
     position: absolute;
     top: 8px;
@@ -98,40 +79,49 @@ body {
     font-size: 11px;
     font-style: italic;
 }
+
 .title {
     text-align: center;
     font-weight: bold;
     font-size: 18px;
-    margin: 4px 0 8px;
+    margin: 4px 0 15px;
     letter-spacing: 1px;
 }
-.meta-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 6px;
-    font-size: 12px;
-}
-.meta-table td { padding: 3px 6px; vertical-align: bottom; }
-.meta-item { display: flex; gap: 6px; align-items: flex-end; }
-.meta-label { font-weight: bold; white-space: nowrap; }
-.field-line { flex: 1 1 180px; border-bottom: 1px solid #000; min-height: 16px; line-height: 16px; padding: 0 4px; }
-.field-line.empty:after { content: "\00a0"; }
 
 .stock-card-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 4px;
-    table-layout: fixed;
     font-size: 11px;
 }
-.stock-card-table th, .stock-card-table td {
+.stock-card-table th,
+.stock-card-table td {
     border: 1px solid #000;
     padding: 4px 6px;
     text-align: center;
     vertical-align: middle;
 }
-.stock-card-table th { font-weight: bold; }
-.no-history { font-style: italic; color: #444; }
+.stock-card-table th {
+    font-weight: bold;
+}
+
+.label-row th {
+    text-align: left;
+    font-weight: bold;
+}
+.label-row th span {
+    font-weight: normal;
+}
+.underline {
+    border-bottom: 1px solid #000;
+    display: inline-block;
+    min-width: 100px;
+}
+
+.no-history {
+    font-style: italic;
+    color: #444;
+}
 
 .print-button {
     background: #007cba;
@@ -143,7 +133,6 @@ body {
     font-size: 12px;
     margin-bottom: 12px;
 }
-
 .back-link {
     background: #6c757d;
     color: white;
@@ -152,7 +141,6 @@ body {
     font-size: 12px;
     text-decoration: none;
 }
-
 .instruction-box {
     background: #fffacd;
     border: 1px solid #ddd;
@@ -164,7 +152,8 @@ body {
 </style>
 </head>
 <body>
-  <div class="no-print">
+
+<div class="no-print">
     <div class="instruction-box">
       <strong>📄 Export Instructions:</strong>
       <div>1. Click the Print/Save button below.</div>
@@ -174,93 +163,83 @@ body {
     <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
     <a class="back-link" href="SC.php">← Back to SC</a>
     <hr style="margin:14px 0;">
-  </div>
+</div>
 
-<?php foreach ($stock_cards as $data): 
+<?php foreach ($stock_cards as $data):
     $item = $data['item'];
     $history_rows = $data['history'];
 ?>
 <div class="card-wrapper">
-    <div class="top-spacer"></div> <!-- Invisible spacer -->
     <div class="appendix">Appendix 53</div>
     <div class="title">STOCK CARD</div>
 
-    <table class="meta-table">
-        <tr>
-            <td>
-                <div class="meta-item"><span class="meta-label">LGU:</span><div class="field-line">TESDA</div></div>
-            </td>
-            <td>
-                <div class="meta-item"><span class="meta-label">Fund:</span><div class="field-line empty"></div></div>
-            </td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>
-                <div class="meta-item"><span class="meta-label">Item:</span><div class="field-line"><?= htmlspecialchars($item['item_name']); ?></div></div>
-            </td>
-            <td>
-                <div class="meta-item"><span class="meta-label">Stock No.:</span><div class="field-line"><?= htmlspecialchars($item['stock_number']); ?></div></div>
-            </td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>
-                <div class="meta-item"><span class="meta-label">Description:</span><div class="field-line"><?= htmlspecialchars($item['description']); ?></div></div>
-            </td>
-            <td>
-                <div class="meta-item"><span class="meta-label">Re-order Point:</span><div class="field-line"><?= htmlspecialchars($item['reorder_point']); ?></div></div>
-            </td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>
-                <div class="meta-item"><span class="meta-label">Unit of Measurement:</span><div class="field-line"><?= htmlspecialchars($item['unit']); ?></div></div>
-            </td>
-            <td colspan="2"></td>
-        </tr>
-    </table>
-
     <table class="stock-card-table">
-        <thead>
-            <tr>
-                <th rowspan="2">Date</th>
-                <th rowspan="2">Reference</th>
-                <th>Receipt Qty.</th>
-                <th colspan="2">Issue</th>
-                <th rowspan="2">Balance Qty.</th>
-                <th rowspan="2">Days to Consume</th>
-            </tr>
-            <tr>
-                <th>Qty.</th>
-                <th>Qty.</th>
-                <th>Office</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php if (count($history_rows) > 0): ?>
-            <?php foreach ($history_rows as $h): ?>
-            <tr>
-                <td><?= date('M d, Y', strtotime($h['changed_at'])); ?></td>
-                <td><?= !empty($h['ris_no']) ? htmlspecialchars($h['ris_no']) : htmlspecialchars($item['iar']); ?></td>
-                <td><?= $h['quantity_change'] > 0 ? htmlspecialchars($h['quantity_change']) : ''; ?></td>
-                <td><?= $h['quantity_change'] < 0 ? abs(htmlspecialchars($h['quantity_change'])) : ''; ?></td>
-                <td></td>
-                <td><?= htmlspecialchars($h['quantity_on_hand']); ?></td>
-                <td>--</td>
-            </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr><td colspan="7" class="no-history">No history available for this item.</td></tr>
+      <thead>
+        <tr class="label-row">
+          <th colspan="5" style="border: none;">LGU: <span class="underline" style="min-width: 200px;">TESDA</span></th>
+          <th colspan="2" style="border: none;">Fund: <span class="underline" style="min-width: 100px;">(TEMP DATA)</span></th>
+        </tr>
+        <tr class="label-row">
+          <th colspan="5">Item: <span><?= htmlspecialchars($item['item_name']); ?></span></th>
+          <th colspan="2">Stock No.: <span><?= htmlspecialchars($item['stock_number']); ?></span></th>
+        </tr>
+        <tr class="label-row">
+          <th colspan="5">Description: <span><?= htmlspecialchars($item['description']); ?></span></th>
+          <th colspan="2">Re-order Point: <span><?= htmlspecialchars($item['reorder_point']); ?></span></th>
+        </tr>
+        <tr class="label-row">
+          <th colspan="5">Unit of Measurement: <span><?= htmlspecialchars($item['unit']); ?></span></th>
+          <th colspan="2"></th>
+        </tr>
+        <tr>
+          <th rowspan="2" style="width: 20%">Date</th>
+          <th rowspan="2" style="width: 20%;">Reference</th>
+          <th colspan="1" style="width: 10%;">Receipt</th>
+          <th colspan="2" style="width: 25%;">Issue</th>
+          <th rowspan="1" style="width: 10%;">Balance</th>
+          <th rowspan="2" style="width: 15%;">No. of Days to Consume</th>
+        </tr>
+        <tr>
+          <th>Qty.</th>
+          <th style="width: 5%;">Qty.</th>
+          <th>Office</th>
+          <th>Qty.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (count($history_rows) > 0): 
+            foreach ($history_rows as $h):
+              $date = date('M d, Y', strtotime($h['changed_at']));
+              $reference = !empty($h['ris_no']) ? htmlspecialchars($h['ris_no']) : htmlspecialchars($item['iar']);
+              $receipt_qty = $h['quantity_change'] > 0 ? htmlspecialchars($h['quantity_change']) : '';
+              $issue_qty = $h['quantity_change'] < 0 ? abs(htmlspecialchars($h['quantity_change'])) : '';
+              $office = ''; // add office info if available
+              $balance = htmlspecialchars($h['quantity_on_hand']);
+              $days = '--';
+        ?>
+        <tr>
+          <td><?= $date; ?></td>
+          <td><?= $reference; ?></td>
+          <td><?= $receipt_qty; ?></td>
+          <td><?= $issue_qty; ?></td>
+          <td><?= $office; ?></td>
+          <td><?= $balance; ?></td>
+          <td><?= $days; ?></td>
+        </tr>
+        <?php endforeach; 
+        else: ?>
+          <tr>
+            <td>--</td><td>--</td><td>0</td><td>0</td><td>--</td><td>0</td><td>--</td>
+          </tr>
         <?php endif; ?>
 
-        <?php for ($i = 0; $i < max(0, 20 - count($history_rows)); $i++): ?>
-            <tr>
-                <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-                <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-            </tr>
+        <?php for ($i=0; $i<max(0,20-count($history_rows)); $i++): ?>
+          <tr>
+            <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+            <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+          </tr>
         <?php endfor; ?>
-        </tbody>
+      </tbody>
     </table>
 </div>
 <?php endforeach; ?>

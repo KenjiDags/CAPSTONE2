@@ -7,7 +7,7 @@ require 'functions.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     restockItems($conn, $_POST); // one clean function call
-
+    // Redirect to inventory.php after saving entries
     header("Location: inventory.php?success=restocked");
     exit;
 }

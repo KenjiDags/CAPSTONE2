@@ -54,6 +54,9 @@ $ris = ['entity_name' => 'TESDA'];
   <style>
     @media print {
       .no-print { display:none !important; }
+      .card-wrapper {
+        border: none !important;
+      }
     }
     body {
       margin: 20px;
@@ -62,7 +65,7 @@ $ris = ['entity_name' => 'TESDA'];
       color: #000;
     }
     .card-wrapper {
-      max-width: 1000px;
+      max-width: 800px;
       margin: 0 auto;
       border: 2px solid #000;
       padding: 8px 12px 16px;
@@ -79,55 +82,14 @@ $ris = ['entity_name' => 'TESDA'];
       text-align: center;
       font-weight: bold;
       font-size: 18px;
-      margin: 4px 0 8px;
+      margin: 4px 0 15px;
       letter-spacing: 1px;
     }
 
-  .meta-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 6px;
-    font-size: 12px;
-  }
-
-  .meta-table td {
-    padding: 3px 6px;
-    vertical-align: bottom;
-  }
-
-  .meta-item {
-    display: flex;
-    gap: 6px;
-    align-items: flex-end;
-    flex-wrap: nowrap;
-  }
-
-  .meta-label {
-    font-weight: bold;
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-
-  .field-line {
-    flex: 1 1 180px; /* grow to fill, but at least 180px */
-    border-bottom: 1px solid #000;
-    min-height: 16px;
-    line-height: 16px;
-    padding: 0 4px;
-    box-sizing: border-box;
-    display: inline-block;
-    vertical-align: bottom;
-    /* ensure empty placeholder shows underline */
-  }
-
-  .field-line.empty:after {
-    content: "\00a0"; /* non-breaking space to preserve height when empty */
-  }
     .stock-card-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 4px;
-      table-layout: fixed;
       font-size: 11px;
     }
     .stock-card-table th,
@@ -140,6 +102,7 @@ $ris = ['entity_name' => 'TESDA'];
     .stock-card-table th {
       font-weight: bold;
     }
+
     .sub-header {
       border-left: none;
       border-right: none;
@@ -188,6 +151,22 @@ $ris = ['entity_name' => 'TESDA'];
       font-style: italic;
       color: #444;
     }
+
+    .label-row th {
+      text-align: left; 
+      font-weight: bold;
+    }
+
+    .label-row th span {
+      font-weight: normal;
+    }
+
+    .underline {
+      border-bottom: 1px solid #000;
+      display: inline-block;
+    }
+
+        
   </style>
 </head>
 <body>
@@ -207,77 +186,39 @@ $ris = ['entity_name' => 'TESDA'];
     <div class="appendix">Appendix 53</div>
     <div class="title">STOCK CARD</div>
 
-  <table class="meta-table">
-    <tr>
-      <td style="width:33%;">
-        <div class="meta-item">
-          <span class="meta-label">LGU:</span>
-          <div class="field-line"><?php echo htmlspecialchars($ris['entity_name']); ?></div>
-        </div>
-      </td>
-      <td style="width:33%;">
-        <div class="meta-item">
-          <span class="meta-label">Fund:</span>
-          <div class="field-line empty"></div>
-        </div>
-      </td>
-      <td style="width:34%;"></td>
-    </tr>
-    <tr>
-      <td>
-        <div class="meta-item">
-          <span class="meta-label">Item:</span>
-          <div class="field-line"><?php echo htmlspecialchars($items['item_name']); ?></div>
-        </div>
-      </td>
-      <td>
-        <div class="meta-item">
-          <span class="meta-label">Stock No.:</span>
-          <div class="field-line"><?php echo htmlspecialchars($items['stock_number']); ?></div>
-        </div>
-      </td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>
-        <div class="meta-item">
-          <span class="meta-label">Description:</span>
-          <div class="field-line"><?php echo htmlspecialchars($items['description']); ?></div>
-        </div>
-      </td>
-      <td>
-        <div class="meta-item">
-          <span class="meta-label">Re-order Point:</span>
-          <div class="field-line"><?php echo htmlspecialchars($items['reorder_point']); ?></div>
-        </div>
-      </td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>
-        <div class="meta-item">
-          <span class="meta-label">Unit of Measurement:</span>
-          <div class="field-line"><?php echo htmlspecialchars($items['unit']); ?></div>
-        </div>
-      </td>
-      <td colspan="2"></td>
-    </tr>
-  </table>
-
     <table class="stock-card-table">
       <thead>
+
+        <tr class="label-row">
+          <th colspan="5" style="border: none;">LGU: <span class="underline" style="min-width: 200px;"><?php echo htmlspecialchars($ris['entity_name']); ?></span></th>
+          <th colspan="2" style="border: none;">Fund: <span class="underline" style="min-width: 100px;">(TEMP DATA)</span></th>
+        </tr>
+
+        <tr class ="label-row">
+          <th colspan="5">Item: <span><?php echo htmlspecialchars($items['item_name']); ?></span></th>
+          <th colspan="2">Stock No. <span><?php echo htmlspecialchars($items['stock_number']); ?></span></th>
+        </tr>
+        <tr class="label-row">
+          <th colspan="5">Description: <span><?php echo htmlspecialchars($items['description']); ?></span></th>
+          <th colspan="2">Re-order Point: <span><?php echo htmlspecialchars($items['reorder_point']); ?></span></th>
+        </tr>
+        <tr class="label-row">
+          <th colspan="5">Unit of Measurement: <span><?php echo htmlspecialchars($items['unit']); ?></span></th>
+          <th colspan="2"></th>
+        </tr>
         <tr>
-          <th rowspan="2" style="width:10%;">Date</th>
-          <th rowspan="2">Reference</th>
-          <th colspan="1">Receipt</th>
-          <th colspan="2">Issue</th>
-          <th rowspan="2">Balance Qty.</th>
-          <th rowspan="2">No. of Days to Consume</th>
+          <th rowspan="2" style="width: 20%">Date</th>
+          <th rowspan="2" style="width: 20%;">Reference</th>
+          <th colspan="1" style="width: 10%;">Receipt</th>
+          <th colspan="2" style="width: 25%;">Issue</th>
+          <th rowspan="1" style="width: 10%;">Balance</th>
+          <th rowspan="2" style="width: 15%;">No. of Days to Consume</th>
         </tr>
         <tr>
           <th>Qty.</th>
-          <th>Qty.</th>
+          <th style="width: 5%;">Qty.</th>
           <th>Office</th>
+          <th>Qty.</th>
         </tr>
       </thead>
       <tbody>

@@ -111,12 +111,12 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         }
         .logo {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
         .logo img {
-            max-width: 90px;
+            max-width: 150px;
             height: auto;
-            margin-bottom: 15px;
+            margin-bottom: -5px;
         }
         .logo h1 {
             color: #0052a3;
@@ -125,9 +125,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             font-weight: 700;
             letter-spacing: 1px;
         }
-        .form-group { 
-            margin-bottom: 20px; 
-        }
+
         .form-group input[type="checkbox"] {
             width: auto !important;
         }
