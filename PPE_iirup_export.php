@@ -1,3 +1,39 @@
+<?php
+require 'config.php';
+
+// Get IIRUP ID from URL
+$iirup_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+if ($iirup_id <= 0) {
+    die("Invalid IIRUP ID");
+}
+
+// Fetch IIRUP header
+$stmt = $conn->prepare("SELECT * FROM ppe_iirup WHERE id = ?");
+$stmt->bind_param("i", $iirup_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$iirup = $result->fetch_assoc();
+$stmt->close();
+
+if (!$iirup) {
+    die("IIRUP not found");
+}
+
+// Fetch IIRUP items
+$items_stmt = $conn->prepare("
+    SELECT * FROM ppe_iirup_items
+    WHERE ppe_iirup_id = ?
+    ORDER BY id
+");
+$items_stmt->bind_param("i", $iirup_id);
+$items_stmt->execute();
+$items_result = $items_stmt->get_result();
+$items = $items_result->fetch_all(MYSQLI_ASSOC);
+$items_stmt->close();
+
+$dataRows = count($items);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,11 +135,11 @@
     <div class="appendix">appendix 74</div>
     <div class="header-section">
         INVENTORY AND INSPECTION REPORT OF UNSERVICEABLE PROPERTY<br>
-        As at ________________________________
+        As at <?= htmlspecialchars(date('M d, Y', strtotime($iirup['date_reported']))) ?>
     </div>
 
-    <p><strong>Entity Name:</strong> Sample Agency Name<br>
-    <strong>Fund Cluster:</strong> 01</p>
+    <p><strong>Entity Name:</strong> <?= htmlspecialchars($iirup['entity_name'] ?? 'TESDA Regional Office') ?><br>
+    <strong>Fund Cluster:</strong> <?= htmlspecialchars($iirup['fund_cluster'] ?? '101') ?></p>
 
     <div class="table-container">
         <table id="inventoryTable" style="border-right: 2px solid #000;">
@@ -160,11 +196,33 @@
             </tr>
         </tr>
 
-        <!-- your data rows here (2 sample rows + 18 generated) -->
+        <!-- data rows populated from database -->
         <?php
-        // Example: replace with your actual data rows rendering
-        $dataRows = 2; // Set this to the number of actual data rows rendered
-        // for ($i = 0; $i < count($yourDataArray); $i++) { ... }
+        if (!empty($items)) {
+            foreach ($items as $item) {
+                $totalCost = ($item['quantity'] ?? 0) * (($item['amount'] ?? 0) / ($item['quantity'] ?? 1));
+                echo "<tr>";
+                echo "<td>" . htmlspecialchars(date('m/d/Y', strtotime($item['date_acquired'] ?? 'now'))) . "</td>";
+                echo "<td style='text-align:left;'>" . htmlspecialchars($item['particulars'] ?? 'N/A') . "</td>";
+                echo "<td>" . htmlspecialchars($item['PPE_no'] ?? 'N/A') . "</td>";
+                echo "<td>" . htmlspecialchars($item['quantity'] ?? 0) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format(($item['amount'] ?? 0) / ($item['quantity'] ?? 1), 2) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($totalCost, 2) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['depreciation'] ?? 0, 2) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['impairment_loss'] ?? 0, 2) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['carrying_amount'] ?? 0, 2) . "</td>";
+                echo "<td id='remarksCol' style='text-align:left;'>" . htmlspecialchars($item['remarks'] ?? '') . "</td>";
+                echo "<td>" . htmlspecialchars($item['sale'] ?? 0) . "</td>";
+                echo "<td>" . htmlspecialchars($item['transfer'] ?? 0) . "</td>";
+                echo "<td>" . htmlspecialchars($item['destruction'] ?? 0) . "</td>";
+                echo "<td>" . htmlspecialchars($item['other'] ?? 0) . "</td>";
+                echo "<td>" . htmlspecialchars($item['total'] ?? 0) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['appraised_value'] ?? 0, 2) . "</td>";
+                echo "<td>" . htmlspecialchars($item['or_no'] ?? '') . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['amount'] ?? 0, 2) . "</td>";
+                echo "</tr>";
+            }
+        }
         $totalRows = 20;
         $emptyRows = $totalRows - $dataRows;
         for ($i = 0; $i < $emptyRows; $i++) {
@@ -187,30 +245,26 @@
 const TOTAL_ROWS = 20;
 const table = document.getElementById("inventoryTable");
 
-let existingDataRows = table.rows.length - 2;
-let rowsToAdd = TOTAL_ROWS - existingDataRows;
+// Count existing data rows (excluding header rows)
+let dataRowCount = <?= $dataRows ?>;
+let existingRows = table.rows.length - 3; // Subtract header rows
+let rowsToAdd = TOTAL_ROWS - dataRowCount;
 
-for (let i = 0; i < rowsToAdd; i++) {
-    let tr = document.createElement("tr");
-    for (let c = 0; c < 18; c++) {
-        let td = document.createElement("td");
-        td.innerHTML = "&nbsp;";
-        tr.appendChild(td);
-    }
-    table.appendChild(tr);
+// Rows are already added by PHP, just ensure we have the signature row
+let lastRow = table.rows[table.rows.length - 1];
+if (!lastRow.innerHTML.includes("SIGNATORIES")) {
+    // Add the SIGNATORIES ROW inside the table
+    let signRow = document.createElement("tr");
+    signRow.innerHTML = `
+        <th colspan="10" style="border: 2px solid #000;">
+            <div>
+                I HEREBY request inspection and disposition, pursuant to Section 79 of PD 1445, of the property enumerated above.
+            </div>
+        </th>
+        <th colspan="8" style="border: 2px solid #000;">SIGNATORIES 2</th>
+    `;
+    table.appendChild(signRow);
 }
-
-// Add the SIGNATORIES ROW inside the table
-let signRow = document.createElement("tr");
-signRow.innerHTML = `
-    <th colspan="10" style="border: 2px solid #000;">
-        <div>
-            I HEREBY request inspection and disposition, pursuant to Section 79 of PD 1445, of the property enumerated above.
-        </div>
-    </th>
-    <th colspan="8" style="border: 2px solid #000;">SIGNATORIES 2</th>
-`;
-table.appendChild(signRow);
 </script>
 
 

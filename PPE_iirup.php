@@ -39,7 +39,7 @@ switch ($sort_by) {
 $whereClause = '';
 if ($search !== '') {
     $esc = $conn->real_escape_string($search);
-    $whereClause = " WHERE (particulars LIKE '%$esc%' OR property_number LIKE '%$esc%' OR remarks LIKE '%$esc%')";
+    $whereClause = " WHERE (particulars LIKE '%$esc%' OR PPE_no LIKE '%$esc%' OR remarks LIKE '%$esc%')";
 }
 $query = "SELECT * FROM ppe_iirup $whereClause $order_clause";
 $result = $conn->query($query);
@@ -144,10 +144,9 @@ $result = $conn->query($query);
     <table>
             <thead>
                 <tr>
-                <th>ID</th>
                 <th>Date Reported</th>
                 <th>Particulars</th>
-                <th>Property Number</th>
+                <th>PPE Number</th>
                 <th>Quantity</th>
                 <th>Unit Cost</th>
                 <th>Depreciation</th>
@@ -162,10 +161,9 @@ $result = $conn->query($query);
             <?php if ($result && $result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($row['id']) ?></strong></td>
                         <td><?= date('M d, Y', strtotime($row['date_reported'])) ?></td>
                         <td><?= htmlspecialchars($row['particulars']) ?></td>
-                        <td><?= htmlspecialchars($row['property_number']) ?></td>
+                        <td><?= htmlspecialchars($row['PPE_no']) ?></td>
                         <td><?= htmlspecialchars($row['quantity']) ?></td>
                         <td><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
                         <td><?= number_format($row['depreciation'] ?? 0, 2) ?></td>
@@ -176,7 +174,7 @@ $result = $conn->query($query);
                         <td>
                             <a href="view_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-view" title="View PPE IIRUP"><i class="fas fa-eye"></i> View</a>
                             <a href="edit_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-edit" title="Edit PPE IIRUP"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="export_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-export" title="Export PPE IIRUP"><i class="fas fa-download"></i> Export</a>
+                            <a href="PPE_iirup_export.php?id=<?= $row['id'] ?>" class="pill-btn pill-export" title="Export PPE IIRUP"><i class="fas fa-download"></i> Export</a>
                             <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= $row['id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')" title="Delete PPE IIRUP"><i class="fas fa-trash"></i> Delete</a>
                         </td>
                     </tr>

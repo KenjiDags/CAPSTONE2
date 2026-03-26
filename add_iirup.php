@@ -13,13 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("No items selected for disposal.");
         }
         $conn->begin_transaction();
-        // Insert Header
-        $stmt = $conn->prepare("INSERT INTO ppe_iirup (date_reported, particulars, property_number, quantity, unit_cost, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        // Get first item's PPE_no and particulars for the header
+        $ppe_no_header = $items[0]['PPE_no'] ?? '';
+        $particulars_header = $items[0]['particulars'] ?? '';
+        // Insert Header (update to use PPE_no and remove unused fields)
+        $stmt = $conn->prepare("INSERT INTO ppe_iirup (date_reported, PPE_no, particulars, quantity, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $date_reported = $_POST['date_reported'] ?? date('Y-m-d');
-        $particulars = $_POST['particulars'] ?? '';
-        $property_number = $_POST['property_number'] ?? '';
         $quantity = $_POST['quantity'] ?? 0;
-        $unit_cost = $_POST['unit_cost'] ?? 0;
         $depreciation = $_POST['depreciation'] ?? 0;
         $impairment_loss = $_POST['impairment_loss'] ?? 0;
         $carrying_amount = $_POST['carrying_amount'] ?? 0;
@@ -32,20 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $appraised_value = $_POST['appraised_value'] ?? 0;
         $or_no = $_POST['or_no'] ?? '';
         $amount = $_POST['amount'] ?? 0;
-        $stmt->bind_param("sssiddddsiiiiddsd", $date_reported, $particulars, $property_number, $quantity, $unit_cost, $depreciation, $impairment_loss, $carrying_amount, $remarks, $sale, $transfer, $destruction, $other, $total, $appraised_value, $or_no, $amount);
+        $stmt->bind_param("sssidddsiiiiidsd", $date_reported, $ppe_no_header, $particulars_header, $quantity, $depreciation, $impairment_loss, $carrying_amount, $remarks, $sale, $transfer, $destruction, $other, $total, $appraised_value, $or_no, $amount);
         if (!$stmt->execute()) throw new Exception("Header Error: " . $stmt->error);
         $ppe_iirup_id = $stmt->insert_id;
         $stmt->close();
         // Insert Items
-        $item_stmt = $conn->prepare("INSERT INTO ppe_iirup_items (ppe_iirup_id, date_acquired, particulars, property_number, quantity, unit_cost, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $item_stmt = $conn->prepare("INSERT INTO ppe_iirup_items (ppe_iirup_id, date_acquired, quantity, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount, particulars) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $update_stmt = $conn->prepare("UPDATE ppe_property SET quantity = quantity - ? WHERE id = ?");
         foreach ($items as $item) {
-            $item_stmt->bind_param("isssiddddsiiiiddsd",
+            $particulars = $item['particulars'] ?? '';
+            $item_stmt->bind_param("isiddddsiiiddsss",
                 $ppe_iirup_id,
                 $item['date_acquired'],
-                $item['particulars'],
-                $item['property_number'],
                 $item['quantity'],
-                $item['unit_cost'],
                 $item['depreciation'],
                 $item['impairment_loss'],
                 $item['carrying_amount'],
@@ -57,13 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $item['total'],
                 $item['appraised_value'],
                 $item['or_no'],
-                $item['amount']
+                $item['amount'],
+                $particulars
             );
             if (!$item_stmt->execute()) {
                 throw new Exception("Failed to insert item: " . $item_stmt->error);
             }
+            // Update ppe_property to subtract disposed quantity
+            $ppe_id = $item['ppe_id'];
+            $disposed_qty = $item['quantity'];
+            $update_stmt->bind_param("ii", $disposed_qty, $ppe_id);
+            if (!$update_stmt->execute()) {
+                throw new Exception("Failed to update item quantity: " . $update_stmt->error);
+            }
         }
         $item_stmt->close();
+        $update_stmt->close();
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'PPE IIRUP saved successfully']);
     } catch (Exception $e) {
@@ -122,21 +130,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="date" id="date_reported" value="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="form-group">
-                    <label>Particulars:</label>
-                    <input type="text" id="particulars" placeholder="Description">
+                    <label>PPE No.:</label>
+                    <input type="text" id="PPE_no" placeholder="PPE No." readonly>
                 </div>
                 <div class="form-group">
-                    <label>Property Number:</label>
-                    <input type="text" id="property_number" placeholder="Property No.">
+                    <label>Property No.:</label>
+                    <input type="text" id="property_no" placeholder="Property No." readonly>
                 </div>
                 <div class="form-group">
                     <label>Quantity:</label>
                     <input type="number" id="quantity" min="0" value="0">
                 </div>
-                <div class="form-group">
-                    <label>Unit Cost:</label>
-                    <input type="number" id="unit_cost" min="0" step="0.01" value="0">
-                </div>
+
                 <div class="form-group">
                     <label>Depreciation:</label>
                     <input type="number" id="depreciation" min="0" step="0.01" value="0">
@@ -197,8 +202,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <table id="itemsTable">
                         <thead>
                             <tr>
+                                <th style="width: 40px;"></th>
                                 <th>Date Acq.</th>
-                                <th>Property No.</th>
+                                <th>PPE No.</th>
                                 <th>Description</th>
                                 <th>Custodian</th>
                                 <th>Quantity</th>
@@ -210,15 +216,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </thead>
                         <tbody>
                         <?php
-                        $sql = "SELECT id, date_acquired, par_no, item_name, item_description, unit, quantity, custodian, amount, remarks FROM ppe_property WHERE quantity > 0 ORDER BY item_name";
+                        $sql = "SELECT p.id, p.date_acquired, p.PPE_no, p.item_name, p.item_description, p.unit, p.quantity, p.custodian, p.amount, p.remarks, pc.property_no FROM ppe_property p LEFT JOIN ppe_pc pc ON p.PPE_no = pc.ppe_property_no WHERE p.quantity > 0 ORDER BY p.item_name";
                         $res = $conn->query($sql);
                         if ($res && $res->num_rows > 0) {
                             while ($row = $res->fetch_assoc()) {
-                                $search = strtolower($row['par_no'] . " " . $row['item_name'] . " " . $row['item_description']);
+                                $search = strtolower($row['PPE_no'] . " " . $row['item_name'] . " " . $row['item_description']);
                         ?>
-                        <tr class="item-row" data-search="<?= $search ?>">
-                            <td><input type="checkbox" class="item-checkbox" onclick="fillInputsFromRow(this)"> <?= htmlspecialchars($row['date_acquired']) ?></td>
-                            <td class="prop-cell"><?= htmlspecialchars($row['par_no']) ?></td>
+                        <tr class="item-row" data-search="<?= $search ?>" data-ppe-id="<?= $row['id'] ?>" data-date-acquired="<?= htmlspecialchars($row['date_acquired']) ?>" data-property-no="<?= htmlspecialchars($row['property_no']) ?>" data-item-name="<?= htmlspecialchars($row['item_name']) ?>" data-item-description="<?= htmlspecialchars($row['item_description']) ?>">
+                            <td><input type="checkbox" class="item-checkbox" onclick="fillInputsFromRow(this)"></td>
+                            <td><?= htmlspecialchars($row['date_acquired']) ?></td>
+                            <td class="prop-cell"><?= htmlspecialchars($row['PPE_no']) ?></td>
                             <td class="desc-cell"><?= htmlspecialchars($row['item_name'] . ' - ' . $row['item_description']) ?></td>
                             <td class="holder-cell"><?= htmlspecialchars($row['custodian']) ?></td>
                             <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
@@ -278,14 +285,17 @@ function submitIIRUP() {
         const qty = parseInt(row.querySelector('.disposal-qty').value) || 0;
         if (qty > 0) {
             const mode = row.querySelector('.mode-select').value;
+            const unitCost = parseFloat(row.querySelector('.currency').dataset.val) || 0;
+            const itemName = row.dataset.itemName || '';
+            const itemDescription = row.dataset.itemDescription || '';
+            const particulars = itemName + (itemDescription ? ', ' + itemDescription : '');
             items.push({
-                date_acquired: row.cells[0].innerText.trim(),
-                property_number: row.querySelector('.prop-cell').innerText.trim(),
-                particulars: row.querySelector('.desc-cell').innerText.trim(),
-                unit: row.querySelector('.unit-cell').innerText.trim(),
-                unit_cost: row.querySelector('.cost-cell').dataset.val,
+                ppe_id: row.dataset.ppeId,
+                date_acquired: row.dataset.dateAcquired,
+                PPE_no: row.querySelector('.prop-cell').innerText.trim(),
                 quantity: qty,
                 remarks: row.querySelector('.remarks-input').value.trim(),
+                particulars: particulars,
                 sale: (mode === 'Sale') ? qty : 0,
                 transfer: (mode === 'Transfer') ? qty : 0,
                 destruction: (mode === 'Destruction') ? qty : 0,
@@ -293,17 +303,14 @@ function submitIIRUP() {
                 total: qty,
                 appraised_value: 0,
                 or_no: '',
-                amount: qty * parseFloat(row.querySelector('.cost-cell').dataset.val)
+                amount: qty * unitCost
             });
         }
     });
     if (items.length === 0) { alert('Please select items to dispose.'); return; }
     const fd = new FormData();
     fd.append('date_reported', document.getElementById('date_reported').value);
-    fd.append('particulars', document.getElementById('particulars').value);
-    fd.append('property_number', document.getElementById('property_number').value);
     fd.append('quantity', document.getElementById('quantity').value);
-    fd.append('unit_cost', document.getElementById('unit_cost').value);
     fd.append('depreciation', document.getElementById('depreciation').value);
     fd.append('impairment_loss', document.getElementById('impairment_loss').value);
     fd.append('carrying_amount', document.getElementById('carrying_amount').value);
@@ -335,11 +342,21 @@ function submitIIRUP() {
 function fillInputsFromRow(checkbox) {
     if (!checkbox.checked) return;
     const row = checkbox.closest('tr');
-    document.getElementById('date_reported').value = row.cells[0].textContent.trim();
-    document.getElementById('property_number').value = row.querySelector('.prop-cell').textContent.trim();
-    document.getElementById('particulars').value = row.querySelector('.desc-cell').textContent.trim();
-    document.getElementById('quantity').value = row.cells[4].textContent.trim();
-    document.getElementById('unit_cost').value = row.querySelector('.cost-cell').dataset.val;
+    // Extract item_name and item_description from the desc-cell
+    const descCell = row.querySelector('.desc-cell').textContent.trim();
+    let itemName = '', itemDescription = '';
+    if (descCell.includes(' - ')) {
+        [itemName, itemDescription] = descCell.split(' - ', 2);
+    } else {
+        itemName = descCell;
+        itemDescription = '';
+    }
+    // Set particulars as item_name + item_description
+    document.getElementById('date_reported').value = row.dataset.dateAcquired;
+    document.getElementById('PPE_no').value = row.querySelector('.prop-cell').textContent.trim();
+    document.getElementById('property_no').value = row.dataset.propertyNo;
+    document.getElementById('quantity').value = row.cells[5].textContent.trim();
+    // No unit cost input to fill anymore
     document.getElementById('remarks').value = row.querySelector('.remarks-input').value.trim();
 }
 </script>

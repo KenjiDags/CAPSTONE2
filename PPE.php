@@ -199,6 +199,7 @@ try {
                 <th><i class="fas fa-align-left"></i> Description</th>
                 <th><i class="fas fa-list-ol"></i> Quantity</th>
                 <th><i class="fas fa-ruler"></i> Unit</th>
+                <th><i class="fas fa-calendar"></i> Date Acquired</th>
                 <th><i class="fas fa-user-tie"></i> Officer in charge</th>
                 <th><i class="fas fa-info-circle"></i> Status</th>
                 <th><i class="fas fa-check-circle"></i> Condition</th>
@@ -208,7 +209,7 @@ try {
         </thead>
         <tbody>
             <?php if (empty($items)): ?>
-                <tr><td colspan="10">
+                <tr><td colspan="11">
                     <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
                     <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
                 </td></tr>
@@ -220,6 +221,7 @@ try {
                     <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
                     <td><?= number_format($item['quantity']); ?></td>
                     <td><?= htmlspecialchars($item['unit']); ?></td>
+                    <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A'); ?></td>
                     <td><?= htmlspecialchars($item['custodian']); ?></td>
                     <td><?= htmlspecialchars($item['status']); ?></td>
                     <td><?= htmlspecialchars($item['condition']); ?></td>
@@ -274,6 +276,7 @@ function viewItem(id){
                 <div class="detail-row"><strong>Description:</strong> ${item.item_description}</div>
                 <div class="detail-row"><strong>Quantity:</strong> ${item.quantity}</div>
                 <div class="detail-row"><strong>Unit:</strong> ${item.unit}</div>
+                <div class="detail-row"><strong>Date Acquired:</strong> ${item.date_acquired || 'N/A'}</div>
                 <div class="detail-row"><strong>Officer Incharge:</strong> ${item.officer_incharge}</div>
                 <div class="detail-row"><strong>Custodian:</strong> ${item.custodian}</div>
                 <div class="detail-row"><strong>Status:</strong> ${item.status}</div>

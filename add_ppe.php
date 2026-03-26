@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $officer_incharge = $_POST['officer_incharge'];
         $custodian = $_POST['custodian'];
         $entity_name = $_POST['entity_name'];
+        $date_acquired = $_POST['date_acquired'] ?? date('Y-m-d');
         $status = $_POST['status'];
         $condition = $_POST['condition'];
         $fund_cluster = $_POST['fund_cluster'] ?? '101';
@@ -58,18 +59,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_insert = $conn->prepare("
             INSERT INTO ppe_property
             (PPE_no, property_no, item_name, item_description, amount, quantity, unit,
-            officer_incharge, custodian, entity_name, `condition`, status, fund_cluster, remarks)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            officer_incharge, custodian, entity_name, date_acquired, `condition`, status, fund_cluster, remarks)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         ");
         $stmt_insert->bind_param(
-            "sssssdisssssss",
+            "sssssdissssssss",
             $PPE_no, $property_no, $item_name, $item_description, $amount, $quantity, $unit,
-            $officer_incharge, $custodian, $entity_name, $condition, $status, $fund_cluster, $remarks
+            $officer_incharge, $custodian, $entity_name, $date_acquired, $condition, $status, $fund_cluster, $remarks
         );
         if ($stmt_insert->execute()) {
             $success = "PPE item added successfully!";
             // Log history for initial addition to item_history_ppe
             $new_id = $conn->insert_id;
+            
+            // Also create a corresponding ppe_pc record with the property_no
+            $stmt_pc = $conn->prepare("
+                INSERT INTO ppe_pc
+                (date_created, ppe_property_no, property_no, item_name, item_description, amount, quantity, unit, custodian, officer, entity_name, fund_cluster, remarks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ");
+            $today = date('Y-m-d');
+            $stmt_pc->bind_param(
+                "sssssdisissss",
+                $today, $PPE_no, $property_no, $item_name, $item_description, $amount, $quantity, $unit,
+                $custodian, $officer_incharge, $entity_name, $fund_cluster, $remarks
+            );
+            $stmt_pc->execute();
+            $stmt_pc->close();
         $change_direction = 'increase';
         $change_type = 'add';
         $receipt_qty = $quantity;
@@ -217,6 +233,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date_acquired">Date Acquired <span class="required">*</span></label>
+                    <input type="date" id="date_acquired" name="date_acquired" required>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="item_description">Description <span class="required">*</span></label>
                 <textarea id="item_description" name="item_description" required></textarea>
@@ -301,5 +324,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 </div>
+
+<script>
+// Set date_acquired to current date on page load
+window.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('date_acquired');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+    }
+});
+</script>
 </body>
 </html>

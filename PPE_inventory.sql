@@ -5,7 +5,6 @@ USE tesda_inventory;
 CREATE TABLE ppe_property (
     id INT PRIMARY KEY AUTO_INCREMENT,
 
-    -- par_no removed
     item_name TEXT NOT NULL,        
     item_description TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
@@ -51,6 +50,9 @@ CREATE TABLE ppe_pc (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+ALTER TABLE ppe_pc
+    ADD COLUMN property_no VARCHAR(100) NULL;
 
 /* Table for Property Transfer Receipt (PTR) */
 CREATE TABLE ppe_ptr (
@@ -178,10 +180,7 @@ ALTER TABLE item_history_ppe
 CREATE TABLE IF NOT EXISTS ppe_iirup (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date_reported DATE NOT NULL,
-    particulars TEXT NOT NULL,
-    property_number VARCHAR(100) NULL,
     quantity INT NULL,
-    unit_cost DECIMAL(15,2) NULL,
     depreciation DECIMAL(15,2) NULL,
     impairment_loss DECIMAL(15,2) NULL,
     carrying_amount DECIMAL(15,2) NULL,
@@ -198,18 +197,18 @@ CREATE TABLE IF NOT EXISTS ppe_iirup (
     total_cost DECIMAL(15,2) NULL
 );
 
-ALTER TABLE ppe_iirup 
-    ADD COLUMN iirup_id VARCHAR(100) NOT NULL UNIQUE;
+ALTER TABLE ppe_iirup
+    ADD COLUMN PPE_no VARCHAR(50) NULL;
 
+ALTER TABLE ppe_iirup
+    ADD COLUMN particulars VARCHAR(255) NULL;
 
 CREATE TABLE IF NOT EXISTS ppe_iirup_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ppe_iirup_id INT NOT NULL,
     date_acquired DATE NULL,
-    particulars TEXT NOT NULL,
-    property_number VARCHAR(100) NULL,
     quantity INT NULL,
-    unit_cost DECIMAL(15,2) NULL,
+    PPE_no VARCHAR(50) NULL,
     depreciation DECIMAL(15,2) NULL,
     impairment_loss DECIMAL(15,2) NULL,
     carrying_amount DECIMAL(15,2) NULL,
@@ -225,4 +224,5 @@ CREATE TABLE IF NOT EXISTS ppe_iirup_items (
     FOREIGN KEY (ppe_iirup_id) REFERENCES ppe_iirup(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
+ALTER TABLE ppe_iirup_items
+    ADD COLUMN particulars VARCHAR(255) NULL;
