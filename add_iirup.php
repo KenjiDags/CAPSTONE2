@@ -5,7 +5,16 @@ require 'functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
-    ini_set('display_errors', 0);
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        echo json_encode(['success' => false, 'message' => "$errstr (Line $errline in $errfile)"]);
+        exit;
+    });
+    set_exception_handler(function($e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    });
     try {
         $items_json = $_POST['items_json'] ?? '[]';
         $items = json_decode($items_json, true);
@@ -17,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ppe_no_header = $items[0]['PPE_no'] ?? '';
         $particulars_header = $items[0]['particulars'] ?? '';
         // Insert Header (update to use PPE_no and remove unused fields)
-        $stmt = $conn->prepare("INSERT INTO ppe_iirup (date_reported, PPE_no, particulars, quantity, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO ppe_iirup (date_reported, PPE_no, particulars, quantity, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount, requested_by_name, requested_by_designation, requested_by_station, approved_by_name, approved_by_designation, inspection_officer_name, inspection_officer_designation, witness_name, witness_designation, entity_name, total_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $date_reported = $_POST['date_reported'] ?? date('Y-m-d');
         $quantity = $_POST['quantity'] ?? 0;
         $depreciation = $_POST['depreciation'] ?? 0;
@@ -32,7 +41,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $appraised_value = $_POST['appraised_value'] ?? 0;
         $or_no = $_POST['or_no'] ?? '';
         $amount = $_POST['amount'] ?? 0;
-        $stmt->bind_param("sssidddsiiiiidsd", $date_reported, $ppe_no_header, $particulars_header, $quantity, $depreciation, $impairment_loss, $carrying_amount, $remarks, $sale, $transfer, $destruction, $other, $total, $appraised_value, $or_no, $amount);
+        $requested_by_name = $_POST['requested_by_name'] ?? '';
+        $requested_by_designation = $_POST['requested_by_designation'] ?? '';
+        $requested_by_station = $_POST['requested_by_station'] ?? '';
+        $approved_by_name = $_POST['approved_by_name'] ?? '';
+        $approved_by_designation = $_POST['approved_by_designation'] ?? '';
+        $inspection_officer_name = $_POST['inspection_officer_name'] ?? '';
+        $inspection_officer_designation = $_POST['inspection_officer_designation'] ?? '';
+        $witness_name = $_POST['witness_name'] ?? '';
+        $witness_designation = $_POST['witness_designation'] ?? '';
+        $entity_name = $_POST['entity_name'] ?? 'TESDA Regional Office';
+        $total_cost = $_POST['total_cost'] ?? 0;
+        $stmt->bind_param("sssidddsiiiiidsdssssssssssd", $date_reported, $ppe_no_header, $particulars_header, $quantity, $depreciation, $impairment_loss, $carrying_amount, $remarks, $sale, $transfer, $destruction, $other, $total, $appraised_value, $or_no, $amount, $requested_by_name, $requested_by_designation, $requested_by_station, $approved_by_name, $approved_by_designation, $inspection_officer_name, $inspection_officer_designation, $witness_name, $witness_designation, $entity_name, $total_cost);
         if (!$stmt->execute()) throw new Exception("Header Error: " . $stmt->error);
         $ppe_iirup_id = $stmt->insert_id;
         $stmt->close();
@@ -41,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update_stmt = $conn->prepare("UPDATE ppe_property SET quantity = quantity - ? WHERE id = ?");
         foreach ($items as $item) {
             $particulars = $item['particulars'] ?? '';
-            $item_stmt->bind_param("isiddddsiiiddsss",
+            $item_stmt->bind_param("isidddsiiiiidsds",
                 $ppe_iirup_id,
                 $item['date_acquired'],
                 $item['quantity'],
@@ -260,6 +280,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
+
+        <div class="section-card">
+            <h3> <i class="fas fa-pen-fancy"></i>Signatories</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Requested By</h4>
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="requested_by_name" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation:</label>
+                        <input type="text" id="requested_by_designation" placeholder="Designation">
+                    </div>
+                    <div class="form-group">
+                        <label>Station:</label>
+                        <input type="text" id="requested_by_station" placeholder="Station">
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Approved By</h4>
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="approved_by_name" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation:</label>
+                        <input type="text" id="approved_by_designation" placeholder="Designation">
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Inspection Officer</h4>
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="inspection_officer_name" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation:</label>
+                        <input type="text" id="inspection_officer_designation" placeholder="Designation">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Witness</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="witness_name" placeholder="Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation:</label>
+                        <input type="text" id="witness_designation" placeholder="Designation">
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <button onclick="submitIIRUP()" class="pill-btn pill-add" type="submit">
             <i class="fas fa-save"></i>SUBMIT PPE IIRUP
         </button>
@@ -323,6 +400,17 @@ function submitIIRUP() {
     fd.append('appraised_value', document.getElementById('appraised_value').value);
     fd.append('or_no', document.getElementById('or_no').value);
     fd.append('amount', document.getElementById('amount').value);
+    fd.append('requested_by_name', document.getElementById('requested_by_name').value);
+    fd.append('requested_by_designation', document.getElementById('requested_by_designation').value);
+    fd.append('requested_by_station', document.getElementById('requested_by_station').value);
+    fd.append('approved_by_name', document.getElementById('approved_by_name').value);
+    fd.append('approved_by_designation', document.getElementById('approved_by_designation').value);
+    fd.append('inspection_officer_name', document.getElementById('inspection_officer_name').value);
+    fd.append('inspection_officer_designation', document.getElementById('inspection_officer_designation').value);
+    fd.append('witness_name', document.getElementById('witness_name').value);
+    fd.append('witness_designation', document.getElementById('witness_designation').value);
+    fd.append('entity_name', 'TESDA Regional Office');
+    fd.append('total_cost', 0);
     fd.append('items_json', JSON.stringify(items));
     fetch('add_iirup.php', {
         method: 'POST',

@@ -180,6 +180,8 @@ ALTER TABLE item_history_ppe
 CREATE TABLE IF NOT EXISTS ppe_iirup (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date_reported DATE NOT NULL,
+    PPE_no VARCHAR(50) NULL,
+    particulars VARCHAR(255) NULL,
     quantity INT NULL,
     depreciation DECIMAL(15,2) NULL,
     impairment_loss DECIMAL(15,2) NULL,
@@ -193,15 +195,18 @@ CREATE TABLE IF NOT EXISTS ppe_iirup (
     appraised_value DECIMAL(15,2) NULL,
     or_no VARCHAR(100) NULL,
     amount DECIMAL(15,2) NULL,
+    requested_by_name VARCHAR(255) NULL,
+    requested_by_designation VARCHAR(255) NULL,
+    requested_by_station VARCHAR(255) NULL,
+    approved_by_name VARCHAR(255) NULL,
+    approved_by_designation VARCHAR(255) NULL,
+    inspection_officer_name VARCHAR(255) NULL,
+    inspection_officer_designation VARCHAR(255) NULL,
+    witness_name VARCHAR(255) NULL,
+    witness_designation VARCHAR(255) NULL,
     entity_name VARCHAR(255) NULL,
     total_cost DECIMAL(15,2) NULL
 );
-
-ALTER TABLE ppe_iirup
-    ADD COLUMN PPE_no VARCHAR(50) NULL;
-
-ALTER TABLE ppe_iirup
-    ADD COLUMN particulars VARCHAR(255) NULL;
 
 CREATE TABLE IF NOT EXISTS ppe_iirup_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -221,8 +226,6 @@ CREATE TABLE IF NOT EXISTS ppe_iirup_items (
     appraised_value DECIMAL(15,2) NULL,
     or_no VARCHAR(100) NULL,
     amount DECIMAL(15,2) NULL,
+    particulars VARCHAR(255) NULL,
     FOREIGN KEY (ppe_iirup_id) REFERENCES ppe_iirup(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-ALTER TABLE ppe_iirup_items
-    ADD COLUMN particulars VARCHAR(255) NULL;
