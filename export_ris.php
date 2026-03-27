@@ -94,7 +94,6 @@ $item_result = $conn->query($item_query);
             font-size: 14px;
             margin-bottom: 15px;
             margin-top: 25px;
-            border: 2px solid #000;
             padding: 8px;
             background: #f9f9f9;
             position: relative;
@@ -108,7 +107,6 @@ $item_result = $conn->query($item_query);
         
         .info-section td {
             border: 1px solid #000;
-            padding: 4px 6px;
             font-size: 9px;
         }
         
@@ -266,10 +264,8 @@ $item_result = $conn->query($item_query);
 
         <table class="info-section">
             <tr>
-                <td class="label">Entity Name:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['entity_name']); ?></td>
-                <td class="label">Fund Cluster:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['fund_cluster']); ?></td>
+                <td colspan="2" class="label" style="border: none !important;">Entity Name: <?php echo htmlspecialchars($ris['entity_name']); ?></td>
+                <td colspan="2" class="label" style="border: none !important;">Fund Cluster: <?php echo htmlspecialchars($ris['fund_cluster']); ?></td>
             </tr>
             <tr>
                 <td class="label">Division:</td>

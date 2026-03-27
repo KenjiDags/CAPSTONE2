@@ -441,30 +441,6 @@ if ($officers_result && $officers_result->num_rows > 0) {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .btn-back {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            margin-bottom: 20px;
-        }
-        
-        .btn-back:hover {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
         .help-text {
             font-size: 13px;
             color: #64748b;
@@ -481,11 +457,6 @@ if ($officers_result && $officers_result->num_rows > 0) {
     
     <div class="content">
         <div class="settings-container">
-            <a href="inventory.php" class="btn-back">
-                <i class="fas fa-arrow-left"></i>
-                Back to Inventory
-            </a>
-            
             <header class="settings-header">
                 <h1>
                     <i class="fas fa-user-cog"></i>

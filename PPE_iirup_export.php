@@ -68,6 +68,7 @@ $dataRows = count($items);
         text-align: center;
         font-weight: bold;
         margin: 20px 0 20px 0;
+        padding: 20px 0 30px 0;
     }
     .sign-section {
         margin-top: 25px;
@@ -393,7 +394,7 @@ $dataRows = count($items);
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I CERTIFY that I have inspected each<br> and every article enumerated in this<br> report, and that the disposition made<br> thereof was, in my judgment, the best for<br> the public interest.
             </td>
             <td colspan="3" style="text-align:left; border: none; border-top: 2px solid #000;">
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I CERTIFY that I have <br>witnessed the disposition of the<br> articles enumerated on this<br> report this _____ day of<br> ____________, ________.
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I CERTIFY that I have <br>witnessed the disposition of the<br> articles enumerated on this<br> report this <span style="display: inline-block; width: 40px; border-bottom: 1px solid #000; text-align: center;"><?= htmlspecialchars(date('d', strtotime($iirup['date_reported']))) ?></span> day of<br> <span style="display: inline-block; width: 100px; border-bottom: 1px solid #000; text-align: center;"><?= htmlspecialchars(date('F', strtotime($iirup['date_reported']))) ?></span>, <span style="display: inline-block; width: 50px; border-bottom: 1px solid #000; text-align: center;"><?= htmlspecialchars(date('Y', strtotime($iirup['date_reported']))) ?></span>.
             </td>
         `;
         table.appendChild(row1);
@@ -412,24 +413,32 @@ $dataRows = count($items);
         let row3 = document.createElement("tr");
         row3.innerHTML = `
             <td colspan="5" style="border: none; vertical-align:bottom;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 220px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['requested_by_name'] ?? '') ?>
+                </span><br>
                 (Signature over Printed Name<br>
                  of Accountable Officer)
             </td>
             <td colspan="5" style="border: none; border-right: 2px solid #000; vertical-align:bottom;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 220px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['approved_by_name'] ?? '') ?>
+                </span><br>
                 (Signature over Printed Name of<br>
                  Authorized Official)
             </td>
             <td colspan="4" style="border: none; vertical-align:bottom;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 180px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['inspection_officer_name'] ?? '') ?>
+                </span><br>
                 (Signature over Printed Name of<br>
                 Inspection Officer)
             </td>
             <td style="border:none;">
             </td>
             <td colspan="3" style="border: none; vertical-align:bottom;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 180px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['witness_name'] ?? '') ?>
+                </span><br>
                 (Signature over Printed Name of<br>
                  Witness)
             </td>
@@ -440,11 +449,15 @@ $dataRows = count($items);
         let row4 = document.createElement("tr");
         row4.innerHTML = `
             <td colspan="5" style="border: none; border-bottom: 2px solid #000;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 250px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['requested_by_designation'] ?? '') ?>
+                </span><br>
                 Designation of Accountable Officer
             </td>
             <td colspan="5" style="border: none; border-right: 2px solid #000; border-bottom: 2px solid #000;">
-                ___________________________<br>
+                <span style="display: inline-block; width: 250px; border-bottom: 1px solid #000; text-align: center; padding-bottom: 2px;">
+                    <?= htmlspecialchars($iirup['approved_by_designation'] ?? '') ?>
+                </span><br>
                 Designation of Authorized Official
             </td>
             <td colspan="4" style="border:none; border-bottom: 2px solid #000;"></td>

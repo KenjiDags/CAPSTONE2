@@ -16,7 +16,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </head>
 <body>
     <div class="sidebar">
-        <a href="user_settings.php" class="logo-text">
+        <a href="user_settings.php" class="logo-text" id="sidebar-logo">
             <div class="logo">
                 <img src="images/tesda_logo.png">
                 <h3>TESDA Inventory</h3>
@@ -75,17 +75,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a href="PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>">📄 PTR</a>
                             <a href="PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>">📄 PAR</a>
                             <a href="RPCPPE.php" class="<?= $currentPage == 'RPCPPE.php' ? 'active' : '' ?>">📄 RPCPPE</a>
-                            <a href="PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>">📄 IIRUP (U_CONs)</a>
+                            <a href="PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>">📄 IIRUP </a>
                         </div>
                     </div>
 
                     <button class="dropdown-toggle no-arrow<?= $currentPage == 'analytics.php' ? ' active' : '' ?>" onclick="location.href='analytics.php'">
                         📊 Analytics
-                    </button>
-
-                    <a href="add_iirusp(just_incase).php" class="no-italic <?= $currentPage == 'add_iirusp(just_incase).php' ? 'active' : '' ?>">
-                        add iirusp (old)
-                    </a>   
+                    </button> 
 
                 </nav>
 
