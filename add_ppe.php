@@ -10,7 +10,7 @@ $success = '';
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_name = $_POST['item_name'];
-    $PPE_no = $_POST['PPE_no'];
+    $PPE_no = $_POST['PPE_no'] ?? '';
 
     // Check for duplicate PPE_no
     $stmt_check = $conn->prepare("SELECT COUNT(*) FROM ppe_property WHERE PPE_no = ?");
