@@ -105,18 +105,16 @@ $item_result = $conn->query($item_query);
             margin-bottom: 15px;
         }
         
-        .info-section td {
-            border: 1px solid #000;
-            font-size: 9px;
-        }
         
-        .info-section .label {
+        .items-table .label {
             font-weight: bold;
             width: 15%;
+            text-align: left;
         }
         
-        .info-section .value {
+        .items-table .value {
             width: 35%;
+            text-decoration: underline;
         }
         
         .items-table {
@@ -149,19 +147,7 @@ $item_result = $conn->query($item_query);
             font-size: 7px;
         }
         
-        .purpose-section {
-            width: 97.8%;
-            border: 1px solid #000;
-            padding: 8px;
-            margin-bottom: 15px;
-            font-size: 9px;
-            min-height: 40px;
-        }
         
-        .purpose-section .label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
         
         .signatures {
             width: 100%;
@@ -262,27 +248,22 @@ $item_result = $conn->query($item_query);
         
         <div class="header-title">REQUISITION AND ISSUE SLIP</div>
 
-        <table class="info-section">
-            <tr>
-                <td colspan="2" class="label" style="border: none !important;">Entity Name: <?php echo htmlspecialchars($ris['entity_name']); ?></td>
-                <td colspan="2" class="label" style="border: none !important;">Fund Cluster: <?php echo htmlspecialchars($ris['fund_cluster']); ?></td>
-            </tr>
-            <tr>
-                <td class="label">Division:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['division']); ?></td>
-                <td class="label">Responsibility Center Code:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></td>
-            </tr>
-            <tr>
-                <td class="label">Office:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['office']); ?></td>
-                <td class="label">RIS No:</td>
-                <td class="value"><?php echo htmlspecialchars($ris['ris_no']); ?></td>
-            </tr>
-        </table>
-
         <table class="items-table">
             <thead>
+
+                <tr>
+                    <td colspan="7" class="label" style="border: none !important;">Entity Name: <span class="value"><?php echo htmlspecialchars($ris['entity_name']); ?></span></td>
+                    <td colspan="2" class="label" style="border: none !important;">Fund Cluster: <span class="value"><?php echo htmlspecialchars($ris['fund_cluster']); ?></span></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="label">Division: <span class="value"><?php echo htmlspecialchars($ris['division']); ?></span></td>
+                    <td colspan="5" class="label">Responsibility Center Code: <span class="value"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></span></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="label">Office: <span class="value"><?php echo htmlspecialchars($ris['office']); ?></span></td>
+                    <td colspan="5" class="label">RIS No: <span class="value"><?php echo htmlspecialchars($ris['ris_no']); ?></span></td>
+                </tr>
+
                 <tr>
                     <th rowspan="2" style="width: 10%;">Stock No.</th>
                     <th rowspan="2" style="width: 25%;">Description</th>
@@ -339,13 +320,32 @@ $item_result = $conn->query($item_query);
                     echo '</tr>';
                 }
                 ?>
+
+                <tr class="purpose-section">
+                    <td rowspan="3"
+                        style="text-align: right; vertical-align: top; border-right: none; font-weight: bold;">
+                        Purpose:
+                    </td>
+                    <td colspan="8" style="border-left: none; text-align: left; ">
+                        <?php 
+                            echo !empty($ris['purpose']) 
+                                ? nl2br(htmlspecialchars($ris['purpose'])) 
+                                : '&nbsp;'; 
+                        ?>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="8" style="border: none !important; border-right: 1px solid black !important;">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="8" style="border-left: none;">&nbsp;</td>
+                </tr>
+
             </tbody>
         </table>
 
-        <div class="purpose-section">
-            <div class="label">Purpose:</div>
-            <div><?php echo nl2br(htmlspecialchars($ris['purpose'])); ?></div>
-        </div>
 
         <table class="signatures">
             <tr>
@@ -389,14 +389,6 @@ $item_result = $conn->query($item_query);
         </table>
     </div>
 
-    <script>
-        // Auto-focus on print when page loads (optional)
-        // window.addEventListener('load', function() {
-        //     setTimeout(function() {
-        //         window.print();
-        //     }, 500);
-        // });
-    </script>
 </body>
 </html>
 

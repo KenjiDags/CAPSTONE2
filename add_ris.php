@@ -422,9 +422,6 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr id="no-search-placeholder" class="no-search-placeholder">
-                                        <td colspan="8">Start typing in the search box to find items...</td>
-                                    </tr>
                                     <?php 
                                     $result = $conn->query("SELECT * FROM items");
                                     if ($result && $result->num_rows > 0) {
@@ -432,7 +429,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                             $stock_number = $row['stock_number'];
                                             $existing_item = $ris_items[$stock_number] ?? null;
                                             
-                                            echo '<tr class="item-row hidden" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_name'])) . '" data-description="' . htmlspecialchars(strtolower($row['description'])) . '" data-unit="' . htmlspecialchars(strtolower($row['unit'])) . '">';
+                                            echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_name'])) . '" data-description="' . htmlspecialchars(strtolower($row['description'])) . '" data-unit="' . htmlspecialchars(strtolower($row['unit'])) . '">';
                                             echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
                                             echo '<td>' . htmlspecialchars($row['item_name']) . '</td>';
                                             echo '<td>' . htmlspecialchars($row['description']) . '</td>';
@@ -513,35 +510,9 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             
             // Get all item rows
             const itemRows = document.querySelectorAll('.item-row');
-            const noSearchPlaceholder = document.getElementById('no-search-placeholder');
             
             // Counter for visible rows
             let visibleRows = 0;
-            
-            // If search is empty, hide all rows and show placeholder
-            if (searchValue.trim() === '') {
-                itemRows.forEach(function(row) {
-                    row.classList.remove('visible');
-                    row.classList.add('hidden');
-                });
-                
-                // Show the placeholder
-                if (noSearchPlaceholder) {
-                    noSearchPlaceholder.style.display = 'table-row';
-                }
-                
-                // Hide the no items message
-                const noItemsRow = document.getElementById('no-items-row');
-                if (noItemsRow) {
-                    noItemsRow.style.display = 'none';
-                }
-                return;
-            }
-            
-            // Hide the placeholder when searching
-            if (noSearchPlaceholder) {
-                noSearchPlaceholder.style.display = 'none';
-            }
             
             // Loop through each row
             itemRows.forEach(function(row) {
@@ -552,18 +523,17 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 const unit = row.getAttribute('data-unit');
                 
                 // Check if search value matches any of the fields
-                if ((stockNumber && stockNumber.includes(searchValue)) || 
+                if (searchValue.trim() === '' || 
+                    (stockNumber && stockNumber.includes(searchValue)) || 
                     (item_name && item_name.includes(searchValue)) ||
                     (description && description.includes(searchValue)) || 
                     (unit && unit.includes(searchValue))) {
                     // Show the row
-                    row.classList.remove('hidden');
-                    row.classList.add('visible');
+                    row.style.display = 'table-row';
                     visibleRows++;
                 } else {
                     // Hide the row
-                    row.classList.remove('visible');
-                    row.classList.add('hidden');
+                    row.style.display = 'none';
                 }
             });
             
