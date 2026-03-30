@@ -239,7 +239,7 @@ $item_result = $conn->query($item_query);
         </div>
         
         <button class="print-button" onclick="window.print()">🖨️ Print/Save as PDF</button>
-        <a href="view_ris.php?ris_id=<?php echo $ris_id; ?>" class="back-button">← Back to RIS</a>
+        <button class="back-button" onclick="history.back()">← Back</button>
         <hr style="margin: 20px 0;">
     </div>
     

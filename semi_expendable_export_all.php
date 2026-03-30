@@ -103,7 +103,7 @@ $conn->close();
       if ($search !== '') { $qs['search'] = $search; }
       if (!empty($qs)) { $backUrl .= '?' . http_build_query($qs); }
     ?>
-    <a class="back-link" href="<?php echo htmlspecialchars($backUrl); ?>">← Back</a>
+    <button class="back-link" onclick="history.back()" style="border:none; cursor:pointer;">← Back</button>
     <hr style="margin:14px 0;">
   </div>
 

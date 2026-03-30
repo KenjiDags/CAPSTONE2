@@ -18,20 +18,32 @@ if ($result) {
     $inventory_items = [];
 }
 
-// Fetch logged-in user's full_name for Accountable Officer
+// Fetch logged-in user's full_name and position for Accountable Officer
 $current_user_full_name = '';
+$current_user_position = '';
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result && $result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $current_user_full_name = $user_data['full_name'] ?? '';
+        $current_user_position = $user_data['user_position'] ?? '';
     }
     $stmt->close();
 }
+
+// Fetch all officer names for autocomplete
+$officer_names = [];
+$officers_result = $conn->query("SELECT officer_name FROM officers ORDER BY officer_name ASC");
+if ($officers_result && $officers_result->num_rows > 0) {
+    while ($row = $officers_result->fetch_assoc()) {
+        $officer_names[] = $row['officer_name'];
+    }
+}
+$officer_names_json = json_encode($officer_names);
 ?>
 
 <!DOCTYPE html>
@@ -218,6 +230,7 @@ if (isset($_SESSION['user_id'])) {
             padding: 20px;
             border-radius: 8px;
             border: 2px solid #e2e8f0;
+            position: relative;
         }
         
         .signature-box h4 {
@@ -231,12 +244,43 @@ if (isset($_SESSION['user_id'])) {
             border: 2px solid #cbd5e1;
             border-radius: 8px;
             margin-bottom: 10px;
+            position: relative;
         }
         
         .signature-text {
             font-size: 0.85em;
             color: #64748b;
             line-height: 1.4;
+        }
+        
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .autocomplete-item:hover {
+            background: #f0f4f8;
+        }
+        
+        .autocomplete-item.selected {
+            background: #3b82f6;
+            color: white;
         }
     </style>
 </head>
@@ -268,10 +312,11 @@ if (isset($_SESSION['user_id'])) {
                     <div class="field-group" style="grid-column: 1 / -1;">
                         <label>For which: 
                             <input type="text" id="accountable_officer" name="accountable_officer" value="<?= htmlspecialchars($current_user_full_name) ?>" placeholder="Name of Accountable Officer" style="min-width: 350px;">,    
-                            <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation" style="min-width: 250px;">,
+                            <input type="text" id="official_designation" name="official_designation" value="<?= htmlspecialchars($current_user_position) ?>" placeholder="Official Designation" style="min-width: 250px;">
+,
                             <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name" style="min-width: 250px;">
                             is accountable, having assumed such accountability on
-                            <input type="date" id="assumption_date" name="assumption_date">
+                            <input type="date" id="assumption_date" name="assumption_date" value="<?= date('Y-m-d') ?>">
                             .
                             </label>
                         </div>
@@ -346,7 +391,10 @@ if (isset($_SESSION['user_id'])) {
                 <div class="signature-section">
                     <div class="signature-box">
                         <h4>Certified Correct by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_1" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_1" name="signature_name_1" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_1_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of Inventory<br>
                             Committee Chair and Members
@@ -355,7 +403,10 @@ if (isset($_SESSION['user_id'])) {
                     
                     <div class="signature-box">
                         <h4>Approved by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_2" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_2" name="signature_name_2" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_2_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of Head of Agency/Entity<br>
                             or Authorized Representative
@@ -364,7 +415,10 @@ if (isset($_SESSION['user_id'])) {
                     
                     <div class="signature-box">
                         <h4>Verified by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_3" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_3" name="signature_name_3" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_3_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of COA Representative
                         </div>
@@ -379,6 +433,192 @@ if (isset($_SESSION['user_id'])) {
     </div>
     
     <script>
+        const officerNames = <?php echo $officer_names_json; ?>;
+
+        function setupAutocomplete(inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            
+            if (!input || !dropdown) return;
+
+            // Show dropdown on focus
+            input.addEventListener('focus', function() {
+                if (this.value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(this.value, dropdown, input);
+                }
+            });
+
+            // Prevent click on input from closing dropdown
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.style.display !== 'block') {
+                    if (this.value.trim() === '') {
+                        showAllSuggestions(dropdown, input);
+                    } else {
+                        filterSuggestions(this.value, dropdown, input);
+                    }
+                }
+            });
+
+            // Filter on input
+            input.addEventListener('input', function() {
+                const value = this.value;
+                if (value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(value, dropdown, input);
+                }
+            });
+
+            // Handle keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                if (dropdown.style.display !== 'block') return;
+
+                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
+                if (items.length === 0) return;
+
+                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
+                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = (currentIndex + 1) % items.length;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedItem) {
+                            const text = selectedItem.textContent || selectedItem.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Tab':
+                        const itemToSelect = selectedItem || items[0];
+                        if (itemToSelect) {
+                            const text = itemToSelect.textContent || itemToSelect.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        break;
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Highlight selected item and scroll into view
+        function highlightItem(items, index, dropdown) {
+            items.forEach(item => item.classList.remove('selected'));
+            
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+                
+                const item = items[index];
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+                
+                if (itemRect.bottom > dropdownRect.bottom) {
+                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                } else if (itemRect.top < dropdownRect.top) {
+                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+        }
+
+        function showAllSuggestions(dropdown, input) {
+            dropdown.innerHTML = '';
+            
+            if (officerNames.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            officerNames.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = name;
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        function filterSuggestions(value, dropdown, input) {
+            dropdown.innerHTML = '';
+            const searchValue = value.toLowerCase();
+            
+            const filtered = officerNames.filter(name => 
+                name.toLowerCase().includes(searchValue)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                
+                const index = name.toLowerCase().indexOf(searchValue);
+                if (index !== -1) {
+                    const before = name.substring(0, index);
+                    const match = name.substring(index, index + searchValue.length);
+                    const after = name.substring(index + searchValue.length);
+                    item.innerHTML = before + '<strong>' + match + '</strong>' + after;
+                } else {
+                    item.textContent = name;
+                }
+                
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        // Initialize autocomplete on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAutocomplete('signature_name_1', 'signature_name_1_dropdown');
+            setupAutocomplete('signature_name_2', 'signature_name_2_dropdown');
+            setupAutocomplete('signature_name_3', 'signature_name_3_dropdown');
+        });
+
         function openExport() {
             const params = new URLSearchParams({
                 report_date: document.getElementById('report_date').value,
@@ -387,9 +627,9 @@ if (isset($_SESSION['user_id'])) {
                 official_designation: document.getElementById('official_designation').value,
                 entity_name: document.getElementById('entity_name').value,
                 assumption_date: document.getElementById('assumption_date').value,
-                signature_name_1: document.getElementsByName('signature_name_1')[0].value,
-                signature_name_2: document.getElementsByName('signature_name_2')[0].value,
-                signature_name_3: document.getElementsByName('signature_name_3')[0].value,
+                signature_name_1: document.getElementById('signature_name_1').value,
+                signature_name_2: document.getElementById('signature_name_2').value,
+                signature_name_3: document.getElementById('signature_name_3').value,
             });
             window.location.href = './rpci_export.php?' + params.toString();
         }

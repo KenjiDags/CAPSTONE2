@@ -84,7 +84,7 @@ $stmt->close();
       <div>3. Save.</div>
     </div>
     <button class="print-button" onclick="window.print()">Print / Save as PDF</button>
-    <a class="back-link" href="view_semi_expendable.php?id=<?php echo $id; ?>">← Back to Property No. <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></a>
+    <button class="back-link" onclick="history.back()" style="border:none; cursor:pointer;">← Back</button>
     <hr style="margin:14px 0;">
   </div>
 
