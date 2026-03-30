@@ -1083,6 +1083,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `username` (`username`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER Table users
+Add Column user_full_name varchar(255) NULL;
+
 --
 -- Dumping data for table `users`
 --
@@ -1219,7 +1222,6 @@ CREATE Table if NOT exists `officers` (
   officer_position varchar(255) NOT NULL
 ); 
 
-DROP TABLE IF EXISTS `officers`;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
