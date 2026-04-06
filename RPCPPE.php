@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_report'])) {
 
 // Fetch PPE items from database
 $ppe_items = [];
-$sql = "SELECT id, item_name, item_description, par_no, unit, amount, quantity, officer_incharge, custodian FROM ppe_property ORDER BY par_no";
+$sql = "SELECT id, item_name, item_description, PPE_no, unit, amount, quantity, officer_incharge, custodian FROM ppe_property ORDER BY PPE_no";
 $result = $conn->query($sql);
 
 if ($result) {

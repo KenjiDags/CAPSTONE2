@@ -7,7 +7,7 @@ $user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 
 // Fetch current full name and user_position from database
-$stmt = $conn->prepare("SELECT full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
+$stmt = $conn->prepare("SELECT user_full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -15,7 +15,7 @@ $current_full_name = '';
 $current_user_position = '';
 if ($result && $result->num_rows > 0) {
     $user_data = $result->fetch_assoc();
-    $current_full_name = $user_data['full_name'] ?? '';
+    $current_full_name = $user_data['user_full_name'] ?? '';
     $current_user_position = $user_data['user_position'] ?? '';
 }
 $stmt->close();
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_full_name'])) 
         $_SESSION['error_message'] = 'Full name cannot be empty.';
     } else {
         // Update full name
-        $update = $conn->prepare("UPDATE users SET full_name = ? WHERE user_id = ?");
+        $update = $conn->prepare("UPDATE users SET user_full_name = ? WHERE user_id = ?");
         $update->bind_param("si", $new_full_name, $user_id);
         
         if ($update->execute()) {

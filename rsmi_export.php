@@ -217,38 +217,6 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             text-align: right;
         }
 
-        .bottom-section {
-            display: flex;
-            border-top: 2px solid black;
-        }
-
-        .recapitulation-left,
-        .recapitulation-right {
-            flex: 1;
-        }
-
-        .recapitulation-left {
-            border-right: 1px solid black;
-        }
-
-        .recap-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .recap-table th,
-        .recap-table td {
-            border: 1px solid black;
-            padding: 4px;
-            text-align: center;
-            font-size: 10px;
-        }
-
-        .recap-table th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-        }
-
         .signature-section {
             display: flex;
             border-top: 2px solid black;
@@ -377,7 +345,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                 <th style="width: 8%;">RIS No.</th>
                 <th style="width: 15%;">Responsibility Center</th>
                 <th style="width: 10%;">Stock No.</th>
-                <th style="width: 25%;">Item</th>
+                <th style="width: 20%;">Item</th>
                 <th style="width: 8%;">Unit</th>
                 <th style="width: 10%;">Quantity Issued</th>
                 <th style="width: 12%;">Unit Cost</th>
@@ -414,29 +382,31 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                 echo '</tr>';
             }
             ?>
-        </table>
 
-        <!-- Recapitulation Section -->
-        <div class="bottom-section">
-            <div class="recapitulation-left">
-                <table class="recap-table">
-                    <thead>
-                        <tr>
-                            <th colspan="2">Recapitulation:</th>
-                        </tr>
-                        <tr>
-                            <th>Stock No.</th>
-                            <th>Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
+            <tr>
+                <th colspan="4" style="border: 2px solid black;">Recapitulation</th>
+                <th colspan="4" style="border: 2px solid black;">Recapitulation</th>
+            </tr>
+
+            <tr>
+                <th colspan="2">Stock No.</th>
+                <th colspan="2">Quantity</th>
+                <th>Unit Cost</th>
+                <th>Total Cost</th>
+                <th colspan="2">UACS Object Code</th>
+            </tr>
+
+                    <?php 
                         $recap_count = 0;
                         if ($recap_result && $recap_result->num_rows > 0) {
+                            $recap_result->data_seek(0);
                             while ($recap_row = $recap_result->fetch_assoc()) {
                                 echo '<tr>';
-                                echo '<td>' . htmlspecialchars($recap_row['stock_number']) . '</td>';
-                                echo '<td>' . htmlspecialchars($recap_row['total_issued']) . '</td>';
+                                echo '<td colspan="2">' . htmlspecialchars($recap_row['stock_number']) . '</td>';
+                                echo '<td colspan="2">' . htmlspecialchars($recap_row['total_issued']) . '</td>';
+                                echo '<td class="text-right">₱ ' . number_format($recap_row['avg_unit_cost'], 2) . '</td>';
+                                echo '<td class="text-right">₱ ' . number_format($recap_row['total_cost'], 2) . '</td>';
+                                echo '<td colspan="2">&nbsp;</td>'; // UACS Object Code
                                 echo '</tr>';
                                 $recap_count++;
                             }
@@ -444,49 +414,36 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                         
                         // Fill remaining recap rows (up to 15 rows)
                         for ($i = $recap_count; $i < 15; $i++) {
-                            echo '<tr><td>&nbsp;</td><td>&nbsp;</td></tr>';
+                            echo '<tr>';
+                            echo '<td colspan="2">&nbsp;</td>';
+                            echo '<td colspan="2">&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td colspan="2">&nbsp;</td>';
+                            echo '</tr>';
                         }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
-            <div class="recapitulation-right">
-                <table class="recap-table">
-                    <thead>
-                        <tr>
-                            <th colspan="3">Recapitulation:</th>
-                        </tr>
-                        <tr>
-                            <th>Unit Cost</th>
-                            <th>Total Cost</th>
-                            <th>UACS Object Code</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        // Reset the recap result pointer
-                        if ($recap_result) {
-                            $recap_result->data_seek(0);
-                            $recap_count = 0;
-                            while ($recap_row = $recap_result->fetch_assoc()) {
-                                echo '<tr>';
-                                echo '<td class="text-right">₱ ' . number_format($recap_row['avg_unit_cost'], 2) . '</td>';
-                                echo '<td class="text-right">₱ ' . number_format($recap_row['total_cost'], 2) . '</td>';
-                                echo '<td>&nbsp;</td>'; // UACS Object Code - you may need to add this field to your database
-                                echo '</tr>';
-                                $recap_count++;
-                            }
-                            
-                            // Fill remaining rows
-                            for ($i = $recap_count; $i < 15; $i++) {
-                                echo '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>';
-                            }
-                        }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    ?>
+
+                <tr>
+                    <td colspan="4" style="text-align: left; border-bottom: none">I hereby certify to the correctness of the above information.</td>
+                    <td colspan="4" style="text-align: right; border-bottom: none">Test</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
+                    <td colspan="4" style="border-top: none; border-bottom: none">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
+                    <td colspan="4" style="border-top: none; border-bottom: none">of Designated Accounting<br> Staff</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="border-top: none; border-bottom: none">Signature over Printed Name of Supply<br>and/or Property Custodian</td>
+                    <td colspan="4" style="border-top: none; border-bottom: none">Date</td>
+                </tr>
+        </table>
 
         <!-- Signature Section -->
         <div class="signature-section">
