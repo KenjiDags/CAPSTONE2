@@ -275,6 +275,19 @@ if (columnExists($conn, 'semi_expendable_property', 'category')) {
     }
 }
 
+// Fetch all officer names and positions for autocomplete
+$officer_names = [];
+$officer_data = [];
+$officers_result = $conn->query("SELECT officer_name, officer_position FROM officers ORDER BY officer_name ASC");
+if ($officers_result && $officers_result->num_rows > 0) {
+    while ($row = $officers_result->fetch_assoc()) {
+        $officer_names[] = $row['officer_name'];
+        $officer_data[$row['officer_name']] = $row['officer_position'];
+    }
+}
+$officer_names_json = json_encode($officer_names);
+$officer_data_json = json_encode($officer_data);
+
 // Function to generate the next ICS number (only for new ICS)
 // New format: "NN-YY" where NN is a 2+ digit serial (zero-padded to 2) and YY is the last two digits of the year
 function generateICSNumber($conn) {
@@ -423,6 +436,37 @@ function generateICSNumberSimple($conn) {
     #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
     #itemsTable thead th { height: 44px; }
     .search-container { margin: 8px 0 12px !important; }
+    .form-group { position: relative; }
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: none;
+        border-radius: 0 0 6px 6px;
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .autocomplete-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    .autocomplete-item:hover {
+        background: #f0f4f8;
+    }
+    .autocomplete-item.selected {
+        background: #3b82f6;
+        color: white;
+    }
     </style>
 </head>
 <body>
@@ -548,21 +592,23 @@ function generateICSNumberSimple($conn) {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Received By:</label>
-                        <input type="text" name="received_by" value="<?php echo htmlspecialchars($ics_data['received_by'] ?? ''); ?>" required>
+                        <input type="text" id="received_by" name="received_by" value="<?php echo htmlspecialchars($ics_data['received_by'] ?? ''); ?>" autocomplete="off" required>
+                        <div id="received_by_dropdown" class="autocomplete-dropdown"></div>
                     </div>
                     <div class="form-group">
                         <label>Received By Position:</label>
-                        <input type="text" name="received_by_position" value="<?php echo htmlspecialchars($ics_data['received_by_position'] ?? ''); ?>" required>
+                        <input type="text" id="received_by_position" name="received_by_position" value="<?php echo htmlspecialchars($ics_data['received_by_position'] ?? ''); ?>" required>
                     </div>
                 </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Received From:</label>
-                        <input type="text" name="received_from" value="<?php echo htmlspecialchars($ics_data['received_from'] ?? ''); ?>" required>
+                        <input type="text" id="received_from" name="received_from" value="<?php echo htmlspecialchars($ics_data['received_from'] ?? ''); ?>" autocomplete="off" required>
+                        <div id="received_from_dropdown" class="autocomplete-dropdown"></div>
                     </div>
                     <div class="form-group">
                         <label>Received From Position:</label>
-                        <input type="text" name="received_from_position" value="<?php echo htmlspecialchars($ics_data['received_from_position'] ?? ''); ?>" required>
+                        <input type="text" id="received_from_position" name="received_from_position" value="<?php echo htmlspecialchars($ics_data['received_from_position'] ?? ''); ?>" required>
                     </div>
                 </div>
             </div>
@@ -577,6 +623,205 @@ function generateICSNumberSimple($conn) {
 </div>
 
     <script>
+        const officerNames = <?php echo $officer_names_json; ?>;
+        const officerPositions = <?php echo $officer_data_json; ?>;
+
+        function setupAutocomplete(inputId, dropdownId, positionInputId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            const positionInput = positionInputId ? document.getElementById(positionInputId) : null;
+            
+            if (!input || !dropdown) return;
+
+            // Show dropdown on focus
+            input.addEventListener('focus', function() {
+                if (this.value.trim() === '') {
+                    showAllSuggestions(dropdown, input, positionInput);
+                } else {
+                    filterSuggestions(this.value, dropdown, input, positionInput);
+                }
+            });
+
+            // Prevent click on input from closing dropdown
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.style.display !== 'block') {
+                    if (this.value.trim() === '') {
+                        showAllSuggestions(dropdown, input, positionInput);
+                    } else {
+                        filterSuggestions(this.value, dropdown, input, positionInput);
+                    }
+                }
+            });
+
+            // Filter on input
+            input.addEventListener('input', function() {
+                const value = this.value;
+                if (value.trim() === '') {
+                    showAllSuggestions(dropdown, input, positionInput);
+                } else {
+                    filterSuggestions(value, dropdown, input, positionInput);
+                }
+            });
+
+            // Handle keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                if (dropdown.style.display !== 'block') return;
+
+                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
+                if (items.length === 0) return;
+
+                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
+                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = (currentIndex + 1) % items.length;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedItem) {
+                            const text = selectedItem.textContent || selectedItem.innerText;
+                            input.value = text;
+                            if (positionInput && officerPositions[text]) {
+                                positionInput.value = officerPositions[text];
+                            }
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Tab':
+                        const itemToSelect = selectedItem || items[0];
+                        if (itemToSelect) {
+                            const text = itemToSelect.textContent || itemToSelect.innerText;
+                            input.value = text;
+                            if (positionInput && officerPositions[text]) {
+                                positionInput.value = officerPositions[text];
+                            }
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        break;
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Highlight selected item and scroll into view
+        function highlightItem(items, index, dropdown) {
+            items.forEach(item => item.classList.remove('selected'));
+            
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+                
+                const item = items[index];
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+                
+                if (itemRect.bottom > dropdownRect.bottom) {
+                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                } else if (itemRect.top < dropdownRect.top) {
+                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+        }
+
+        function showAllSuggestions(dropdown, input, positionInput) {
+            dropdown.innerHTML = '';
+            
+            if (officerNames.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            officerNames.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = name;
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    if (positionInput && officerPositions[name]) {
+                        positionInput.value = officerPositions[name];
+                    }
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        function filterSuggestions(value, dropdown, input, positionInput) {
+            dropdown.innerHTML = '';
+            const searchValue = value.toLowerCase();
+            
+            const filtered = officerNames.filter(name => 
+                name.toLowerCase().includes(searchValue)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                
+                const index = name.toLowerCase().indexOf(searchValue);
+                if (index !== -1) {
+                    const before = name.substring(0, index);
+                    const match = name.substring(index, index + searchValue.length);
+                    const after = name.substring(index + searchValue.length);
+                    item.innerHTML = before + '<strong>' + match + '</strong>' + after;
+                } else {
+                    item.textContent = name;
+                }
+                
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    if (positionInput && officerPositions[name]) {
+                        positionInput.value = officerPositions[name];
+                    }
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        // Initialize autocomplete on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAutocomplete('received_by', 'received_by_dropdown', 'received_by_position');
+            setupAutocomplete('received_from', 'received_from_dropdown', 'received_from_position');
+        });
+
         // Show a temporary notice when we clamp an input value
         function showClampNotice(message) {
             const notice = document.getElementById('clamp-notice');

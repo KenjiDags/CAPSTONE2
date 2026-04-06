@@ -59,6 +59,16 @@
                 <?php 
                 require 'config.php';
 
+                // Fetch all officer names for autocomplete
+                $officer_names = [];
+                $officers_result = $conn->query("SELECT officer_name FROM officers ORDER BY officer_name ASC");
+                if ($officers_result && $officers_result->num_rows > 0) {
+                    while ($row = $officers_result->fetch_assoc()) {
+                        $officer_names[] = $row['officer_name'];
+                    }
+                }
+                $officer_names_json = json_encode($officer_names);
+
                 // Fetch current user's full name for custodian default
                 $default_custodian = '';
                 $user_id = $_SESSION['user_id'];
@@ -154,7 +164,7 @@
                         style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
                     >
                 </div>
-                <div class="form-group" style="margin: 0;">
+                <div class="form-group" style="margin: 0; position: relative;">
                     <label for="accounting_staff" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
                         <i class="fas fa-calculator"></i> Designated Accounting Staff:
                     </label>
@@ -163,8 +173,10 @@
                         id="accounting_staff" 
                         name="accounting_staff" 
                         placeholder="Enter name"
+                        autocomplete="off"
                         style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
                     >
+                    <div id="accounting_staff_dropdown" class="autocomplete-dropdown"></div>
                 </div>
             </form>
             <style>
@@ -175,6 +187,32 @@
                     outline: none;
                     border-color: #3b82f6;
                     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+                .autocomplete-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    border: none;
+                    border-radius: 0 0 6px 6px;
+                    max-height: 250px;
+                    overflow-y: auto;
+                    display: none;
+                    z-index: 1000;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }
+                .autocomplete-item {
+                    padding: 10px 12px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .autocomplete-item:hover {
+                    background: #f0f4f8;
+                }
+                .autocomplete-item.selected {
+                    background: #3b82f6;
+                    color: white;
                 }
             </style>
         </div>
@@ -218,12 +256,198 @@
             sidebar.classList.toggle('active');
         }
 
+        // Officer names for autocomplete
+        const officerNames = <?php echo $officer_names_json; ?>;
+
+        function setupAutocomplete(inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            
+            if (!input || !dropdown) return;
+
+            // Show dropdown on focus
+            input.addEventListener('focus', function() {
+                if (this.value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(this.value, dropdown, input);
+                }
+            });
+
+            // Prevent click on input from closing dropdown
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.style.display !== 'block') {
+                    if (this.value.trim() === '') {
+                        showAllSuggestions(dropdown, input);
+                    } else {
+                        filterSuggestions(this.value, dropdown, input);
+                    }
+                }
+            });
+
+            // Filter on input
+            input.addEventListener('input', function() {
+                const value = this.value;
+                if (value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(value, dropdown, input);
+                }
+            });
+
+            // Handle keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                if (dropdown.style.display !== 'block') return;
+
+                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
+                if (items.length === 0) return;
+
+                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
+                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = (currentIndex + 1) % items.length;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedItem) {
+                            const text = selectedItem.textContent || selectedItem.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Tab':
+                        const itemToSelect = selectedItem || items[0];
+                        if (itemToSelect) {
+                            const text = itemToSelect.textContent || itemToSelect.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        break;
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Highlight selected item and scroll into view
+        function highlightItem(items, index, dropdown) {
+            // Remove previous selection
+            items.forEach(item => item.classList.remove('selected'));
+            
+            // Add selection to current item
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+                
+                // Scroll into view if needed
+                const item = items[index];
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+                
+                if (itemRect.bottom > dropdownRect.bottom) {
+                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                } else if (itemRect.top < dropdownRect.top) {
+                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+        }
+
+        function showAllSuggestions(dropdown, input) {
+            dropdown.innerHTML = '';
+            
+            if (officerNames.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            officerNames.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = name;
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        function filterSuggestions(value, dropdown, input) {
+            dropdown.innerHTML = '';
+            const searchValue = value.toLowerCase();
+            
+            const filtered = officerNames.filter(name => 
+                name.toLowerCase().includes(searchValue)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                
+                // Highlight matching text
+                const index = name.toLowerCase().indexOf(searchValue);
+                if (index !== -1) {
+                    const before = name.substring(0, index);
+                    const match = name.substring(index, index + searchValue.length);
+                    const after = name.substring(index + searchValue.length);
+                    item.innerHTML = before + '<strong>' + match + '</strong>' + after;
+                } else {
+                    item.textContent = name;
+                }
+                
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
         // Add event listener for mobile menu button if you have one
         document.addEventListener('DOMContentLoaded', function() {
             const menuButton = document.querySelector('.menu-button');
             if (menuButton) {
                 menuButton.addEventListener('click', toggleSidebar);
             }
+            // Initialize autocomplete for accounting staff
+            setupAutocomplete('accounting_staff', 'accounting_staff_dropdown');
         });
     </script>
 </body>
