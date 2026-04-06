@@ -21,7 +21,6 @@ $conn->query("CREATE TABLE IF NOT EXISTS ppe_ptr (
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
 )");
 
-// Add signature columns if they don't exist (for existing tables)
 // Check and add approved_by column
 $result = $conn->query("SHOW COLUMNS FROM ppe_ptr LIKE 'approved_by'");
 if ($result->num_rows == 0) {

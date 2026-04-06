@@ -148,38 +148,6 @@ $item_result = $conn->query($item_query);
         }
         
         
-        
-        .signatures {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        .signatures td {
-            border: 1px solid #000;
-            padding: 8px;
-            font-size: 8px;
-            height: 80px;
-            vertical-align: top;
-            width: 25%;
-        }
-        
-        .signatures .signature-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .signatures .signature-name {
-            padding-top: 10px;
-            border-bottom: 1px solid #000;
-            margin-bottom: 0px;
-        }
-        
-        .signatures .signature-label {
-            font-size: 7px;
-            color: #666;
-        }
-        
         .print-instructions {
             background: #fffacd;
             border: 1px solid #ddd;
@@ -266,7 +234,7 @@ $item_result = $conn->query($item_query);
 
                 <tr>
                     <th rowspan="2" style="width: 10%;">Stock No.</th>
-                    <th rowspan="2" style="width: 25%;">Description</th>
+                    <th rowspan="2" style="width: 20%;">Description</th>
                     <th rowspan="2" style="width: 8%;">Unit</th>
                     <th colspan="2" style="width: 17%;">Requisition</th>
                     <th colspan="2" style="width: 10%;">Stock Available?</th>
@@ -343,50 +311,58 @@ $item_result = $conn->query($item_query);
                     <td colspan="8" style="border-left: none;">&nbsp;</td>
                 </tr>
 
+            <tr>
+                <td>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">Signature:</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">Printed Name:</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">Designation:</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">Date:</td></tr>
+                    </table>
+                </td>
+                <td colspan="2">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Requested by:</td></tr>
+                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['requested_by']); ?></td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                    </table>
+                </td>
+                <td colspan="3">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Approved by:</td></tr>
+                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['approved_by']); ?></td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                    </table>
+                </td>
+                <td colspan="2">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Issued by:</td></tr>
+                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['issued_by']); ?></td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                    </table>
+                </td>
+                <td colspan="2">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Received by:</td></tr>
+                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['received_by']); ?></td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
+                    </table>
+                </td>
+            </tr>
+
             </tbody>
         </table>
 
 
-        <table class="signatures">
-            <tr>
-                <td>
-                    <div class="signature-title">Requested by:</div>
-                    <div class="signature-name"><?php echo htmlspecialchars($ris['requested_by']); ?></div>
-                    <div class="signature-label">Printed Name</div>
-                    <br>
-                    <div class="signature-label">Designation: _______________</div>
-                    <br>
-                    <div class="signature-label">Date: _______________</div>
-                </td>
-                <td>
-                    <div class="signature-title">Approved by:</div>
-                    <div class="signature-name"><?php echo htmlspecialchars($ris['approved_by']); ?></div>
-                    <div class="signature-label">Printed Name</div>
-                    <br>
-                    <div class="signature-label">Designation: _______________</div>
-                    <br>
-                    <div class="signature-label">Date: _______________</div>
-                </td>
-                <td>
-                    <div class="signature-title">Issued by:</div>
-                    <div class="signature-name"><?php echo htmlspecialchars($ris['issued_by']); ?></div>
-                    <div class="signature-label">Printed Name</div>
-                    <br>
-                    <div class="signature-label">Designation: _______________</div>
-                    <br>
-                    <div class="signature-label">Date: _______________</div>
-                </td>
-                <td>
-                    <div class="signature-title">Received by:</div>
-                    <div class="signature-name"><?php echo htmlspecialchars($ris['received_by']); ?></div>
-                    <div class="signature-label">Printed Name</div>
-                    <br>
-                    <div class="signature-label">Designation: _______________</div>
-                    <br>
-                    <div class="signature-label">Date: _______________</div>
-                </td>
-            </tr>
-        </table>
     </div>
 
 </body>
