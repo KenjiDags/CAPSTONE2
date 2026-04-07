@@ -1,6 +1,30 @@
 <?php
 require 'auth.php';
 require_once 'config.php';
+
+// Handle delete action from list page
+if (isset($_GET['delete_id'])) {
+  $deleteId = (int)$_GET['delete_id'];
+  if ($deleteId > 0) {
+    $deleteStmt = $conn->prepare("DELETE FROM semi_expendable_property WHERE id = ?");
+    if ($deleteStmt) {
+      $deleteStmt->bind_param("i", $deleteId);
+      $deleteStmt->execute();
+      $deleteStmt->close();
+    }
+  }
+
+  $redirectParams = ['deleted' => '1'];
+  if (isset($_GET['category']) && $_GET['category'] !== '') {
+    $redirectParams['category'] = $_GET['category'];
+  }
+  if (isset($_GET['search']) && $_GET['search'] !== '') {
+    $redirectParams['search'] = $_GET['search'];
+  }
+
+  header('Location: PC_semi.php?' . http_build_query($redirectParams));
+  exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +112,12 @@ require_once 'config.php';
   <?php include 'sidebar.php'; ?>
   <div class="container">
     <h2>Property Card (Semi-Expendables)</h2>
+
+    <?php if (isset($_GET['deleted']) && $_GET['deleted'] === '1'): ?>
+      <div class="alert alert-success" style="margin-bottom: 16px;">
+        Entry deleted successfully.
+      </div>
+    <?php endif; ?>
 
   <form id="pc-semi-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
       <?php
@@ -189,7 +219,11 @@ require_once 'config.php';
                 echo '<div class="action-stack">';
                 echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
                 echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
-                echo '<a href="pc_delete.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
+                $deleteParams = ['delete_id' => (int)$row['id']];
+                if ($category !== '') { $deleteParams['category'] = $category; }
+                if ($search !== '') { $deleteParams['search'] = $search; }
+                $deleteUrl = 'PC_semi.php?' . http_build_query($deleteParams);
+                echo '<a href="' . htmlspecialchars($deleteUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
                 echo '</div>';
                 echo '</td>';
                 echo '</tr>';

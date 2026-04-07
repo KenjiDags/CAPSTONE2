@@ -246,7 +246,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
         /* Page-specific styling */
         .settings-container {
             max-width: 800px;
-            margin: 40px auto;
+            margin: 12px auto 40px;
             padding: 0 20px;
         }
         
