@@ -28,7 +28,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     // Semi Expendables dropdown should be open for ICS and its subpages
                     $icsPages = ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php'];
                     $expendablesDropdownActive = in_array($currentPage, array_merge(['semi_expendible.php', 'PC.php', 'PC_semi.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php'], $icsPages));
-                    $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php']);
+                    $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php', 'PPE_iirup.php']);
 
                 ?>
 

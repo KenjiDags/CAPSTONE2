@@ -2,7 +2,6 @@
 ob_start();
 require 'auth.php';
 include 'config.php'; 
-include 'sidebar.php';
 
 // Handle delete action (POST or GET)
 if ((

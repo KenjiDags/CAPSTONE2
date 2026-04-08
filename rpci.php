@@ -1,7 +1,6 @@
 <?php
 require 'auth.php';
 require 'config.php';
-include 'sidebar.php';
 
 // Fetch inventory items from database
 $inventory_items = [];
