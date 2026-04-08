@@ -80,6 +80,7 @@ $item_result = $conn->query($item_query);
                 transform: scale(0.95);
                 transform-origin: top left;
                 width: 105.3%;
+                border: none !important;
             }
 
             .items-table {
@@ -161,7 +162,7 @@ $item_result = $conn->query($item_query);
             margin: 0 auto;
             background: #fff;
             padding: 20px;
-            border: 1px solid #ddd;
+            border: 1px solid black;
             position: relative;
         }
         
@@ -474,7 +475,7 @@ $item_result = $conn->query($item_query);
                 </tr>
 
                 <tr>
-                    <td style="border: none; border-left: 1px solid black;">Signature:</td>
+                    <td style="border: none; border-left: 1px solid black; padding-top: 10px;">Signature:</td>
                     <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
                     <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
                     <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>

@@ -56,6 +56,7 @@ $ris = ['entity_name' => 'TESDA'];
       .no-print { display:none !important; }
       .card-wrapper {
         border: none !important;
+        padding-top: 20px !important;
       }
     }
     body {
@@ -68,7 +69,7 @@ $ris = ['entity_name' => 'TESDA'];
       max-width: 800px;
       margin: 0 auto;
       border: 2px solid #000;
-      padding: 8px 12px 16px;
+      padding: 20px 12px 16px;
       position: relative;
     }
     .appendix {
@@ -78,6 +79,30 @@ $ris = ['entity_name' => 'TESDA'];
       font-size: 11px;
       font-style: italic;
     }
+
+    .agency-header {
+      position: relative;
+      text-align: center;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    .agency-header img {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .agency-text {
+      text-align: center;
+      line-height: 1.2;
+      display: inline-block;
+    }
+
     .title {
       text-align: center;
       font-weight: bold;
@@ -101,6 +126,15 @@ $ris = ['entity_name' => 'TESDA'];
     }
     .stock-card-table th {
       font-weight: bold;
+    }
+
+    .table-main-title {
+      text-align: center !important;
+      font-weight: bold !important;
+      font-size: 18px !important;
+      letter-spacing: 1px;
+      padding: 8px 6px !important;
+      border-bottom: none !important;
     }
 
     .sub-header {
@@ -184,14 +218,26 @@ $ris = ['entity_name' => 'TESDA'];
 
   <div class="card-wrapper">
     <div class="appendix">Appendix 53</div>
-    <div class="title">STOCK CARD</div>
+
+    <div class="agency-header">
+      <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+      <div class="agency-text">
+        <div>Republic of the Philippines</div>
+        <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+        <div>Cordillera Administrative Region</div>
+      </div>
+    </div>
 
     <table class="stock-card-table">
       <thead>
 
+        <tr>
+          <th colspan="7" class="table-main-title">STOCK CARD</th>
+        </tr>
+
         <tr class="label-row">
-          <th colspan="5" style="border: none;">LGU: <span class="underline" style="min-width: 200px;"><?php echo htmlspecialchars($ris['entity_name']); ?></span></th>
-          <th colspan="2" style="border: none;">Fund: <span class="underline" style="min-width: 100px;">(TEMP DATA)</span></th>
+          <th colspan="5" style="border: none; border-left: 1px solid #000;">LGU: <span class="underline" style="min-width: 200px;"><?php echo htmlspecialchars($ris['entity_name']); ?></span></th>
+          <th colspan="2" style="border: none; border-right: 1px solid #000;">Fund: <span class="underline" style="min-width: 100px;">(TEMP DATA)</span></th>
         </tr>
 
         <tr class ="label-row">
