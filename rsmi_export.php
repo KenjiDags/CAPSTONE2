@@ -6,6 +6,14 @@ require 'config.php';
 $custodian_name = isset($_GET['custodian_name']) ? htmlspecialchars(trim($_GET['custodian_name'])) : '';
 $accounting_staff = isset($_GET['accounting_staff']) ? htmlspecialchars(trim($_GET['accounting_staff'])) : '';
 
+// Get report date from GET parameter (fallback to current date)
+$report_date_raw = isset($_GET['report_date']) ? trim($_GET['report_date']) : date('Y-m-d');
+$report_date_obj = DateTime::createFromFormat('Y-m-d', $report_date_raw);
+if (!$report_date_obj || $report_date_obj->format('Y-m-d') !== $report_date_raw) {
+    $report_date_obj = new DateTime();
+}
+$report_date_display = $report_date_obj->format('F d, Y');
+
 // Get all RSMI data
 $rsmi_query = "
     SELECT ris.ris_no, ri.stock_number, i.item_name, i.description, i.unit, ri.issued_quantity, 
@@ -121,19 +129,42 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             max-width: 1000px;
             margin: 0 auto;
             position: relative;
+            padding: 8px 12px 16px;
         }
 
         /* Appendix 64 styling */
         .appendix-label {
             position: absolute;
-            top: 8px;
+            top: 2px;
             right: 15px;
             font-size: 12px;
             font-style: italic;
             color: black;
             z-index: 10;
-            background: white;
             padding: 2px 5px;
+        }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
         }
 
         .header-section {
@@ -168,16 +199,6 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             min-height: 18px;
         }
 
-        .form-title {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            padding: 8px;
-            border-bottom: 1px solid black;
-            background-color: #f8f9fa;
-            margin-top: 20px; 
-        }
-
         .instructions {
             text-align: center;
             padding: 3px;
@@ -189,11 +210,48 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         .main-table {
             width: 100%;
             border-collapse: collapse;
+            border: none;
+        }
+
+        .main-table caption {
+            caption-side: top;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            padding: 8px;
+            height: 60px;
+            border: none;
+        }
+
+        .main-table .header-cell {
+            border: none;
+            padding: 0px 8px;
+            vertical-align: top;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .main-table .title-cell {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 8px;
+            height: 60px;
+            border: 2px solid black;
+            border-bottom: none;
+        }
+
+        .main-table .data-underline {
+            display: inline-block;
+            width: 220px;
+            padding: 2px 5px 0;
+            border-bottom: 1px solid black;
+            vertical-align: bottom;
         }
 
         .main-table th,
         .main-table td {
-            border: 1px solid black;
             padding: 4px;
             text-align: center;
             vertical-align: middle;
@@ -201,7 +259,6 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         }
 
         .main-table th {
-            background-color: #f0f0f0;
             font-weight: bold;
         }
 
@@ -243,6 +300,19 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             margin-bottom: 5px;
         }
 
+        .signature-line-custodian {
+            width: 65%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .signatory-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
         .signature-text {
             text-align: center;
             font-size: 10px;
@@ -252,6 +322,23 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             text-align: right;
             font-size: 10px;
             margin-bottom: 10px;
+        }
+
+        .main-table td.full-border,
+        .main-table th.full-border {
+            border: 2px solid black;
+        }
+
+        .main-table .ris-header-row > th:first-child,
+        .main-table .ris-header-row ~ tr > td:first-child,
+        .main-table .ris-header-row ~ tr > th:first-child {
+            border-left: 2px solid black;
+        }
+
+        .main-table .ris-header-row > th:last-child,
+        .main-table .ris-header-row ~ tr > td:last-child,
+        .main-table .ris-header-row ~ tr > th:last-child {
+            border-right: 2px solid black;
         }
 
         @media print {
@@ -270,6 +357,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                 max-width: none;
                 margin: 0;
                 page-break-inside: avoid;
+                border: none !important;
             }
 
             .appendix-label {
@@ -313,43 +401,43 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
     <!-- RSMI Form -->
     <div class="form-container">
         <div class="appendix-label">Appendix 64</div>
-        
-
-        <!-- Combined Header and Main Table -->
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION & SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
         <table class="main-table" style="width: 100%;">
             <tr>
-                <td colspan="8" style="text-align: center; font-weight: bold; font-size: 14px; background-color: #f8f9fa; padding: 8px; border-bottom: 1px solid black; height: 60px;">
-                    REPORT ON THE STOCK OF MATERIALS AND SUPPLIES ISSUED (RSMI)
+                <td class="title-cell" colspan="8">REPORT OF SUPPLIES AND MATERIALS ISSUED (RSMI)</td>
+            </tr>
+            <tr>
+                <td class="header-cell" colspan="4" style="padding-bottom: 3px !important; border-left: 2px solid black;">
+                    <strong>Entity Name:</strong> <span class="data-underline"> <?= htmlspecialchars($entity_info['entity_name'] ?? '') ?> </span><br>
+                    <strong>Fund Cluster:</strong> <span class="data-underline"> <?= htmlspecialchars($entity_info['fund_cluster'] ?? '') ?> </span><br>
+                </td>
+                <td class="header-cell" colspan="4" style="padding-bottom: 3px !important; border-right: 2px solid black;">
+                    <strong>Serial No.:</strong> <span class="data-underline"> RSMI-<?= date('Y') ?>-001 </span><br>
+                    <strong>Date:</strong> <span class="data-underline"> <?= date('F d, Y') ?> </span><br>
                 </td>
             </tr>
+
             <tr>
-                <td colspan="4" style="text-align: left;">
-                    <strong>Entity Name:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['entity_name'] ?? '') ?> </span><br>
-                    <strong>Fund Cluster:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['fund_cluster'] ?? '') ?> </span><br>
-                    <strong>Division:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['division'] ?? '') ?> </span><br>
-                    <strong>Office:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['office'] ?? '') ?> </span>
-                </td>
-                <td colspan="4" style="text-align: left;">
-                    <strong>Serial No.:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> RSMI-<?= date('Y') ?>-001 </span><br>
-                    <strong>Date:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= date('F d, Y') ?> </span><br>
-                    <strong>Responsibility Code:</strong> <span style="border-bottom: 1px solid black; padding: 2px 5px; min-width: 100px; display: inline-block;"> <?= htmlspecialchars($entity_info['responsibility_center_code'] ?? '') ?> </span>
-                </td>
+                <td colspan="6" class="instructions full-border">To be filled up by the Supply and/or Property Division/Unit</td>
+                <td colspan="2" class="instructions full-border">To be filled up by the Accounting Division/Unit</td>
             </tr>
-            <tr>
-                <td colspan="8" class="instructions">To be filled up by the Supply and/or Property Division/Unit</td>
-            </tr>
-            <tr>
-                <td colspan="8" class="instructions">To be filled up by the Accounting Division/Unit</td>
-            </tr>
-            <tr>
-                <th style="width: 8%;">RIS No.</th>
-                <th style="width: 15%;">Responsibility Center</th>
-                <th style="width: 10%;">Stock No.</th>
-                <th style="width: 20%;">Item</th>
-                <th style="width: 8%;">Unit</th>
-                <th style="width: 10%;">Quantity Issued</th>
-                <th style="width: 12%;">Unit Cost</th>
-                <th style="width: 12%;">Amount</th>
+
+            <tr class="ris-header-row">
+                <th style="width: 10%;" class="instructions full-border">RIS No.</th>
+                <th style="width: 10%;" class="instructions full-border">Responsibility Center Code</th>
+                <th style="width: 10%;" class="instructions full-border">Stock No.</th>
+                <th style="width: 20%;" class="instructions full-border">Item</th>
+                <th style="width: 10%;" class="instructions full-border">Unit</th>
+                <th style="width: 10%;" class="instructions full-border">Quantity Issued</th>
+                <th style="width: 15%;" class="instructions full-border">Unit Cost</th>
+                <th style="width: 15%;" class="instructions full-border">Amount</th>
             </tr>
             <?php 
             $row_count = 0;
@@ -368,8 +456,8 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                     $row_count++;
                 }
             }
-            // Fill remaining rows with empty cells (up to 25 rows total)
-            for ($i = $row_count; $i < 25; $i++) {
+            // Fill remaining rows with empty cells (up to 15 rows total)
+            for ($i = $row_count; $i < 15; $i++) {
                 echo '<tr>';
                 echo '<td>&nbsp;</td>';
                 echo '<td>&nbsp;</td>';
@@ -384,16 +472,22 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             ?>
 
             <tr>
-                <th colspan="4" style="border: 2px solid black;">Recapitulation</th>
-                <th colspan="4" style="border: 2px solid black;">Recapitulation</th>
+                <th>&nbsp;</th>
+                <th colspan="2" style="border: 2px solid black;">Recapitulation</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th colspan="3" style="border: 2px solid black;">Recapitulation</th>
             </tr>
 
             <tr>
-                <th colspan="2">Stock No.</th>
-                <th colspan="2">Quantity</th>
-                <th>Unit Cost</th>
-                <th>Total Cost</th>
-                <th colspan="2">UACS Object Code</th>
+                <th>&nbsp;</th>
+                <th style="border: 2px solid black;">Stock No.</th>
+                <th style="border: 2px solid black;">Quantity</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th style="border: 2px solid black;">Unit Cost</th>
+                <th style="border: 2px solid black;">Total Cost</th>
+                <th style="border: 2px solid black;">UACS Object Code</th>
             </tr>
 
                     <?php 
@@ -402,85 +496,65 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                             $recap_result->data_seek(0);
                             while ($recap_row = $recap_result->fetch_assoc()) {
                                 echo '<tr>';
-                                echo '<td colspan="2">' . htmlspecialchars($recap_row['stock_number']) . '</td>';
-                                echo '<td colspan="2">' . htmlspecialchars($recap_row['total_issued']) . '</td>';
-                                echo '<td class="text-right">₱ ' . number_format($recap_row['avg_unit_cost'], 2) . '</td>';
-                                echo '<td class="text-right">₱ ' . number_format($recap_row['total_cost'], 2) . '</td>';
-                                echo '<td colspan="2">&nbsp;</td>'; // UACS Object Code
+                                echo '<td>&nbsp;</td>';
+                                echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">' . htmlspecialchars($recap_row['stock_number']) . '</td>';
+                                echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">' . htmlspecialchars($recap_row['total_issued']) . '</td>';
+                                echo '<td>&nbsp;</td>';
+                                echo '<td>&nbsp;</td>';
+                                echo '<td class="text-right" style="border: none; border-right: 2px solid black; border-left: 2px solid black;">₱ ' . number_format($recap_row['avg_unit_cost'], 2) . '</td>';
+                                echo '<td class="text-right" style="border: none; border-right: 2px solid black; border-left: 2px solid black;">₱ ' . number_format($recap_row['total_cost'], 2) . '</td>';
+                                echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>'; // UACS Object Code
                                 echo '</tr>';
                                 $recap_count++;
                             }
                         }
                         
-                        // Fill remaining recap rows (up to 15 rows)
-                        for ($i = $recap_count; $i < 15; $i++) {
+                        // Fill remaining recap rows (up to 10 rows)
+                        for ($i = $recap_count; $i < 10; $i++) {
                             echo '<tr>';
-                            echo '<td colspan="2">&nbsp;</td>';
-                            echo '<td colspan="2">&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>';
+                            echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>';
                             echo '<td>&nbsp;</td>';
                             echo '<td>&nbsp;</td>';
-                            echo '<td colspan="2">&nbsp;</td>';
+                            echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>';
+                            echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>';
+                            echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>';
                             echo '</tr>';
                         }
                     ?>
 
                 <tr>
-                    <td colspan="4" style="text-align: left; border-bottom: none">I hereby certify to the correctness of the above information.</td>
-                    <td colspan="4" style="text-align: right; border-bottom: none">Test</td>
+                    <td colspan="5" style="text-align: left; border:2px solid black; border-bottom: none">&nbsp;</td>
+                    <td colspan="2" style="text-align: left; border: none; border-top: 2px solid black;">Posted by:</td>
+                    <td style=" border: none; border-top: 2px solid black; border-right: 2px solid black">&nbsp;</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">&nbsp;</td>
+                    <td style="border-left: 2px solid black;">&nbsp;</td>
+                    <td colspan="4" style="border: none; text-align: left; border-right:2px solid black;">I hereby certify to the correctness of the above information.</td>
+                    <td colspan="2" style="border: none;">&nbsp;</td>
+                    <td style="border: 2px solid black; border: none; border-right: 2px solid black">&nbsp;</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">of Designated Accounting<br> Staff</td>
+                    <td colspan="5" style="border: 2px solid black; border-top:none; border-bottom: none ">&nbsp;</td>
+                    <td colspan="2" style="border: none;">&nbsp;</td>
+                    <td style="border-right: 2px solid black; border-top: none;">&nbsp;</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top: none; border-bottom: none">Signature over Printed Name of Supply<br>and/or Property Custodian</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">Date</td>
+                    <td colspan="5" style="border: 2px solid black; border-top: none;"><?php if ($custodian_name): ?>
+                            <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
+                        <?php endif; ?><div class="signature-line signature-line-custodian"></div>Signature over Printed Name of Supply<br>and/or Property Custodian</td>
+                    <td colspan="2" style=" border: none; border-bottom: 2px solid black; vertical-align: top;">
+                        <?php if ($accounting_staff): ?>    
+                            <div class="signatory-name"><?= $accounting_staff ?></div>
+                        <?php endif; ?><div class="signature-line"></div>Signature over Printed Name of<br> Designated Accounting Staff</td>
+                    <td style="border: 2px solid black; border-top: none; border-left: none; vertical-align: top;"><div class="signatory-name"><?= htmlspecialchars($report_date_display) ?></div><div class="signature-line"></div>Date</td>
                 </tr>
+                
         </table>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <div class="signature-left">
-                <div style="font-size: 10px; margin-bottom: 10px;">
-                    I hereby certify to the correctness of the above information.
-                </div>
-                <div style="text-align: center; margin-top: auto;">
-                    <?php if ($custodian_name): ?>
-                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
-                    <?php endif; ?>
-                    <div class="signature-line"></div>
-                    <div class="signature-text">
-                        Signature over Printed Name of Supply<br>
-                        and/or Property Custodian
-                    </div>
-                </div>
-            </div>
-            <div class="signature-right">
-                <div class="posted-by">Posted by:</div>
-                <div style="text-align: center; margin-top: auto;">
-                    <?php if ($accounting_staff): ?>
-                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $accounting_staff ?></div>
-                    <?php endif; ?>
-                    <div class="signature-line"></div>
-                    <div class="signature-text">
-                        of Designated Accounting<br>
-                        Staff
-                    </div>
-                    <div style="margin-top: 30px;">
-                        <div class="signature-line"></div>
-                        <div class="signature-text">Date</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         function printForm() {
@@ -501,14 +575,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             }, 1000);
         }
 
-        // Optional: Auto-focus print dialog on page load
-        // window.addEventListener('load', function() {
-        //     setTimeout(function() {
-        //         if (confirm('Would you like to print/save this RSMI form as PDF?')) {
-        //             printForm();
-        //         }
-        //     }, 1000);
-        // });
+
     </script>
 </body>
 </html>

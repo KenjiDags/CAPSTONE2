@@ -150,7 +150,7 @@
             <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-signature"></i> Signatory Information
             </h3>
-            <form id="signatureForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: end;">
+            <form id="signatureForm" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: end;">
                 <div class="form-group" style="margin: 0;">
                     <label for="custodian_name" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
                         <i class="fas fa-user"></i> Supply/Property Custodian:
@@ -177,6 +177,18 @@
                         style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
                     >
                     <div id="accounting_staff_dropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label for="report_date" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
+                        <i class="fas fa-calendar"></i> Date:
+                    </label>
+                    <input 
+                        type="date" 
+                        id="report_date" 
+                        name="report_date" 
+                        value="<?= date('Y-m-d') ?>"
+                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+                    >
                 </div>
             </form>
             <style>
@@ -232,6 +244,7 @@
             
             const custodianName = document.getElementById('custodian_name').value;
             const accountingStaff = document.getElementById('accounting_staff').value;
+            const reportDate = document.getElementById('report_date').value;
             
             let exportUrl = 'rsmi_export.php';
             const params = new URLSearchParams();
@@ -241,6 +254,9 @@
             }
             if (accountingStaff) {
                 params.append('accounting_staff', accountingStaff);
+            }
+            if (reportDate) {
+                params.append('report_date', reportDate);
             }
             
             if (params.toString()) {
