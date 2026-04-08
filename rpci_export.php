@@ -23,6 +23,12 @@ $assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
 $signature_name_1 = htmlspecialchars($_GET['signature_name_1'] ?? '');
 $signature_name_2 = htmlspecialchars($_GET['signature_name_2'] ?? '');
 $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
+
+$rows_per_page = 17;
+$item_pages = array_chunk($inventory_items, $rows_per_page);
+if (empty($item_pages)) {
+    $item_pages = [[]];
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,9 +40,117 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
     <style>
         /* Print-specific */
         @media print {
+            @page {
+                size: auto;
+                margin: 0.2in;
+            }
+
             .no-print { display: none !important; }
-            body { margin: 0; padding: 10px; }
-            .container {border: none !important;}
+            body { margin: 0; padding: 0; }
+            .container {border: none !important; padding: 10px 8px 8px !important; width: 100%; max-width: none;}
+            .screen-only { display: none !important; }
+            .print-only { display: block !important; }
+            thead { display: table-header-group; }
+            .appendix { display: none !important; }
+            .agency-header { display: none !important; }
+            .appendix-repeat-row { display: table-row !important; }
+            .agency-header-row { display: table-row !important; }
+            .appendix-repeat-cell,
+            .agency-header-row th,
+            .agency-header-cell {
+                border: none !important;
+                background: transparent !important;
+            }
+
+            .appendix-repeat-cell {
+                text-align: right !important;
+                font-style: italic;
+                font-weight: normal;
+                font-size: 11px;
+                padding: 0 0 2px 0 !important;
+            }
+            .table-page-break { page-break-after: always; break-after: page; }
+
+            .print-only table {
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            .print-only th,
+            .print-only td {
+                padding: 2px 3px;
+                font-size: 8px;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+            }
+
+            .print-only .title {
+                font-size: 14px;
+            }
+
+            .print-only .table-inline-input {
+                min-width: 120px;
+            }
+
+            .print-only .agency-header-inline {
+                gap: 8px;
+            }
+
+            .print-only .agency-header-logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media print and (orientation: portrait) {
+            .print-only table {
+                font-size: 8.5px;
+            }
+
+            .print-only th,
+            .print-only td {
+                padding: 2.5px 3px;
+                font-size: 8.5px;
+            }
+
+            .print-only .title {
+                font-size: 15px;
+            }
+
+            .print-only .table-inline-input {
+                min-width: 130px;
+            }
+
+            .print-only .agency-header-logo {
+                width: 42px;
+                height: 42px;
+            }
+        }
+
+        @media print and (orientation: landscape) {
+            .print-only th,
+            .print-only td {
+                padding: 2px 3px;
+                font-size: 8px;
+            }
+
+            .print-only .title {
+                font-size: 14px;
+            }
+
+            .print-only .table-inline-input {
+                min-width: 120px;
+            }
+
+            .print-only .agency-header-logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media screen {
+            .screen-only { display: block; }
+            .print-only { display: none; }
         }
 
         body {
@@ -53,7 +167,7 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             max-width: 1000px;
             margin: 0 auto;
             border: 1px solid #000;
-            padding: 16px;
+            padding: 28px 16px 16px;
             box-sizing: border-box;
             position: relative;
         }
@@ -65,6 +179,64 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             font-style: italic;
             font-weight: normal;
             font-size: 12px;
+        }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        .agency-header-row {
+            display: none;
+        }
+
+        .appendix-repeat-row {
+            display: none;
+        }
+
+        .agency-header-cell {
+            border-bottom: none !important;
+            padding: 8px 6px !important;
+        }
+
+        .agency-header-inline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .agency-header-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+
+        .agency-header-inline .agency-text {
+            display: inline-block;
+            text-align: center;
+            line-height: 1.2;
         }
 
         .header {
@@ -100,13 +272,6 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             margin-right: 8px;
         }
 
-        .field-input {
-            border-bottom: 1px solid #000;
-            min-width: 120px;
-            padding: 0 4px;
-            margin: 0 8px;
-        }
-
         .field-input.long {
             min-width: 200px;
         }
@@ -120,8 +285,34 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             margin-bottom: 15px;
         }
 
+        td.accountability-text {
+            text-align: left !important;
+            padding: 4px 6px !important;
+            line-height: 1.3;
+            margin-bottom: 0;
+        }
+
+        td.fund-cluster-row {
+            text-align: left !important;
+            padding: 4px 6px !important;
+            font-size: 12px;
+        }
+
+        .table-inline-input {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 150px;
+            padding: 0 4px;
+            margin-left: 8px;
+            text-align: center;
+        }
+
         .table-wrapper {
             overflow: visible;
+        }
+
+        .table-page-break {
+            margin-bottom: 0;
         }
 
         table {
@@ -131,14 +322,14 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
         }
 
         th, td {
-            border: 1px solid #000;
+            border-right: 2px solid #000;
+            border-left: 2px solid #000;
             padding: 4px 6px;
             vertical-align: top;
             text-align: center;
         }
 
         th {
-            background: #f5f5f5;
             font-weight: bold;
         }
 
@@ -201,6 +392,10 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             background: #6c757d;
             color: #fff;
         }
+
+        th,td .full-border{
+            border: 2px solid #000 !important;
+        }
     </style>
 </head>
 <body>
@@ -222,36 +417,172 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
 
     <div class="container">
         <div class="appendix">Appendix 66</div>
-        
-        <div class="header">
-            <h1 class="title">REPORT ON THE PHYSICAL COUNT OF INVENTORIES</h1>
-            <p class="subtitle">(Type of Inventory Items)</p>
-        </div>
 
-        <div class="form-fields">
-            <div class="field-row">
-                <span>As at</span>
-                <span class="field-input"><?= $report_date ?></span>
-            </div>
-            
-            <div class="field-row" style="margin-top: 15px;">
-                <span>Fund Cluster:</span>
-                <span class="field-input long"><?= $fund_cluster ?></span>
-            </div>
-            
-            <div class="accountability-text" style="margin-top: 15px; margin-bottom: 0;">
-                For which 
-                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $accountable_officer ?></span>,
-                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $official_designation ?></span>,
-                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having 
-                <span style="margin-top: 10px; display: inline-block;">assumed such accountability on </span> <!-- temporary change to make print spacing better -->
-                <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 120px; text-align: center;"><?= $assumption_date ?></span>.
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
             </div>
         </div>
 
         <div class="table-wrapper">
+            <div class="screen-only">
             <table>
                 <thead>
+                    <tr>
+                        <th colspan="11" class="title" style="border-bottom: none !important;">REPORT ON THE PHYSICAL COUNT OF INVENTORIES</th>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="subtitle" style="border-top: none !important; border-bottom: none;">(Type of Inventory Items)</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" style="text-align: center !important; border-top: none !important; border-bottom: none;" class="fund-cluster-row">As at:
+                            <span class="table-inline-input"><?= $report_date ?></span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" style="border-top: none; border-bottom:none;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="fund-cluster-row" style="border-top: none; border-bottom: none;">Fund Cluster:
+                            <span class="table-inline-input"><?= $fund_cluster ?></span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="accountability-text" style="border-top: none;">For which
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $accountable_officer ?></span>,
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $official_designation ?></span>,
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having
+                            <span style="margin-top: 10px; display: inline-block;">assumed such accountability on </span>
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 120px; text-align: center;"><?= $assumption_date ?></span>.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th rowspan="2" style="width:8%;" class="full-border">Article</th>
+                        <th rowspan="2" style="width:12%;">Item</th>
+                        <th rowspan="2" style="width:18%;">Description</th>
+                        <th rowspan="2" style="width:10%;">Stock Number</th>
+                        <th rowspan="2" style="width:8%;">Unit of Measure</th>
+                        <th rowspan="2" style="width:8%;">Unit Value</th>
+                        <th  style="width:8%;">Balance Per Card</th>
+                        <th  style="width:8%;">On Hand Per Count</th>
+                        <th colspan="2" style="width:12%;">Shortage/Overage</th>
+                        <th rowspan="2" style="width:8%;">Remarks</th>
+                    </tr>
+                    <tr>
+                        <th>Quantity</th>
+                        <th>Quantity</th>
+                        <th style="width:6%;">Quantity</th>
+                        <th style="width:6%;">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if (!empty($inventory_items)) {
+                        foreach ($inventory_items as $item) {
+                            echo '<tr>';
+                            echo '<td>Office Supplies</td>';
+                            echo '<td class="text-left">' . htmlspecialchars($item['item_name'] ?? '') . '</td>';
+                            echo '<td class="text-left">' . htmlspecialchars($item['description'] ?? '') . '</td>';
+                            echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
+                            echo '<td>' . htmlspecialchars($item['unit'] ?? '') . '</td>';
+                            echo '<td>' . htmlspecialchars($item['unit_cost'] ?? '') . '</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '<td>&nbsp;</td>';
+                            echo '</tr>';
+                        }
+                    }
+                    ?>
+                    <tr>
+                        <td colspan="3" style="border: 2px solid black; border-right: none;">
+                            <div class="sig-title">Certified Correct by:</div>
+                            <div class="sig-name"><?php echo !empty($signature_name_1) ? htmlspecialchars($signature_name_1) : '&nbsp;'; ?></div>
+                            <div class="small">Signature over Printed Name of Inventory Committee Chair and Members</div>
+                        </td>
+                        <td colspan="4" style="border: 2px solid black; border-left: none; border-right: none;">
+                            <div class="sig-title">Approved by:</div>
+                            <div class="sig-name"><?php echo !empty($signature_name_2) ? htmlspecialchars($signature_name_2) : '&nbsp;'; ?></div>
+                            <div class="small">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
+                        </td>
+                        <td colspan="4" style="border: 2px solid black; border-left: none;">
+                            <div class="sig-title">Verified by:</div>
+                            <div class="sig-name"><?php echo !empty($signature_name_3) ? htmlspecialchars($signature_name_3) : '&nbsp;'; ?></div>
+                            <div class="small">Signature over Printed Name of COA Representative</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="print-only">
+            <?php foreach ($item_pages as $page_index => $page_items): ?>
+            <?php $is_last_page = ($page_index === count($item_pages) - 1); ?>
+            <table class="<?php echo $is_last_page ? '' : 'table-page-break'; ?>">
+                <thead>
+
+                    <tr class="appendix-repeat-row">
+                        <th colspan="11" class="appendix-repeat-cell">Appendix 66</th>
+                    </tr>
+
+                    <tr class="agency-header-row">
+                        <th colspan="11" class="agency-header-cell">
+                            <div class="agency-header-inline">
+                                <img src="images/TESDA-Logo-export.png" alt="TESDA Logo" class="agency-header-logo">
+                                <div class="agency-text">
+                                    <div>Republic of the Philippines</div>
+                                    <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                                    <div>Cordillera Administrative Region</div>
+                                </div>
+                            </div>
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <th colspan="11" class="title" style="border-bottom: none !important;">REPORT ON THE PHYSICAL COUNT OF INVENTORIES</th>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="subtitle" style="border-top: none !important; border-bottom: none;">(Type of Inventory Items)</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" style="text-align: center !important; border-top: none !important; border-bottom: none;" class="fund-cluster-row">As at:
+                            <span class="table-inline-input"><?= $report_date ?></span>
+                        </td>
+                        
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" style="border-top: none; border-bottom:none;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="fund-cluster-row" style="border-top: none; border-bottom: none;">Fund Cluster:
+                            <span class="table-inline-input"><?= $fund_cluster ?></span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="11" class="accountability-text" style="border-top: none;">For which
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $accountable_officer ?></span>,
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 140px; text-align: center;"><?= $official_designation ?></span>,
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 150px; text-align: center;"><?= $entity_name ?></span> is accountable, having 
+                            <span style="margin-top: 10px; display: inline-block;">assumed such accountability on </span>
+                            <span style="display: inline-block; border-bottom: 1px solid #000; min-width: 120px; text-align: center;"><?= $assumption_date ?></span>.
+                        </td>
+                    </tr>
+
                     <tr>
                         <th rowspan="2" style="width:8%;">Article</th>
                         <th rowspan="2" style="width:12%;">Item</th>
@@ -272,8 +603,8 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
                 <tbody>
                     <?php
                     $row_count = 0;
-                    if (!empty($inventory_items)) {
-                        foreach ($inventory_items as $item) {
+                    if (!empty($page_items)) {
+                        foreach ($page_items as $item) {
                             echo '<tr>';
                             echo '<td>Office Supplies</td>';
                             echo '<td class="text-left">' . htmlspecialchars($item['item_name'] ?? '') . '</td>';
@@ -291,8 +622,8 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
                         }
                     }
                     
-                    // Add empty rows to reach minimum of 15 rows
-                    for ($i = $row_count; $i < 15; $i++) {
+                    // Add empty rows to reach minimum of 17 rows
+                    for ($i = $row_count; $i < 17; $i++) {
                         echo '<tr>';
                         for ($j = 0; $j < 11; $j++) {
                             echo '<td>&nbsp;</td>';
@@ -302,17 +633,17 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
                     ?>
 
             <tr>
-                <td colspan="3">
+                <td colspan="3" style="border: 2px solid black !important; border-right: none !important;">
                     <div class="sig-title">Certified Correct by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_1) ? htmlspecialchars($signature_name_1) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Inventory Committee Chair and Members</div>
                 </td>
-                <td colspan="4">
+                <td colspan="4" style="border: 2px solid black !important; border-left: none !important; border-right: none !important;">
                     <div class="sig-title">Approved by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_2) ? htmlspecialchars($signature_name_2) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
                 </td>
-                <td colspan="4">
+                <td colspan="4" style="border: 2px solid black !important; border-left: none !important;">
                     <div class="sig-title">Verified by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_3) ? htmlspecialchars($signature_name_3) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of COA Representative</div>
@@ -320,6 +651,8 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             </tr>
                 </tbody>
             </table>
+            <?php endforeach; ?>
+            </div>
         </div>
     </div>
 </body>
