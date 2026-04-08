@@ -121,6 +121,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             max-width: 1000px;
             margin: 0 auto;
             position: relative;
+            padding: 8px 12px 16px;
         }
 
         /* Appendix 64 styling */
@@ -132,7 +133,6 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             font-style: italic;
             color: black;
             z-index: 10;
-            background: white;
             padding: 2px 5px;
         }
 
@@ -189,6 +189,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         .main-table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid black;
         }
 
         .main-table th,
@@ -318,7 +319,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         <!-- Combined Header and Main Table -->
         <table class="main-table" style="width: 100%;">
             <tr>
-                <td colspan="8" style="text-align: center; font-weight: bold; font-size: 14px; background-color: #f8f9fa; padding: 8px; border-bottom: 1px solid black; height: 60px;">
+                <td colspan="8" style="text-align: center; font-weight: bold; font-size: 14px; background-color: #f8f9fa; padding: 8px; border: none !important; height: 60px;">
                     REPORT ON THE STOCK OF MATERIALS AND SUPPLIES ISSUED (RSMI)
                 </td>
             </tr>
@@ -425,62 +426,30 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                     ?>
 
                 <tr>
-                    <td colspan="4" style="text-align: left; border-bottom: none">I hereby certify to the correctness of the above information.</td>
-                    <td colspan="4" style="text-align: right; border-bottom: none">Test</td>
+                    <td colspan="4" style="text-align: left; border:2px solid black; border-bottom: none">I hereby certify to the correctness of the above information.</td>
+                    <td colspan="4" style="text-align: right; border:2px solid black; border-bottom: none">Posted by:</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">&nbsp;</td>
+                    <td colspan="4" style="border: 2px solid black; border-top:none; border-bottom: none ">&nbsp;</td>
+                    <td colspan="4" style="border: 2px solid black; border-top: none; border-bottom: none">&nbsp;</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top:none; border-bottom: none ">&nbsp;</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">of Designated Accounting<br> Staff</td>
+                    <td colspan="4" style="border: 2px solid black; border-top:none; border-bottom: none ">&nbsp;</td>
+                    <td colspan="4" style="border: 2px solid black; border-top: none; border-bottom: none">
+                    <?php if ($accounting_staff): ?>    
+                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $accounting_staff ?></div>
+                    <?php endif; ?><div class="signature-line"></div>of Designated Accounting<br> Staff</td>
                 </tr>
 
                 <tr>
-                    <td colspan="4" style="border-top: none; border-bottom: none">Signature over Printed Name of Supply<br>and/or Property Custodian</td>
-                    <td colspan="4" style="border-top: none; border-bottom: none">Date</td>
+                    <td colspan="4" style="border: 2px solid black; border-top: none;"><?php if ($custodian_name): ?>
+                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
+                    <?php endif; ?><div class="signature-line"></div>Signature over Printed Name of Supply<br>and/or Property Custodian</td>
+                    <td colspan="4" style="border: 2px solid black; border-top: none;"><div class="signature-line"></div>Date</td>
                 </tr>
         </table>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <div class="signature-left">
-                <div style="font-size: 10px; margin-bottom: 10px;">
-                    I hereby certify to the correctness of the above information.
-                </div>
-                <div style="text-align: center; margin-top: auto;">
-                    <?php if ($custodian_name): ?>
-                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
-                    <?php endif; ?>
-                    <div class="signature-line"></div>
-                    <div class="signature-text">
-                        Signature over Printed Name of Supply<br>
-                        and/or Property Custodian
-                    </div>
-                </div>
-            </div>
-            <div class="signature-right">
-                <div class="posted-by">Posted by:</div>
-                <div style="text-align: center; margin-top: auto;">
-                    <?php if ($accounting_staff): ?>
-                        <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $accounting_staff ?></div>
-                    <?php endif; ?>
-                    <div class="signature-line"></div>
-                    <div class="signature-text">
-                        of Designated Accounting<br>
-                        Staff
-                    </div>
-                    <div style="margin-top: 30px;">
-                        <div class="signature-line"></div>
-                        <div class="signature-text">Date</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         function printForm() {
@@ -501,14 +470,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             }, 1000);
         }
 
-        // Optional: Auto-focus print dialog on page load
-        // window.addEventListener('load', function() {
-        //     setTimeout(function() {
-        //         if (confirm('Would you like to print/save this RSMI form as PDF?')) {
-        //             printForm();
-        //         }
-        //     }, 1000);
-        // });
+
     </script>
 </body>
 </html>

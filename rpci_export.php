@@ -300,29 +300,27 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
                         echo '</tr>';
                     }
                     ?>
-                </tbody>
-            </table>
-        </div>
 
-        <table class="signatures">
             <tr>
-                <td style="width: 33.33%;">
+                <td colspan="3">
                     <div class="sig-title">Certified Correct by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_1) ? htmlspecialchars($signature_name_1) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Inventory Committee Chair and Members</div>
                 </td>
-                <td style="width: 33.33%;">
+                <td colspan="4">
                     <div class="sig-title">Approved by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_2) ? htmlspecialchars($signature_name_2) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
                 </td>
-                <td style="width: 33.34%;">
+                <td colspan="4">
                     <div class="sig-title">Verified by:</div>
                     <div class="sig-name"><?php echo !empty($signature_name_3) ? htmlspecialchars($signature_name_3) : '&nbsp;'; ?></div>
                     <div class="small">Signature over Printed Name of COA Representative</div>
                 </td>
             </tr>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>
