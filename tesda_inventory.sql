@@ -789,6 +789,17 @@ CREATE TABLE IF NOT EXISTS `ris` (
   PRIMARY KEY (`ris_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- new addition
+
+ALTER TABLE `ris`
+  ADD COLUMN requested_by_designation varchar(255),
+  ADD COLUMN approved_by_designation varchar(255),
+  ADD COLUMN issued_by_designation varchar(255),
+  ADD COLUMN received_by_designation varchar(255),
+  ADD COLUMN requested_by_date date,
+  ADD COLUMN approved_by_date date,
+  ADD COLUMN issued_by_date date,
+  ADD COLUMN received_by_date date;
 --
 -- Dumping data for table `ris`
 --

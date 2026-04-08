@@ -15,6 +15,19 @@ if (!$ris_result || $ris_result->num_rows === 0) {
 }
 $ris = $ris_result->fetch_assoc();
 
+function formatSignatoryDate($date_value) {
+    if (empty($date_value)) {
+        return '';
+    }
+
+    $date = DateTime::createFromFormat('Y-m-d', $date_value);
+    if ($date && $date->format('Y-m-d') === $date_value) {
+        return $date->format('F d, Y');
+    }
+
+    return $date_value;
+}
+
 // Fetch items that were actually issued (only those with issued_quantity > 0)
 $item_query = "
     SELECT 
@@ -42,14 +55,89 @@ $item_result = $conn->query($item_query);
     <style>
         /* Print-specific styles */
         @media print {
-            body { margin: 0; padding: 10px; }
+            @page {
+                size: A4;
+                margin: 0.35in;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                font-size: 8.5px !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
             .no-print { display: none !important; }
-            .print-container { page-break-inside: avoid; }
+            .print-container {
+                page-break-inside: avoid;
+                max-width: none;
+                width: 100%;
+                margin: 0;
+                padding: 6px !important;
+                border: none;
+                box-sizing: border-box;
+                transform: scale(0.95);
+                transform-origin: top left;
+                width: 105.3%;
+            }
+
+            .items-table {
+                width: 100%;
+                table-layout: auto;
+            }
+
+            .items-table th,
+            .items-table td {
+                font-size: 6.5px !important;
+                padding: 2.5px 2px !important;
+                line-height: 1.25 !important;
+            }
+
+            .items-table th.table-main-title {
+                font-size: 12px !important;
+                line-height: 1.2 !important;
+                padding: 6px 2px !important;
+                font-weight: bold !important;
+            }
+
+            .fixed-underline,
+            .header-fixed-underline,
+            .header-fixed-underline-short {
+                padding-bottom: 0 !important;
+                line-height: 1 !important;
+                min-height: 0 !important;
+                vertical-align: bottom;
+            }
+
+            .header-fixed-underline {
+                width: 150px;
+            }
+
+            .header-fixed-underline-short {
+                width: 95px;
+            }
+
+            .fixed-underline {
+                width: 120px;
+            }
+
+            .agency-header {
+                padding-top: 8px;
+                padding-bottom: 8px;
+            }
+
+                .agency-header img {
+                    width: 43px !important;
+                    height: 43px !important;
+                    max-width: 43px !important;
+                    max-height: 43px !important;
+            }
+
             .appendix-label {
-                position: absolute;
-                top: 15px;
-                right: 15px;
-                font-size: 11px;
+                top: 4px;
+                right: 6px;
+                font-size: 10px;
                 font-style: italic;
                 font-weight: normal;
                 z-index: 1000;
@@ -95,8 +183,39 @@ $item_result = $conn->query($item_query);
             margin-bottom: 15px;
             margin-top: 25px;
             padding: 8px;
-            background: #f9f9f9;
             position: relative;
+        }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+        }
+
+        .table-main-title {
+            text-align: center !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            padding: 8px !important;
+            border: 1px solid #000 !important;
+            height: 30px;
         }
         
         .info-section {
@@ -133,7 +252,6 @@ $item_result = $conn->query($item_query);
         }
         
         .items-table th {
-            background-color: #f0f0f0;
             font-weight: bold;
         }
         
@@ -191,6 +309,40 @@ $item_result = $conn->query($item_query);
             font-size: 12px;
             font-weight: bold;
         }
+
+        .fixed-underline {
+            display: inline-block;
+            width: 150px;
+            border-bottom: 1px solid #000;
+            min-height: 0;
+            line-height: 1;
+            padding-bottom: 1px;
+            text-align: center;
+        }
+
+        .header-fixed-underline {
+            display: inline-block;
+            width: 180px;
+            border-bottom: 1px solid #000;
+            min-height: 0;
+            line-height: 1;
+            padding-bottom: 1px;
+            text-align: left;
+        }
+
+        .header-fixed-underline-short {
+            display: inline-block;
+            width: 120px;
+            border-bottom: 1px solid #000;
+            min-height: 0;
+            line-height: 1;
+            padding-bottom: 1px;
+            text-align: left;
+        }
+
+        .fund-cluster-cell {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -213,31 +365,41 @@ $item_result = $conn->query($item_query);
     
     <div class="print-container">
         <div class="appendix-label">Appendix 63</div>
-        
-        <div class="header-title">REQUISITION AND ISSUE SLIP</div>
+
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION & SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
 
         <table class="items-table">
             <thead>
-
                 <tr>
-                    <td colspan="7" class="label" style="border: none !important;">Entity Name: <span class="value"><?php echo htmlspecialchars($ris['entity_name']); ?></span></td>
-                    <td colspan="2" class="label" style="border: none !important;">Fund Cluster: <span class="value"><?php echo htmlspecialchars($ris['fund_cluster']); ?></span></td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="label">Division: <span class="value"><?php echo htmlspecialchars($ris['division']); ?></span></td>
-                    <td colspan="5" class="label">Responsibility Center Code: <span class="value"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></span></td>
-                </tr>
-                <tr>
-                    <td colspan="5" class="label">Office: <span class="value"><?php echo htmlspecialchars($ris['office']); ?></span></td>
-                    <td colspan="5" class="label">RIS No: <span class="value"><?php echo htmlspecialchars($ris['ris_no']); ?></span></td>
+                    <th colspan="9" class="table-main-title">REQUISITION AND ISSUE SLIP</th>
                 </tr>
 
                 <tr>
-                    <th rowspan="2" style="width: 10%;">Stock No.</th>
+                    <td colspan="7" class="label" style="border-top: none !important; border-right: none !important;">Entity Name: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['entity_name']); ?></span></td>
+                    <td colspan="2" class="label fund-cluster-cell" style="border-top: none !important; border-left: none !important;">Fund Cluster: <span class="header-fixed-underline-short"><?php echo htmlspecialchars($ris['fund_cluster']); ?></span></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="label">Division: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['division']); ?></span></td>
+                    <td colspan="5" class="label">Responsibility Center Code: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></span></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="label">Office: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['office']); ?></span></td>
+                    <td colspan="5" class="label">RIS No: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['ris_no']); ?></span></td>
+                </tr>
+
+                <tr>
+                    <th rowspan="2" style="width: 15%;">Stock No.</th>
                     <th rowspan="2" style="width: 20%;">Description</th>
-                    <th rowspan="2" style="width: 8%;">Unit</th>
-                    <th colspan="2" style="width: 17%;">Requisition</th>
-                    <th colspan="2" style="width: 10%;">Stock Available?</th>
+                    <th rowspan="2" style="width: 20%;">Unit</th>
+                    <th colspan="2" style="width: 15%;">Requisition</th>
+                    <th colspan="2" style="width: 20%;">Stock Available?</th>
                     <th colspan="2" style="width: 20%;">Issue</th>
                 </tr>
                 <tr>
@@ -311,53 +473,37 @@ $item_result = $conn->query($item_query);
                     <td colspan="8" style="border-left: none;">&nbsp;</td>
                 </tr>
 
-            <tr>
-                <td>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">Signature:</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">Printed Name:</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">Designation:</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">Date:</td></tr>
-                    </table>
-                </td>
-                <td colspan="2">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Requested by:</td></tr>
-                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['requested_by']); ?></td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                    </table>
-                </td>
-                <td colspan="3">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Approved by:</td></tr>
-                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['approved_by']); ?></td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                    </table>
-                </td>
-                <td colspan="2">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Issued by:</td></tr>
-                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['issued_by']); ?></td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                    </table>
-                </td>
-                <td colspan="2">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0; font-weight: bold;">Received by:</td></tr>
-                        <tr><td style="border-left: none; border-right: none; border-top: none; padding: 10px 0 2px 0;"><?php echo htmlspecialchars($ris['received_by']); ?></td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                        <tr><td style="border: none; padding: 2px 0;">&nbsp;</td></tr>
-                    </table>
-                </td>
-            </tr>
+                <tr>
+                    <td style="border: none; border-left: 1px solid black;">Signature:</td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
+                    <td style="border: none; border-right: 1px solid black;" colspan="2"><span class="fixed-underline">&nbsp;</span></td>
+                </tr>
+
+                <tr>
+                    <td style="border: none; border-left: 1px solid black;">Printed Name:</td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['requested_by']); ?></span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['approved_by']); ?></span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['issued_by']); ?></span></td>
+                    <td style="border: none; border-right: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['received_by']); ?></span></td>
+                </tr>
+
+                <tr>
+                    <td style="border: none; border-left: 1px solid black;">Designation:</td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['requested_by_designation'] ?? ''); ?></span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['approved_by_designation'] ?? ''); ?></span></td>
+                    <td style="border: none;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['issued_by_designation'] ?? ''); ?></span></td>
+                    <td style="border: none; border-right: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars($ris['received_by_designation'] ?? ''); ?></span></td>
+                </tr>
+
+                <tr>
+                    <td style="border: none; border-left: 1px solid black; border-bottom: 1px solid black;">Date:</td>
+                    <td style="border: none; border-bottom: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars(formatSignatoryDate($ris['requested_by_date'] ?? '')); ?></span></td>
+                    <td style="border: none; border-bottom: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars(formatSignatoryDate($ris['approved_by_date'] ?? '')); ?></span></td>
+                    <td style="border: none; border-bottom: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars(formatSignatoryDate($ris['issued_by_date'] ?? '')); ?></span></td>
+                    <td style="border: none; border-right: 1px solid black; border-bottom: 1px solid black;" colspan="2"><span class="fixed-underline"><?php echo htmlspecialchars(formatSignatoryDate($ris['received_by_date'] ?? '')); ?></span></td>
+                </tr>
 
             </tbody>
         </table>

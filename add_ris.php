@@ -27,16 +27,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $approved_by = $_POST['approved_by'];
     $issued_by = $_POST['issued_by'];
     $received_by = $_POST['received_by'];
+    $requested_by_designation = $_POST['requested_by_designation'] ?? '';
+    $approved_by_designation = $_POST['approved_by_designation'] ?? '';
+    $issued_by_designation = $_POST['issued_by_designation'] ?? '';
+    $received_by_designation = $_POST['received_by_designation'] ?? '';
+    $requested_by_date = $_POST['requested_by_date'] ?? '';
+    $approved_by_date = $_POST['approved_by_date'] ?? '';
+    $issued_by_date = $_POST['issued_by_date'] ?? '';
+    $received_by_date = $_POST['received_by_date'] ?? '';
 
     if ($is_editing) {
         // Update existing RIS
         $stmt = $conn->prepare("UPDATE ris SET entity_name = ?, fund_cluster = ?, division = ?, office = ?, 
                                responsibility_center_code = ?, date_requested = ?, purpose = ?, 
-                               requested_by = ?, approved_by = ?, issued_by = ?, received_by = ? 
+                               requested_by = ?, approved_by = ?, issued_by = ?, received_by = ?,
+                               requested_by_designation = ?, approved_by_designation = ?, issued_by_designation = ?, received_by_designation = ?,
+                               requested_by_date = ?, approved_by_date = ?, issued_by_date = ?, received_by_date = ?
                                WHERE ris_id = ?");
-        $stmt->bind_param("sssssssssssi", $entity_name, $fund_cluster, $division, $office, 
+        $stmt->bind_param("sssssssssssssssssssi", $entity_name, $fund_cluster, $division, $office, 
                          $responsibility_center_code, $date_requested, $purpose, 
-                         $requested_by, $approved_by, $issued_by, $received_by, $ris_id);
+                         $requested_by, $approved_by, $issued_by, $received_by,
+                         $requested_by_designation, $approved_by_designation, $issued_by_designation, $received_by_designation,
+                         $requested_by_date, $approved_by_date, $issued_by_date, $received_by_date,
+                         $ris_id);
         $stmt->execute();
         $stmt->close();
         
@@ -69,11 +82,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insert new RIS
         $stmt = $conn->prepare("INSERT INTO ris (ris_no, entity_name, fund_cluster, division, office, 
                                responsibility_center_code, date_requested, purpose, requested_by, 
-                               approved_by, issued_by, received_by)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssssssss", $ris_no, $entity_name, $fund_cluster, $division, $office, 
+                               approved_by, issued_by, received_by,
+                               requested_by_designation, approved_by_designation, issued_by_designation, received_by_designation,
+                               requested_by_date, approved_by_date, issued_by_date, received_by_date)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssssssssssssss", $ris_no, $entity_name, $fund_cluster, $division, $office, 
                          $responsibility_center_code, $date_requested, $purpose, 
-                         $requested_by, $approved_by, $issued_by, $received_by);
+                         $requested_by, $approved_by, $issued_by, $received_by,
+                         $requested_by_designation, $approved_by_designation, $issued_by_designation, $received_by_designation,
+                         $requested_by_date, $approved_by_date, $issued_by_date, $received_by_date);
         $stmt->execute();
         $ris_id = $stmt->insert_id;
         $stmt->close();
@@ -156,28 +173,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $is_editing = isset($_GET['ris_id']) && !empty($_GET['ris_id']);
 $ris_id = $is_editing ? (int)$_GET['ris_id'] : null;
 
-// Fetch current user's full name for default values
+// Fetch current user's full name and position for default values
 $current_user_full_name = '';
+$current_user_position = '';
 $user_id = $_SESSION['user_id'];
-$stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ? LIMIT 1");
+$stmt = $conn->prepare("SELECT full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 if ($result && $result->num_rows > 0) {
     $user_data = $result->fetch_assoc();
     $current_user_full_name = $user_data['full_name'] ?? '';
+    $current_user_position = $user_data['user_position'] ?? '';
 }
 $stmt->close();
 
-// Fetch all officer names for autocomplete
+// Fetch officer names and positions for autocomplete/auto-fill
 $officer_names = [];
-$officers_result = $conn->query("SELECT officer_name FROM officers ORDER BY officer_name ASC");
+$officer_positions = [];
+$officer_data = [];
+$officers_result = $conn->query("SELECT officer_name, officer_position FROM officers ORDER BY officer_name ASC");
 if ($officers_result && $officers_result->num_rows > 0) {
     while ($row = $officers_result->fetch_assoc()) {
-        $officer_names[] = $row['officer_name'];
+        $name = trim($row['officer_name'] ?? '');
+        $position = trim($row['officer_position'] ?? '');
+        if ($name !== '') {
+            $officer_names[] = $name;
+            $officer_data[$name] = $position;
+        }
+        if ($position !== '') {
+            $officer_positions[] = $position;
+        }
     }
 }
+$officer_positions = array_values(array_unique($officer_positions));
 $officer_names_json = json_encode($officer_names);
+$officer_data_json = json_encode($officer_data);
 
 // Initialize variables
 $ris_data = [];
@@ -470,27 +501,73 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                             <label><i class="fas fa-user"></i> Requested by:</label>
                             <input type="text" id="requested_by" name="requested_by" value="<?php echo htmlspecialchars($ris_data['requested_by'] ?? ''); ?>" autocomplete="off">
                             <div id="requested_by_dropdown" class="autocomplete-dropdown"></div>
+                            <div class="form-grid" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label>Designation:</label>
+                                    <input type="text" id="requested_by_designation" name="requested_by_designation" value="<?php echo htmlspecialchars($ris_data['requested_by_designation'] ?? ''); ?>" placeholder="Enter designation" list="officer_position_list">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date:</label>
+                                    <input type="date" name="requested_by_date" value="<?php echo htmlspecialchars($ris_data['requested_by_date'] ?? date('Y-m-d')); ?>">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label><i class="fas fa-user-check"></i> Approved by:</label>
-                            <input type="text" name="approved_by" value="<?php echo htmlspecialchars($ris_data['approved_by'] ?? $current_user_full_name); ?>">
+                            <input type="text" id="approved_by" name="approved_by" value="<?php echo htmlspecialchars($ris_data['approved_by'] ?? $current_user_full_name); ?>">
+                            <div class="form-grid" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label>Designation:</label>
+                                    <input type="text" id="approved_by_designation" name="approved_by_designation" value="<?php echo htmlspecialchars($ris_data['approved_by_designation'] ?? $current_user_position); ?>" placeholder="Enter designation" list="officer_position_list">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date:</label>
+                                    <input type="date" name="approved_by_date" value="<?php echo htmlspecialchars($ris_data['approved_by_date'] ?? date('Y-m-d')); ?>">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
                             <label><i class="fas fa-user-cog"></i> Issued by:</label>
-                            <input type="text" name="issued_by" value="<?php echo htmlspecialchars($ris_data['issued_by'] ?? $current_user_full_name); ?>">
+                            <input type="text" id="issued_by" name="issued_by" value="<?php echo htmlspecialchars($ris_data['issued_by'] ?? $current_user_full_name); ?>">
+                            <div class="form-grid" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label>Designation:</label>
+                                    <input type="text" id="issued_by_designation" name="issued_by_designation" value="<?php echo htmlspecialchars($ris_data['issued_by_designation'] ?? $current_user_position); ?>" placeholder="Enter designation" list="officer_position_list">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date:</label>
+                                    <input type="date" name="issued_by_date" value="<?php echo htmlspecialchars($ris_data['issued_by_date'] ?? date('Y-m-d')); ?>">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group" style="position: relative;">
                             <label><i class="fas fa-user-circle"></i> Received by:</label>
                             <input type="text" id="received_by" name="received_by" value="<?php echo htmlspecialchars($ris_data['received_by'] ?? ''); ?>" autocomplete="off">
                             <div id="received_by_dropdown" class="autocomplete-dropdown"></div>
+                            <div class="form-grid" style="margin-top: 10px;">
+                                <div class="form-group">
+                                    <label>Designation:</label>
+                                    <input type="text" id="received_by_designation" name="received_by_designation" value="<?php echo htmlspecialchars($ris_data['received_by_designation'] ?? ''); ?>" placeholder="Enter designation" list="officer_position_list">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date:</label>
+                                    <input type="date" name="received_by_date" value="<?php echo htmlspecialchars($ris_data['received_by_date'] ?? date('Y-m-d')); ?>">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <datalist id="officer_position_list">
+                    <?php foreach ($officer_positions as $position): ?>
+                        <option value="<?= htmlspecialchars($position) ?>"></option>
+                    <?php endforeach; ?>
+                </datalist>
 
                     <button type="submit" class="pill-btn pill-add">
                         <i class="fas fa-save"></i>
@@ -556,20 +633,30 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
     <script>
         // Officer names from database
         const officerNames = <?php echo $officer_names_json; ?>;
+        const officerPositions = <?php echo $officer_data_json; ?>;
+
+        function fillDesignation(nameInput, designationInput) {
+            if (!nameInput || !designationInput) return;
+            const name = nameInput.value.trim();
+            if (name && officerPositions[name]) {
+                designationInput.value = officerPositions[name];
+            }
+        }
 
         // Autocomplete functionality
-        function setupAutocomplete(inputId, dropdownId) {
+        function setupAutocomplete(inputId, dropdownId, designationInputId) {
             const input = document.getElementById(inputId);
             const dropdown = document.getElementById(dropdownId);
+            const designationInput = designationInputId ? document.getElementById(designationInputId) : null;
             
             if (!input || !dropdown) return;
 
             // Show dropdown on focus
             input.addEventListener('focus', function() {
                 if (this.value.trim() === '') {
-                    showAllSuggestions(dropdown, input);
+                    showAllSuggestions(dropdown, input, designationInput);
                 } else {
-                    filterSuggestions(this.value, dropdown, input);
+                    filterSuggestions(this.value, dropdown, input, designationInput);
                 }
             });
 
@@ -578,9 +665,9 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 e.stopPropagation();
                 if (dropdown.style.display !== 'block') {
                     if (this.value.trim() === '') {
-                        showAllSuggestions(dropdown, input);
+                        showAllSuggestions(dropdown, input, designationInput);
                     } else {
-                        filterSuggestions(this.value, dropdown, input);
+                        filterSuggestions(this.value, dropdown, input, designationInput);
                     }
                 }
             });
@@ -589,9 +676,9 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             input.addEventListener('input', function() {
                 const value = this.value;
                 if (value.trim() === '') {
-                    showAllSuggestions(dropdown, input);
+                    showAllSuggestions(dropdown, input, designationInput);
                 } else {
-                    filterSuggestions(value, dropdown, input);
+                    filterSuggestions(value, dropdown, input, designationInput);
                 }
             });
 
@@ -623,6 +710,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                         if (selectedItem) {
                             const text = selectedItem.textContent || selectedItem.innerText;
                             input.value = text;
+                            fillDesignation(input, designationInput);
                             dropdown.style.display = 'none';
                         }
                         break;
@@ -632,6 +720,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                         if (itemToSelect) {
                             const text = itemToSelect.textContent || itemToSelect.innerText;
                             input.value = text;
+                            fillDesignation(input, designationInput);
                             dropdown.style.display = 'none';
                         }
                         break;
@@ -645,6 +734,10 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             // Prevent clicks inside dropdown from closing it
             dropdown.addEventListener('click', function(e) {
                 e.stopPropagation();
+            });
+
+            input.addEventListener('blur', function() {
+                fillDesignation(input, designationInput);
             });
 
             // Hide dropdown when clicking outside
@@ -677,7 +770,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             }
         }
 
-        function showAllSuggestions(dropdown, input) {
+        function showAllSuggestions(dropdown, input, designationInput) {
             dropdown.innerHTML = '';
             
             if (officerNames.length === 0) {
@@ -692,6 +785,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 item.textContent = name;
                 item.addEventListener('click', function() {
                     input.value = name;
+                    fillDesignation(input, designationInput);
                     dropdown.style.display = 'none';
                 });
                 dropdown.appendChild(item);
@@ -700,7 +794,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             dropdown.style.display = 'block';
         }
 
-        function filterSuggestions(value, dropdown, input) {
+        function filterSuggestions(value, dropdown, input, designationInput) {
             dropdown.innerHTML = '';
             const searchValue = value.toLowerCase();
             
@@ -731,6 +825,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 
                 item.addEventListener('click', function() {
                     input.value = name;
+                    fillDesignation(input, designationInput);
                     dropdown.style.display = 'none';
                 });
                 dropdown.appendChild(item);
@@ -741,8 +836,25 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 
         // Initialize autocomplete for both fields
         document.addEventListener('DOMContentLoaded', function() {
-            setupAutocomplete('requested_by', 'requested_by_dropdown');
-            setupAutocomplete('received_by', 'received_by_dropdown');
+            setupAutocomplete('requested_by', 'requested_by_dropdown', 'requested_by_designation');
+            setupAutocomplete('received_by', 'received_by_dropdown', 'received_by_designation');
+
+            const approvedBy = document.getElementById('approved_by');
+            const approvedByDesignation = document.getElementById('approved_by_designation');
+            const issuedBy = document.getElementById('issued_by');
+            const issuedByDesignation = document.getElementById('issued_by_designation');
+
+            if (approvedBy) {
+                approvedBy.addEventListener('blur', function() {
+                    fillDesignation(approvedBy, approvedByDesignation);
+                });
+            }
+
+            if (issuedBy) {
+                issuedBy.addEventListener('blur', function() {
+                    fillDesignation(issuedBy, issuedByDesignation);
+                });
+            }
         });
     </script>
 </body>
