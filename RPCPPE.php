@@ -269,7 +269,6 @@ if ($result) {
     </style>
 </head>
 <body>
-<?php include 'sidebar.php'; ?>
 
 <div class="container">
     <div class="rpcppe-form">

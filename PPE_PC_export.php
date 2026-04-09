@@ -47,8 +47,11 @@ require 'functions.php';
     }
     th { background: #f2f2f2; }
 
-    .no-border { border: none !important; }
-    .header-label { background: #f2f2f2; font-weight:bold; }
+    .header-label { 
+        background: #f2f2f2; 
+        font-weight:bold; 
+    }
+    
     .underline {
         display: inline-block;
         width: 250px;
@@ -67,6 +70,30 @@ require 'functions.php';
         right:10px;
         font-size:11px;
         font-style:italic;
+    }
+
+    .agency-header {
+        position: relative;
+        text-align: center;
+        padding-top: 12px;
+        padding-bottom: 10px;
+    }
+
+    .agency-header img {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .agency-text {
+        text-align: center;
+        line-height: 1.2;
+        display: inline-block;
+        font-size: 12px;
     }
 
     .prop-no-underline {
@@ -102,8 +129,32 @@ require 'functions.php';
         height: 20px; 
     }
 
+    .table-main-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+        letter-spacing: 1px;
+        padding: 8px 6px;
+        background: #fff;
+    }
+
     .text-center { 
         text-align:center; 
+    }
+
+    @media print {
+        .agency-header {
+            padding-top: 8px;
+            padding-bottom: 6px;
+        }
+        .agency-header img {
+            width: 42px;
+            height: 42px;
+        }
+        .agency-text {
+            font-size: 8px;
+            line-height: 1.1;
+        }
     }
 </style>
 </head>
@@ -123,7 +174,15 @@ require 'functions.php';
 
 <div class="page-wrapper">
     <div class="appendix">Appendix 69</div>
-    <h2>PROPERTY CARD</h2>
+
+    <div class="agency-header">
+        <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+        <div class="agency-text">
+            <div>Republic of the Philippines</div>
+            <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+            <div>Cordillera Administrative Region</div>
+        </div>
+    </div>
 
     <?php
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -174,13 +233,17 @@ require 'functions.php';
     ?>
 
     <table>
+        <tr>
+            <th colspan="9" class="table-main-title">PROPERTY CARD</th>
+        </tr>
+
         <!-- ENTITY NAME + FUND CLUSTER -->
         <tr>
-            <td colspan="6" class="no-border">
+            <td colspan="6">
                 <strong>Entity Name:</strong>
                 <span class="underline large-underline"><?= htmlspecialchars($ppe['entity_name'] ?? '') ?></span>
             </td>
-            <td colspan="3" class="no-border">
+            <td colspan="3">
                 <strong>Fund Cluster:</strong>
                 <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? '') ?></span>
             </td>

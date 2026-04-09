@@ -49,19 +49,66 @@ require 'functions.php';
     }
     
     th { background: #f2f2f2; font-weight: bold; }
-    .no-border { border: none !important; background: #f2f2f2; font-weight: bold; }
     .header-label { background: #f2f2f2; font-weight:bold; }
     .underline { display: inline-block; width: 250px; border-bottom: 1px solid #000; height: 12px; vertical-align: middle; margin-left: 4px; }
     .small-underline { width:189px; }
     .large-underline { width:300px; }
     .appendix { position:absolute; top:10px; right:10px; font-size:11px; font-style:italic; }
+
+    .agency-header {
+        position: relative;
+        text-align: center;
+        padding-top: 12px;
+        padding-bottom: 10px;
+    }
+
+    .agency-header img {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .agency-text {
+        text-align: center;
+        line-height: 1.2;
+        display: inline-block;
+        font-size: 12px;
+    }
+
     .prop-no-underline { width: 165px; display: inline-block; box-sizing: border-box; }
-    h2 { text-align:center; margin:0 0 15px 0; }
     .print-button { background: #007cba; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 8px; }
     .back-link { background: #6c757d; color: white; padding: 8px 16px; border-radius: 4px; font-size: 13px; text-decoration: none; display: inline-block; }
     .header-row td { height: 20px; }
     .text-center { text-align:center; }
     .currency { text-align:right; }
+
+    .table-main-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+        letter-spacing: 1px;
+        padding: 8px 6px;
+        background: #fff;
+    }
+
+    @media print {
+        .agency-header {
+            padding-top: 8px;
+            padding-bottom: 6px;
+        }
+        .agency-header img {
+            width: 42px;
+            height: 42px;
+        }
+        .agency-text {
+            font-size: 8px;
+            line-height: 1.1;
+        }
+    }
 </style>
 </head>
 
@@ -113,16 +160,28 @@ foreach ($ppe_items as $ppe) {
 
 <div class="page-wrapper">
     <div class="appendix">Appendix 69</div>
-    <h2>PROPERTY CARD</h2>
+
+    <div class="agency-header">
+        <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+        <div class="agency-text">
+            <div>Republic of the Philippines</div>
+            <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+            <div>Cordillera Administrative Region</div>
+        </div>
+    </div>
 
     <table>
+        <tr>
+            <th colspan="9" class="table-main-title">PROPERTY CARD</th>
+        </tr>
+
         <!-- Entity + Fund -->
         <tr>
-            <td colspan="6" class="no-border">
+            <td colspan="6">
                 <strong>Entity Name:</strong>
                 <span class="underline large-underline"><?= htmlspecialchars($ppe['entity_name'] ?? '') ?></span>
             </td>
-            <td colspan="3" class="no-border">
+            <td colspan="3">
                 <strong>Fund Cluster:</strong>
                 <span class="underline small-underline"><?= htmlspecialchars($ppe['fund_cluster'] ?? '') ?></span>
             </td>

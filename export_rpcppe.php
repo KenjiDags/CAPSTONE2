@@ -51,6 +51,7 @@ if ($result) {
     }
     @media print { 
         .no-print { display: none; } 
+        .page-wrapper { border: none !important; }
     }
     .page-wrapper { 
         width: 1000px;
@@ -63,15 +64,58 @@ if ($result) {
     .appendix { 
         position: absolute; 
         top: 10px; 
-        right: 15px; 
+        right: 25px; 
         font-size: 11px; 
         font-style: italic; 
+    }
+    .agency-header {
+        position: relative;
+        text-align: center;
+        padding-top: 12px;
+        padding-bottom: 10px;
+    }
+    .agency-header img {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+    .agency-text {
+        text-align: center;
+        line-height: 1.2;
+        display: inline-block;
+        font-size: 12px;
     }
     .title { 
         text-align: center; 
         font-weight: bold; 
         font-size: 14px; 
         margin-bottom: 0px; 
+    }
+    .table-main-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        padding: 8px 6px;
+        background: #fff;
+    }
+    .rpcppe-header-row td {
+        font-size: 11px;
+        padding: 6px 8px;
+        text-align: left;
+        border-top: none;
+        border-bottom: none;
+    }
+    .rpcppe-header-row .center-header {
+        text-align: center;
+    }
+    .rpcppe-header-row .underline {
+        width: auto;
+        min-width: 0;
     }
     .header-row { 
         font-size: 11px; 
@@ -190,6 +234,22 @@ if ($result) {
         font-size: 12px;
     }
 
+    @media print {
+        .agency-header {
+            padding-top: 8px;
+            padding-bottom: 6px;
+        }
+        .agency-header img {
+            width: 42px;
+            height: 42px;
+            top: 45%;
+        }
+        .agency-text {
+            font-size: 8px;
+            line-height: 1.1;
+        }
+    }
+
 </style>
 </head>
 <body>
@@ -209,30 +269,39 @@ if ($result) {
 <div class="page-wrapper">
     <div class="appendix">Appendix 73</div>
 
-    <div class="title">REPORT ON THE PHYSICAL COUNT OF PROPERTY, PLANT AND EQUIPMENT</div>
-
-    <!-- Header -->
-    <div class="header-row">
-        <div style="text-align:center; margin-bottom: 30px; font-size: 11px;">
-            <span class="underline" style="width:200px;">PPE</span><br>
-            <em>(Type of Property, Plant and Equipment)</em><br>
-            As at <span class="underline" style="width:220px;"><?php echo htmlspecialchars($report_date); ?></span>
-        </div>
-        <div>
-            <strong>Fund Cluster:</strong>
-            <span class="underline" style="width:150px;"><?php echo htmlspecialchars($fund_cluster); ?></span>
-        </div>
-        <div>
-            For which <span class="underline" style="width:170px;"><?php echo htmlspecialchars($accountable_officer); ?></span>,
-            <span class="underline" style="width:120px;"><?php echo htmlspecialchars($official_designation); ?></span>,
-            <span class="underline" style="width:120px;"><?php echo htmlspecialchars($entity_name); ?></span>
-            is accountable, having assumed such accountability on
-            <span class="underline" style="width:110px;"><?php echo htmlspecialchars($assumption_date); ?></span>.
+    <div class="agency-header">
+        <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+        <div class="agency-text">
+            <div>Republic of the Philippines</div>
+            <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+            <div>Cordillera Administrative Region</div>
         </div>
     </div>
 
     <!-- Table -->
     <table>
+        <tr>
+            <th colspan="10" class="table-main-title" style="border-bottom: none;">REPORT ON THE PHYSICAL COUNT OF PROPERTY, PLANT AND EQUIPMENT<br>
+                <span class="underline" style="width:200px; font-size: 10px;">PPE</span><br>
+                <em style="font-size: 10px;">(Type of Property, Plant and Equipment)</em><br>
+                <span style="font-size: 10px;" class="center-header">As at <span class="underline" style="width:220px;"><?php echo htmlspecialchars($report_date); ?></span></span>
+            </th>
+        </tr>
+        <tr class="rpcppe-header-row">
+            <td colspan="10">
+                <strong>Fund Cluster:</strong>
+                <span class="underline" style="width:150px;"><?php echo htmlspecialchars($fund_cluster); ?></span>
+            </td>
+        </tr>
+        <tr class="rpcppe-header-row">
+            <td colspan="10">
+                For which <span class="underline" style="width:170px;"><?php echo htmlspecialchars($accountable_officer); ?></span>,
+                <span class="underline" style="width:120px;"><?php echo htmlspecialchars($official_designation); ?></span>,
+                <span class="underline" style="width:120px;"><?php echo htmlspecialchars($entity_name); ?></span>
+                is accountable, having assumed such accountability on
+                <span class="underline" style="width:110px;"><?php echo htmlspecialchars($assumption_date); ?></span>.
+            </td>
+        </tr>
         <tr>
             <th rowspan="4">ARTICLE</th>
             <th rowspan="4">DESCRIPTION</th>

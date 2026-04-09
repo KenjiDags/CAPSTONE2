@@ -86,6 +86,27 @@ $received_by_date = $ptr['received_by_date'] ?? '';
       font-size: 10px;
       font-style: italic;
     }
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 10px;
+        }
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+            font-size: 12px;
+        }
     .title {
       text-align: center;
       font-weight: bold;
@@ -93,6 +114,26 @@ $received_by_date = $ptr['received_by_date'] ?? '';
       margin: 0 0 15px 0;
       letter-spacing: 0.5px;
     }
+
+        .table-main-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            padding: 8px 6px;
+            background: #fff;
+        }
+
+        .ptr-meta-row td {
+            text-align: left;
+            border-top: none;
+            border-bottom: none;
+            padding: 6px 8px;
+        }
+
+        .ptr-meta-row .data-underline {
+            width: 50%;
+        }
     .form-table td.text-left div {
       margin-bottom: 4px;
     }
@@ -110,7 +151,6 @@ $received_by_date = $ptr['received_by_date'] ?? '';
     }
     .form-table th {
       font-weight: bold;
-      background: #f5f5f5;
     }
     .form-table td.text-left {
       text-align: left;
@@ -287,6 +327,22 @@ $received_by_date = $ptr['received_by_date'] ?? '';
         min-height: 12px; /* optional: makes line more visible */
         vertical-align: bottom;
     }
+
+        @media print {
+            .agency-header {
+                padding-top: 8px;
+                padding-bottom: 6px;
+            }
+            .agency-header img {
+                width: 42px;
+                height: 42px;
+                top: 45%;
+            }
+            .agency-text {
+                font-size: 12px;
+                line-height: 1.1;
+            }
+        }
   </style>
 </head>
 <body>
@@ -304,17 +360,27 @@ $received_by_date = $ptr['received_by_date'] ?? '';
 
   <div class="page-wrapper">
     <div class="appendix">Appendix 76</div>
-    
-    <div class="title">PROPERTY TRANSFER REPORT</div>
 
-    <!-- Entity Name and Fund Cluster Header -->
-    <div style="display: flex; margin-top: 15px; margin-bottom: 0px; padding: 5px 0;">
-        <div style="width: 69%;"><strong>Entity Name:</strong> <span class="data-underline"><?= htmlspecialchars($entity_name) ?></span></div>
-        <div style="width: 31%;"><strong>Fund Cluster:</strong> <span class="data-underline"><?= htmlspecialchars($fund_cluster) ?></span></div>
-    </div>
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
 
     <!-- Single Connected Form Table -->
     <table class="form-table">
+        <tr>
+            <th colspan="5" class="table-main-title">PROPERTY TRANSFER REPORT</th>
+        </tr>
+
+        <tr class="ptr-meta-row">
+            <td colspan="3" style="text-align: left;"><strong>Entity Name:</strong> <span class="data-underline"><?= htmlspecialchars($entity_name) ?></span></td>
+            <td colspan="2" style="text-align: left;"><strong>Fund Cluster:</strong> <span class="data-underline"><?= htmlspecialchars($fund_cluster) ?></span></td>
+        </tr>
+
         <tr>
             <td colspan="3" class="text-left">
                 <div class="inline-underline">

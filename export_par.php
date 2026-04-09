@@ -44,6 +44,18 @@ body {
 @media print {
     .no-print { display: none; }
     .page-wrapper { border: none !important; }
+    .agency-header {
+        padding-top: 8px;
+        padding-bottom: 6px;
+    }
+    .agency-header img {
+        width: 42px;
+        height: 42px;
+    }
+    .agency-text {
+        font-size: 8px;
+        line-height: 1.1;
+    }
 }
 
 .page-wrapper {
@@ -62,11 +74,55 @@ body {
     font-style: italic;
 }
 
+.agency-header {
+    position: relative;
+    text-align: center;
+    padding-top: 12px;
+    padding-bottom: 10px;
+}
+
+.agency-header img {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.agency-text {
+    text-align: center;
+    line-height: 1.2;
+    display: inline-block;
+    font-size: 12px;
+}
+
 .title {
     text-align: center;
     font-weight: bold;
     font-size: 15px;
     margin-bottom: 60px;
+}
+
+.table-main-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    padding: 8px 6px;
+    background: #fff;
+}
+
+.par-meta-row td {
+    font-size: 11px;
+    text-align: left;
+    border-top: none;
+    border-bottom: none;
+}
+
+.par-meta-row .underline {
+    width: 50%;
 }
 
 /* Header underline fields */
@@ -186,30 +242,29 @@ td.desc {
 <div class="page-wrapper">
     <div class="appendix">Appendix 71</div>
 
-    <div class="title">PROPERTY ACKNOWLEDGMENT RECEIPT</div>
-
-    <!-- HEADER -->
-    <div style="font-size:11px;">
-        <div style="margin-bottom:8px;">
-            <strong>Entity Name:</strong>
-            <span class="underline" style="width:300px;"><?= htmlspecialchars($par['entity_name']) ?></span>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <div>
-                <strong>Fund Cluster:</strong>
-                <span class="underline" style="width:300px;"><?= htmlspecialchars($par['fund_cluster']) ?></span>
-            </div>
-            <div>
-                <strong>PAR No.:</strong>
-                <span class="underline" style="width:150px;"><?= htmlspecialchars($par['par_no']) ?></span>
-            </div>
+    <div class="agency-header">
+        <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+        <div class="agency-text">
+            <div>Republic of the Philippines</div>
+            <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+            <div>Cordillera Administrative Region</div>
         </div>
     </div>
 
     <!-- MAIN TABLE -->
      <div class="table-container">
         <table style="border:2px solid black; border-bottom:none;">
+            <tr>
+                <th colspan="6" class="table-main-title">PROPERTY ACKNOWLEDGMENT RECEIPT</th>
+            </tr>
+            <tr class="par-meta-row">
+                <td colspan="4"><strong>Entity Name:</strong> <span class="underline"><?= htmlspecialchars($par['entity_name']) ?></span></td>
+                <td colspan="2"><strong>Fund Cluster:</strong> <span class="underline"><?= htmlspecialchars($par['fund_cluster']) ?></span></td>
+            </tr>
+            <tr class="par-meta-row">
+                <td colspan="4"></td>
+                <td colspan="2"><strong>PAR No.:</strong> <span class="underline" style="width:150px;"><?= htmlspecialchars($par['par_no']) ?></span></td>
+            </tr>
             <tr style="border-bottom: 2px solid #000;">
                 <th style="width:7%;">Quantity</th>
                 <th style="width:7%;">Unit</th>
