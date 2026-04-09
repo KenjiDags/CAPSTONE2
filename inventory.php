@@ -578,7 +578,7 @@ case 'update':
             <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by stock number, item name, description, or unit..." />
         </div>
         <div class="control" style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" class="btn btn-success" onclick="document.getElementById('addModal').style.display='block'">
+            <button type="button" class="btn btn-success" onclick="window.location.href='add_o.f_item.php'">
                 <i class="fas fa-plus"></i> Add New Item
             </button>
             <button type="button" class="btn btn-success" onclick="window.location.href='add_multiple_items.php'">
