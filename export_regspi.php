@@ -178,7 +178,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
         .form-container {
             background: #fff;
             border: none;
-            padding: 15px;
+            padding: 10px 12px;
             margin-bottom: 20px;
         }
 
@@ -202,6 +202,29 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
             font-size: 11px;
             margin: 0;
             padding: 0;
+        }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
         }
 
         .sheet-number {
@@ -247,6 +270,23 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
             text-align: center;
             vertical-align: middle;
             font-size: 10px;
+        }
+
+        .main-table thead tr.title-row th {
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            padding: 10px 4px;
+        }
+
+        .main-table thead tr.meta-row td {
+            padding: 3px 4px;
+            font-size: 11px;
+            text-align: left;
+        }
+
+        .main-table thead tr.meta-row td.meta-right {
+            text-align: right;
         }
 
         .main-table td {
@@ -348,39 +388,30 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
     </div>
 
     <div class="form-container">
-        <div class="annex-reference" style="text-align: right; font-style: italic; font-size: 11px; margin-bottom: 10px;">Annex A.4</div>
-        <div class="form-title">REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED</div>
-        
-        <div class="header-row">
-            <div class="header-left">
-                <div class="info-line">Entity Name: <span contenteditable="true">TESDA-CAR</span></div>
-                <div class="info-line">Semi-expendable Property: <span contenteditable="true"><?php echo h($categoryLabel); ?></span></div>
-            </div>
-            <div class="header-right">
-                <div class="info-line">Fund Cluster: <span contenteditable="true" style="min-width: 100px;">101</span></div>
-                <div class="info-line">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min-width: 100px;">1</span></div>
+        <div class="annex-reference" style="text-align: right; font-style: italic; font-size: 11px;">Annex A.4</div>
+
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
             </div>
         </div>
-        
-        <table class="form-header">
-            <tr>
-                <td class="label">Entity Name:</td>
-                <td class="value" contenteditable="true">TESDA-CAR</td>
-                <td style="width: 100px;"></td>
-                <td class="label">Fund Cluster :</td>
-                <td class="value" style="width: 80px;" contenteditable="true">101</td>
-            </tr>
-        </table>
-        <table class="form-header" style="margin-top:0;">
-            <tr>
-                <td class="label">Semi-Expendable Property:</td>
-                <td class="value" contenteditable="true"><?php echo h($categoryLabel); ?></td>
-                <td colspan="3"></td>
-            </tr>
-        </table>
 
         <table class="main-table">
             <thead>
+                <tr class="title-row">
+                    <th colspan="15">REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED</th>
+                </tr>
+                <tr class="meta-row">
+                    <td colspan="10">Entity Name: <span contenteditable="true">TESDA-CAR</span></td>
+                    <td colspan="5" class="meta-right">Fund Cluster: <span contenteditable="true" style="min-width: 100px;">101</span></td>
+                </tr>
+                <tr class="meta-row">
+                    <td colspan="10">Semi-expendable Property: <span contenteditable="true"><?php echo h($categoryLabel); ?></span></td>
+                    <td colspan="5" class="meta-right">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min-width: 100px;">1</span></td>
+                </tr>
                 <tr>
                     <th rowspan="2" class="date-col">Date</th>
                     <th colspan="2">Reference</th>

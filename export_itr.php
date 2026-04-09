@@ -35,7 +35,7 @@ if ($items_rs) {
 $stmt->close();
 
 // Limit items so the printout fits on a single A4 page
-$MAX_ITEMS_ON_PAGE = 12; // Adjust if you need a bit more/less content on one page
+$MAX_ITEMS_ON_PAGE = 12; 
 
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function peso($n) { $n = (float)$n; return number_format($n, 2); }
@@ -83,75 +83,114 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
             .print-container { max-width: 720px; }
         }
 
-        .header-title {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 8px;
-            border: none;
-            padding: 0;
-            background: transparent;
-            letter-spacing: 0.5px;
-        }
 
-    .info-section { width: 100%; border-collapse: collapse; }
-    .info-section td { border: 0; padding: 4px 6px; font-size: 10px; }
-    /* Overall form frame (matches the thick box in the template) */
-    .form-frame { border:2px solid #000; padding:0; page-break-inside: avoid; }
-        /* Header zone inside the frame (with thick bottom line) */
-        .header-box { border:none; border-bottom:0px solid #000; padding:0; margin:0; }
-    .uline { display:inline-block; min-width: 260px; width: 70%; border-bottom:1px solid #000; padding:0 4px; }
-    .uline-sm { display:inline-block; min-width: 200px; width: 70%; border-bottom:1px solid #000; padding:0 4px; }
+    .main-table thead th.header-title {
+        padding: 8px 4px;
+        background: #fff;
+        border: 1px solid #000;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .agency-header {
+        position: relative;
+        text-align: center;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .agency-header img {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .agency-text {
+        text-align: center;
+        line-height: 1.2;
+        display: inline-block;
+        font-size: 11px;
+    }
+
+    .uline { display:inline-block; min-width: 260px; border-bottom:1px solid #000; padding:0 4px; }
+    .uline-sm { display:inline-block; min-width: 50px; border-bottom:1px solid #000; padding:0 4px; text-align: left;}
     .transfer-row { border-top:2px solid #000; border-bottom:2px solid #000; padding-top:6px; margin-top:4px; }
-    .hb-left { width:68%; }
-    .hb-right { width:32%; border-left:2px solid #000; }
-    /* Header grid built entirely with tables */
-    .hdr-grid { width:100%; border-collapse: collapse; }
-    .label-table { width:100%; border-collapse: collapse; }
-    .label-table .label { font-weight:bold; }
-    .label-table .line-cell { border-bottom:none; padding:2px 6px 4px 6px; height:18px; }
-    .label-table .line-cell .line-inner { display:inline-block; border-bottom:1px solid #000; padding:0 2px 2px 2px; height:16px; width:85%; vertical-align:bottom; }
     .uline-inline { display: inline-block; border-bottom:1px solid #000; padding:0 2px; line-height: 1; width:auto; margin: 4px 0px; }
-    .hb-left .uline-inline { min-width: 200px; }
-    .hb-right .uline-inline { min-width: 130px; }
-    /* Fine tune underline lengths per side */
-    .hb-left .line-inner { width:88%; }
-    .hb-right .line-inner { width:80%; }
-    
-    .transfer-options { display: inline-grid; grid-template-columns: 1fr 1fr; column-gap: 48px; row-gap: 6px; align-items: center; }
     .cbox { display: inline-flex; align-items: center; }
     .cbox .sq { display:inline-block; width:12px; height:12px; border:1px solid #000; vertical-align:middle; }
-    .other-line { display:inline-block; flex:1; min-width: 260px; border-bottom:1px solid #000; height: 0; margin-left: 8px; vertical-align: middle; }
+    .cbox .sq.checked { background:#000; }
 
-        /* Items grid (full grid, thick line below the table) */
-    .items-table { width: 100%; border-collapse: collapse; margin: 0; border: none; border-bottom:2px solid #000; page-break-inside: avoid; }
-        .items-table th, .items-table td { border: 1px solid #000; padding: 6px 4px; text-align: center; font-size: 10px; vertical-align: middle; }
-        .items-table th { font-weight: bold; }
-        .items-table .description { text-align: left; font-size: 10px; }
+    @media print {
+        .cbox .sq {
+            position: relative;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
 
-        .tt-table { border-collapse: collapse; }
-        .tt-table td { padding-right: 48px; padding-top: 2px; padding-bottom: 2px; vertical-align: middle; }
-        .signatures { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .signatures td { border: 2px solid #000; padding: 10px; font-size: 10px; height: 100px; vertical-align: top; width: 33.33%; }
-        .signatures .signature-title { font-weight: bold; margin-bottom: 10px; }
-        .signature-line { border-bottom: 1px solid #000; width: 90%; height: 18px; margin: 0 auto 4px auto; text-align: center; line-height: 18px; }
-        .signature-line.position { margin-top: 6px; }
-        .signatures .signature-label { font-size: 7px; color: #666; text-align:center; }
-    /* Reasons section (inside frame) */
-    .reasons-lines { padding: 8px 6px; border-bottom:2px solid #000; }
-        .reasons-lines .line { border-bottom:1px solid #000; height:16px; margin:6px 0; }
-    /* Bottom signature section: no inner borders, only the frame provides edges */
-    .sig-section { padding: 2px; }
-    .sig-section table { width:100%; border-collapse: collapse; }
-    .sig-section th, .sig-section td { padding:10px 14px; vertical-align: top; font-size: 10px; text-align:left; }
+        .cbox .sq.checked::after {
+            content: "X";
+            position: absolute;
+            top: -2px;
+            left: 1px;
+            font-size: 11px;
+            line-height: 12px;
+            font-weight: bold;
+            color: #000;
+        }
+    }
+    .other-line { display:inline-block; flex:1; min-width: 260px; border-bottom:1px solid #000; height: 0; margin-left: 8px; vertical-align: middle; position: relative; top: 3px; }
+    .main-table { width: 100%; border-collapse: collapse; margin: 0; border: 2px solid #000; page-break-inside: avoid; }
+    .main-table th, .main-table td { border: 1px solid #000; padding: 6px 4px; text-align: center; font-size: 10px; vertical-align: middle; }
+    .main-table th { font-weight: bold; }
+    .main-table .label { font-weight: bold; text-align: left;}
+    .main-table .description { text-align: left; font-size: 10px; }
+    .main-table thead tr.info-row td,
+    .main-table thead tr.transfer-row td { text-align: left; vertical-align: top; font-size: 10px; }
+    .main-table thead tr.info-row td { padding: 6px 4px; }
+    .main-table thead tr.transfer-row td { padding: 6px 4px; }
+
+    .tt-table { border-collapse: collapse; }
+    .tt-table td { padding-right: 48px; padding-top: 2px; padding-bottom: 2px; vertical-align: middle; }
+    .main-table tbody tr.reason-row td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 6px;
+    }
+    .main-table tbody tr.reason-row .line {
+        border-bottom:1px solid #000;
+        height:16px;
+        margin:6px 0;
+        display:block;
+        width:100%;
+    }
+    .main-table tbody tr.signature-head-row th {
+        border-bottom: none !important;
+    }
+    .main-table tbody tr.signature-row td {
+        border-top: none !important;
+        vertical-align: top;
+        padding: 10px 14px;
+    }
+    .main-table tbody tr.signature-row td.sig-labels {
+        width: 15%;
+    }
+    .main-table tbody tr.signature-row td.sig-approve,
+    .main-table tbody tr.signature-row td.sig-release,
+    .main-table tbody tr.signature-row td.sig-receive {
+        width: 28.333%;
+    }
     .sig-row { display:grid; grid-template-columns: auto 1fr; align-items: start; column-gap: 0px; margin: 5px 0; }
     .sig-row .sig-line { border-bottom:1px solid #000; min-height:8px; line-height:12px; width:100%; white-space: nowrap; overflow: hidden; }
 
-        .print-instructions { background: #fffacd; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
-        .print-button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 10px; }
-        .print-button:hover { background: #005a87; }
-        .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
-        .back-button:hover { background: #545b62; }
+    .print-instructions { background: #fffacd; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+    .print-button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 10px; }
+    .print-button:hover { background: #005a87; }
+    .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
+    .back-button:hover { background: #545b62; }
     </style>
 </head>
 <body>
@@ -167,7 +206,6 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
             <p><strong>For best results:</strong> Use Chrome or Edge browser for optimal PDF formatting.</p>
         </div>
         <button class="print-button" onclick="window.print()">🖨️ Print/Save as PDF</button>
-    <!-- PDF export is disabled -->
         <a href="itr.php" class="back-button">← Back to ITR List</a>
         <a href="add_itr.php?itr_id=<?php echo (int)$itr_id; ?>" class="back-button">✏️ Edit ITR</a>
         <hr style="margin: 20px 0;">
@@ -175,90 +213,87 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
 
     <div class="print-container">
         <div style="text-align:right; font-style:italic; font-size:11px;">Annex A.5</div>
-        <div class="header-title">INVENTORY TRANSFER REPORT</div>
 
-        <!-- Top line: Entity Name (left) and Fund Cluster (right), outside the frame -->
-        <table class="info-section" style="margin-bottom:6px;">
-            <tr>
-                <td>
-                    <strong>Entity Name :</strong>
-                    <span class="uline"><?php echo h($itr['entity_name']); ?></span>
-                </td>
-                <td style="text-align:right;">
-                    <strong>Fund Cluster :</strong>
-                    <span class="uline-sm"><?php echo h($itr['fund_cluster']); ?></span>
-                </td>
-            </tr>
-        </table>
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
 
-        <!-- Start of the framed form body -->
-        <div class="form-frame">
-            <div class="header-box">
-                <table class="hdr-grid">
-                    <tr>
-                        <td class="hb-left" style="vertical-align:top;">
-                            <table class="label-table">
-                                <tr><td class="label">From Accountable Officer/Agency/Fund Cluster : <span class="uline-inline"><?php echo h($itr['from_accountable']); ?></span></td></tr>
-                                <tr><td class="label">To Accountable Officer/Agency/Fund Cluster : <span class="uline-inline"><?php echo h($itr['to_accountable']); ?></span></td></tr>
-                            </table>
-                        </td>
-                        <td class="hb-right" style="text-align:left; padding-left:12px; vertical-align:top;">
-                            <table class="label-table">
-                                <tr><td class="label">ITR No : <span class="uline-inline"><?php echo h($itr['itr_no']); ?></span></td></tr>
-                                <tr><td class="label">Date : <span class="uline-inline"><?php echo h($itr['itr_date']); ?></span></td></tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="transfer-row">
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th colspan="6" class="header-title">INVENTORY TRANSFER REPORT</th>
+                </tr>
+                <tr class="info-row">
+                    <td colspan="4">
+                        <strong>Entity Name :</strong>
+                        <span class="uline"><?php echo h($itr['entity_name']); ?></span>
+                    </td>
+                    <td colspan="2" style="text-align:left;">
+                        <strong>Fund Cluster :</strong>
+                        <span class="uline-sm"><?php echo h($itr['fund_cluster']); ?></span>
+                    </td>
+                </tr>
+
+                <tr> 
+                    <td colspan="4" class="label">From Accountable Officer/Agency/Fund Cluster : <span class="uline"><?php echo h($itr['from_accountable']); ?></span></td>
+                    <td colspan="2" class="label">ITR No : <span class="uline-inline"><?php echo h($itr['itr_no']); ?></span></td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" class="label">To Accountable Officer/Agency/Fund Cluster : <span class="uline"><?php echo h($itr['to_accountable']); ?></span></td>
+                    <td colspan="2" class="label">Date : <span class="uline-inline"><?php echo h($itr['itr_date']); ?></span></td>
+                </tr>
+
+                <tr class="transfer-row">
+                    <td colspan="6">
                             <div class="tt-head">
                                 <strong>Transfer Type:</strong> <em>(check only one)</em>
                             </div>
-                                <table class="tt-table" style="margin-left:12px;">
-                                    <tr>
-                                        <td>
-                                            <span class="cbox">
-                                                <span class="sq" style="background: <?php echo $isDonation ? '#000' : 'transparent'; ?>;"></span>
-                                                <span style="margin-left:6px;">Donation</span>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="cbox">
-                                                <span class="sq" style="background: <?php echo $isRelocate ? '#000' : 'transparent'; ?>;"></span>
-                                                <span style="margin-left:6px;">Relocate</span>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <span class="cbox">
-                                                <span class="sq" style="background: <?php echo $isReassignment ? '#000' : 'transparent'; ?>;"></span>
-                                                <span style="margin-left:6px;">Reassignment</span>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="cbox">
-                                                <span class="sq" style="background: <?php echo $isOthers ? '#000' : 'transparent'; ?>;"></span>
-                                                <span style="margin-left:6px;">Others (Specify)</span>
-                                                <span class="other-line"></span>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            <table class="items-table">
-            <thead>
+                            <table class="tt-table" style="margin-left:12px;">
+                                <tr>
+                                    <td style="border: none;">
+                                        <span class="cbox">
+                                            <span class="sq <?php echo $isDonation ? 'checked' : ''; ?>"></span>
+                                            <span style="margin-left:6px;">Donation</span>
+                                        </span>
+                                    </td>
+                                    <td style="border: none;">
+                                        <span class="cbox">
+                                            <span class="sq <?php echo $isRelocate ? 'checked' : ''; ?>"></span>
+                                            <span style="margin-left:6px;">Relocate</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: none;">
+                                        <span class="cbox">
+                                            <span class="sq <?php echo $isReassignment ? 'checked' : ''; ?>"></span>
+                                            <span style="margin-left:6px;">Reassignment</span>
+                                        </span>
+                                    </td>
+                                    <td style="border: none;">
+                                        <span class="cbox">
+                                            <span class="sq <?php echo $isOthers ? 'checked' : ''; ?>"></span>
+                                            <span style="margin-left:6px;">Others (Specify)</span>
+                                            <span class="other-line"></span>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                    </td>
+                </tr>
                 <tr>
-                    <th style="width: 12%">Date Acquired</th>
-                    <th style="width: 10%">Item No.</th>
-                    <th style="width: 14%">ICS No./Date</th>
-                    <th style="width: 42%">Description</th>
-                    <th style="width: 10%">Amount</th>
-                    <th style="width: 12%">Condition of<br>Inventory</th>
+                    <th style="width: 15%">Date Acquired</th>
+                    <th style="width: 15%">Item No.</th>
+                    <th style="width: 15%">ICS No./Date</th>
+                    <th style="width: 20%">Description</th>
+                    <th style="width: 15%">Amount</th>
+                    <th style="width: 20%">Condition of<br>Inventory</th>
                 </tr>
 
             </thead>
@@ -279,7 +314,6 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
                     $row_count++;
                 }
 
-                // Pad with blank rows to keep the table height consistent
                 for ($i = $row_count; $i < $MAX_ITEMS_ON_PAGE; $i++) {
                     echo '<tr>';
                     echo '<td>&nbsp;</td>';
@@ -291,60 +325,55 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
                     echo '</tr>';
                 }
                 ?>
-            </tbody>
-        </table>
 
-            <div class="reasons-lines">
-                <strong>Reason/s for Transfer:</strong>
-                <div class="line"></div>
-                <div class="line"></div>
-                <div class="line"></div>
-            </div>
+                <tr class="reason-row">
+                    <td colspan="6" style="border: 2px solid #000;">
+                        <strong>Reason/s for Transfer:</strong>
+                        <div class="line">&nbsp;</div>
+                        <div class="line">&nbsp;</div>
+                        <div class="line">&nbsp;</div>
+                    </td>
+                </tr>
 
-            <div class="sig-section">
-                <table>
-                    <tr>
-                        <th style="width:15%"></th>
-                        <th style="width:25%">Approved by:</th>
-                        <th style="width:25%">Released/Issued by:</th>
-                        <th style="width:25%">Received by:</th>
+                    <tr class="signature-head-row">
+                        <th>&nbsp;</th>
+                        <th colspan="2" style="text-align: left;">Approved by:</th>
+                        <th style="text-align: left;">Released/Issued by:</th>
+                        <th colspan="2" style="text-align: left;">Received by:</th>
                     </tr>
-                    <tr>
-                        <td>
+                    <tr class="signature-row">
+                        <td class="sig-labels">
                             <div class="sig-row"><div>Signature :</div></div>
                             <div class="sig-row"><div>Printed Name :</div></div></div>
                             <div class="sig-row"><div>Designation :</div></div></div>
                             <div class="sig-row"><div>Date :</div></div></div>
                         </td>
-                        <td>
-                            <!-- Keep first line for handwritten signature; then show stored name/designation/date -->
+                        <td colspan="2" class="sig-approve">
                             <div class="sig-row"><div></div><div class="sig-line"></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['approved_name'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['approved_designation'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['approved_date'] ?? ''); ?></div></div>
                         </td>
-                        <td>
+                        <td class="sig-release">
                             <div class="sig-row"><div></div><div class="sig-line"></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['released_name'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['released_designation'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['released_date'] ?? ''); ?></div></div>
                         </td>
-                        <td>
+                        <td colspan="2" class="sig-receive">
                             <div class="sig-row"><div></div><div class="sig-line"></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['received_name'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['received_designation'] ?? ''); ?></div></div>
                             <div class="sig-row"><div></div><div class="sig-line"><?php echo h($itr['received_date'] ?? ''); ?></div></div>
                         </td>
                     </tr>
-                </table>
-            </div>
-        </div>
+
+            </tbody>
+        </table>
+
     </div>
 
-    <script>
-        // Optional: auto-open print dialog
-        // window.addEventListener('load', function() { setTimeout(function(){ window.print(); }, 400); });
-    </script>
+
 </body>
 </html>
 

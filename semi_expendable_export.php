@@ -37,7 +37,7 @@ $stmt->close();
     body {
       margin: 20px;
       font-family: "Times New Roman", serif;
-      font-size: 12px; /* match sc_export on screen */
+      font-size: 12px; 
       color: #000;
       background: #fff;
     }
@@ -55,24 +55,53 @@ $stmt->close();
       box-sizing: border-box;
     }
     .title-row { display:flex; justify-content:space-between; align-items:flex-start; }
-    .title { text-align:center; font-weight:bold; font-size:18px; margin: 2px 0 10px; letter-spacing:0.5px; flex:1; }
+    .title { text-align:center; font-weight:bold; font-size:18px; margin: 2px 0 10px; letter-spacing:0.5px; flex:1; padding:10px 0 !important; }
     .annex { font-style:italic; font-size:12px; }
+    .appendix {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 11px;
+      font-style: italic;
+    }
+
+    .agency-header {
+      position: relative;
+      text-align: center;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    .agency-header img {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .agency-text {
+      text-align: center;
+      line-height: 1.2;
+      display: inline-block;
+    }
 
     .meta-top { width:100%; border-collapse:collapse; margin-bottom:6px; }
     .meta-top td { padding:2px 4px; }
-  .meta-underline { border-bottom:1px solid #000; display:inline-block; min-width:320px; height:14px; }
-  .inline-fill { display:flex; align-items:flex-end; gap:4px; }
-  .inline-fill .meta-underline { flex: 1 1 auto; min-width:200px; }
-  /* Show only the vertical divider (no box) */
-  .spine-only { border: 0 !important; border-left: 1px solid #000 !important; }
-  .no-right-border { border-right: 0 !important; }
-  .no-bottom-border { border-bottom: 0 !important; }
+    .meta-underline { border-bottom:1px solid #000; display:inline-block; min-width:320px; height:14px; }
+    .inline-fill { display:flex; align-items:flex-end; gap:4px; }
+    .inline-fill .meta-underline { flex: 1 1 auto; min-width:200px; }
+    .spine-only { border: 0 !important; border-left: 1px solid #000 !important; }
+    .no-right-border { border-right: 0 !important; }
+    .no-bottom-border { border-bottom: 0 !important; }
 
-  .property-card-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:11px; border:2px solid #000; }
+    .property-card-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:11px; border:2px solid #000; }
     .property-card-table th, .property-card-table td { border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle; }
     .meta-row .meta-cell { border:1px solid #000; padding:4px 6px; text-align:left; font-weight:bold; }
     .meta-line { border-bottom:1px solid #000; display:inline-block; width:100%; height:14px; vertical-align:bottom; }
-  .th-ref { text-decoration: underline; }
+
   </style>
 </head>
 <body>
@@ -89,23 +118,19 @@ $stmt->close();
   </div>
 
   <div class="card-wrapper">
-    <div class="title-row">
-      <span></span>
-      <div class="title">SEMI-EXPENDABLE PROPERTY CARD</div>
-      <div class="annex">Annex A.1</div>
+    <div class="appendix">Annex A.1</div>
+
+    <div class="agency-header">
+      <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+      <div class="agency-text">
+        <div>Republic of the Philippines</div>
+        <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+        <div>Cordillera Administrative Region</div>
+      </div>
     </div>
 
-    <table class="meta-top">
-  <tr>
-    <td style="width:60%; font-weight:bold;">Entity Name:&nbsp; <span class="meta-underline">TESDA Regional Office</span></td>
-    <td style="width:40%; font-weight:normal;">
-      <div class="inline-fill"><strong>Fund Cluster:</strong> <span class="meta-underline"><?php echo htmlspecialchars($item['fund_cluster'] ?? ''); ?></span></div>
-    </td>
-  </tr>
-    </table>
-
     <?php
-      // Load history rows for this semi item
+      // Load history rows
       $hist_rows = [];
   if ($hstmt = $conn->prepare("SELECT * FROM semi_expendable_history WHERE semi_id = ? ORDER BY created_at ASC, id ASC")) {
         $hstmt->bind_param("i", $id);
@@ -114,12 +139,10 @@ $stmt->close();
     while ($hr = $hres->fetch_assoc()) { $hist_rows[] = $hr; }
         $hstmt->close();
       }
-    // Remove only 'Pre-ICS Snapshot' rows from export rendering (show Initial Receipt as old data)
     if (!empty($hist_rows)) {
         $hist_rows = array_values(array_filter($hist_rows, function($hr){
           $remarks = isset($hr['remarks']) ? trim(strtolower($hr['remarks'])) : '';
           $ref = isset($hr['ics_rrsp_no']) ? strtolower($hr['ics_rrsp_no']) : '';
-          // Exclude Pre-ICS Snapshot and any RRSP-related rows (by reference, remarks, or typical RRSP fields)
           $is_rrsp = strpos($ref, 'rrsp') !== false
             || strpos($remarks, 'rrsp') !== false
             || (isset($hr['quantity_returned']) && (int)$hr['quantity_returned'] > 0 && empty($hr['quantity_issued']) && empty($hr['quantity_disposed']) && empty($hr['quantity_reissued']));
@@ -130,6 +153,15 @@ $stmt->close();
 
     <table class="property-card-table">
       <thead>
+        <tr>
+          <th colspan="11" class="title">SEMI-EXPENDABLE PROPERTY CARD</th>
+        </tr>
+        <tr>
+          <td colspan="8" style="width:60%; font-weight:bold; border-left: 1px solid #000; text-align:left;" >Entity Name:&nbsp; <span class="meta-underline">TESDA Regional Office</span></td>
+          <td colspan="3" style="width:40%; font-weight:normal; border-right: 1px solid #000;">
+            <div class="inline-fill"><strong>Fund Cluster:</strong> <span class="meta-underline"><?php echo htmlspecialchars($item['fund_cluster'] ?? ''); ?></span></div>
+          </td>
+        </tr>
         <tr class="meta-row">
           <td colspan="8" class="meta-cell no-right-border">
             <div class="inline-fill"><strong>Semi-expendable Property:</strong> <span><?php echo htmlspecialchars($item['category'] ?? ''); ?></span></div>

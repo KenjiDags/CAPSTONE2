@@ -61,16 +61,47 @@ $conn->close();
       .no-print { display:none !important; }
       @page { size: landscape; margin: 0.5cm 1.5cm 0.5cm 1.5cm; }
       .page-break { page-break-after: always; }
+      .card-wrapper { margin-bottom: 0 !important; }
     }
     body { margin: 20px; font-family: "Times New Roman", serif; font-size: 12px; color: #000; background: #fff; }
   .print-button { background:#007cba; color:#fff; padding:6px 14px; border:none; border-radius:4px; cursor:pointer; font-size:12px; margin-right:6px; text-decoration:none; }
   .back-link { background:#6c757d; color:#fff; padding:6px 14px; border-radius:4px; font-size:12px; text-decoration:none; }
     .instruction-box { background:#fffacd; border:1px solid #ddd; padding:8px; margin-bottom:10px; border-radius:4px; font-size:12px; }
 
-    .card-wrapper { max-width: 1200px; margin: 0 auto; border: 2px solid #000; padding: 12px 12px 16px 12px; position: relative; background: #fff; box-sizing: border-box; }
+    .card-wrapper { max-width: 1200px; margin: 0 auto 18px auto; border: 2px solid #000; padding: 12px 12px 16px 12px; position: relative; background: #fff; box-sizing: border-box; }
     .title-row { display:flex; justify-content:space-between; align-items:flex-start; }
-    .title { text-align:center; font-weight:bold; font-size:18px; margin: 2px 0 10px; letter-spacing:0.5px; flex:1; }
+    .title { text-align:center; font-weight:bold; font-size:18px; margin: 2px 0 10px; letter-spacing:0.5px; flex:1; padding:10px 0 !important; }
     .annex { font-style:italic; font-size:12px; }
+    .appendix {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 11px;
+      font-style: italic;
+    }
+
+    .agency-header {
+      position: relative;
+      text-align: center;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    .agency-header img {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .agency-text {
+      text-align: center;
+      line-height: 1.2;
+      display: inline-block;
+    }
     .meta-top { width:100%; border-collapse:collapse; margin-bottom:6px; }
     .meta-top td { padding:2px 4px; }
     .meta-underline { border-bottom:1px solid #000; display:inline-block; min-width:320px; height:14px; }
@@ -149,23 +180,28 @@ $conn->close();
       $conn->close();
     ?>
     <div class="card-wrapper">
-      <div class="title-row">
-        <span></span>
-        <div class="title">SEMI-EXPENDABLE PROPERTY CARD</div>
-        <div class="annex">Annex A.1</div>
-      </div>
+      <div class="appendix">Annex A.1</div>
 
-      <table class="meta-top">
-        <tr>
-          <td style="width:60%; font-weight:bold;">Entity Name:&nbsp; <span class="meta-underline">TESDA</span></td>
-          <td style="width:40%; font-weight:normal;">
-            <div class="inline-fill"><strong>Fund Cluster:</strong> <span class="meta-underline"><?php echo htmlspecialchars($item['fund_cluster'] ?? ''); ?></span></div>
-          </td>
-        </tr>
-      </table>
+      <div class="agency-header">
+        <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+        <div class="agency-text">
+          <div>Republic of the Philippines</div>
+          <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+          <div>Cordillera Administrative Region</div>
+        </div>
+      </div>
 
       <table class="property-card-table">
         <thead>
+          <tr>
+            <th colspan="11" class="title">SEMI-EXPENDABLE PROPERTY CARD</th>
+          </tr>
+          <tr>
+            <td colspan="8" style="width:60%; font-weight:bold; border-left: 1px solid #000; text-align:left;" >Entity Name:&nbsp; <span class="meta-underline">TESDA Regional Office</span></td>
+            <td colspan="3" style="width:40%; font-weight:normal; border-right: 1px solid #000;">
+              <div class="inline-fill"><strong>Fund Cluster:</strong> <span class="meta-underline"><?php echo htmlspecialchars($item['fund_cluster'] ?? ''); ?></span></div>
+            </td>
+          </tr>
           <tr class="meta-row">
             <td colspan="8" class="meta-cell no-right-border">
               <div class="inline-fill"><strong>Semi-expendable Property:</strong> <span><?php echo htmlspecialchars($item['category'] ?? ''); ?></span></div>

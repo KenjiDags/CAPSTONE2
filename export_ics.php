@@ -247,7 +247,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             border: 2px solid #000;
         }
 
-        /* Make the on-screen view a bit narrower, but keep print full-width */
         @media screen {
             .print-container { max-width: 720px; }
         }
@@ -262,11 +261,42 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             background: transparent;
             letter-spacing: 0.5px;
         }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+        }
+
+        .table-main-title {
+            text-align: center !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            letter-spacing: 0.5px;
+            padding: 8px 6px !important;
+        }
         
         .info-section {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
         
         .info-section td {
@@ -297,16 +327,43 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             font-size: 10px;
             vertical-align: middle;
         }
-        /* Header keeps full grid lines */
+
         .items-table thead th {
-            border: 1px solid #000;
+            border: 2px solid #000;
         }
-        /* Body rows show only vertical lines (no horizontal row lines) */
+
+        .items-table thead tr.info-row td {
+            padding: 2px;
+            font-size: 9px;
+            text-align: left;
+        }
+
+        .items-table thead tr.info-row td.info-right {
+            text-align: right;
+        }
+
+        .info-value-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            padding: 0 4px;
+        }
+
+        .info-value-line.entity {
+            min-width: 205px;
+        }
+
+        .info-value-line.fund {
+            min-width: 200px;
+        }
+
+        .info-value-line.icsno {
+            min-width: 70px;
+        }
+
         .items-table tbody td {
-            border-left: 1px solid #000;
-            border-right: 1px solid #000;
-            border-top: 0;
-            border-bottom: 0;
+            border: none;
+            border-left: 2px solid #000;
+            border-right: 2px solid #000;
             padding-top: 5px;
             padding-bottom: 5px; 
         }
@@ -326,6 +383,19 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         .items-table tbody tr.current-row td {
             font-weight: normal;
         }
+
+        .items-table tbody tr.signatories-row td {
+            border: 2px solid #000;
+            border-top: none !important;
+            padding: 10px;
+            font-size: 10px;
+            height: 100px;
+            vertical-align: top;
+        }
+
+        .items-table tbody tr.signatories-row td.signatories {
+            border: 2px solid #000 !important;
+        }
         
         .signatures {
             width: 100%;
@@ -341,16 +411,23 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             width: 50%;
         }
         
-        .signatures .signature-title {
+        .signature-title {
             font-weight: bold;
             margin-bottom: 10px;
+            text-align: left;
         }
         
         .signatures .signature-label {
             font-size: 7px;
             color: #666;
+            text-align: center;
         }
-        /* Prefilled signature lines */
+
+        .signature-label {
+            font-size: 8px;
+            text-align: center;
+        }
+
         .signature-line {
             border-bottom: 1px solid #000;
             width: 90%;
@@ -423,42 +500,51 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         
         <button class="print-button" onclick="window.print()">🖨️ Print/Save as PDF</button>
         <a href="ics.php" class="back-button">← Back to ICS List</a>
-    <a href="edit_ics.php?ics_id=<?php echo $ics_id; ?>" class="back-button">✏️ Edit ICS</a>
+        <a href="edit_ics.php?ics_id=<?php echo $ics_id; ?>" class="back-button">✏️ Edit ICS</a>
         <hr style="margin: 20px 0;">
     </div>
 
     <div class="print-container">
         <div style="text-align:right; font-style:italic; font-size:11px;">Appendix 59</div> <!-- (OLD) Annex A.3 -->
-        <div class="header-title">INVENTORY CUSTODIAN SLIP</div>
 
-        <table class="info-section" style="border:0;">
-            <tr>
-                <td style="border:0; padding:2px 0;">
-                    <strong>Entity Name:</strong>
-                    <span style="display:inline-block; min-width:205px; border-bottom:1px solid #000; padding:0 4px;">
-                        <?php echo htmlspecialchars($ics['entity_name']); ?>
-                    </span>
-                </td>
-                <td style="border:0; padding:2px 0; text-align:right;">&nbsp;</td>
-            </tr>
-            <tr>
-                <td style="border:0; padding:2px 0;">
-                    <strong>Fund Cluster :</strong>
-                    <span style="display:inline-block; min-width:200px; border-bottom:1px solid #000; padding:0 4px;">
-                        <?php echo htmlspecialchars($ics['fund_cluster']); ?>
-                    </span>
-                </td>
-                <td style="border:0; padding:2px 0; text-align:right;">
-                    <strong>ICS No :</strong>
-                    <span style="display:inline-block; min-width:70px; border-bottom:1px solid #000; padding:0 4px;">
-                        <?php echo htmlspecialchars($ics['ics_no']); ?>
-                    </span>
-                </td>
-            </tr>
-        </table>
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
 
         <table class="items-table">
             <thead>
+                <tr>
+                    <th colspan="7" class="table-main-title">INVENTORY CUSTODIAN SLIP</th>
+                </tr>
+                <tr class="info-row">
+                    <td colspan="5">
+                        <strong>Entity Name:</strong>
+                        <span class="info-value-line entity">
+                            <?php echo htmlspecialchars($ics['entity_name']); ?>
+                        </span>
+                    </td>
+                    <td colspan="2" class="info-right">&nbsp;</td>
+                </tr>
+                <tr class="info-row">
+                    <td colspan="5">
+                        <strong>Fund Cluster :</strong>
+                        <span class="info-value-line fund">
+                            <?php echo htmlspecialchars($ics['fund_cluster']); ?>
+                        </span>
+                    </td>
+                    <td colspan="2" class="info-right">
+                        <strong>ICS No :</strong>
+                        <span class="info-value-line icsno">
+                            <?php echo htmlspecialchars($ics['ics_no']); ?>
+                        </span>
+                    </td>
+                </tr>
+
                 <tr>
                     <th rowspan="2" style="width: 7%">Quantity</th>
                     <th rowspan="2" style="width: 7%">Unit</th>
@@ -484,14 +570,12 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                         $qtyDisplay = (fmod($qtyVal, 1.0) == 0.0) ? number_format($qtyVal, 0) : number_format($qtyVal, 2);
                         $unit = isset($item['unit']) && $item['unit'] !== '' ? $item['unit'] : '-';
 
-                        // Get historical records for this item (full series)
+                        // Get historical records for this item 
                         $historyEntries = [];
                         if ($itemId > 0 && isset($historyByItemId[$itemId])) {
                             $historyEntries = $historyByItemId[$itemId];
                         }
 
-                        // If we have history, render a baseline row from the first entry's quantity_before,
-                        // then render each transfer event as its own row. Otherwise, render the single current row.
                         if (!empty($historyEntries)) {
                             $firstEntry = $historyEntries[0];
                             $baseQty = isset($firstEntry['quantity_before']) ? (float)$firstEntry['quantity_before'] : $qtyVal;
@@ -501,7 +585,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                 ? (float)$firstEntry['total_cost_before']
                                 : ($baseQty * $baseUnitCost);
 
-                            // Baseline/original issuance row (no notes)
                             echo '<tr class="current-row">';
                             echo '<td>' . $baseQtyDisplay . '</td>';
                             echo '<td>' . htmlspecialchars($unit) . '</td>';
@@ -513,7 +596,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                             echo '</tr>';
                             $row_count++;
 
-                            // Render each history/transfer as its own row with a friendly note
                             // Prepare itr_history pointer for this item
                             $itrHistList = $itrHistByItemId[$itemId] ?? [];
                             if (!isset($itrHistIdxByItemId[$itemId])) { $itrHistIdxByItemId[$itemId] = 0; }
@@ -527,7 +609,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                 $histDescription = $hist['description'] ?? ($item['description'] ?? '');
                                 $histUnit = $hist['unit'] ?? $unit;
 
-                                // Build note from reference_details if present
                                 $noteText = '';
                                 if (!empty($hist['reference_details'])) {
                                     $details = json_decode($hist['reference_details'], true);
@@ -542,7 +623,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                     }
                                 }
 
-                                // Fallback: match against itr_history rows by transfer quantity
+                                // Fallback
                                 if ($noteText === '') {
                                     $qtyBefore = isset($hist['quantity_before']) ? (float)$hist['quantity_before'] : null;
                                     $qtyAfter = isset($hist['quantity_after']) ? (float)$hist['quantity_after'] : null;
@@ -562,11 +643,11 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                                     $ih['transfer_other'] ?? ''
                                                 );
                                                 if ($built) { $noteText = $built; }
-                                                $itrIdx = $k + 1; // advance pointer
+                                                $itrIdx = $k + 1; 
                                                 break;
                                             }
                                         }
-                                        // If still empty, provide minimal note
+
                                         if ($noteText === '') {
                                             $noteText = ($expected == 1)
                                                 ? '1 unit returned'
@@ -654,7 +735,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                     $row_count++;
                                 }
                             } else {
-                                // No history and no disposal: render single current row
                                 echo '<tr class="current-row">';
                                 echo '<td>' . $qtyDisplay . '</td>';
                                 echo '<td>' . htmlspecialchars($unit) . '</td>';
@@ -670,7 +750,6 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                     }
                 }
 
-                // Add '*** NOTHING FOLLOWS ***' only in the description column
                 echo '<tr>';
                 echo '<td>&nbsp;</td>';
                 echo '<td>&nbsp;</td>';
@@ -704,42 +783,40 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                     }
                 }
                 ?>
-            </tbody>
-        </table>
 
-        <table class="signatures">
-            <tr>
-                <td style="border-top: none !important; width: 40%;">
-                    <div class="signature-title">Received from:</div>
-                    <div class="signature-line">
-                        <span><?php echo htmlspecialchars($ics['received_from'] ?? ''); ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Signature Over Printed Name</div>
-                    <div class="signature-line position">
-                        <span><?php echo htmlspecialchars($ics['received_from_position'] ?? ''); ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Position/Office</div>
-                    <div class="signature-line" style="width: 60%;">
-                        <span><?php echo (isset($ics['date_issued']) && $ics['date_issued']) ? htmlspecialchars(date('M d, Y', strtotime($ics['date_issued']))) : ''; ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Date</div>
-                </td>
-                <td style="border-top: none !important; width: 75%;">
-                    <div class="signature-title">Received by:</div>
-                    <div class="signature-line">
-                        <span><?php echo htmlspecialchars($ics['received_by'] ?? ''); ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Signature Over Printed Name</div>
-                    <div class="signature-line position">
-                        <span><?php echo htmlspecialchars($ics['received_by_position'] ?? ''); ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Position/Office</div>
-                    <div class="signature-line" style="width: 60%;">
-                        <span><?php echo (isset($ics['date_issued']) && $ics['date_issued']) ? htmlspecialchars(date('M d, Y', strtotime($ics['date_issued']))) : ''; ?></span>
-                    </div>
-                    <div class="signature-label" style="text-align:center;">Date</div>
-                </td>
-            </tr>
+                <tr class="signatories-row">
+                    <td colspan="4" class="signatories">
+                        <div class="signature-title">Received from:</div>
+                        <div class="signature-line">
+                            <span><?php echo htmlspecialchars($ics['received_from'] ?? ''); ?></span>
+                        </div>
+                        <div class="signature-label">Signature Over Printed Name</div>
+                        <div class="signature-line position">
+                            <span><?php echo htmlspecialchars($ics['received_from_position'] ?? ''); ?></span>
+                        </div>
+                        <div class="signature-label">Position/Office</div>
+                        <div class="signature-line" style="width: 60%;">
+                            <span><?php echo (isset($ics['date_issued']) && $ics['date_issued']) ? htmlspecialchars(date('M d, Y', strtotime($ics['date_issued']))) : ''; ?></span>
+                        </div>
+                        <div class="signature-label">Date</div>
+                    </td>
+                    <td colspan="3" class="signatories">
+                        <div class="signature-title">Received by:</div>
+                        <div class="signature-line">
+                            <span><?php echo htmlspecialchars($ics['received_by'] ?? ''); ?></span>
+                        </div>
+                        <div class="signature-label">Signature Over Printed Name</div>
+                        <div class="signature-line position">
+                            <span><?php echo htmlspecialchars($ics['received_by_position'] ?? ''); ?></span>
+                        </div>
+                        <div class="signature-label">Position/Office</div>
+                        <div class="signature-line" style="width: 60%;">
+                            <span><?php echo (isset($ics['date_issued']) && $ics['date_issued']) ? htmlspecialchars(date('M d, Y', strtotime($ics['date_issued']))) : ''; ?></span>
+                        </div>
+                        <div class="signature-label">Date</div>
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
 

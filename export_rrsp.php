@@ -45,7 +45,8 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
             @page { size: A4 landscape; margin: 10mm; }
             body { margin: 0; padding: 0; }
             .no-print { display: none !important; }
-            .print-container { page-break-inside: avoid; width: 90%; }
+            .print-container { page-break-inside: avoid; width: 100%; margin: 0; }
+            .content-wrapper { border: none !important; padding: 0; }
         }
 
         body {
@@ -59,15 +60,56 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         }
 
         .print-container {
+            width: 100%;
+            margin: 0;
+            background: #fff;
+            border: none;
+            padding: 0 20px 20px 20px;
+            box-sizing: border-box;
+        }
+
+        .content-wrapper {
             width: 900px;
             margin: 0 auto;
-            background: #fff;
-            padding: 0;
-            border: 2px solid #000;
+            border: 2px solid black;
+            box-sizing: border-box;
+        }
+
+        .content-wrapper .Annex{
+            text-align: right;
+            font-style: italic;
+            font-size: 11px;
+            padding-top: 4px;
+            padding-right: 10px;
+        }
+
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .agency-header img {
+            position: absolute;
+            left: 17px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+            font-size: 11px;
         }
 
         @media screen {
-            .print-container { max-width: 90%; }
+            .print-container { max-width: 100%; }
+            .content-wrapper { max-width: 90%; }
         }
 
         .form-table {
@@ -84,34 +126,15 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
             vertical-align: middle;
         }
 
-        .annex-row th {
-            border-top: none;
-            border-left: none;
-            border-right: none;
-            border-bottom: none;
-            padding: 4px 12px;
-            text-align: right;
-        }
-
-        .annex {
-            font-style: italic;
-            font-size: 11px;
-        }
-
         .title-row th {
-            border-left: none;
-            border-right: none;
-            border-top: none;
-            border-bottom: 1px solid #000;
             text-align: center;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             letter-spacing: 0.5px;
             padding: 8px 6px;
         }
 
         .entity-row {
-            border: none !important;
             padding: 6px 8px;
             font-size: 11px;
         }
@@ -122,36 +145,20 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         }
 
         .label-cell {
-            border-left: 1px solid #000 !important;
-            border-top: 0 !important;
-            border-right: 0 !important;
-            border-bottom: 0 !important;
             padding: 6px 8px;
             font-size: 11px;
             width: 12%;
         }
 
         .value-cell {
-            border: 0 !important;
             padding: 6px 8px;
             font-size: 11px;
             width: 18%;
         }
 
-        .divider-row td {
-            border-top: 0 !important;
-        }
-
-        .divider-row .line-cell {
-            border-top: 1px solid #000 !important;
-        }
-
         .subtitle-row th {
-            border-left: none;
-            border-right: none;
-            border-bottom: 1px solid #000;
-            font-weight: normal;
-            font-size: 10px;
+            font-weight: bold;
+            font-size: 11px;
             text-align: center;
             padding: 6px 8px;
         }
@@ -176,10 +183,7 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         }
 
         .signature-cell {
-            border-top: 1px solid #000 !important;
-            border-left: 0 !important;
-            border-right: 0 !important;
-            border-bottom: 0 !important;
+            border-right: none !important;
             padding: 18px 24px 22px;
             vertical-align: top;
             text-align: left;
@@ -187,12 +191,14 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         }
 
         .signature-cell.right {
+            border: 1px solid #000 !important;
             border-left: 0 !important;
         }
 
         .sig-label {
             font-size: 11px;
             margin-bottom: 32px;
+            text-align: left;
         }
 
         .sig-line {
@@ -291,24 +297,30 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         <hr style="margin: 20px 0;">
     </div>
 
-    <div class="print-container">
-        <table class="form-table">
+    <div class="content-wrapper">
+        <div class="Annex">Annex A.6</div>
+
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
+
+        <div class="print-container">
+            <table class="form-table">
             <thead>
-                <tr class="annex-row">
-                    <th colspan="5"><span class="annex">Annex A.6</span></th>
-                </tr>
                 <tr class="title-row">
                     <th colspan="5">RECEIPT OF RETURNED SEMI-EXPENDABLE PROPERTY</th>
                 </tr>
                 <tr>
-                    <td colspan="3" class="entity-row"><strong>Entity Name:&nbsp;</strong><?php echo htmlspecialchars($rrsp['entity_name']); ?></td>
-                    <td class="label-cell"><strong>Date:</strong></td>
-                    <td class="value-cell"><?php echo htmlspecialchars($rrsp['date_prepared']); ?></td>
+                    <td rowspan="2" colspan="3" class="entity-row"><strong>Entity Name:&nbsp;</strong><?php echo htmlspecialchars($rrsp['entity_name']); ?></td>
+                    <td colspan="2" class="label-cell"><strong>Date:</strong> <?php echo htmlspecialchars($rrsp['date_prepared']); ?></td>
                 </tr>
                 <tr class="divider-row">
-                    <td colspan="3" class="entity-row"></td>
-                    <td class="label-cell line-cell"><strong>RRSP No.:</strong></td>
-                    <td class="value-cell line-cell"><?php echo htmlspecialchars($rrsp['rrsp_no']); ?></td>
+                    <td colspan="2" class="label-cell line-cell"><strong>RRSP No.:</strong> <?php echo htmlspecialchars($rrsp['rrsp_no']); ?></td>
                 </tr>
                 <tr class="subtitle-row">
                     <th colspan="5">This is to acknowledge receipt of the returned Semi-expendable Property</th>
@@ -337,7 +349,6 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
                     }
                 }
 
-                // Add empty rows to fill the table
                 for ($i = $row_count; $i < 9; $i++) {
                     echo '<tr>';
                     echo '<td>&nbsp;</td>';
@@ -348,8 +359,7 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
                     echo '</tr>';
                 }
                 ?>
-            </tbody>
-            <tfoot>
+
                 <tr>
                     <td colspan="2" class="signature-cell">
                         <div class="sig-label">Returned by:</div>
@@ -382,8 +392,9 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
                         <div class="sig-text">Date</div>
                     </td>
                 </tr>
-            </tfoot>
-        </table>
+            </tbody>
+            </table>
+        </div>
     </div>
 
 </body>

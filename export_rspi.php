@@ -142,24 +142,47 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
             .print-container { max-width: 900px; }
         }
 
-    .header-title { text-align:center; font-weight:bold; font-size:14px; margin-bottom:16px; letter-spacing:0.3px; }
+    .header-title { text-align:center; font-weight:bold; font-size:14px; letter-spacing:0.3px; }
     .annex { text-align:right; font-style:italic; font-size:12px; }
-    .label { font-weight:700; width:160px; }
+        .agency-header {
+            position: relative;
+            text-align: center;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+        .agency-header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        .agency-text {
+            text-align: center;
+            line-height: 1.2;
+            display: inline-block;
+            font-size: 12px;
+        }
+    .label { font-weight:700; width:160px; border: 2px solid #000;}
     .value { min-width:220px; border-bottom:1px solid #000; }
         /* Main grid */
     table.main { width:100%; border-collapse: collapse; }
     table.main th, table.main td {  padding:4px; vertical-align:middle; font-size:10px; }
     table.main th { font-weight:700; }
-        /* Remove horizontal row lines in body, keep vertical lines and make rows taller */
     table.main thead th { border:2px solid #000; }
+    table.main thead th.header-title {
+        padding: 8px 4px;
+        background: #fff;
+        font-weight: bold;
+        font-size: 14px;
+    }
     table.main tbody td { border-left:2px solid #000; border-right:2px solid #000; border-top:0; border-bottom:0; padding-top:5px; padding-bottom:5px; }
     table.main thead tr.group th { font-weight:700; background:#f8f8f8; font-style: italic; }
     .text-left { text-align:left; }
-        /* Column widths */
     .w-ics{width:70px;} .w-rcc{width:100px;} .w-prop{width:130px;} .w-item{width:210px;} .w-unit{width:60px;} .w-qty{width:80px;} .w-uc{width:220px;} .w-amt{width:150px;}
-        /* Footer certification section aligned to column grid */
     .sig-line { border-top:1px solid #000; margin:22px auto 0; padding-top:4px; text-align:center; font-size:10px; }
-        /* Print Instructions */
     .print-instructions { background: #fffacd; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
     .print-button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 10px; }
     .print-button:hover { background: #005a87; }
@@ -197,10 +220,21 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
     <div class="print-container">
         <div class="annex">Annex A.7</div>
-        <div class="header-title">REPORT OF SEMI-EXPENDABLE PROPERTY ISSUED</div>
+
+        <div class="agency-header">
+            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+            <div class="agency-text">
+                <div>Republic of the Philippines</div>
+                <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                <div>Cordillera Administrative Region</div>
+            </div>
+        </div>
 
             <table class="main">
                 <thead>
+                        <tr>
+                            <th colspan="8" class="header-title">REPORT OF SEMI-EXPENDABLE PROPERTY ISSUED</th>
+                        </tr>
                         <tr>
                             <td colspan="6" class="label">Entity Name:<span class="underline"> <?= h($entity_name) ?></span></td>
                             <td colspan="2" class="label">Serial No.:<span class="underline"> <?= h($serial_no) ?></span></td>

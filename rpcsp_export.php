@@ -67,10 +67,34 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
       font-size: 12px;
     }
 
+    .agency-header {
+      position: relative;
+      text-align: center;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    .agency-header img {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .agency-text {
+      text-align: center;
+      line-height: 1.2;
+      display: inline-block;
+      font-size: 12px;
+    }
+
     .header {
       text-align: center;
       margin-bottom: 15px;
-      margin-top: 40px;
+      margin-top: 15px;
     }
 
     .title {
@@ -94,13 +118,19 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
     }
 
     .field-input {
+      display: inline-block;
       border-bottom: 1px solid #000;
       min-width: 120px;
       padding: 0 4px;
+      font-size: 11px;
     }
 
     .field-input.long {
       min-width: 200px;
+    }
+
+    .field-input.medium {
+      min-width: 120px;
     }
 
     table {
@@ -126,18 +156,31 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
       text-align: left;
     }
 
-    .signatures {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .signatures td {
-      border: 1px solid #000;
-      padding: 8px;
+    .main tbody tr.signature-row td {
+      border-top: 1px solid #000;
       vertical-align: top;
       height: 100px;
       font-size: 10px;
-      border-top: none !important;
+      text-align: left;
+      padding: 8px;
+    }
+
+    .signature-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      text-align: left;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid #000;
+      margin-bottom: 6px;
+      text-align: center;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    .signature-label {
+      font-size: 10px;
     }
 
     .btn {
@@ -170,39 +213,60 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
 
   <div class="container">
     <div class="appendix">Appendix A.8</div>
-    <div class="header">
-      <h1 class="title">REPORT ON THE PHYSICAL COUNT OF SEMI-EXPENDABLE PROPERTY</h1>
-      <p class="subtitle">(Semi-Expendable Property)</p>
-    </div>
 
-    <div class="field-row">
-      <span>As at</span>
-      <span class="field-input"><?= $report_date ?></span>
-    </div>
-    <div class="field-row" style="margin-top:10px;">
-      <span>Fund Cluster:</span>
-      <span class="field-input long"><?= $fund_cluster ?></span>
-    </div>
-    <div class="field-row" style="margin-top:10px; display:block; line-height:1.6;">
-      For which <span style="text-decoration: underline;"><?= $accountable_officer ?></span>,
-      <span style="text-decoration: underline;"><?= $official_designation ?></span>,
-      <span style="text-decoration: underline;"><?= $entity_name ?></span> is accountable, having assumed such accountability on
-      <span style="text-decoration: underline;"><?= $assumption_date ?></span>.
+    <div class="agency-header">
+      <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+      <div class="agency-text">
+        <div>Republic of the Philippines</div>
+        <div><strong>TECHNICAL EDUCATION &amp; SKILLS DEVELOPMENT AUTHORITY</strong></div>
+        <div>Cordillera Administrative Region</div>
+      </div>
     </div>
 
     <table>
       <thead>
         <tr>
+          <td colspan="11" style="font-size: 10px; border-bottom: none;">
+            <div class="header">
+              <h1 class="title">REPORT ON THE PHYSICAL COUNT OF SEMI-EXPENDABLE PROPERTY</h1>
+              <p class="subtitle">(Semi-Expendable Property)</p>
+            </div>
+            <span style="font-size:11px;">As at</span>
+            <span class="field-input"><?= $report_date ?></span>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="11" style="border-top: none; border-bottom: none;">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td colspan="11" style="text-align: left; font-size: 12px; border-top: none; border-bottom: none;">
+            <span>Fund Cluster:</span>
+            <span class="field-input long"><?= $fund_cluster ?></span>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="11" style=" text-align:left; font-size: 12px; border-top: none; border-bottom: none;">
+            For which <span class="field-input medium"><?= $accountable_officer ?></span>,
+            <span class="field-input medium"><?= $official_designation ?></span>,
+            <span class="field-input medium"><?= $entity_name ?></span> is accountable, having assumed such accountability on
+            <span class="field-input medium"><?= $assumption_date ?></span>.
+          </td>
+        </tr>
+
+        <tr>
           <th rowspan="2" style="width:8%;">Article</th>
           <th rowspan="2" style="width:12%;">Item</th>
-          <th rowspan="2" style="width:18%;">Description</th>
-          <th rowspan="2" style="width:12%;">Property Number</th>
+          <th rowspan="2" style="width:14%;">Description</th>
+          <th rowspan="2" style="width:10%;">Property Number</th>
           <th rowspan="2" style="width:8%;">Unit of Measure</th>
           <th rowspan="2" style="width:8%;">Unit Value</th>
           <th rowspan="2" style="width:8%;">Balance Per Card<br>(Quantity)</th>
           <th rowspan="2" style="width:8%;">On Hand Per Count<br>(Quantity)</th>
           <th colspan="2" style="width:12%;">Shortage/Overage</th>
-          <th rowspan="2" style="width:8%;">Remarks</th>
+          <th rowspan="2" style="width:14%;">Remarks</th>
         </tr>
         <tr>
           <th style="width:6%;">Quantity</th>
@@ -234,27 +298,25 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             echo '</tr>';
         }
         ?>
-      </tbody>
-    </table>
 
-    <table class="signatures">
-      <tr>
-        <td style="width:33.33%;">
-          <div style="font-weight:bold; margin-bottom:4px;">Certified Correct by:</div>
-          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center; margin-top: 10px;"><?= $signature_name_1 ?: '&nbsp;' ?></div>
-          <div style="font-size:10px;">Signature over Printed Name of Inventory Committee Chair and Members</div>
-        </td>
-        <td style="width:33.33%;">
-          <div style="font-weight:bold; margin-bottom:4px;">Approved by:</div>
-          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center; margin-top: 10px;"><?= $signature_name_2 ?: '&nbsp;' ?></div>
-          <div style="font-size:10px;">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
-        </td>
-        <td style="width:33.34%;">
-          <div style="font-weight:bold; margin-bottom:4px;">Verified by:</div>
-          <div style="border-bottom:1px solid #000; margin-bottom:6px; text-align:center;  margin-top: 10px;"><?= $signature_name_3 ?: '&nbsp;' ?></div>
-          <div style="font-size:10px;">Signature over Printed Name of COA Representative</div>
-        </td>
-      </tr>
+        <tr class="signature-row">
+          <td colspan="3" style="padding-bottom: 20px;">
+            <div class="signature-title">Certified Correct by:</div>
+            <div class="signature-line"><?= $signature_name_1 ?: '&nbsp;' ?></div>
+            <div class="signature-label">Signature over Printed Name of Inventory Committee Chair and Members</div>
+          </td>
+          <td colspan="4" style="padding-bottom: 20px;">
+            <div class="signature-title">Approved by:</div>
+            <div class="signature-line"><?= $signature_name_2 ?: '&nbsp;' ?></div>
+            <div class="signature-label">Signature over Printed Name of Head of Agency/Entity or Authorized Representative</div>
+          </td>
+          <td colspan="4" style="padding-bottom: 20px;">
+            <div class="signature-title">Verified by:</div>
+            <div class="signature-line"><?= $signature_name_3 ?: '&nbsp;' ?></div>
+            <div class="signature-label">Signature over Printed Name of COA Representative</div>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </body>
