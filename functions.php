@@ -238,7 +238,9 @@ function ensure_iirusp_tables($conn) {
         accountable_officer_designation VARCHAR(255) NULL,
         accountable_officer_station VARCHAR(255) NULL,
         requested_by VARCHAR(255) NULL,
+        requested_by_designation VARCHAR(255) NULL,
         approved_by VARCHAR(255) NULL,
+        approved_by_designation VARCHAR(255) NULL,
         inspection_officer VARCHAR(255) NULL,
         witness VARCHAR(255) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -247,6 +249,17 @@ function ensure_iirusp_tables($conn) {
         INDEX idx_as_at (as_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+
+    if (function_exists('columnExists')) {
+        try {
+            if (!columnExists($conn, 'iirusp', 'requested_by_designation')) {
+                $conn->query("ALTER TABLE iirusp ADD COLUMN requested_by_designation VARCHAR(255) NULL AFTER requested_by");
+            }
+            if (!columnExists($conn, 'iirusp', 'approved_by_designation')) {
+                $conn->query("ALTER TABLE iirusp ADD COLUMN approved_by_designation VARCHAR(255) NULL AFTER approved_by");
+            }
+        } catch (Throwable $e) { /* no-op */ }
+    }
     
     // Create iirusp_items table
     $sql = "CREATE TABLE IF NOT EXISTS iirusp_items (

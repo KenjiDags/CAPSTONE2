@@ -44,7 +44,7 @@ function h($value)
     body {
         font-family: Arial, sans-serif;
         margin: 20px;
-        font-size: 10px;
+        font-size: 11px;
     }
     table {
         width: 100%;
@@ -72,6 +72,7 @@ function h($value)
         border: 2px solid #000;
         padding: 20px;
         position: relative;
+        font-size: 11px !important;
     }
     .appendix {
         position: absolute;
@@ -185,6 +186,10 @@ function h($value)
         padding-bottom: 2px;
     }
 
+    .sig-line-signatory {
+        font-size: 11px;
+    }
+
     .sig-line-lg { width: 220px; }
     .sig-line-md { width: 180px; }
     .sig-line-xl { width: 250px; }
@@ -228,7 +233,7 @@ function h($value)
         body {
             margin: 5mm;
             padding: 0;
-            font-size: 7px;
+            font-size: 9px;
         }
         .page-wraper {
             border: none !important;
@@ -289,6 +294,10 @@ function h($value)
         }
         .sig-line-xl {
             width: 160px;
+        }
+
+        .sig-line-signatory {
+            font-size: 6px;
         }
         .sig-day-line {
             width: 26px;
@@ -440,20 +449,20 @@ function h($value)
                         <td style="text-align:left;"><?= h($item['particulars'] ?? '') ?></td>
                         <td><?= h($item['semi_expendable_property_no'] ?? '') ?></td>
                         <td><?= h($item['quantity'] ?? '') ?></td>
-                        <td style="text-align:right;"><?= $unitCost > 0 ? 'P' . number_format($unitCost, 2) : '' ?></td>
-                        <td style="text-align:right;"><?= $totalCost > 0 ? 'P' . number_format($totalCost, 2) : '' ?></td>
-                        <td style="text-align:right;"></td>
-                        <td style="text-align:right;"></td>
-                        <td style="text-align:right;"></td>
+                        <td style="text-align:center;"><?= $unitCost > 0 ? 'P' . number_format($unitCost, 2) : '' ?></td>
+                        <td style="text-align:center;"><?= $totalCost > 0 ? 'P' . number_format($totalCost, 2) : '' ?></td>
+                        <td style="text-align:center;"></td>
+                        <td style="text-align:center;"></td>
+                        <td style="text-align:center;"></td>
                         <td id="remarksCol" style="text-align:left;"><?= h($item['remarks'] ?? '') ?></td>
                         <td><?= h($item['disposal_sale'] ?? '') ?></td>
                         <td><?= h($item['disposal_transfer'] ?? '') ?></td>
                         <td><?= h($item['disposal_destruction'] ?? '') ?></td>
                         <td><?= h($item['disposal_others'] ?? '') ?></td>
                         <td><?= h($item['disposal_total'] ?? '') ?></td>
-                        <td style="text-align:right;"><?= isset($item['appraised_value']) && $item['appraised_value'] !== '' ? 'P' . number_format((float)$item['appraised_value'], 2) : '' ?></td>
+                        <td style="text-align:center;"><?= isset($item['appraised_value']) && $item['appraised_value'] !== '' ? 'P' . number_format((float)$item['appraised_value'], 2) : '' ?></td>
                         <td><?= h($item['or_no'] ?? '') ?></td>
-                        <td style="text-align:right;"><?= isset($item['sales_amount']) && $item['sales_amount'] !== '' ? 'P' . number_format((float)$item['sales_amount'], 2) : '' ?></td>
+                        <td style="text-align:center;"><?= isset($item['sales_amount']) && $item['sales_amount'] !== '' ? 'P' . number_format((float)$item['sales_amount'], 2) : '' ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -508,20 +517,20 @@ function h($value)
         const row3 = document.createElement('tr');
         row3.innerHTML = `
             <td colspan="5" style="border: none; vertical-align:bottom;">
-                <span class="sig-line sig-line-lg"><?= h($iirusp['requested_by'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-lg sig-line-signatory"><?= h($iirusp['requested_by'] ?? '') ?></span><br>
                 (Signature over Printed Name of<br> Accountable Officer)
             </td>
             <td colspan="5" style="border: none; border-right: 2px solid #000; vertical-align:bottom;">
-                <span class="sig-line sig-line-lg"><?= h($iirusp['approved_by'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-lg sig-line-signatory"><?= h($iirusp['approved_by'] ?? '') ?></span><br>
                 (Signature over Printed Name of<br> Authorized Official)
             </td>
             <td colspan="4" style="border: none; vertical-align:bottom;">
-                <span class="sig-line sig-line-md"><?= h($iirusp['inspection_officer'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-md sig-line-signatory"><?= h($iirusp['inspection_officer'] ?? '') ?></span><br>
                 (Signature over Printed Name of<br> Inspection Officer)
             </td>
             <td style="border:none;"></td>
             <td colspan="3" style="border: none; vertical-align:bottom;">
-                <span class="sig-line sig-line-md"><?= h($iirusp['witness'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-md sig-line-signatory"><?= h($iirusp['witness'] ?? '') ?></span><br>
                 (Signature over Printed Name of<br> Witness)
             </td>
         `;
@@ -530,11 +539,11 @@ function h($value)
         const row4 = document.createElement('tr');
         row4.innerHTML = `
             <td colspan="5" style="border: none; border-bottom: 2px solid #000;">
-                <span class="sig-line sig-line-xl"><?= h($iirusp['requested_by_designation'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-xl sig-line-signatory"><?= h($iirusp['requested_by_designation'] ?? '') ?></span><br>
                 Designation of Accountable Officer
             </td>
             <td colspan="5" style="border: none; border-right: 2px solid #000; border-bottom: 2px solid #000;">
-                <span class="sig-line sig-line-xl"><?= h($iirusp['approved_by_designation'] ?? '') ?></span><br>
+                <span class="sig-line sig-line-xl sig-line-signatory"><?= h($iirusp['approved_by_designation'] ?? '') ?></span><br>
                 Designation of Authorized Official
             </td>
 

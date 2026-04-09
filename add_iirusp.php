@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->begin_transaction();
 
         // B. Insert Header
-        $stmt = $conn->prepare("INSERT INTO iirusp (iirusp_no, as_at, entity_name, fund_cluster, accountable_officer_name, accountable_officer_designation, accountable_officer_station, requested_by, approved_by, inspection_officer, witness) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO iirusp (iirusp_no, as_at, entity_name, fund_cluster, accountable_officer_name, accountable_officer_designation, accountable_officer_station, requested_by, requested_by_designation, approved_by, approved_by_designation, inspection_officer, witness) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         $as_at = $_POST['as_at'] ?? date('Y-m-d');
         $ent = $_POST['entity_name'] ?? '';
@@ -40,11 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $acc_d = $_POST['accountable_officer_designation'] ?? '';
         $acc_s = $_POST['accountable_officer_station'] ?? '';
         $req = $_POST['requested_by'] ?? '';
+        $req_d = $_POST['requested_by_designation'] ?? '';
         $app = $_POST['approved_by'] ?? '';
+        $app_d = $_POST['approved_by_designation'] ?? '';
         $insp = $_POST['inspection_officer'] ?? '';
         $wit = $_POST['witness'] ?? '';
 
-        $stmt->bind_param("sssssssssss", $iirusp_no, $as_at, $ent, $fund, $acc_n, $acc_d, $acc_s, $req, $app, $insp, $wit);
+        $stmt->bind_param("sssssssssssss", $iirusp_no, $as_at, $ent, $fund, $acc_n, $acc_d, $acc_s, $req, $req_d, $app, $app_d, $insp, $wit);
         
         if (!$stmt->execute()) throw new Exception("Header Error: " . $stmt->error);
         $iirusp_id = $stmt->insert_id;
@@ -322,8 +324,16 @@ ensure_iirusp_tables($conn);
                     <input type="text" id="requested_by">
                 </div>
                 <div class="form-group">
+                    <label>Requested By Designation:</label>
+                    <input type="text" id="requested_by_designation" placeholder="Position">
+                </div>
+                <div class="form-group">
                     <label>Approved By:</label>
                     <input type="text" id="approved_by">
+                </div>
+                <div class="form-group">
+                    <label>Approved By Designation:</label>
+                    <input type="text" id="approved_by_designation" placeholder="Position">
                 </div>
                 <div class="form-group">
                     <label>Inspection Officer:</label>
@@ -415,7 +425,9 @@ ensure_iirusp_tables($conn);
         fd.append('accountable_officer_designation', document.getElementById('accountable_officer_designation').value);
         fd.append('accountable_officer_station', document.getElementById('accountable_officer_station').value);
         fd.append('requested_by', document.getElementById('requested_by').value);
+        fd.append('requested_by_designation', document.getElementById('requested_by_designation').value);
         fd.append('approved_by', document.getElementById('approved_by').value);
+        fd.append('approved_by_designation', document.getElementById('approved_by_designation').value);
         fd.append('inspection_officer', document.getElementById('inspection_officer').value);
         fd.append('witness', document.getElementById('witness').value);
 

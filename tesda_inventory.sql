@@ -156,6 +156,11 @@ CREATE TABLE IF NOT EXISTS `iirusp` (
   PRIMARY KEY (`iirusp_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- NEW
+ALTER TABLE `iirusp`
+  ADD COLUMN `approved_by_designation` VARCHAR(255),
+  ADD COLUMN `requested_by_designation` VARCHAR(255);
+
 -- --------------------------------------------------------
 
 --

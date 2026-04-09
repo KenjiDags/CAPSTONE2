@@ -77,12 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $accountable_officer_designation = trim($_POST['accountable_officer_designation'] ?? '');
         $accountable_officer_station = trim($_POST['accountable_officer_station'] ?? '');
         $requested_by = trim($_POST['requested_by'] ?? '');
+        $requested_by_designation = trim($_POST['requested_by_designation'] ?? '');
         $approved_by = trim($_POST['approved_by'] ?? '');
+        $approved_by_designation = trim($_POST['approved_by_designation'] ?? '');
         $inspection_officer = trim($_POST['inspection_officer'] ?? '');
         $witness = trim($_POST['witness'] ?? '');
         
-        $stmt = $conn->prepare("UPDATE iirusp SET iirusp_no=?, as_at=?, entity_name=?, fund_cluster=?, accountable_officer_name=?, accountable_officer_designation=?, accountable_officer_station=?, requested_by=?, approved_by=?, inspection_officer=?, witness=? WHERE iirusp_id=?");
-        $stmt->bind_param("sssssssssssi", $iirusp_no, $as_at, $entity_name, $fund_cluster, $accountable_officer_name, $accountable_officer_designation, $accountable_officer_station, $requested_by, $approved_by, $inspection_officer, $witness, $iirusp_id);
+        $stmt = $conn->prepare("UPDATE iirusp SET iirusp_no=?, as_at=?, entity_name=?, fund_cluster=?, accountable_officer_name=?, accountable_officer_designation=?, accountable_officer_station=?, requested_by=?, requested_by_designation=?, approved_by=?, approved_by_designation=?, inspection_officer=?, witness=? WHERE iirusp_id=?");
+        $stmt->bind_param("sssssssssssssi", $iirusp_no, $as_at, $entity_name, $fund_cluster, $accountable_officer_name, $accountable_officer_designation, $accountable_officer_station, $requested_by, $requested_by_designation, $approved_by, $approved_by_designation, $inspection_officer, $witness, $iirusp_id);
         
         if (!$stmt->execute()) {
             throw new Exception("Update Error: " . $stmt->error);
@@ -268,8 +270,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" id="requested_by" value="<?php echo htmlspecialchars($iirusp['requested_by'] ?? ''); ?>" placeholder="Name">
             </div>
             <div class="form-group">
+                <label>Requested By Designation:</label>
+                <input type="text" id="requested_by_designation" value="<?php echo htmlspecialchars($iirusp['requested_by_designation'] ?? ''); ?>" placeholder="Position">
+            </div>
+            <div class="form-group">
                 <label>Approved By:</label>
                 <input type="text" id="approved_by" value="<?php echo htmlspecialchars($iirusp['approved_by'] ?? ''); ?>" placeholder="Name">
+            </div>
+            <div class="form-group">
+                <label>Approved By Designation:</label>
+                <input type="text" id="approved_by_designation" value="<?php echo htmlspecialchars($iirusp['approved_by_designation'] ?? ''); ?>" placeholder="Position">
             </div>
             <div class="form-group">
                 <label>Inspection Officer:</label>
@@ -336,7 +346,9 @@ function submitForm() {
     data.append('accountable_officer_designation', document.getElementById('accountable_officer_designation').value);
     data.append('accountable_officer_station', document.getElementById('accountable_officer_station').value);
     data.append('requested_by', document.getElementById('requested_by').value);
+    data.append('requested_by_designation', document.getElementById('requested_by_designation').value);
     data.append('approved_by', document.getElementById('approved_by').value);
+    data.append('approved_by_designation', document.getElementById('approved_by_designation').value);
     data.append('inspection_officer', document.getElementById('inspection_officer').value);
     data.append('witness', document.getElementById('witness').value);
     data.append('items_json', JSON.stringify([])); // Empty items for now, can be extended
