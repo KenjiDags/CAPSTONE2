@@ -204,6 +204,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit RRSP</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
   <style>
     .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
     .section-card h3 { margin-top:0; margin-bottom:12px; }
@@ -338,9 +339,9 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         </div>
       </div>
 
-      <button type="submit">Update RRSP</button>
-      <a href="rrsp.php" style="margin-left: 10px;">
-        <button type="button">Cancel</button>
+      <button type="submit" class="pill-btn pill-add">Update RRSP</button>
+      <a href="rrsp.php" style="margin-left: 10px;" >
+        <button type="button" class="pill-btn pill-view">Cancel</button>
       </a>
     </form>
   </div>

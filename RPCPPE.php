@@ -63,6 +63,25 @@ if ($result) {
     error_log("Database error: " . $conn->error);
     $ppe_items = [];
 }
+
+// Default accountable officer to the logged-in user's full name
+$current_user_full_name = '';
+$current_user_position = '';
+if (isset($_SESSION['user_id'])) {
+    $uid = (int)$_SESSION['user_id'];
+    $stmt_user = $conn->prepare("SELECT COALESCE(NULLIF(full_name, ''), NULLIF(user_full_name, '')) AS full_name, COALESCE(NULLIF(user_position, ''), '') AS user_position FROM users WHERE user_id = ? LIMIT 1");
+    if ($stmt_user) {
+        $stmt_user->bind_param("i", $uid);
+        $stmt_user->execute();
+        $user_res = $stmt_user->get_result();
+        if ($user_res && $user_res->num_rows > 0) {
+            $user_data = $user_res->fetch_assoc();
+            $current_user_full_name = $user_data['full_name'] ?? '';
+            $current_user_position = $user_data['user_position'] ?? '';
+        }
+        $stmt_user->close();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -297,6 +316,7 @@ if ($result) {
             </div>
             
             <form method="POST" action="">
+                <input type="hidden" id="report_date_hidden" name="report_date" value="<?= date('Y-m-d') ?>">
                 <div class="form-fields">
                     <div class="field-group">
                         <label for="fund_cluster">Fund Cluster:
@@ -307,8 +327,8 @@ if ($result) {
 
                     <div class="field-group" style="grid-column: 1 / -1;">
                         <label>For which: 
-                            <input type="text" id="accountable_officer" name="accountable_officer" placeholder="Name of Accountable Officer" style="min-width: 350px;">,    
-                            <input type="text" id="official_designation" name="official_designation" placeholder="Official Designation" style="min-width: 250px;">,
+                            <input type="text" id="accountable_officer" name="accountable_officer" value="<?= htmlspecialchars($current_user_full_name) ?>" placeholder="Name of Accountable Officer" style="min-width: 350px;">,    
+                            <input type="text" id="official_designation" name="official_designation" value="<?= htmlspecialchars($current_user_position) ?>" placeholder="Official Designation" style="min-width: 250px;">,
                             <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name" style="min-width: 250px;">
                             is accountable, having assumed such accountability on
                             <input type="date" id="assumption_date" name="assumption_date">
@@ -494,6 +514,25 @@ if ($result) {
         const firstRowHeight = firstRow.getBoundingClientRect().height;
         secondRowThs.forEach(th => {
             th.style.top = firstRowHeight + 'px';
+        });
+    });
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const reportDateInput = document.getElementById('report_date');
+        const reportDateHidden = document.getElementById('report_date_hidden');
+
+        if (!reportDateInput || !reportDateHidden) return;
+
+        // Ensure default is today's date and keep submitted value in sync.
+        if (!reportDateInput.value) {
+            reportDateInput.value = new Date().toISOString().slice(0, 10);
+        }
+        reportDateHidden.value = reportDateInput.value;
+
+        reportDateInput.addEventListener('change', () => {
+            reportDateHidden.value = reportDateInput.value;
         });
     });
     </script>
