@@ -549,6 +549,47 @@ case 'update':
             font-weight: 900;
             color: #3b82f6;
         }
+
+        .category-tabs {
+            display: flex !important;
+            gap: 10px !important;
+            margin-bottom: 20px !important;
+            border-bottom: 2px solid #e5e7eb !important;
+            flex-wrap: wrap !important;
+        }
+
+        .category-tab {
+            padding: 12px 20px !important;
+            text-decoration: none !important;
+            color: #6b7280 !important;
+            border: none !important;
+            border-bottom: 3px solid transparent !important;
+            background: transparent !important;
+            transition: all 0.3s !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            margin-bottom: -2px !important;
+            cursor: pointer;
+        }
+
+        .category-tab:hover {
+            color: #3b82f6 !important;
+            border-bottom-color: #93c5fd !important;
+        }
+
+        .category-tab.active {
+            color: #3b82f6 !important;
+            border-bottom-color: #3b82f6 !important;
+            font-weight: 600 !important;
+        }
+
+        .inventory-clickable-row {
+            cursor: pointer;
+        }
+
+        .inventory-clickable-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -562,7 +603,7 @@ case 'update':
             <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
                 <i class="fas fa-sort"></i> Sort by:
             </label>
-            <select id="sort-select" name="sort" onchange="this.form.submit()">
+            <select id="sort-select" name="sort">
                 <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
                 <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
                 <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
@@ -587,6 +628,14 @@ case 'update':
         </div>
     </form>
 
+    <div class="category-tabs" id="inventoryTabs" role="tablist" aria-label="Inventory Categories">
+        <button type="button" class="category-tab active" data-category="office-supplies" role="tab" aria-selected="true">Office Supplies</button>
+        <button type="button" class="category-tab" data-category="office-equipment" role="tab" aria-selected="false">Office Equipment</button>
+        <button type="button" class="category-tab" data-category="cleaning-supplies" role="tab" aria-selected="false">Cleaning Supplies</button>
+        <button type="button" class="category-tab" data-category="electronics" role="tab" aria-selected="false">Electronics</button>
+        <button type="button" class="category-tab" data-category="miscelaneous" role="tab" aria-selected="false">Miscelaneous</button>
+    </div>
+
     <div class="table-container">
         <table id="inventoryTable">
             <thead>
@@ -598,12 +647,16 @@ case 'update':
                     <th><i class="fas fa-cubes"></i> Quantity</th>
                     <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
                     <th><i class="fas fa-calculator"></i> Total Cost</th>
-                    <th><i class="fas fa-exclamation-triangle"></i> Reorder Point</th>
                     <th><i class="fas fa-clock"></i> Last Updated</th>
                     <th><i class="fas fa-cogs"></i> Actions</th>
                 </tr>
             </thead>
             <tbody>
+                <tr id="category-empty-row" style="display:none;">
+                    <td colspan="9" style="text-align: center; color: #666; font-style: italic;">
+                        <i class='fas fa-filter'></i> No items found for this category.
+                    </td>
+                </tr>
                 <?php
                 $sql = "SELECT i.*, 
                     (COALESCE(i.calculated_quantity, i.quantity_on_hand) * CASE 
@@ -635,7 +688,7 @@ case 'update':
                         $total_cost = $row["total_cost"];
                         $status_class = $row["quantity_on_hand"] <= $row["reorder_point"] ? 'status-low' : 'status-normal';
                         
-                        echo "<tr data-id='{$row['item_id']}'>
+                        echo "<tr data-id='{$row['item_id']}' data-view-url='view_item.php?item_id={$row['item_id']}' class='inventory-clickable-row'>
                             <td><strong>{$row['stock_number']}</strong></td>
                             <td>{$row['item_name']}</strong></td>
                             <td>{$row['description']}</td>
@@ -646,17 +699,11 @@ case 'update':
                                         " . $row['display_quantity'] . "
                                     </span>
                                 </div>
-                                <div class='sub-entries' id='sub-entries-{$row['item_id']}'>
-                                    <!-- Sub-entries will be loaded here -->
-                                </div>
                             </td>
                             <td class='cost-cell'>
-                                <div class='main-cost'>₱ " . number_format((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])), 2) . " " . ((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null) || $row['has_multiple_entries'] ? '(average)' : '') . "</div>                            <div class='sub-entries' id='sub-cost-{$row['item_id']}'>
-                                    <!-- Sub-entries will be loaded here -->
-                                </div>
+                                <div class='main-cost'>₱ " . number_format((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])), 2) . " " . ((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null) || $row['has_multiple_entries'] ? '(average)' : '') . "</div>
                             </td>
                             <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
-                            <td>{$row['reorder_point']}</td>
                             <td>" . date('M d, Y H:i', strtotime($row['created_at'] ?? 'now')) . "</td>
                             <td class='actions-cell'>
                                 <div class='actions-row'>
@@ -685,58 +732,8 @@ case 'update':
                                     </button>
                                 </div>
                                 
-                                " . ($row['has_multiple_entries'] ? "
-                                <div class='actions-row actions-row-full'>
-                                    <button 
-                                        class='btn clear-entries-btn' 
-                                        onclick='clearEntries({$row['item_id']})' 
-                                        title='Clear All Entries'
-                                        style='width: 100%; max-width: none;'
-                                    >
-                                        <i class='fas fa-broom'></i> Clear Entries
-                                    </button>
-                                </div>
-                                " : "") . "
                             </td>
                         </tr>";
-
-                        // Add sub-entries query and display
-                        $sub_sql = "SELECT quantity, unit_cost, created_at FROM inventory_entries WHERE item_id = {$row['item_id']} ORDER BY created_at DESC";
-                        $sub_result = $conn->query($sub_sql);
-
-                        // Show sub-entries only if there are inventory entries
-                        $total_entries = $sub_result->num_rows;
-                        if ($total_entries > 0) {
-                            echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                const subQtyContainer = document.getElementById('sub-entries-{$row['item_id']}');
-                                const subCostContainer = document.getElementById('sub-cost-{$row['item_id']}');
-                                let subQtyHTML = '';
-                                let subCostHTML = '';
-                            
-                                // Add original quantity first (only when entries exist)
-                                if ({$row['initial_quantity']} > 0) {
-                                    subQtyHTML += '<div class=\"sub-entry initial\">{$row['initial_quantity']} (initial)</div>';
-                                    // Only show initial cost breakdown when there are multiple entries
-                                    if ({$row['has_multiple_entries']}) {
-                                        subCostHTML += '<div class=\"sub-entry initial\">₱ " . number_format($row['unit_cost'], 2) . " (initial)</div>';
-                                    }
-                                }";
-                            
-                            // Add inventory entries
-                            $sub_result->data_seek(0); 
-                            while ($sub_row = $sub_result->fetch_assoc()) {
-                                echo "
-                                subQtyHTML += '<div class=\"sub-entry\">{$sub_row['quantity']}</div>';
-                                subCostHTML += '<div class=\"sub-entry\">₱ " . number_format($sub_row['unit_cost'], 2) . "</div>';";
-                            }
-                            
-                            echo "
-                                subQtyContainer.innerHTML = subQtyHTML;
-                                subCostContainer.innerHTML = subCostHTML;
-                            });
-                            </script>";
-                        }
                     }
                             
                 } else {
@@ -833,16 +830,208 @@ case 'update':
 <div id="notification" class="notification"></div>
 
 <script>
-// Handle search form submission on Enter key
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sort-select');
+    const tableBody = document.querySelector('#inventoryTable tbody');
+    let activeCategory = 'office-supplies';
+
     if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('inventory-filters').submit();
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
             }
         });
     }
+
+    const tabs = document.querySelectorAll('.category-tab');
+    const tableRows = document.querySelectorAll('#inventoryTable tbody tr[data-id]');
+    const emptyRow = document.getElementById('category-empty-row');
+    const activeTabStorageKey = 'inventoryActiveTab';
+
+    const categoryMap = {
+        'office-supplies': ['fastener', 'paper', 'bond', 'notebook', 'pad', 'ream', 'envelope', 'pen', 'ballpen', 'gel pen', 'marker', 'highlighter', 'ink', 'folder', 'file', 'filing', 'index tab', 'document holder', 'staples', 'paper clip', 'clip', 'binder clip', 'tape', 'glue', 'adhesive', 'paste', 'pin', 'note', 'book'],
+        'office-equipment': ['ruler', 'chair', 'table', 'desk', 'cabinet', 'printer', 'scanner', 'projector', 'laminator', 'shredder', 'furniture', 'cutter', 'stapler', 'staplers'],
+        'cleaning-supplies': ['conditioner', 'dishwashing', 'detergent', 'soap', 'bleach', 'mop', 'broom', 'brush', 'disinfectant', 'cleaner', 'trash bag', 'garbage', 'alcohol', 'tissue', 'towel', 'rags', 'sponge'],
+        'electronics': ['laptop', 'computer', 'monitor', 'keyboard', 'mouse', 'ups', 'router','calculator', 'switch', 'tablet', 'phone', 'speaker', 'camera', 'headset', 'microphone', 'usb', 'cable', 'charger', 'adapter', 'electronic', 'battery', 'led', 'bulb'],
+        'miscelaneous': ['misc', 'miscellaneous', 'assorted', 'other', 'general', 'various', 'accessory', 'supply']
+    };
+
+    const categoryExclusions = {
+        'office-equipment': ['pen', 'ballpen', 'paper', 'notebook', 'folder', 'ink', 'marker', 'highlighter']
+    };
+
+    const primaryCategories = ['office-supplies', 'office-equipment', 'cleaning-supplies', 'electronics'];
+
+    function parseNumber(value) {
+        const numericValue = parseFloat((value || '').replace(/[^0-9.-]/g, ''));
+        return Number.isNaN(numericValue) ? 0 : numericValue;
+    }
+
+    function compareRows(a, b, sortBy) {
+        const aStock = a.children[0] ? a.children[0].textContent.trim().toLowerCase() : '';
+        const bStock = b.children[0] ? b.children[0].textContent.trim().toLowerCase() : '';
+        const aItem = a.children[1] ? a.children[1].textContent.trim().toLowerCase() : '';
+        const bItem = b.children[1] ? b.children[1].textContent.trim().toLowerCase() : '';
+        const aQty = parseNumber(a.children[4] ? a.children[4].textContent : '0');
+        const bQty = parseNumber(b.children[4] ? b.children[4].textContent : '0');
+        const aCost = parseNumber(a.children[5] ? a.children[5].textContent : '0');
+        const bCost = parseNumber(b.children[5] ? b.children[5].textContent : '0');
+
+        switch (sortBy) {
+            case 'item_name':
+                return aItem.localeCompare(bItem);
+            case 'quantity_low':
+                return aQty - bQty;
+            case 'quantity_high':
+                return bQty - aQty;
+            case 'cost_low':
+                return aCost - bCost;
+            case 'cost_high':
+                return bCost - aCost;
+            case 'stock_number':
+            default:
+                return aStock.localeCompare(bStock, undefined, { numeric: true, sensitivity: 'base' });
+        }
+    }
+
+    function matchesCategory(rowText, category) {
+        if (rowText.includes('cutter paper')) {
+            return category === 'office-equipment';
+        }
+
+        if (rowText.includes('kitchen towel')) {
+            return category === 'cleaning-supplies';
+        }
+
+        if (rowText.includes('tape dispenser')) {
+            return category === 'office-equipment';
+        }
+
+        const keywords = categoryMap[category] || [];
+        let isMatch = keywords.some(function(keyword) {
+            return rowText.includes(keyword);
+        });
+
+        const exclusions = categoryExclusions[category] || [];
+        if (isMatch && exclusions.some(function(term) { return rowText.includes(term); })) {
+            isMatch = false;
+        }
+
+        if (category === 'office-supplies' && (rowText.includes('tissue paper') || rowText.includes('scouring pad') || rowText.includes('stapler'))) {
+            isMatch = false;
+        }
+
+        return isMatch;
+    }
+
+    function filterByCategory(category) {
+        activeCategory = category;
+        const sortBy = sortSelect ? sortSelect.value : 'stock_number';
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        let visibleCount = 0;
+
+        const sortedRows = Array.from(tableRows).sort(function(a, b) {
+            return compareRows(a, b, sortBy);
+        });
+
+        sortedRows.forEach(function(row) {
+            tableBody.appendChild(row);
+        });
+
+        sortedRows.forEach(function(row) {
+            const stockCell = row.children[0] ? row.children[0].textContent.toLowerCase() : '';
+            const itemCell = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+            const descriptionCell = row.children[2] ? row.children[2].textContent.toLowerCase() : '';
+            const unitCell = row.children[3] ? row.children[3].textContent.toLowerCase() : '';
+            const rowText = itemCell + ' ' + descriptionCell;
+            let isMatch = false;
+
+            if (category === 'miscelaneous') {
+                isMatch = !primaryCategories.some(function(primaryCategory) {
+                    return matchesCategory(rowText, primaryCategory);
+                });
+            } else {
+                isMatch = matchesCategory(rowText, category);
+            }
+
+            const matchesSearch = searchTerm === '' ||
+                stockCell.includes(searchTerm) ||
+                itemCell.includes(searchTerm) ||
+                descriptionCell.includes(searchTerm) ||
+                unitCell.includes(searchTerm);
+
+            const isVisible = isMatch && matchesSearch;
+
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) {
+                visibleCount++;
+            }
+        });
+
+        if (emptyRow) {
+            emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(otherTab) {
+                otherTab.classList.remove('active');
+                otherTab.setAttribute('aria-selected', 'false');
+            });
+
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            localStorage.setItem(activeTabStorageKey, tab.dataset.category);
+            filterByCategory(tab.dataset.category);
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterByCategory(activeCategory);
+        });
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            filterByCategory(activeCategory);
+        });
+    }
+
+    // Restore previously selected tab, fallback to office supplies
+    const savedCategory = localStorage.getItem(activeTabStorageKey);
+    const initialTab = Array.from(tabs).find(function(tab) {
+        return tab.dataset.category === savedCategory;
+    }) || Array.from(tabs).find(function(tab) {
+        return tab.dataset.category === 'office-supplies';
+    });
+
+    if (initialTab) {
+        tabs.forEach(function(otherTab) {
+            otherTab.classList.remove('active');
+            otherTab.setAttribute('aria-selected', 'false');
+        });
+
+        initialTab.classList.add('active');
+        initialTab.setAttribute('aria-selected', 'true');
+        activeCategory = initialTab.dataset.category;
+        filterByCategory(initialTab.dataset.category);
+    }
+
+    tableRows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('button, a, input, select, textarea, .actions-cell')) {
+                return;
+            }
+
+            const url = row.getAttribute('data-view-url');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
 });
 </script>
 

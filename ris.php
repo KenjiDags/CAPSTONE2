@@ -121,6 +121,14 @@ switch ($sort_by) {
             padding: 12px 24px;
             font-size: 15px;
         }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -163,15 +171,12 @@ switch ($sort_by) {
             $result = $conn->query("SELECT * FROM ris $order_clause");
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
+                    echo '<tr class="clickable-row" data-view-url="view_ris.php?ris_id=' . $row["ris_id"] . '">';
                     echo '<td><strong>' . htmlspecialchars($row['ris_no']) . '</strong></td>';
                     echo '<td>' . date('M d, Y', strtotime($row['date_requested'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['requested_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['purpose']) . '</td>';
                     echo '<td>
-                        <a href="view_ris.php?ris_id=' . $row["ris_id"] . '" title="View RIS">
-                            <i class="fas fa-eye"></i> View
-                        </a>
                         <a href="add_ris.php?ris_id=' . $row["ris_id"] . '" title="Edit RIS">
                             <i class="fas fa-edit"></i> Edit
                         </a>
@@ -206,6 +211,23 @@ function sortTable(sortBy) {
     // Redirect to new URL with sort parameter
     window.location.href = url.toString();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('#risTable tbody tr[data-view-url]');
+
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
+    });
+});
 </script>
 
 </body>

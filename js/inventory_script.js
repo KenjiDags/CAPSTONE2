@@ -1,31 +1,4 @@
-let searchTimeout;
 let stockCheckTimeout;
-
-// Search functionality
-document.getElementById('searchInput').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        const filter = this.value.toLowerCase();
-        const table = document.getElementById('inventoryTable');
-        const rows = table.getElementsByTagName('tr');
-
-        for (let i = 1; i < rows.length; i++) {
-            const cells = rows[i].getElementsByTagName('td');
-            if (cells.length > 0) {
-                const stockNumber = cells[0].textContent.toLowerCase();
-                const item_name = cells[1].textContent.toLowerCase();
-                const description = cells[2].textContent.toLowerCase();
-                const unit = cells[3].textContent.toLowerCase();
-
-                if (stockNumber.includes(filter) || item_name.includes(filter) || description.includes(filter) || unit.includes(filter)) {
-                    rows[i].style.display = '';
-                } else {
-                    rows[i].style.display = 'none';
-                }
-            }
-        }
-    }, 300);
-});
 
 // Stock number check functionality
 document.getElementById('add_stock_number').addEventListener('input', function() {

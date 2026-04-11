@@ -106,6 +106,8 @@ if (isset($_GET['delete_id'])) {
     table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
     .action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
     .amount-col { white-space: nowrap; min-width: 100px; }
+    .clickable-row { cursor: pointer; }
+    .clickable-row:hover { background: #f8fafc; }
   </style>
 </head>
 <body>
@@ -201,7 +203,13 @@ if (isset($_GET['delete_id'])) {
                 $issueQty = (int)($row['quantity_issued'] ?? 0);
                 $balanceQty = (int)($row['quantity_balance'] ?? 0);
                 $amount = (float)($row['amount_total'] ?? 0);
-                echo '<tr>';
+                $returnUrl = 'PC_semi.php';
+                $qs = [];
+                if ($category !== '') { $qs['category'] = $category; }
+                if ($search !== '') { $qs['search'] = $search; }
+                if (!empty($qs)) { $returnUrl .= '?' . http_build_query($qs); }
+                $viewUrl = 'view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl);
+                echo '<tr class="clickable-row" data-view-url="' . htmlspecialchars($viewUrl, ENT_QUOTES, 'UTF-8') . '">';
                 echo '<td class="description-col">' . htmlspecialchars($description) . '</td>';
                 echo '<td>' . htmlspecialchars($propertyNo) . '</td>';
                 echo '<td>' . htmlspecialchars($txDate) . '</td>';
@@ -210,14 +218,8 @@ if (isset($_GET['delete_id'])) {
                 echo '<td class="text-center">' . ($issueQty ?: '') . '</td>';
                 echo '<td class="text-center">' . ($balanceQty ?: '') . '</td>';
                 echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
-                $returnUrl = 'PC_semi.php';
-                $qs = [];
-                if ($category !== '') { $qs['category'] = $category; }
-                if ($search !== '') { $qs['search'] = $search; }
-                if (!empty($qs)) { $returnUrl .= '?' . http_build_query($qs); }
                 echo '<td class="text-center actions-col">';
                 echo '<div class="action-stack">';
-                echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-view"><i class="fas fa-eye"></i> View</a>';
                 echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
                 $deleteParams = ['delete_id' => (int)$row['id']];
                 if ($category !== '') { $deleteParams['category'] = $category; }
@@ -236,5 +238,24 @@ if (isset($_GET['delete_id'])) {
       </table>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+      rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+          if (event.target.closest('a, button, input, select, textarea')) {
+            return;
+          }
+
+          const viewUrl = row.getAttribute('data-view-url');
+          if (viewUrl) {
+            window.location.href = viewUrl;
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

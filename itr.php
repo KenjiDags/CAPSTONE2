@@ -69,6 +69,8 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
   }
   .filters .pill-btn { height: 38px; padding: 0 16px; }
   .filters #searchInput { width: 400px; max-width: 65vw; }
+    .clickable-row { cursor: pointer; }
+    .clickable-row:hover { background: #f8fafc; }
     </style>
 </head>
 <body>
@@ -160,15 +162,14 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
                 $rs = $conn->query($sql);
                 if ($rs && $rs->num_rows > 0) {
                     while ($row = $rs->fetch_assoc()) {
-                        echo '<tr>';
+                        echo '<tr class="clickable-row" data-view-url="view_itr.php?itr_id=' . (int)$row['itr_id'] . '">';
                         echo '<td>' . htmlspecialchars($row['itr_no']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['itr_date']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['from_accountable']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['to_accountable']) . '</td>';
                     echo '<td class="currency">₱' . number_format((float)$row['total_amount'], 2) . '</td>';
                     echo '<td>';
-                    // Actions: View, Edit, Export, Delete with pill button classes
-                    echo '<a href="view_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-view" title="View ITR"><i class="fas fa-eye"></i> View</a> ';
+                    // Actions: Edit, Export, Delete with pill button classes
                     echo '<a href="edit_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-edit" title="Edit ITR"><i class="fas fa-edit"></i> Edit</a> ';
                     echo '<a href="export_itr.php?itr_id=' . (int)$row['itr_id'] . '" class="pill-btn pill-export" title="Export ITR"><i class="fas fa-download"></i> Export</a> ';
                     echo '<a href="itr.php?delete_itr_id=' . (int)$row['itr_id'] . (isset($_GET['sort']) ? ('&sort=' . urlencode($_GET['sort'])) : '') . '" ' .
@@ -190,7 +191,22 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 </div>
 
 <script>
-// Form auto-submits on sort change via onchange event
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
+    });
+});
 </script>
 
 </body>

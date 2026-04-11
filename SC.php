@@ -51,6 +51,14 @@ if ($search !== '') {
             font-weight: 900;
             color: #3b82f6;
         }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -106,7 +114,7 @@ if ($search !== '') {
                 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<tr data-id='{$row['item_id']}'>
+                        echo "<tr data-id='{$row['item_id']}' data-view-url='view_sc.php?item_id={$row['item_id']}' class='clickable-row'>
                             <td><strong>{$row['stock_number']}</strong></td>
                             <td>{$row['iar']}</td>
                             <td>{$row['item_name']}</td>
@@ -115,9 +123,6 @@ if ($search !== '') {
                             <td>{$row['quantity_on_hand']}</td>
                             <td>{$row['reorder_point']}</td>
                             <td>
-                                <a href='view_sc.php?item_id={$row['item_id']}' title='View SC'>
-                                    <i class='fas fa-eye'></i> View
-                                </a>
                                 <a class='scexport' href='sc_export.php?item_id={$row['item_id']}' title='Export SC'>
                                     <i class='fas fa-download'></i> Export
                                 </a>
@@ -138,26 +143,64 @@ if ($search !== '') {
 </div>
 
 <script>
-// Auto-search functionality with debounce
-let searchTimeout;
-const searchInput = document.getElementById('searchInput');
-const scFiltersForm = document.getElementById('sc-filters');
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#scTable tbody tr[data-view-url]');
 
-if (searchInput) {
-    // Auto-focus searchbar if there's a search value
-    if (searchInput.value.length > 0) {
-        searchInput.focus();
-        // Move cursor to end of text
-        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    function filterRows() {
+        if (!searchInput) {
+            return;
+        }
+
+        const term = searchInput.value.toLowerCase().trim();
+
+        rows.forEach(function(row) {
+            const stockNo = row.children[0] ? row.children[0].textContent.toLowerCase() : '';
+            const iar = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+            const item = row.children[2] ? row.children[2].textContent.toLowerCase() : '';
+            const description = row.children[3] ? row.children[3].textContent.toLowerCase() : '';
+            const unit = row.children[4] ? row.children[4].textContent.toLowerCase() : '';
+
+            const isMatch = term === '' ||
+                stockNo.includes(term) ||
+                iar.includes(term) ||
+                item.includes(term) ||
+                description.includes(term) ||
+                unit.includes(term);
+
+            row.style.display = isMatch ? '' : 'none';
+        });
     }
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            scFiltersForm.submit();
-        }, 500); // Wait 500ms after user stops typing
+
+    if (searchInput) {
+        if (searchInput.value.length > 0) {
+            searchInput.focus();
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
+
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        });
+
+        searchInput.addEventListener('input', filterRows);
+        filterRows();
+    }
+
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
     });
-}
+});
 </script>
 
 </body>

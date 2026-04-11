@@ -108,6 +108,8 @@ $result = $conn->query($query);
     .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
     .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
+    .clickable-row { cursor: pointer; }
+    .clickable-row:hover { background: #f8fafc; }
 </style>
 </head>
 <body class="ppe-iirup-page">
@@ -160,7 +162,7 @@ $result = $conn->query($query);
             <tbody>
             <?php if ($result && $result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr>
+                <tr class="clickable-row" data-view-url="view_ppe_iirup.php?id=<?= (int)$row['id'] ?>">
                         <td><?= date('M d, Y', strtotime($row['date_reported'])) ?></td>
                         <td><?= htmlspecialchars($row['particulars']) ?></td>
                         <td><?= htmlspecialchars($row['PPE_no']) ?></td>
@@ -172,7 +174,6 @@ $result = $conn->query($query);
                         <td><?= htmlspecialchars($row['remarks']) ?></td>
                         <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
                         <td>
-                            <a href="view_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-view" title="View PPE IIRUP"><i class="fas fa-eye"></i> View</a>
                             <a href="edit_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-edit" title="Edit PPE IIRUP"><i class="fas fa-edit"></i> Edit</a>
                             <a href="PPE_iirup_export.php?id=<?= $row['id'] ?>" class="pill-btn pill-export" title="Export PPE IIRUP"><i class="fas fa-download"></i> Export</a>
                             <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= $row['id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')" title="Delete PPE IIRUP"><i class="fas fa-trash"></i> Delete</a>
@@ -190,7 +191,22 @@ $result = $conn->query($query);
     </table>
 </div>
 <script>
-// Form auto-submits on sort change via onchange event
+document.addEventListener('DOMContentLoaded', function() {
+  const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+  rows.forEach(function(row) {
+    row.addEventListener('click', function(event) {
+      if (event.target.closest('a, button, input, select, textarea, form')) {
+        return;
+      }
+
+      const viewUrl = row.getAttribute('data-view-url');
+      if (viewUrl) {
+        window.location.href = viewUrl;
+      }
+    });
+  });
+});
 </script>
 </body>
 </html>

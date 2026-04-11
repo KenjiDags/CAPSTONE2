@@ -145,6 +145,14 @@ try {
         table tbody td:nth-child(8) {
             color: #0891b2;
         }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -215,7 +223,7 @@ try {
                 </td></tr>
             <?php else: ?>
                 <?php foreach ($items as $item): ?>
-                <tr>
+                <tr class="clickable-row" data-view-url="view_ppe_items.php?id=<?= (int)$item['id']; ?>">
                     <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
                     <td><?= htmlspecialchars($item['item_name']); ?></td>
                     <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
@@ -228,7 +236,6 @@ try {
                     <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                     <td class="actions-cell">
                         <div class="action-buttons">
-                            <button class="pill-btn pill-view" onclick="viewItem(<?= $item['id']; ?>)"><i class="fas fa-eye"></i> View</button>
                             <a href="edit_ppe.php?id=<?= $item['id']; ?>" class="pill-btn pill-edit" style="height: 30px;"><i class="fas fa-edit"></i> Edit</a>
                             <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="display: inline;">
                                 <input type="hidden" name="delete_id" value="<?= $item['id']; ?>">
@@ -242,59 +249,23 @@ try {
         </tbody>
     </table>
 </div>
-
-
-
-<!-- View Item Modal -->
-<div id="viewModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Item Details</h3>
-            <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
-        </div>
-        <div id="itemDetails"></div>
-    </div>
-</div>
-
 <script>
-function viewItem(id){
-    const modal = document.getElementById('viewModal');
-    const details = document.getElementById('itemDetails');
-    
-    // Show loading state
-    details.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3b82f6;"></i><div style="margin-top: 12px; color: #64748b;">Loading...</div></div>';
-    modal.style.display='flex';
-    
-    fetch(`get_ppe_details.php?id=${id}`)
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.success){
-            const item = data.item;
-            details.innerHTML = `
-                <div class="detail-row"><strong>PPE No:</strong> ${item.PPE_no}</div>
-                <div class="detail-row"><strong>Item Name:</strong> ${item.item_name}</div>
-                <div class="detail-row"><strong>Description:</strong> ${item.item_description}</div>
-                <div class="detail-row"><strong>Quantity:</strong> ${item.quantity}</div>
-                <div class="detail-row"><strong>Unit:</strong> ${item.unit}</div>
-                <div class="detail-row"><strong>Date Acquired:</strong> ${item.date_acquired || 'N/A'}</div>
-                <div class="detail-row"><strong>Officer Incharge:</strong> ${item.officer_incharge}</div>
-                <div class="detail-row"><strong>Custodian:</strong> ${item.custodian}</div>
-                <div class="detail-row"><strong>Status:</strong> ${item.status}</div>
-                <div class="detail-row"><strong>Condition:</strong> ${item.condition}</div>
-                <div class="detail-row"><strong>Amount:</strong> ₱${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
-                ${item.remarks?`<div class="detail-row"><strong>Remarks:</strong> ${item.remarks}</div>`:''}
-            `;
-        } else {
-            details.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px;"></i><div style="margin-top: 12px;">Error loading item details</div></div>';
-        }
-    })
-    .catch(error => {
-        details.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><i class="fas fa-exclamation-circle" style="font-size: 32px;"></i><div style="margin-top: 12px;">Error loading item details</div></div>';
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-function closeModal(id){document.getElementById(id).style.display='none';}
-window.onclick=function(event){if(event.target.classList.contains('modal')) closeModal(event.target.id);}
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea, form, .actions-cell')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
+    });
+});
 </script>
 </body>
 </html>

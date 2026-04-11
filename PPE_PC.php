@@ -106,6 +106,8 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
 		.action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
 		.amount-col { white-space: nowrap; min-width: 100px; }
+		.clickable-row { cursor: pointer; }
+		.clickable-row:hover { background: #f8fafc; }
 	</style>
 </head>
 <body>
@@ -174,7 +176,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 						}
 						$sql = "SELECT * FROM item_history_ppe";
 						if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-						$sql = "SELECT h.*, p.property_no FROM item_history_ppe h INNER JOIN (
+						$sql = "SELECT h.*, p.property_no, p.id AS ppe_id FROM item_history_ppe h INNER JOIN (
 							SELECT PPE_no, MAX(changed_at) AS max_changed_at
 							FROM item_history_ppe
 							GROUP BY PPE_no
@@ -211,7 +213,9 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 								$issueQty = (int)($row['issue_qty'] ?? 0);
 								$balanceQty = (int)($row['balance_qty'] ?? 0);
 								$amount = (float)($row['unit_cost'] ?? 0) * (int)($row['quantity_on_hand'] ?? 0);
-								echo '<tr>';
+								$rowClass = !empty($row['ppe_id']) ? ' class="clickable-row"' : '';
+								$rowViewAttr = !empty($row['ppe_id']) ? ' data-view-url="view_ppe_items.php?id=' . (int)$row['ppe_id'] . '"' : '';
+								echo '<tr' . $rowClass . $rowViewAttr . '>';
 								echo '<td class="description-col">' . htmlspecialchars($itemName);
 								if ($itemDescription) {
 									echo ', ' . htmlspecialchars($itemDescription);
@@ -244,5 +248,23 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 			</table>
 		</div>
 	</div>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+			rows.forEach(function(row) {
+				row.addEventListener('click', function(event) {
+					if (event.target.closest('a, button, input, select, textarea, form, .actions-col')) {
+						return;
+					}
+
+					const viewUrl = row.getAttribute('data-view-url');
+					if (viewUrl) {
+						window.location.href = viewUrl;
+					}
+				});
+			});
+		});
+	</script>
 </body>
 </html>

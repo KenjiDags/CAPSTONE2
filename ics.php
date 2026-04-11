@@ -88,6 +88,14 @@ if ($search !== '') {
             font-weight: 900;
             color: #3b82f6;
         }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -153,16 +161,13 @@ if ($search !== '') {
             
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
+                    echo '<tr class="clickable-row" data-view-url="view_ics.php?ics_id=' . (int)$row["ics_id"] . '">';
                     echo '<td><strong>' . htmlspecialchars(formatICSNo($row['ics_no'])) . '</strong></td>';
                     echo '<td>' . date('M d, Y', strtotime($row['date_issued'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
                     echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
-                        <a href="view_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-view" title="View ICS">
-                            <i class="fas fa-eye"></i> View
-                        </a>
                         <a href="edit_ics.php?ics_id=' . $row["ics_id"] . '" class="pill-btn pill-edit" title="Edit ICS">
                             <i class="fas fa-edit"></i> Edit
                         </a>
@@ -190,7 +195,22 @@ if ($search !== '') {
 </div>
 
 <script>
-// Form auto-submits on sort change via onchange event
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
+    });
+});
 </script>
 
 </body>

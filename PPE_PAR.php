@@ -125,6 +125,14 @@ if ($search !== '') {
         color: #64748b;
         font-size: 13px;
     }
+
+    .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-row:hover {
+        background: #f8fafc;
+    }
     </style>
 </head>
 <body class="par-page">
@@ -182,17 +190,13 @@ if ($search !== '') {
             
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
+                    echo '<tr class="clickable-row" data-view-url="view_par.php?id=' . (int)$row["par_id"] . '">';
                     echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
                     echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
                     echo '<td>' . htmlspecialchars($row['property_number'] ?? 'N/A') . '</td>';
                     echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
                     echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
                     echo '<td>
-                        <a href="view_par.php?id=' . $row["par_id"] . '" title="View PAR">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        
                         <a href="export_par.php?id=' . $row["par_id"] . '" title="Export PAR">
                             <i class="fas fa-download"></i> Export
                         </a>
@@ -217,7 +221,22 @@ if ($search !== '') {
 </div>
 
 <script>
-// Form auto-submits on sort change via onchange event
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
+
+    rows.forEach(function(row) {
+        row.addEventListener('click', function(event) {
+            if (event.target.closest('a, button, input, select, textarea, form')) {
+                return;
+            }
+
+            const viewUrl = row.getAttribute('data-view-url');
+            if (viewUrl) {
+                window.location.href = viewUrl;
+            }
+        });
+    });
+});
 </script>
 
 </body>
