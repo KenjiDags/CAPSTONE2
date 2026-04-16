@@ -33,6 +33,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 ?>
 
                 <nav>
+                    <button class="dropdown-toggle no-arrow<?= $currentPage == 'dashboard.php' ? ' active' : '' ?>" onclick="location.href='dashboard.php'">
+                        📈 Dashboard
+                    </button>
+
                     <div class="dropdown <?= $dropdownActive ? 'open' : '' ?>">
                         <button class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>">
                             🗂️ Office Supplies
