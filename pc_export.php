@@ -37,7 +37,7 @@ if ($pc_result && $pc_result->num_rows > 0) {
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 11px;
             line-height: 1.2;
             background: #f5f5f5;

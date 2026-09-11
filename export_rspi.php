@@ -122,7 +122,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 12px; 
             line-height: 1.3; 
             color: #000;

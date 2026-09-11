@@ -63,7 +63,7 @@ $conn->close();
       .page-break { page-break-after: always; }
       .card-wrapper { margin-bottom: 0 !important; }
     }
-    body { margin: 20px; font-family: "Times New Roman", serif; font-size: 12px; color: #000; background: #fff; }
+    body { margin: 20px; font-family: 'Century Gothic', Century Gothic, sans-serif; font-size: 12px; color: #000; background: #fff; }
   .print-button { background:#007cba; color:#fff; padding:6px 14px; border:none; border-radius:4px; cursor:pointer; font-size:12px; margin-right:6px; text-decoration:none; }
   .back-link { background:#6c757d; color:#fff; padding:6px 14px; border-radius:4px; font-size:12px; text-decoration:none; }
     .instruction-box { background:#fffacd; border:1px solid #ddd; padding:8px; margin-bottom:10px; border-radius:4px; font-size:12px; }

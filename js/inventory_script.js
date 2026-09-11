@@ -455,46 +455,38 @@ function deleteItem(id) {
 
 function addRowToTable(item) {
     const table = document.getElementById('inventoryTable').getElementsByTagName('tbody')[0];
-    const totalCost = item.quantity_on_hand * item.unit_cost;
+    const quantity = item.total_quantity || item.quantity_on_hand;
+    const unitCost = Number(item.calculated_unit_cost || item.average_unit_cost || item.unit_cost);
+    const totalCost = quantity * unitCost;
     const statusClass = item.quantity_on_hand <= item.reorder_point ? 'status-low' : 'status-normal';
     
     const newRow = table.insertRow();
     newRow.setAttribute('data-id', item.item_id);
+    newRow.setAttribute('data-description', item.description || '');
+    newRow.setAttribute('data-unit', item.unit || '');
+    newRow.setAttribute('data-last-updated', new Date(item.created_at).toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'}));
+    newRow.className = 'inventory-clickable-row';
+    newRow.setAttribute('aria-expanded', 'false');
     newRow.innerHTML = `
         <td><strong>${item.stock_number}</strong></td>
         <td>${item.item_name}</td>
-        <td>${item.description}</td>
-        <td>${item.unit}</td>
         <td class="quantity-cell">
             <div class="main-quantity">
-                <span class="${statusClass}">${item.total_quantity || item.quantity_on_hand}</span>
-            </div>
-            <div class="sub-entries" id="sub-entries-${item.item_id}">
-                <!-- Will be populated on page reload -->
+                <span class="${statusClass}">${quantity}</span>
             </div>
         </td>
         <td class="cost-cell">
-            <div class="main-cost">₱ ${Number(item.calculated_unit_cost || item.average_unit_cost || item.unit_cost).toLocaleString('en-PH', {minimumFractionDigits: 2})}${(item.calculated_unit_cost || item.has_multiple_entries) ? ' (average)' : ''}</div>
+            <div class="main-cost">₱ ${unitCost.toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
         </td>
         <td class="currency">₱ ${totalCost.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-        <td>${item.reorder_point}</td>
-        <td>${new Date(item.created_at).toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</td>
-        <td>
-            <button class='btn edit-btn' onclick='openEditModal(this)'
-                data-id='${item.item_id}'
-                data-stock_number='${item.stock_number}'
-                data-item_name='${item.item_name}'
-                data-description='${item.description}'
-                data-unit='${item.unit}'
-                data-reorder_point='${item.reorder_point}'
-                data-unit_cost='${item.unit_cost}'
-                data-quantity_on_hand='${item.quantity_on_hand}'
-                title='Edit Item'>
-                <i class='fas fa-edit'></i> Edit
-            </button>
-            <button class='btn delete-btn' onclick='deleteItem(${item.item_id})' title='Delete Item'>
-                <i class='fas fa-trash'></i> Delete
-            </button>
+        <td class="actions-cell">
+            <div class="actions-menu">
+                <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                <div class="actions-menu-list">
+                    <button type="button" class="edit-action" onclick='openEditModal(this)' data-id='${item.item_id}' data-stock_number='${item.stock_number}' data-item_name='${item.item_name}' data-description='${item.description}' data-unit='${item.unit}' data-reorder_point='${item.reorder_point}' data-unit_cost='${unitCost}' data-quantity_on_hand='${item.quantity_on_hand}' data-iar='${item.iar || ""}'><i class='fas fa-edit'></i> Edit</button>
+                    <button type="button" class="delete-action" onclick="deleteItem(${item.item_id})"><i class='fas fa-trash'></i> Delete</button>
+                </div>
+            </div>
         </td>
     `;
 }
@@ -502,44 +494,32 @@ function addRowToTable(item) {
 function updateRowInTable(item) {
     const row = document.querySelector(`tr[data-id="${item.item_id}"]`);
     if (row) {
-        const totalCost = item.quantity_on_hand * item.unit_cost;
+        const unitCost = Number(item.calculated_unit_cost || item.average_unit_cost || item.unit_cost);
+        const totalCost = item.quantity_on_hand * unitCost;
         const statusClass = item.quantity_on_hand <= item.reorder_point ? 'status-low' : 'status-normal';
-        
+        row.setAttribute('data-description', item.description || '');
+        row.setAttribute('data-unit', item.unit || '');
+        row.setAttribute('data-last-updated', new Date().toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'}));
         row.innerHTML = `
             <td><strong>${item.stock_number}</strong></td>
             <td>${item.item_name}</td>
-            <td>${item.description}</td>
-            <td>${item.unit}</td>
             <td class="quantity-cell">
-            <div class="main-quantity">
-                <span class="${statusClass}">${item.quantity_on_hand}</span>
-            </div>
-            <div class="sub-entries" id="sub-entries-${item.item_id}">
-                <!-- Sub-entries will be preserved -->
-            </div>
-        </td>
+                <div class="main-quantity">
+                    <span class="${statusClass}">${item.quantity_on_hand}</span>
+                </div>
+            </td>
             <td class="cost-cell">
-                <div class="main-cost">₱ ${Number(item.calculated_unit_cost || item.average_unit_cost || item.unit_cost).toLocaleString('en-PH', {minimumFractionDigits: 2})}${(item.calculated_unit_cost || item.has_multiple_entries) ? ' (average)' : ''}</div>
-                <div class="sub-entries" id="sub-cost-${item.item_id}"></div>
-            </td>            <td class="currency">₱ ${totalCost.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-            <td>${item.reorder_point}</td>
-            <td>${new Date().toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</td>
-            <td>
-                <button class='btn edit-btn' onclick='openEditModal(this)'
-                    data-id='${item.item_id}'
-                    data-stock_number='${item.stock_number}'
-                    data-item_name='${item.item_name}'
-                    data-description='${item.description}'
-                    data-unit='${item.unit}'
-                    data-reorder_point='${item.reorder_point}'
-                    data-unit_cost='${item.unit_cost}'
-                    data-quantity_on_hand='${item.quantity_on_hand}'
-                    title='Edit Item'>
-                    <i class='fas fa-edit'></i> Edit
-                </button>
-                <button class='btn delete-btn' onclick='deleteItem(${item.item_id})' title='Delete Item'>
-                    <i class='fas fa-trash'></i> Delete
-                </button>
+                <div class="main-cost">₱ ${unitCost.toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
+            </td>
+            <td class="currency">₱ ${totalCost.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+            <td class="actions-cell">
+                <div class="actions-menu">
+                    <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                    <div class="actions-menu-list">
+                        <button type="button" class="edit-action" onclick='openEditModal(this)' data-id='${item.item_id}' data-stock_number='${item.stock_number}' data-item_name='${item.item_name}' data-description='${item.description}' data-unit='${item.unit}' data-reorder_point='${item.reorder_point}' data-unit_cost='${unitCost}' data-quantity_on_hand='${item.quantity_on_hand}' data-iar='${item.iar || ""}'><i class='fas fa-edit'></i> Edit</button>
+                        <button type="button" class="delete-action" onclick="deleteItem(${item.item_id})"><i class='fas fa-trash'></i> Delete</button>
+                    </div>
+                </div>
             </td>
         `;
     }
@@ -548,6 +528,9 @@ function updateRowInTable(item) {
 function removeRowFromTable(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     if (row) {
+        if (row.nextElementSibling && row.nextElementSibling.classList.contains('item-detail-row')) {
+            row.nextElementSibling.remove();
+        }
         row.remove();
     }
 }

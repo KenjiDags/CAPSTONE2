@@ -63,7 +63,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 12px;
             line-height: 1.3;
             background: #f5f5f5;

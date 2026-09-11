@@ -5,6 +5,10 @@ document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
     });
 });
 
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+}
+
 // Logo click handler - go back if on user_settings page
 const sidebarLogo = document.getElementById('sidebar-logo');
 if (sidebarLogo) {

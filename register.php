@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <style>
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             background: #f5f5f5;
             min-height: 100vh; 
             margin: 0; 

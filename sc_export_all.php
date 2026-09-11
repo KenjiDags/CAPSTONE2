@@ -58,7 +58,7 @@ $conn->close();
 }
 
 body {
-    font-family: "Times New Roman", serif;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
     font-size: 12px;
     color: #000;
     margin: 20px;

@@ -50,7 +50,7 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 11px;
             line-height: 1.2;
             color: #000;

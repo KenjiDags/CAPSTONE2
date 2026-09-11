@@ -297,7 +297,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             min-height: 100vh;
             margin: 0;

@@ -230,7 +230,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         
         /* General styles */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 11px;
             line-height: 1.2;
             color: #000;

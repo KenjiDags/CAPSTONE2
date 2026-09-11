@@ -14,7 +14,7 @@ require 'functions.php';
     }
 
     body { 
-        font-family: Arial, sans-serif; 
+        font-family: 'Century Gothic', Century Gothic, sans-serif;
         font-size: 12px; 
         margin-top:25px;
     }

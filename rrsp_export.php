@@ -29,7 +29,7 @@ header('Content-Type: text/html; charset=UTF-8');
   <title>RRSP Export</title>
   <style>
     @media print { .no-print { display:none !important; } body { margin:0; padding:10px; } }
-    body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.2; margin:0; padding:20px; background:#fff; color:#000; }
+    body { font-family: 'Century Gothic', Century Gothic, sans-serif; font-size: 11px; line-height: 1.2; margin:0; padding:20px; background:#fff; color:#000; }
     .container { max-width: 900px; margin: 0 auto; border: 1px solid #000; padding: 16px; box-sizing: border-box; }
     .header { text-align:center; margin-bottom: 15px; }
     .title { font-weight:bold; font-size:16px; margin:0; text-decoration: underline; }

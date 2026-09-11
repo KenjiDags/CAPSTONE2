@@ -110,7 +110,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
             .annex-reference { page-break-before: avoid; }
         }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             margin: 20px;
             font-size: 12px;
             background-color: #f5f5f5;

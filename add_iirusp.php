@@ -166,7 +166,7 @@ ensure_iirusp_tables($conn);
     .search-input { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
     .search-input:focus { border-color: #0056b3; outline: none; }
     
-    .cost-cell { font-family: monospace; font-weight: bold; color: #444; }
+    .cost-cell { font-family: 'Century Gothic', Century Gothic, sans-serif; font-weight: bold; color: #444; }
     .prop-cell { font-weight: bold; color: #0056b3; }
     .holder-cell { font-style: italic; color: #666; }
     

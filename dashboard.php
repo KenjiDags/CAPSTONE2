@@ -522,7 +522,7 @@ if ($result = $conn->query("SELECT `condition` FROM ppe_property")) {
 
             ctx.save();
             ctx.fillStyle = '#ffffff';
-            ctx.font = '700 14px Segoe UI, Arial, sans-serif';
+            ctx.font = '700 14px Century Gothic, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 

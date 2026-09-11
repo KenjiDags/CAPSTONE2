@@ -68,7 +68,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
     }
     body {
       margin: 20px;
-      font-family: Arial, sans-serif;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
       font-size: 11px;
       color: #000;
     }

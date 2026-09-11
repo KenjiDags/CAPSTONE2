@@ -24,6 +24,58 @@
     --shadow-blue-hover: rgba(0, 56, 168, 0.3);
     --sidebar-width: 240px;
 }
+
+body.dark-mode {
+    --background-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --white: #1e293b;
+    --light-gray: #273449;
+    --border-gray: #475569;
+    --text-gray: #cbd5e1;
+    --sidebar-bg: #111827;
+    --sidebar-hover: #1d4ed8;
+    color: #e2e8f0;
+}
+
+body.dark-mode .content,
+body.dark-mode .container {
+    background: var(--background-gradient);
+}
+
+body.dark-mode .sidebar {
+    background: linear-gradient(180deg, #111827 0%, #1e293b 100%);
+    color: #e2e8f0;
+}
+
+body.dark-mode .sidebar .logo {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+}
+
+body.dark-mode .sidebar nav a,
+body.dark-mode .sidebar .dropdown-menu a {
+    color: #cbd5e1;
+}
+
+body.dark-mode .sidebar .dropdown-menu {
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+body.dark-mode .limit-button,
+body.dark-mode .limit-menu {
+    background-color: #0f172a;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+body.dark-mode table,
+body.dark-mode .form-container,
+body.dark-mode .modal-content {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
 /* inventory.php */
 * {
     margin: 0;
@@ -33,7 +85,7 @@
 
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
     background: var(--background-gradient);
     min-height: 100vh;
     line-height: 1.6;
@@ -382,7 +434,7 @@ tr:hover {
 
 /* Currency Formatting */
 .currency {
-    font-family: 'Courier New';
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
     color: #059669;
 }
 
@@ -511,7 +563,7 @@ tbody tr:hover {
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
     background: var(--background-gradient);
     min-height: 100vh;
     line-height: 1.6;
@@ -1450,7 +1502,7 @@ body {
 
 /* Stock number styling */
 .view-ris-page.content table td:nth-child(1) {
-    font-family: 'Segoe UI', monospace;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
     font-weight: 600;
     color: var(--primary-blue);
 }
@@ -1524,7 +1576,7 @@ body {
 .edit-ris-page.content textarea {
     resize: vertical;
     min-height: 60px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Century Gothic', Century Gothic, sans-serif;
 }
 
 .edit-ris-page.content select {

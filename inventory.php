@@ -554,7 +554,7 @@ case 'update':
             display: flex !important;
             gap: 10px !important;
             margin-bottom: 20px !important;
-            border-bottom: 2px solid #e5e7eb !important;
+            border-bottom: 1px solid #e5e7eb !important;
             flex-wrap: wrap !important;
         }
 
@@ -589,6 +589,158 @@ case 'update':
 
         .inventory-clickable-row:hover {
             background: #f8fafc;
+        }
+
+        .inventory-clickable-row.is-expanded {
+            background: #f8fafc;
+        }
+
+        #inventoryTable {
+            border-collapse: collapse;
+            box-shadow: none;
+        }
+
+        #inventoryTable th {
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        #inventoryTable td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        #inventoryTable tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        #inventoryTable .actions-cell {
+            display: table-cell;
+            width: 64px;
+            vertical-align: middle;
+        }
+
+        .item-detail-row td {
+            padding: 0 12px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .item-detail-content {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px 24px;
+            padding: 14px 16px;
+            border-left: 2px solid #2563eb;
+            background: #fff;
+        }
+
+        .item-detail-field span {
+            display: block;
+            margin-bottom: 3px;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .item-detail-field strong {
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .actions-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .actions-menu-toggle {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .actions-menu-toggle:hover,
+        .actions-menu.is-open .actions-menu-toggle {
+            border-color: #93c5fd;
+            color: #2563eb;
+        }
+
+        .actions-menu-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            z-index: 20;
+            min-width: 110px;
+            padding: 4px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+        }
+
+        .actions-menu.is-open .actions-menu-list {
+            display: block;
+        }
+
+        .actions-menu-list button {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #374151;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .actions-menu-list button:hover {
+            background: #f3f4f6;
+        }
+
+        .actions-menu-list .delete-action {
+            color: #dc2626;
+        }
+
+        @media (max-width: 700px) {
+            .item-detail-content {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            #inventoryTable th,
+            #inventoryTable td {
+                padding: 9px 8px;
+            }
+
+            #inventoryTable th:first-child,
+            #inventoryTable td:first-child {
+                display: none;
+            }
+
+            .item-detail-content {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -642,18 +794,15 @@ case 'update':
                 <tr>
                     <th><i class="fas fa-barcode"></i> Stock Number</th>
                     <th><i class="fas fa-tag"></i> Item</th>
-                    <th><i class="fas fa-align-left"></i> Description</th>
-                    <th><i class="fas fa-ruler"></i> Unit</th>
                     <th><i class="fas fa-cubes"></i> Quantity</th>
-                    <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
+                    <th><i class="fas fa-dollar-sign"></i> Avg. Unit Cost</th>
                     <th><i class="fas fa-calculator"></i> Total Cost</th>
-                    <th><i class="fas fa-clock"></i> Last Updated</th>
                     <th><i class="fas fa-cogs"></i> Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr id="category-empty-row" style="display:none;">
-                    <td colspan="9" style="text-align: center; color: #666; font-style: italic;">
+                    <td colspan="6" style="text-align: center; color: #666; font-style: italic;">
                         <i class='fas fa-filter'></i> No items found for this category.
                     </td>
                 </tr>
@@ -687,12 +836,16 @@ case 'update':
                     while ($row = $result->fetch_assoc()) {
                         $total_cost = $row["total_cost"];
                         $status_class = $row["quantity_on_hand"] <= $row["reorder_point"] ? 'status-low' : 'status-normal';
+                        $display_unit_cost = isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost']);
+                        $description = htmlspecialchars($row['description'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $unit = htmlspecialchars($row['unit'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $last_updated = date('M d, Y H:i', strtotime($row['created_at'] ?? 'now'));
+                        $item_name = htmlspecialchars($row['item_name'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $stock_number = htmlspecialchars($row['stock_number'] ?? '', ENT_QUOTES, 'UTF-8');
                         
-                        echo "<tr data-id='{$row['item_id']}' data-view-url='view_item.php?item_id={$row['item_id']}' class='inventory-clickable-row'>
-                            <td><strong>{$row['stock_number']}</strong></td>
-                            <td>{$row['item_name']}</strong></td>
-                            <td>{$row['description']}</td>
-                            <td>{$row['unit']}</td>
+                        echo "<tr data-id='{$row['item_id']}' data-description='{$description}' data-unit='{$unit}' data-last-updated='{$last_updated}' class='inventory-clickable-row' aria-expanded='false'>
+                            <td><strong>{$stock_number}</strong></td>
+                            <td>{$item_name}</td>
                             <td class='quantity-cell'>
                                 <div class='main-quantity'>
                                     <span class='" . ($row['display_quantity'] <= $row['reorder_point'] ? 'status-low' : 'status-normal') . "'>
@@ -701,43 +854,23 @@ case 'update':
                                 </div>
                             </td>
                             <td class='cost-cell'>
-                                <div class='main-cost'>₱ " . number_format((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])), 2) . " " . ((isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null) || $row['has_multiple_entries'] ? '(average)' : '') . "</div>
+                                <div class='main-cost'>₱ " . number_format($display_unit_cost, 2) . "</div>
                             </td>
                             <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
-                            <td>" . date('M d, Y H:i', strtotime($row['created_at'] ?? 'now')) . "</td>
                             <td class='actions-cell'>
-                                <div class='actions-row'>
-                                    <button 
-                                        class='btn edit-btn' 
-                                        onclick='openEditModal(this)'
-                                        data-id='{$row['item_id']}'
-                                        data-stock_number='{$row['stock_number']}'
-                                        data-item_name= '{$row['item_name']}'
-                                        data-description='{$row['description']}'
-                                        data-unit='{$row['unit']}'
-                                        data-reorder_point='{$row['reorder_point']}'
-                                        data-unit_cost='" . (isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost'])) . "'                                        data-quantity_on_hand='{$row['quantity_on_hand']}'
-                                        data-iar='{$row['iar']}'
-                                        title='Edit Item'
-                                    >
-                                        <i class='fas fa-edit'></i> Edit
-                                    </button>
-
-                                    <button 
-                                        class='btn delete-btn' 
-                                        onclick='deleteItem({$row['item_id']})' 
-                                        title='Delete Item'
-                                    >
-                                        <i class='fas fa-trash'></i> Delete
-                                    </button>
+                                <div class='actions-menu'>
+                                    <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'><i class='fas fa-ellipsis-v'></i></button>
+                                    <div class='actions-menu-list'>
+                                        <button type='button' class='edit-action' onclick='openEditModal(this)' data-id='{$row['item_id']}' data-stock_number='{$stock_number}' data-item_name='{$item_name}' data-description='{$description}' data-unit='{$unit}' data-reorder_point='{$row['reorder_point']}' data-unit_cost='{$display_unit_cost}' data-quantity_on_hand='{$row['quantity_on_hand']}' data-iar='" . htmlspecialchars($row['iar'] ?? '', ENT_QUOTES, 'UTF-8') . "'><i class='fas fa-edit'></i> Edit</button>
+                                        <button type='button' class='delete-action' onclick='deleteItem({$row['item_id']})'><i class='fas fa-trash'></i> Delete</button>
+                                    </div>
                                 </div>
-                                
                             </td>
                         </tr>";
                     }
                             
                 } else {
-                    echo "<tr><td colspan='9' style='text-align: center; color: #666; font-style: italic;'>
+                    echo "<tr><td colspan='6' style='text-align: center; color: #666; font-style: italic;'>
                             <i class='fas fa-inbox'></i> No inventory data found.
                           </td></tr>";
                 }
@@ -747,6 +880,7 @@ case 'update':
             </tbody>
         </table>
     </div>
+
 </div>
 
 <!-- Add Item Modal -->
@@ -836,6 +970,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.querySelector('#inventoryTable tbody');
     let activeCategory = 'office-supplies';
 
+    function closeExpandedRow() {
+        const detailRow = tableBody.querySelector('.item-detail-row');
+        const expandedRow = tableBody.querySelector('.inventory-clickable-row.is-expanded');
+        if (detailRow) {
+            detailRow.remove();
+        }
+        if (expandedRow) {
+            expandedRow.classList.remove('is-expanded');
+            expandedRow.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>'"]/g, function(character) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[character];
+        });
+    }
+
+    function toggleExpandedRow(row) {
+        const existingDetailRow = row.nextElementSibling;
+        if (existingDetailRow && existingDetailRow.classList.contains('item-detail-row')) {
+            closeExpandedRow();
+            return;
+        }
+
+        closeExpandedRow();
+        row.classList.add('is-expanded');
+        row.setAttribute('aria-expanded', 'true');
+        const detailRow = document.createElement('tr');
+        detailRow.className = 'item-detail-row';
+        detailRow.innerHTML = `<td colspan="6">
+            <div class="item-detail-content">
+                <div class="item-detail-field"><span>Description</span><strong>${escapeHtml(row.dataset.description)}</strong></div>
+                <div class="item-detail-field"><span>Unit</span><strong>${escapeHtml(row.dataset.unit)}</strong></div>
+                <div class="item-detail-field"><span>Last Updated</span><strong>${escapeHtml(row.dataset.lastUpdated)}</strong></div>
+            </div>
+        </td>`;
+        row.after(detailRow);
+    }
+
     if (searchInput) {
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
@@ -845,7 +1019,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const tabs = document.querySelectorAll('.category-tab');
-    const tableRows = document.querySelectorAll('#inventoryTable tbody tr[data-id]');
     const emptyRow = document.getElementById('category-empty-row');
     const activeTabStorageKey = 'inventoryActiveTab';
 
@@ -873,10 +1046,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const bStock = b.children[0] ? b.children[0].textContent.trim().toLowerCase() : '';
         const aItem = a.children[1] ? a.children[1].textContent.trim().toLowerCase() : '';
         const bItem = b.children[1] ? b.children[1].textContent.trim().toLowerCase() : '';
-        const aQty = parseNumber(a.children[4] ? a.children[4].textContent : '0');
-        const bQty = parseNumber(b.children[4] ? b.children[4].textContent : '0');
-        const aCost = parseNumber(a.children[5] ? a.children[5].textContent : '0');
-        const bCost = parseNumber(b.children[5] ? b.children[5].textContent : '0');
+        const aQty = parseNumber(a.children[2] ? a.children[2].textContent : '0');
+        const bQty = parseNumber(b.children[2] ? b.children[2].textContent : '0');
+        const aCost = parseNumber(a.children[3] ? a.children[3].textContent : '0');
+        const bCost = parseNumber(b.children[3] ? b.children[3].textContent : '0');
 
         switch (sortBy) {
             case 'item_name':
@@ -926,10 +1099,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function filterByCategory(category) {
+        closeExpandedRow();
         activeCategory = category;
         const sortBy = sortSelect ? sortSelect.value : 'stock_number';
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
         let visibleCount = 0;
+        const tableRows = Array.from(tableBody.querySelectorAll('tr[data-id]'));
 
         const sortedRows = Array.from(tableRows).sort(function(a, b) {
             return compareRows(a, b, sortBy);
@@ -942,8 +1117,8 @@ document.addEventListener('DOMContentLoaded', function() {
         sortedRows.forEach(function(row) {
             const stockCell = row.children[0] ? row.children[0].textContent.toLowerCase() : '';
             const itemCell = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
-            const descriptionCell = row.children[2] ? row.children[2].textContent.toLowerCase() : '';
-            const unitCell = row.children[3] ? row.children[3].textContent.toLowerCase() : '';
+            const descriptionCell = (row.dataset.description || '').toLowerCase();
+            const unitCell = (row.dataset.unit || '').toLowerCase();
             const rowText = itemCell + ' ' + descriptionCell;
             let isMatch = false;
 
@@ -1020,17 +1195,35 @@ document.addEventListener('DOMContentLoaded', function() {
         filterByCategory(initialTab.dataset.category);
     }
 
-    tableRows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('button, a, input, select, textarea, .actions-cell')) {
-                return;
-            }
+    tableBody.addEventListener('click', function(event) {
+        const menuToggle = event.target.closest('.actions-menu-toggle');
+        if (menuToggle) {
+            event.stopPropagation();
+            const menu = menuToggle.closest('.actions-menu');
+            document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
+                if (openMenu !== menu) {
+                    openMenu.classList.remove('is-open');
+                    openMenu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
+                }
+            });
+            const isOpen = menu.classList.toggle('is-open');
+            menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            return;
+        }
 
-            const url = row.getAttribute('data-view-url');
-            if (url) {
-                window.location.href = url;
-            }
-        });
+        const row = event.target.closest('.inventory-clickable-row');
+        if (row && !event.target.closest('.actions-cell')) {
+            toggleExpandedRow(row);
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.actions-menu')) {
+            document.querySelectorAll('.actions-menu.is-open').forEach(function(menu) {
+                menu.classList.remove('is-open');
+                menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
+            });
+        }
     });
 });
 </script>

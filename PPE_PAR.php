@@ -115,7 +115,7 @@ if ($search !== '') {
     
     /* Amount Column Styling */
     table td:nth-child(5) {
-        font-family: 'Courier New', monospace;
+        font-family: 'Century Gothic', Century Gothic, sans-serif;
         font-weight: 600;
         color: #059669;
     }

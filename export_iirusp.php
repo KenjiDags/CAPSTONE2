@@ -42,7 +42,7 @@ function h($value)
     }
 
     body {
-        font-family: Arial, sans-serif;
+        font-family: 'Century Gothic', Century Gothic, sans-serif;
         margin: 20px;
         font-size: 11px;
     }

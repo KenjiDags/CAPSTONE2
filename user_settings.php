@@ -450,6 +450,69 @@ if ($officers_result && $officers_result->num_rows > 0) {
         .officers-table tbody tr:hover {
             background-color: #f9fafb;
         }
+
+        .theme-toggle {
+            margin-top: 16px;
+            background: #1e293b;
+        }
+
+        .theme-toggle:hover {
+            background: #0f172a;
+        }
+
+        .dark-mode .settings-header h1,
+        .dark-mode .settings-section h2,
+        .dark-mode .settings-section h3,
+        .dark-mode .form-row label {
+            color: #e2e8f0;
+        }
+
+        .dark-mode .settings-header p,
+        .dark-mode .help-text {
+            color: #94a3b8;
+        }
+
+        .dark-mode .settings-section {
+            background: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .dark-mode .form-row input,
+        .dark-mode .current-value {
+            background-color: #0f172a;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .current-value strong,
+        .dark-mode .current-value span {
+            color: #e2e8f0;
+        }
+
+        .dark-mode .officers-table tbody tr {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .officers-table tbody tr:hover {
+            background-color: #334155 !important;
+        }
+
+        .dark-mode .officers-table table {
+            background: #1e293b !important;
+        }
+
+        .dark-mode .officers-table input {
+            background-color: #0f172a !important;
+            border-color: #475569 !important;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .officers-table > div {
+            border-color: #334155 !important;
+        }
     </style>
 </head>
 <body>
@@ -463,6 +526,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     User Settings
                 </h1>
                 <p>Manage your account information and security settings</p>
+                <button type="button" id="themeToggle" class="btn-update theme-toggle" aria-pressed="false">
+                    <i class="fas fa-moon"></i>
+                    <span>Dark Mode</span>
+                </button>
             </header>
             
             <?php if ($success_message): ?>
@@ -783,6 +850,24 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 icon.classList.add('fa-eye');
             }
         }
+
+        function updateThemeToggle() {
+            const button = document.getElementById('themeToggle');
+            const darkModeEnabled = document.body.classList.contains('dark-mode');
+            const icon = button.querySelector('i');
+            const label = button.querySelector('span');
+
+            button.setAttribute('aria-pressed', darkModeEnabled ? 'true' : 'false');
+            icon.className = darkModeEnabled ? 'fas fa-sun' : 'fas fa-moon';
+            label.textContent = darkModeEnabled ? 'Light Mode' : 'Dark Mode';
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const darkModeEnabled = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', darkModeEnabled ? 'dark' : 'light');
+            updateThemeToggle();
+        });
+        updateThemeToggle();
         
         // Auto-hide success/error messages after 5 seconds
         setTimeout(() => {

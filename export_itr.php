@@ -63,7 +63,7 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Century Gothic', Century Gothic, sans-serif;
             font-size: 10px;
             line-height: 1.2;
             color: #000;

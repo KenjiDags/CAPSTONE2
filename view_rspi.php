@@ -51,7 +51,7 @@ $dateIssued = isset($ics['date_issued']) && $ics['date_issued'] ? date('Y-m-d', 
     <style>
         @page { size: landscape; margin: 10mm; }
         @media print { body { margin:0; padding:0; font-size: 11px; } .no-print { display:none; } table, tr { page-break-inside: avoid; } }
-        body { font-family: Arial, sans-serif; margin: 20px; background:#f5f5f5; }
+        body { font-family: 'Century Gothic', Century Gothic, sans-serif; margin: 20px; background:#f5f5f5; }
         .button-bar { margin: 10px 0 20px; display:flex; gap:10px; }
         .btn { background:#007bff; color:#fff; padding:8px 14px; border-radius:5px; text-decoration:none; font-weight:600; }
         .btn.secondary { background:#6c757d; }
