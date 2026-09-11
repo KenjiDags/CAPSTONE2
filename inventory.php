@@ -640,6 +640,7 @@ case 'update':
             padding: 14px 16px;
             border-left: 2px solid #2563eb;
             background: #fff;
+            font-family: inherit;
         }
 
         .item-detail-field span {
@@ -650,12 +651,14 @@ case 'update':
             font-weight: 600;
             letter-spacing: .04em;
             text-transform: uppercase;
+            font-family: inherit;
         }
 
         .item-detail-field strong {
             color: #1f2937;
             font-size: 13px;
             font-weight: 500;
+            font-family: inherit;
         }
 
         .actions-menu {
@@ -667,7 +670,7 @@ case 'update':
             width: 30px;
             height: 30px;
             padding: 0;
-            border: 1px solid #e5e7eb;
+            border: 0;
             border-radius: 5px;
             background: #fff;
             color: #6b7280;
@@ -676,7 +679,6 @@ case 'update':
 
         .actions-menu-toggle:hover,
         .actions-menu.is-open .actions-menu-toggle {
-            border-color: #93c5fd;
             color: #2563eb;
         }
 
@@ -861,6 +863,7 @@ case 'update':
                                 <div class='actions-menu'>
                                     <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'><i class='fas fa-ellipsis-v'></i></button>
                                     <div class='actions-menu-list'>
+                                        <button type='button' class='view-action' onclick='window.location.href=\"view_item.php?item_id={$row['item_id']}\"'><i class='fas fa-eye'></i> View</button>
                                         <button type='button' class='edit-action' onclick='openEditModal(this)' data-id='{$row['item_id']}' data-stock_number='{$stock_number}' data-item_name='{$item_name}' data-description='{$description}' data-unit='{$unit}' data-reorder_point='{$row['reorder_point']}' data-unit_cost='{$display_unit_cost}' data-quantity_on_hand='{$row['quantity_on_hand']}' data-iar='" . htmlspecialchars($row['iar'] ?? '', ENT_QUOTES, 'UTF-8') . "'><i class='fas fa-edit'></i> Edit</button>
                                         <button type='button' class='delete-action' onclick='deleteItem({$row['item_id']})'><i class='fas fa-trash'></i> Delete</button>
                                     </div>

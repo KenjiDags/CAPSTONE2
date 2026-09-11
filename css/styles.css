@@ -2104,6 +2104,10 @@ body {
     gap: 10px;
 }
 
+.filters .control > label {
+    font-family: inherit;
+}
+
 .filters .control:first-child {
     flex-shrink: 0;
 }
@@ -2117,6 +2121,7 @@ body {
     background-color: #f8fafc;
     color: #111827;
     font-size: 14px;
+    font-family: inherit;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
