@@ -684,10 +684,8 @@ case 'update':
 
         .actions-menu-list {
             display: none;
-            position: absolute;
-            top: calc(100% + 4px);
-            right: 0;
-            z-index: 20;
+            position: fixed;
+            z-index: 10000;
             min-width: 110px;
             padding: 4px;
             border: 1px solid #e5e7eb;
@@ -1198,6 +1196,29 @@ document.addEventListener('DOMContentLoaded', function() {
         filterByCategory(initialTab.dataset.category);
     }
 
+    function positionActionsMenu(menu, menuList) {
+        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
+
+        menuList.style.right = 'auto';
+        menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
+        menuList.style.top = `${toggleRect.bottom + 4}px`;
+
+        const listRect = menuList.getBoundingClientRect();
+        if (listRect.bottom > window.innerHeight - 4) {
+            menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
+        }
+    }
+
+    function closeActionsMenu(menu) {
+        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
+        menuList.style.display = '';
+        menuList.style.left = '';
+        menuList.style.right = '';
+        menuList.style.top = '';
+        menu.appendChild(menuList);
+        menu.classList.remove('is-open');
+    }
+
     tableBody.addEventListener('click', function(event) {
         const menuToggle = event.target.closest('.actions-menu-toggle');
         if (menuToggle) {
@@ -1205,11 +1226,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const menu = menuToggle.closest('.actions-menu');
             document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
                 if (openMenu !== menu) {
-                    openMenu.classList.remove('is-open');
+                    closeActionsMenu(openMenu);
                     openMenu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
                 }
             });
             const isOpen = menu.classList.toggle('is-open');
+            if (isOpen) {
+                const menuList = menu.querySelector('.actions-menu-list');
+                menu._actionsMenuList = menuList;
+                menuList.style.display = 'block';
+                document.body.appendChild(menuList);
+                positionActionsMenu(menu, menuList);
+            } else {
+                closeActionsMenu(menu);
+            }
             menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             return;
         }
@@ -1221,9 +1251,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', function(event) {
-        if (!event.target.closest('.actions-menu')) {
+        if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
             document.querySelectorAll('.actions-menu.is-open').forEach(function(menu) {
-                menu.classList.remove('is-open');
+                closeActionsMenu(menu);
                 menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
             });
         }
