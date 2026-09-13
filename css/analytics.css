@@ -62,12 +62,21 @@ body { background: #f4f6f8; color: #263238; }
 .mrp-chart-frame { height: 270px; }
 .mrp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; align-items: stretch; }
 .mrp-multi-chart-frame { height: 390px; min-width: 0; position: relative; }
+.mrp-chart-sections { display: flex; flex-direction: column; gap: 28px; width: 100%; }
+.mrp-primary-chart { width: 100%; }
 .mrp-multi-chart-frame canvas[hidden] { display: none; }
+.critical-stockouts { width: 100%; min-width: 0; margin-top: 0; padding-top: 24px; border-top: 1px solid #edf0f1; }
+.critical-chart-frame { height: 390px; min-height: 390px; overflow: hidden; padding-bottom: 10px; box-sizing: border-box; }
+.critical-chart-frame canvas { display: block; width: 100% !important; height: 320px !important; min-height: 320px; }
+.critical-details { border-left: 1px solid #f0d7d5; background: #fffafa; }
 .mrp-empty-state { display: flex; width: 100%; min-height: 300px; height: 100%; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 30px; border: 1px dashed #e5b4b0; background: #fff6f5; color: #a62c27; text-align: center; }
 .mrp-empty-state[hidden] { display: none; }
 .mrp-empty-state strong { font-size: 15px; }
 .reorder-action { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 7px; background: #b52d28; color: #fff; font-size: 12px; font-weight: 700; line-height: 1.2; text-decoration: none; }
 .reorder-action:hover { background: #8f211d; }
+.critical-chart-action { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; padding: 8px 12px; border-radius: 7px; background: #b52d28; color: #fff; font-size: 11px; font-weight: 700; line-height: 1.2; text-decoration: none; vertical-align: middle; }
+.critical-chart-action[hidden] { display: none; }
+.critical-chart-action:hover { background: #8f211d; }
 .critical-text { color: #b52d28; }
 .mrp-details { align-self: stretch; padding: 18px; border-left: 1px solid #edf0f1; background: #f8faf9; }
 .mrp-details h3 { margin: 14px 0 3px; color: #263238; font-size: 17px; }

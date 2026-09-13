@@ -171,8 +171,8 @@ if ($category === 'semi-expendables') {
 
     $criticalSql = "
         SELECT i.item_id, i.stock_number, i.item_name, i.description,
-               COALESCE(d.depleted_at, CURDATE()) AS depleted_at,
-               DATEDIFF(CURDATE(), COALESCE(d.depleted_at, CURDATE())) AS days_empty
+               d.depleted_at,
+               COALESCE(d.depleted_at, li.last_issued_at, ie.created_at) AS fallback_at
         FROM items i
         LEFT JOIN (
             SELECT h.item_id, MAX(h.changed_at) AS depleted_at
@@ -186,19 +186,49 @@ if ($category === 'semi-expendables') {
               )
             GROUP BY h.item_id
         ) d ON d.item_id = i.item_id
+        LEFT JOIN (
+            SELECT item_id, MAX(changed_at) AS last_issued_at
+            FROM item_history
+            WHERE quantity_change < 0 OR change_direction = 'decrease'
+            GROUP BY item_id
+        ) li ON li.item_id = i.item_id
+        LEFT JOIN (
+            SELECT item_id, MAX(created_at) AS created_at
+            FROM inventory_entries
+            GROUP BY item_id
+        ) ie ON ie.item_id = i.item_id
         WHERE i.quantity_on_hand = 0
-        ORDER BY days_empty DESC, i.item_name ASC
+        ORDER BY COALESCE(d.depleted_at, li.last_issued_at, ie.created_at) ASC, i.item_name ASC
     ";
     $criticalResult = $conn->query($criticalSql);
     $criticalItems = [];
+    $today = new DateTimeImmutable('today');
     while ($row = $criticalResult->fetch_assoc()) {
+        $depletedAt = trim((string)($row['depleted_at'] ?? ''));
+        $fallbackAt = trim((string)($row['fallback_at'] ?? ''));
+        $dateSource = 'unrecorded';
+        $stockoutDate = $depletedAt !== '' ? $depletedAt : $fallbackAt;
+        $daysEmpty = 1;
+        if ($stockoutDate !== '') {
+            try {
+                $depletedDate = (new DateTimeImmutable($stockoutDate))->setTime(0, 0, 0);
+                // Use whole calendar days and keep today's/missing dates visible.
+                $daysEmpty = max(1, (int)floor(($today->getTimestamp() - $depletedDate->getTimestamp()) / 86400));
+                $dateSource = $depletedAt !== '' ? 'stockout' : 'fallback';
+            } catch (Exception $exception) {
+                error_log('Invalid stock date for item ' . (int)$row['item_id'] . ': ' . $stockoutDate);
+                $stockoutDate = '';
+            }
+        }
         $criticalItems[] = [
             'item_id' => (int)$row['item_id'],
             'stock_number' => $row['stock_number'],
             'item_name' => $row['item_name'],
             'description' => $row['description'],
-            'depleted_at' => $row['depleted_at'],
-            'days_empty' => max(0, (int)$row['days_empty'])
+            'depleted_at' => $stockoutDate !== '' ? substr($stockoutDate, 0, 10) : null,
+            'date_stock_reached_zero' => $stockoutDate !== '' ? substr($stockoutDate, 0, 10) : null,
+            'date_source' => $dateSource,
+            'days_empty' => $daysEmpty
         ];
     }
     $response['critical_depletion'] = $criticalItems;

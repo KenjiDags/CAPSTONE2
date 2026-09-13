@@ -80,8 +80,16 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
       <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">All items are shown together. Select a bar for its deep-dive details.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Show All Items</option><option value="attention">Show Low &amp; Critical Stock Only</option><option value="lowest">Sort by Lowest Quantity First</option></select></div></div>
-      <div class="mrp-status-legend"><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button></div>
-      <div class="mrp-layout"><div class="mrp-multi-chart-frame"><canvas id="mrpStockChart"></canvas><div id="mrpEmptyState" class="mrp-empty-state" hidden><strong>All filtered items are currently OUT OF STOCK (0 units).</strong><a href="ris.php" class="reorder-action">View Reorder Request List</a></div><div id="mrpNoResults" class="mrp-empty-state search-empty-state" hidden><strong>No items match your search query.</strong></div></div><aside class="mrp-details" id="mrpItemDetails"><div class="empty-state">Select an item bar to view details.</div></aside></div>
+      <div class="mrp-status-legend"><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
+      <div class="mrp-chart-sections">
+        <div class="mrp-primary-chart">
+          <div class="mrp-multi-chart-frame">
+            <canvas id="mrpStockChart"></canvas>
+            <div id="mrpEmptyState" class="mrp-empty-state" hidden><strong>No active stock items match the current filters.</strong></div>
+            <div id="mrpNoResults" class="mrp-empty-state search-empty-state" hidden><strong>No items match your search query.</strong></div>
+          </div>
+        </div>
+      </div>
     </article>
   </section>
 
@@ -129,13 +137,13 @@ new Chart(document.getElementById('officeStatusChart'), {
 </script>
 
 <script>
-const state = { category: 'office-supplies', items: [], velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
+const state = { category: 'office-supplies', items: [], criticalItems: [], velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 function itemName(item) { return item.item_name || item.property_no || 'Unnamed item'; }
 function movement(item) { return Number(item.usage_volume || item.quantity || 0); }
 function shortName(name) { return name.length > 25 ? name.slice(0, 23) + '...' : name; }
-function stockStatus(item) { const quantity = Number(item.quantity || 0); const reorderPoint = Number(item.reorder_point || 0); return quantity <= 0 || (reorderPoint > 0 && quantity < reorderPoint) ? 'critical' : state.category === 'office-supplies' && reorderPoint > 0 && quantity <= reorderPoint * 1.2 ? 'low' : 'safe'; }
-function stockColor(status) { return status === 'critical' ? '#e53935' : status === 'low' ? '#d28a00' : '#43a047'; }
+function stockStatus(item) { const quantity = Number(item.quantity || 0); const reorderPoint = Number(item.reorder_point || 0); return quantity <= 0 ? 'critical' : quantity <= reorderPoint ? 'low' : 'safe'; }
+function stockColor(status) { return status === 'critical' ? '#e53935' : status === 'low' ? '#fbc02d' : '#43a047'; }
 function renderCategoryInsights(summary) {
   const insights = document.getElementById('categoryInsights');
   const semiView = document.getElementById('semiInsights');
@@ -183,6 +191,7 @@ function loadCategory(category) {
   const horizon = document.getElementById('horizonSelect').value;
   fetch('analytics_data.php?category=' + encodeURIComponent(category) + '&horizon=' + encodeURIComponent(horizon)).then(response => response.json()).then(data => {
     state.items = data.items || data.supply_list || [];
+    state.criticalItems = data.critical_depletion || [];
     renderCategoryInsights(data.summary || {});
     if (category === 'office-supplies') renderAllItemsChart();
     window.scrollTo(0, scrollPosition);
@@ -204,28 +213,37 @@ function renderDiagnostics() {
 function itemDescription(item) { return String(item.description || '').trim(); }
 function itemSearchText(item) { return `${item.stock_number || item.property_no || ''} ${itemName(item)} ${itemDescription(item)}`.toLowerCase(); }
 function itemLabel(item) { const description = itemDescription(item); return `${item.stock_number || item.property_no || 'N/A'} — ${itemName(item)}${description ? ` (${description})` : ''}`; }
-function renderMRPDetails(item) { const status = stockStatus(item); const statusLabel = status === 'safe' ? 'Safe' : status === 'low' ? 'Low Stock' : 'Critical'; const color = stockColor(status); document.getElementById('mrpItemDetails').innerHTML = `<div class="detail-status" style="color:${color}"><span class="status-dot" style="background:${color}"></span>${statusLabel}</div><h3>${itemName(item)}</h3><p class="detail-code">${item.stock_number || item.property_no || 'N/A'}</p><dl><div><dt>Description</dt><dd>${itemDescription(item) || 'No description recorded'}</dd></div><div><dt>Quantity</dt><dd>${Number(item.quantity || 0).toLocaleString()} units</dd></div><div><dt>Reorder point</dt><dd>${Number(item.reorder_point || 0).toLocaleString()} units</dd></div></dl>`; }
 function renderAllItemsChart() {
-  if (!state.items.length) return;
-  let displayItems = [...state.items];
+  const isCriticalView = state.mrpStatusFilter === 'critical';
+  let displayItems = isCriticalView ? state.criticalItems.map(item => ({ ...item, quantity: Number(item.days_empty || 1), reorder_point: 0, usage_volume: 0 })) : [...state.items];
   if (state.mrpSearch) displayItems = displayItems.filter(item => itemSearchText(item).includes(state.mrpSearch));
-  if (state.mrpStatusFilter === 'low' || state.mrpStatusFilter === 'critical') displayItems = displayItems.filter(item => stockStatus(item) === state.mrpStatusFilter);
+  if (state.mrpStatusFilter === 'low') displayItems = displayItems.filter(item => stockStatus(item) === 'low');
   if (state.mrpStatusFilter === 'attention') displayItems = displayItems.filter(item => ['low', 'critical'].includes(stockStatus(item)));
-  if (state.mrpViewMode === 'lowest') displayItems.sort((a, b) => { const priority = { critical: 0, low: 1, safe: 2 }; return priority[stockStatus(a)] - priority[stockStatus(b)] || Number(a.quantity || 0) - Number(b.quantity || 0); });
+  if (state.mrpStatusFilter === 'safe') displayItems = displayItems.filter(item => stockStatus(item) === 'safe');
+  if (isCriticalView) displayItems.sort((a, b) => Number(b.quantity || 0) - Number(a.quantity || 0) || itemName(a).localeCompare(itemName(b)));
+  if (state.mrpViewMode === 'lowest') displayItems.sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0));
   const canvas = document.getElementById('mrpStockChart');
   const emptyState = document.getElementById('mrpEmptyState');
   const noResults = document.getElementById('mrpNoResults');
+  const criticalChartAction = document.getElementById('criticalChartAction');
   canvas.hidden = false;
   emptyState.hidden = true;
   noResults.hidden = true;
-  if (!displayItems.length) { if (state.mrpStockChart) state.mrpStockChart.destroy(); canvas.hidden = true; noResults.hidden = !state.mrpSearch; document.getElementById('mrpItemDetails').innerHTML = `<div class="empty-state">${state.mrpSearch ? 'No items match your search query.' : 'No items match this stock filter.'}</div>`; return; }
-  if (displayItems.every(item => Number(item.quantity || 0) === 0)) { if (state.mrpStockChart) state.mrpStockChart.destroy(); canvas.hidden = true; emptyState.hidden = false; document.getElementById('mrpItemDetails').innerHTML = '<div class="detail-status critical-text"><span class="status-dot" style="background:#e53935"></span>Critical stock</div><p class="detail-code">Immediate reorder action is required.</p>'; return; }
+  criticalChartAction.hidden = state.mrpStatusFilter !== 'critical';
+  if (!displayItems.length) {
+    if (state.mrpStockChart) state.mrpStockChart.destroy();
+    canvas.hidden = true;
+    const lowStockEmpty = state.mrpStatusFilter === 'low' && !state.mrpSearch;
+    const criticalStockEmpty = state.mrpStatusFilter === 'critical' && !state.mrpSearch;
+    emptyState.hidden = !(criticalStockEmpty || (!lowStockEmpty && !state.mrpSearch));
+    noResults.hidden = lowStockEmpty || !state.mrpSearch;
+    return;
+  }
   const labels = displayItems.map(item => shortName(itemName(item)));
   const quantities = displayItems.map(item => Number(item.quantity || 0));
-  const colors = displayItems.map(item => stockColor(stockStatus(item)));
+  const colors = displayItems.map(item => isCriticalView ? '#e53935' : stockColor(stockStatus(item)));
   if (state.mrpStockChart) state.mrpStockChart.destroy();
-  state.mrpStockChart = new Chart(document.getElementById('mrpStockChart'), { type: 'bar', data: { labels, datasets: [{ label: 'Quantity in units', data: quantities, backgroundColor: colors, borderColor: colors, borderWidth: 1, borderRadius: 4, borderSkipped: false, minBarLength: 4, barPercentage: .78, categoryPercentage: .84 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: contexts => itemLabel(displayItems[contexts[0].dataIndex]), label: context => { const item = displayItems[context.dataIndex]; if (Number(item.quantity || 0) === 0) return `${itemName(item)} — 0 Units Remaining (CRITICAL - Immediate Reorder Needed)`; const status = stockStatus(item); return [`Quantity: ${Number(item.quantity || 0).toLocaleString()} units`, `Status: ${status === 'safe' ? 'Safe' : status === 'low' ? 'Low Stock' : 'Critical'}`, `Movement: ${movement(item).toLocaleString()} units`]; } } } }, scales: { x: { title: { display: true, text: 'Items' }, ticks: { autoSkip: true, maxRotation: 55, minRotation: 35, callback: (value, index) => Number(displayItems[index].quantity || 0) === 0 ? `⚠ ${labels[index]}` : labels[index] }, grid: { display: false } }, y: { beginAtZero: true, title: { display: true, text: 'Quantity (units)' }, grid: { color: palette.grid } } }, onHover: (event, elements) => { if (event.native) event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }, onClick: (event, elements) => { if (elements.length) renderMRPDetails(displayItems[elements[0].index]); } } });
-  renderMRPDetails(displayItems[0]);
+  state.mrpStockChart = new Chart(document.getElementById('mrpStockChart'), { type: 'bar', data: { labels, datasets: [{ label: isCriticalView ? 'Days out of stock' : 'Quantity in units', data: quantities, backgroundColor: colors, borderColor: colors, borderWidth: 1, borderRadius: 4, borderSkipped: false, minBarLength: 4, barPercentage: .78, categoryPercentage: .84 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: contexts => itemLabel(displayItems[contexts[0].dataIndex]), label: context => { const item = displayItems[context.dataIndex]; if (isCriticalView) return `${Number(item.quantity || 0).toLocaleString()} days out of stock`; const status = stockStatus(item); return [`Quantity: ${Number(item.quantity || 0).toLocaleString()} units`, `Status: ${status === 'low' ? 'Low Stock' : 'Safe'}`, `Movement: ${movement(item).toLocaleString()} units`]; } } } }, scales: { x: { title: { display: true, text: isCriticalView ? 'Critical stock items' : 'Active stock items' }, ticks: { autoSkip: true, maxRotation: 55, minRotation: 35 }, grid: { display: false } }, y: { beginAtZero: true, title: { display: true, text: isCriticalView ? 'Days out of stock' : 'Quantity (units)' }, grid: { color: palette.grid } } } } });
 }
 function renderForecast(item, labels, values) {
   const cleanValues = values.map(Number).filter(Number.isFinite); const base = cleanValues.length ? cleanValues : [Number(item.quantity || 0)]; const average = base.reduce((sum, value) => sum + value, 0) / base.length; const recent = base.slice(-3).reduce((sum, value) => sum + value, 0) / Math.min(3, base.length); const futureLabels = ['+1 mo', '+2 mo', '+3 mo', '+4 mo', '+5 mo', '+6 mo']; const forecast = futureLabels.map((_, index) => Math.max(0, Math.round(recent + ((recent - average) * (index + 1) / 3))));
