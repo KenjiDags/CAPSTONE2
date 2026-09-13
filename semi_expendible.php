@@ -279,6 +279,95 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             color: #374151;
             font-weight: 600;
         }
+
+        .actions-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .actions-menu-toggle {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 0;
+            border-radius: 5px;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .actions-menu-toggle:hover,
+        .actions-menu.is-open .actions-menu-toggle {
+            color: #2563eb;
+        }
+
+        .actions-menu-list {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            min-width: 110px;
+            padding: 4px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+        }
+
+        .actions-menu.is-open .actions-menu-list {
+            display: block;
+        }
+
+        .actions-menu-list a {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border-radius: 4px;
+            color: #374151;
+            font-size: 12px;
+            text-align: left;
+            text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .actions-menu-list a:hover,
+        .actions-menu-list a:focus,
+        .actions-menu-list a:active {
+            background: #f3f4f6;
+            text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .actions-menu-list .delete-action {
+            color: #dc2626;
+        }
+
+        body.dark-mode .actions-menu-toggle,
+        body.dark-mode .actions-menu-list {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .actions-menu-list a {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .actions-menu-list a:hover {
+            background: #334155;
+        }
+
+        .table-container tbody tr,
+        .table-container tbody td,
+        body.dark-mode .table-container tbody tr,
+        body.dark-mode .table-container tbody td {
+            border-bottom: none !important;
+        }
     </style>
 </head>
 <body>
@@ -414,14 +503,13 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                 <td><?php echo number_format($item['quantity_balance']); ?></td>
                                 <td class="currency">₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td class="actions-cell">
-                                    <div class="action-row">
-                                        <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>" class="btn edit-btn" title="Edit" aria-label="Edit" style="height: 30px;">
-                                            <i class="fas fa-pen"></i> Edit
-                                        </a>
-                                        <button type="button" class="btn delete-btn" title="Delete" aria-label="Delete"
-                                            onclick="deleteItem(<?php echo (int)$item['id']; ?>, '<?php echo htmlspecialchars($category, ENT_QUOTES); ?>')">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
+                                    <div class="actions-menu">
+                                        <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                                        <div class="actions-menu-list">
+                                            <a href="javascript:void(0)" onclick="viewItem(<?php echo (int)$item['id']; ?>)"><i class="fas fa-eye"></i> View</a>
+                                            <a href="edit_semi_expendable.php?id=<?php echo $item['id']; ?>"><i class="fas fa-pen"></i> Edit</a>
+                                            <a href="javascript:void(0)" class="delete-action" onclick="deleteItem(<?php echo (int)$item['id']; ?>, '<?php echo htmlspecialchars($category, ENT_QUOTES); ?>')"><i class="fas fa-trash"></i> Delete</a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -446,6 +534,55 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
     </div>
 
     <script>
+        function closeActionsMenu(menu) {
+            const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
+            menuList.style.display = '';
+            menuList.style.left = '';
+            menuList.style.top = '';
+            menu.appendChild(menuList);
+            menu.classList.remove('is-open');
+            menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
+        }
+
+        function positionActionsMenu(menu, menuList) {
+            const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
+            menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
+            menuList.style.top = `${toggleRect.bottom + 4}px`;
+
+            const listRect = menuList.getBoundingClientRect();
+            if (listRect.bottom > window.innerHeight - 4) {
+                menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const toggle = event.target.closest('.actions-menu-toggle');
+            if (toggle) {
+                event.stopPropagation();
+                const menu = toggle.closest('.actions-menu');
+                document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
+                    if (openMenu !== menu) closeActionsMenu(openMenu);
+                });
+
+                const isOpen = menu.classList.toggle('is-open');
+                if (isOpen) {
+                    const menuList = menu.querySelector('.actions-menu-list');
+                    menu._actionsMenuList = menuList;
+                    menuList.style.display = 'block';
+                    document.body.appendChild(menuList);
+                    positionActionsMenu(menu, menuList);
+                } else {
+                    closeActionsMenu(menu);
+                }
+                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                return;
+            }
+
+            if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
+                document.querySelectorAll('.actions-menu.is-open').forEach(closeActionsMenu);
+            }
+        });
+
         function deleteItem(id, category) {
             if (confirm('Delete this item permanently?')) {
                 // Redirect with delete_id and category as GET params

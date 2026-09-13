@@ -34,6 +34,10 @@
         .currency {
             color: #059669;
         }
+
+        .recapitulation-heading {
+            margin-top: 40px !important;
+        }
     </style>
 </head>
 <body>
@@ -112,7 +116,7 @@
         </table>
         </div>
 
-        <h2>Recapitulation</h2>
+        <h2 class="recapitulation-heading">Recapitulation</h2>
         
         <div class="table-container">
             <table>
@@ -146,7 +150,7 @@
         </div>
 
         <!-- Signature Names Form -->
-        <div class="section-card" style="background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-top: 30px; margin-bottom: 20px;">
+        <div class="section-card signatory-card" style="background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-top: 30px; margin-bottom: 20px;">
             <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-signature"></i> Signatory Information
             </h3>

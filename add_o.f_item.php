@@ -84,6 +84,34 @@ include 'sidebar.php';
         gap: 10px;
         flex-wrap: wrap;
     }
+    body.dark-mode {
+        background: var(--background-gradient) !important;
+        color: #e2e8f0;
+    }
+    body.dark-mode .container {
+        background: transparent !important;
+    }
+    body.dark-mode .form-container {
+        background: rgba(30, 41, 59, 0.96) !important;
+        color: #e2e8f0;
+    }
+    body.dark-mode .form-group label {
+        color: #e2e8f0;
+    }
+    body.dark-mode .form-group input,
+    body.dark-mode .form-group select,
+    body.dark-mode .form-group textarea {
+        background-color: #0f172a !important;
+        border-color: #475569;
+        color: #e2e8f0;
+    }
+    body.dark-mode .form-group input::placeholder,
+    body.dark-mode .form-group textarea::placeholder {
+        color: #94a3b8;
+    }
+    body.dark-mode .form-container header p {
+        color: #cbd5e1 !important;
+    }
 </style>
 </head>
 <body>

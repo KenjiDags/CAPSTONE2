@@ -129,6 +129,79 @@ switch ($sort_by) {
         .clickable-row:hover {
             background: #f8fafc;
         }
+
+        .actions-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .actions-menu-toggle {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 0;
+            border-radius: 5px;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .actions-menu-toggle:hover,
+        .actions-menu.is-open .actions-menu-toggle {
+            color: #2563eb;
+        }
+
+        .actions-menu-list {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            min-width: 110px;
+            padding: 4px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
+        }
+
+        .actions-menu.is-open .actions-menu-list {
+            display: block;
+        }
+
+        .actions-menu-list a {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border-radius: 4px;
+            color: #374151;
+            font-size: 12px;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .actions-menu-list a:hover {
+            background: #f3f4f6;
+        }
+
+        .actions-menu-list .delete-action {
+            color: #dc2626;
+        }
+
+        body.dark-mode .actions-menu-toggle,
+        body.dark-mode .actions-menu-list {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .actions-menu-list a {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .actions-menu-list a:hover {
+            background: #334155;
+        }
     </style>
 </head>
 <body>
@@ -177,17 +250,15 @@ switch ($sort_by) {
                     echo '<td>' . htmlspecialchars($row['requested_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['purpose']) . '</td>';
                     echo '<td>
-                        <a href="add_ris.php?ris_id=' . $row["ris_id"] . '" title="Edit RIS">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <a href="export_ris.php?ris_id=' . $row["ris_id"] . '" title="Export RIS">
-                            <i class="fas fa-download"></i> Export
-                        </a>
-                        <a href="ris.php?delete_ris_id=' . $row["ris_id"] . '" 
-                           onclick="return confirm(\'Are you sure you want to delete this RIS?\')"
-                           title="Delete RIS">
-                            <i class="fas fa-trash"></i> Delete
-                        </a>
+                        <div class="actions-menu">
+                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                            <div class="actions-menu-list">
+                                <a href="view_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-eye"></i> View</a>
+                                <a href="add_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-edit"></i> Edit</a>
+                                <a href="export_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-download"></i> Export</a>
+                                <a class="delete-action" href="ris.php?delete_ris_id=' . $row["ris_id"] . '" onclick="return confirm(\'Are you sure you want to delete this RIS?\')"><i class="fas fa-trash"></i> Delete</a>
+                            </div>
+                        </div>
                     </td>';
                     echo '</tr>';
                 }
@@ -214,6 +285,55 @@ function sortTable(sortBy) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const rows = document.querySelectorAll('#risTable tbody tr[data-view-url]');
+
+    function closeActionsMenu(menu) {
+        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
+        menuList.style.display = '';
+        menuList.style.left = '';
+        menuList.style.top = '';
+        menu.appendChild(menuList);
+        menu.classList.remove('is-open');
+        menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
+    }
+
+    function positionActionsMenu(menu, menuList) {
+        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
+        menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
+        menuList.style.top = `${toggleRect.bottom + 4}px`;
+
+        const listRect = menuList.getBoundingClientRect();
+        if (listRect.bottom > window.innerHeight - 4) {
+            menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
+        }
+    }
+
+    document.addEventListener('click', function(event) {
+        const toggle = event.target.closest('.actions-menu-toggle');
+        if (toggle) {
+            event.stopPropagation();
+            const menu = toggle.closest('.actions-menu');
+            document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
+                if (openMenu !== menu) closeActionsMenu(openMenu);
+            });
+
+            const isOpen = menu.classList.toggle('is-open');
+            if (isOpen) {
+                const menuList = menu.querySelector('.actions-menu-list');
+                menu._actionsMenuList = menuList;
+                menuList.style.display = 'block';
+                document.body.appendChild(menuList);
+                positionActionsMenu(menu, menuList);
+            } else {
+                closeActionsMenu(menu);
+            }
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            return;
+        }
+
+        if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
+            document.querySelectorAll('.actions-menu.is-open').forEach(closeActionsMenu);
+        }
+    });
 
     rows.forEach(function(row) {
         row.addEventListener('click', function(event) {

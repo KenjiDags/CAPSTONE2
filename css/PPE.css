@@ -545,13 +545,8 @@ table tbody td[colspan] i {
     font-size: 0.95em !important;
 }
 
-/* Actions cell layout */
-.actions-cell {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-    align-items: flex-start !important;
-}
+
+
 
 .actions-row {
     display: flex !important;

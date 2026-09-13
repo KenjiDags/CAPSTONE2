@@ -141,7 +141,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             gap: 12px;
             margin-bottom: 24px;
             padding: 20px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
             backdrop-filter: blur(10px) !important;
             border-radius: 10px !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
@@ -150,7 +150,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
         
         /* Details Container */
         .view-details {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
             backdrop-filter: blur(10px) !important;
             padding: 24px !important;
             border-radius: 10px !important;
@@ -190,6 +190,19 @@ if ($itrRes && $itrRes->num_rows > 0) {
             font-weight: 900;
             color: #3b82f6;
         }
+
+        body.dark-mode .view-ics-table-wrapper,
+        body.dark-mode .view-ics-table {
+            background: #1e293b !important;
+            border-color: #475569 !important;
+        }
+
+        body.dark-mode .view-ics-table tbody tr,
+        body.dark-mode .view-ics-table tbody td {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
     </style>
 </head>
 <body>
@@ -217,8 +230,8 @@ if ($itrRes && $itrRes->num_rows > 0) {
         </div>
 
         <h3>Items</h3>
-        <div style="overflow-x:auto;">
-            <table>
+        <div class="view-ics-table-wrapper" style="overflow-x:auto;">
+            <table class="view-ics-table">
                 <thead>
                     <tr>
                         <th>Quantity</th>

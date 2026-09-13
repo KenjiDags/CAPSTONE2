@@ -108,6 +108,7 @@ if (isset($_GET['delete_id'])) {
     .amount-col { white-space: nowrap; min-width: 100px; }
     .clickable-row { cursor: pointer; }
     .clickable-row:hover { background: #f8fafc; }
+    .pc-semi-table tbody td { text-align: left !important; }
   </style>
 </head>
 <body>
@@ -155,7 +156,7 @@ if (isset($_GET['delete_id'])) {
     </form>
 
     <div class="table-wrapper">
-      <table>
+      <table class="pc-semi-table">
         <thead>
           <tr>
             <th>Description</th>
@@ -219,14 +220,17 @@ if (isset($_GET['delete_id'])) {
                 echo '<td class="text-center">' . ($balanceQty ?: '') . '</td>';
                 echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
                 echo '<td class="text-center actions-col">';
-                echo '<div class="action-stack">';
-                echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
+                echo '<div class="actions-menu">';
+                echo '<button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>';
+                echo '<div class="actions-menu-list">';
+                echo '<a href="view_semi_expendable.php?id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '"><i class="fas fa-eye"></i> View</a>';
+                echo '<a href="semi_expendable_export.php?id=' . (int)$row['id'] . '"><i class="fas fa-download"></i> Export</a>';
                 $deleteParams = ['delete_id' => (int)$row['id']];
                 if ($category !== '') { $deleteParams['category'] = $category; }
                 if ($search !== '') { $deleteParams['search'] = $search; }
                 $deleteUrl = 'PC_semi.php?' . http_build_query($deleteParams);
-                echo '<a href="' . htmlspecialchars($deleteUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
-                echo '</div>';
+                echo '<a href="' . htmlspecialchars($deleteUrl) . '" class="delete-action" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
+                echo '</div></div>';
                 echo '</td>';
                 echo '</tr>';
               }
@@ -241,6 +245,52 @@ if (isset($_GET['delete_id'])) {
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      function closeActionsMenu(menu) {
+        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
+        menuList.style.display = '';
+        menuList.style.left = '';
+        menuList.style.top = '';
+        menu.appendChild(menuList);
+        menu.classList.remove('is-open');
+        menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
+      }
+
+      function positionActionsMenu(menu, menuList) {
+        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
+        menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
+        menuList.style.top = `${toggleRect.bottom + 4}px`;
+        const listRect = menuList.getBoundingClientRect();
+        if (listRect.bottom > window.innerHeight - 4) {
+          menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
+        }
+      }
+
+      document.addEventListener('click', function(event) {
+        const toggle = event.target.closest('.actions-menu-toggle');
+        if (toggle) {
+          event.stopPropagation();
+          const menu = toggle.closest('.actions-menu');
+          document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
+            if (openMenu !== menu) closeActionsMenu(openMenu);
+          });
+          const isOpen = menu.classList.toggle('is-open');
+          if (isOpen) {
+            const menuList = menu.querySelector('.actions-menu-list');
+            menu._actionsMenuList = menuList;
+            menuList.style.display = 'block';
+            document.body.appendChild(menuList);
+            positionActionsMenu(menu, menuList);
+          } else {
+            closeActionsMenu(menu);
+          }
+          toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          return;
+        }
+        if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
+          document.querySelectorAll('.actions-menu.is-open').forEach(closeActionsMenu);
+        }
+      });
+
       const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
       rows.forEach(function(row) {

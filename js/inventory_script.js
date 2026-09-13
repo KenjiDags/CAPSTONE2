@@ -166,7 +166,8 @@ document.getElementById('addForm').addEventListener('submit', function(e) {
 });
 
 // Enhanced edit form submission with selective field updates
-document.getElementById('editForm').addEventListener('submit', function(e) {
+const editForm = document.getElementById('editForm');
+if (editForm) editForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
     // Get current form values
@@ -483,7 +484,7 @@ function addRowToTable(item) {
             <div class="actions-menu">
                 <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
                 <div class="actions-menu-list">
-                    <button type="button" class="edit-action" onclick='openEditModal(this)' data-id='${item.item_id}' data-stock_number='${item.stock_number}' data-item_name='${item.item_name}' data-description='${item.description}' data-unit='${item.unit}' data-reorder_point='${item.reorder_point}' data-unit_cost='${unitCost}' data-quantity_on_hand='${item.quantity_on_hand}' data-iar='${item.iar || ""}'><i class='fas fa-edit'></i> Edit</button>
+                    <a href='edit_item_OFS.php?item_id=${item.item_id}' class='edit-action'><i class='fas fa-edit'></i> Edit</a>
                     <button type="button" class="delete-action" onclick="deleteItem(${item.item_id})"><i class='fas fa-trash'></i> Delete</button>
                 </div>
             </div>
@@ -516,7 +517,7 @@ function updateRowInTable(item) {
                 <div class="actions-menu">
                     <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
                     <div class="actions-menu-list">
-                        <button type="button" class="edit-action" onclick='openEditModal(this)' data-id='${item.item_id}' data-stock_number='${item.stock_number}' data-item_name='${item.item_name}' data-description='${item.description}' data-unit='${item.unit}' data-reorder_point='${item.reorder_point}' data-unit_cost='${unitCost}' data-quantity_on_hand='${item.quantity_on_hand}' data-iar='${item.iar || ""}'><i class='fas fa-edit'></i> Edit</button>
+                        <a href='edit_item_OFS.php?item_id=${item.item_id}' class='edit-action'><i class='fas fa-edit'></i> Edit</a>
                         <button type="button" class="delete-action" onclick="deleteItem(${item.item_id})"><i class='fas fa-trash'></i> Delete</button>
                     </div>
                 </div>

@@ -359,6 +359,70 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         .required {
             color: #dc2626;
         }
+
+        body.dark-mode,
+        body.dark-mode .content {
+            background: var(--background-gradient) !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .form-container,
+        body.dark-mode .section-card {
+            background: #1e293b !important;
+            color: #e2e8f0;
+            border-color: transparent !important;
+        }
+        body.dark-mode .page-header h1,
+        body.dark-mode .section-card h3,
+        body.dark-mode .section-card label {
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode .page-header p {
+            color: #cbd5e1 !important;
+        }
+        body.dark-mode .table-frame,
+        body.dark-mode .table-viewport {
+            background: #1e293b !important;
+            border-color: #475569;
+        }
+        body.dark-mode .table-frame {
+            border-color: transparent !important;
+        }
+        body.dark-mode .table-viewport {
+            scrollbar-color: #475569 #0f172a;
+            scrollbar-width: thin;
+        }
+        body.dark-mode .table-viewport::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        body.dark-mode .table-viewport::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        body.dark-mode .table-viewport::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 6px;
+            border: 2px solid #0f172a;
+        }
+        body.dark-mode .table-viewport::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        body.dark-mode .search-container input,
+        body.dark-mode .form-container input,
+        body.dark-mode .form-container textarea,
+        body.dark-mode .form-container select {
+            background-color: #0f172a !important;
+            border: 1px solid #475569 !important;
+            color: #e2e8f0;
+            color-scheme: dark;
+        }
+        body.dark-mode #itemsTable th,
+        body.dark-mode #itemsTable td {
+            border-color: transparent !important;
+        }
+        body.dark-mode .form-container input::placeholder,
+        body.dark-mode .form-container textarea::placeholder {
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
