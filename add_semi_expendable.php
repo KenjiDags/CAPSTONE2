@@ -399,6 +399,36 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         .required {
             color: #dc2626;
         }
+        body.dark-mode {
+            background: var(--background-gradient) !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .container {
+            background: transparent !important;
+        }
+        body.dark-mode .form-container {
+            background: #1e293b !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .form-container h1,
+        body.dark-mode .form-container label {
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode .form-container header p {
+            color: #cbd5e1 !important;
+        }
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select,
+        body.dark-mode .form-group textarea {
+            background-color: #0f172a !important;
+            border-color: #475569;
+            color: #e2e8f0;
+            color-scheme: dark;
+        }
+        body.dark-mode .form-group input::placeholder,
+        body.dark-mode .form-group textarea::placeholder {
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>

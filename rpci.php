@@ -70,11 +70,13 @@ $officer_names_json = json_encode($officer_names);
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: none !important;
         }
         
         .rpci-header h2 {
             color: #1e293b;
             margin-bottom: 10px;
+            border: none !important;
         }
         
         .form-subtitle {
@@ -85,6 +87,8 @@ $officer_names_json = json_encode($officer_names);
         
         .rpci-meta {
             margin: 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #f2f2f3;
         }
         
         .rpci-meta-row {
@@ -104,6 +108,10 @@ $officer_names_json = json_encode($officer_names);
             border: 2px solid #cbd5e1;
             border-radius: 8px;
             font-size: 14px;
+        }
+
+        body.dark-mode .table-controls > label[for="row_limit"] {
+            color: #ffffff !important;
         }
         
         .form-fields {
@@ -287,18 +295,18 @@ $officer_names_json = json_encode($officer_names);
 <?php include 'sidebar.php'; ?>
 
 <div class="container">
-    <div class="rpci-form">
-            <div class="rpci-header">
-                <h2>Report on the Physical Count of Inventories</h2>
+    <div class="rpci-header">
+        <h2>Report on the Physical Count of Inventories</h2>
+    </div>
 
-                <div class="rpci-meta">
-                    <div class="rpci-meta-row">
-                        <label for="report_date">As at:</label>
-                        <input type="date" id="report_date" name="report_date" value="<?= date('Y-m-d') ?>">
-                    </div>
-                </div>
+    <div class="rpci-form">
+        <div class="rpci-meta">
+            <div class="rpci-meta-row">
+                <label for="report_date">As at:</label>
+                <input type="date" id="report_date" name="report_date" value="<?= date('Y-m-d') ?>">
             </div>
-            
+        </div>
+
             <form method="POST" action="">
                 <div class="form-fields">
                     <div class="field-group">
@@ -323,7 +331,7 @@ $officer_names_json = json_encode($officer_names);
                 </div>
 
                 <div class="table-controls" style="display:flex; gap:12px; align-items:center; justify-content: flex-start;">
-                    <label for="row_limit" style="color: #001F80;">Show:</label>
+                    <label for="row_limit">Show:</label>
                     <select id="row_limit" aria-label="Rows to display">
                         <option value="5" selected>5</option>
                         <option value="10">10</option>

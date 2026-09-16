@@ -344,6 +344,7 @@ $item_result = $conn->query($item_query);
         .fund-cluster-cell {
             white-space: nowrap;
         }
+
     </style>
 </head>
 <body>

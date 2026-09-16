@@ -48,6 +48,22 @@ require 'auth.php';
             transition: all 0.3s ease;
         }
         .filters input[type="month"]:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(0, 56, 168, 0.1); background-color: var(--white); }
+
+        /* RSPI month filter */
+        body.dark-mode .filters label {
+            color: #e2e8f0 !important;
+        }
+
+        body.dark-mode .filters input[type="month"] {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            border-color: #475569 !important;
+            color-scheme: dark !important;
+        }
+
+        body.dark-mode .filters label {
+            color: #e2e8f0 !important;
+        }
     </style>
 </head>
 <body class="rspi-page">
@@ -66,7 +82,7 @@ require 'auth.php';
 
             <form method="get" class="filters" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 18px;">
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
-                    <label for="month" style="color: #001F80; font-weight:600;">Month</label>
+                    <label for="month" style="font-weight:600;">Month</label>
                     <input type="month" id="month" name="month" value="<?= htmlspecialchars($selectedMonth) ?>" />
                     <?php if (!empty($_GET['month'])): ?>
                         <a class="btn edit-btn" href="rspi.php" style="height: 35px;"><i class="fas fa-trash-alt"></i> Clear</a>

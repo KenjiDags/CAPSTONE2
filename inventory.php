@@ -698,7 +698,8 @@ case 'update':
             display: block;
         }
 
-        .actions-menu-list button {
+        .actions-menu-list button,
+        .actions-menu-list a {
             display: flex;
             width: 100%;
             align-items: center;
@@ -711,9 +712,11 @@ case 'update':
             cursor: pointer;
             font-size: 12px;
             text-align: left;
+            text-decoration: none;
         }
 
-        .actions-menu-list button:hover {
+        .actions-menu-list button:hover,
+        .actions-menu-list a:hover {
             background: #f3f4f6;
         }
 
@@ -862,7 +865,7 @@ case 'update':
                                     <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'><i class='fas fa-ellipsis-v'></i></button>
                                     <div class='actions-menu-list'>
                                         <button type='button' class='view-action' onclick='window.location.href=\"view_item.php?item_id={$row['item_id']}\"'><i class='fas fa-eye'></i> View</button>
-                                        <button type='button' class='edit-action' onclick='openEditModal(this)' data-id='{$row['item_id']}' data-stock_number='{$stock_number}' data-item_name='{$item_name}' data-description='{$description}' data-unit='{$unit}' data-reorder_point='{$row['reorder_point']}' data-unit_cost='{$display_unit_cost}' data-quantity_on_hand='{$row['quantity_on_hand']}' data-iar='" . htmlspecialchars($row['iar'] ?? '', ENT_QUOTES, 'UTF-8') . "'><i class='fas fa-edit'></i> Edit</button>
+                                        <a href='edit_item_OFS.php?item_id={$row['item_id']}' class='edit-action'><i class='fas fa-edit'></i> Edit</a>
                                         <button type='button' class='delete-action' onclick='deleteItem({$row['item_id']})'><i class='fas fa-trash'></i> Delete</button>
                                     </div>
                                 </div>
@@ -917,45 +920,6 @@ case 'update':
             
             <button type="submit" class="save-btn">
                 <i class="fas fa-save"></i> Save Item
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- Edit Item Modal -->
-<div id="editModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
-        <h3><i class="fas fa-edit"></i> Edit Item</h3>
-        <form id="editForm">
-            <input type="hidden" name="item_id" id="edit_item_id">
-
-            <label for="edit_stock_number">Stock Number</label>
-            <input type="text" name="stock_number" id="edit_stock_number" placeholder="e.g. 1001" required>
-
-            <label for="edit_iar">I.A.R</label>
-            <input type="text" name="iar" id="edit_iar" placeholder="Enter I.A.R" required>
-
-            <label for="edit_item_name">Item Name</label>
-            <input type="text" name="item_name" id="edit_item_name" placeholder="e.g Hammer" required>
-
-            <label for="edit_description">Description</label>
-            <input type="text" name="description" id="edit_description" placeholder="e.g. Red" required>
-
-            <label for="edit_unit">Unit</label>
-            <input type="text" name="unit" id="edit_unit" placeholder="pcs, box, etc." required>
-
-            <label for="edit_reorder_point">Reorder Point</label>
-            <input type="number" name="reorder_point" id="edit_reorder_point" placeholder="e.g. 10" required min="0">
-
-            <label for="edit_unit_cost">Unit Cost (₱)</label>
-            <input type="number" step="0.01" name="unit_cost" id="edit_unit_cost" placeholder="e.g. 25.00" required min="0">
-
-            <label for="edit_quantity_on_hand">Quantity on Hand</label>
-            <input type="number" name="quantity_on_hand" id="edit_quantity_on_hand" placeholder="e.g. 100" required min="0">
-            
-            <button type="submit" class="save-btn">
-                <i class="fas fa-save"></i> Update Item
             </button>
         </form>
     </div>

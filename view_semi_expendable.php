@@ -128,7 +128,7 @@
 
         <h3><i class="fas fa-box"></i> Stock Card History</h3>
         <div class="table-container" style="margin: 25px 0;">
-            <table>
+            <table class="stock-card-history">
                 <thead>
                     <tr>
                         <th rowspan="2" style="width:10%;">Date</th>

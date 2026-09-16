@@ -34,14 +34,18 @@ $items = $conn->query("SELECT i.*,
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Table styling specific to restock page */
+        .form-container {
+            max-width: 1600px;
+        }
         .table-container {
             border: 2px solid #e5e7eb;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
             margin-bottom: 20px;
         }
         table {
             width: 100%;
+            min-width: 1250px;
             border-collapse: collapse;
             background: white;
         }
@@ -54,6 +58,7 @@ $items = $conn->query("SELECT i.*,
             color: white;
             font-weight: 600;
             font-size: 14px;
+            white-space: nowrap;
         }
         th i {
             margin-right: 6px;
@@ -91,6 +96,38 @@ $items = $conn->query("SELECT i.*,
         /* Hidden row */
         .hidden-row {
             display: none;
+        }
+        body.dark-mode {
+            background: var(--background-gradient) !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .container {
+            background: transparent !important;
+        }
+        body.dark-mode .form-container {
+            background: #1e293b !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .page-header h1,
+        body.dark-mode .filter-container label {
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode table {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+        body.dark-mode td {
+            border-bottom-color: #334155;
+            color: #e2e8f0;
+        }
+        body.dark-mode tbody tr:hover {
+            background-color: #334155;
+        }
+        body.dark-mode input[type="number"],
+        body.dark-mode .filter-dropdown {
+            background-color: #0f172a;
+            border-color: #475569;
+            color: #e2e8f0;
         }
     </style>
 </head>
