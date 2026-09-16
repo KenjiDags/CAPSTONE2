@@ -93,6 +93,28 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     </article>
   </section>
 
+  <section class="inventory-table-section" aria-labelledby="inventoryTableTitle">
+    <div class="section-heading"><h2 id="inventoryTableTitle">Inventory Health Table</h2><p>All inventory grouped by current stock health.</p></div>
+    <article class="panel">
+      <div class="inventory-table-toolbar">
+        <label class="mrp-search inventory-table-search"><span aria-hidden="true">&#128269;</span><input id="inventoryTableSearch" type="search" aria-label="Search inventory table" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label>
+        <div class="inventory-table-filters" role="group" aria-label="Filter inventory health">
+          <button type="button" class="inventory-filter active" data-table-status="all">Show All</button>
+          <button type="button" class="inventory-filter" data-table-status="safe"><i class="safe"></i> Safe</button>
+          <button type="button" class="inventory-filter" data-table-status="low"><i class="low"></i> Low</button>
+          <button type="button" class="inventory-filter" data-table-status="critical"><i class="critical"></i> Critical</button>
+        </div>
+      </div>
+      <div class="inventory-table-wrap">
+        <table class="inventory-health-table">
+          <thead><tr><th>SKU / Stock Number</th><th>Item Name &amp; Description</th><th>Category</th><th>Current Quantity</th><th>Reorder Threshold</th><th>Health Status</th><th>Depletion / Duration</th></tr></thead>
+          <tbody id="inventoryHealthTableBody"></tbody>
+        </table>
+        <div id="inventoryTableEmpty" class="empty-state" hidden>No inventory items match the current search or filter.</div>
+      </div>
+    </article>
+  </section>
+
 </main>
 
 <script>
@@ -137,13 +159,64 @@ new Chart(document.getElementById('officeStatusChart'), {
 </script>
 
 <script>
-const state = { category: 'office-supplies', items: [], criticalItems: [], velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
+const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 function itemName(item) { return item.item_name || item.property_no || 'Unnamed item'; }
 function movement(item) { return Number(item.usage_volume || item.quantity || 0); }
 function shortName(name) { return name.length > 25 ? name.slice(0, 23) + '...' : name; }
 function stockStatus(item) { const quantity = Number(item.quantity || 0); const reorderPoint = Number(item.reorder_point || 0); return quantity <= 0 ? 'critical' : quantity <= reorderPoint ? 'low' : 'safe'; }
 function stockColor(status) { return status === 'critical' ? '#e53935' : status === 'low' ? '#fbc02d' : '#43a047'; }
+function escapeTableText(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character])); }
+function renderInventoryHealthTable() {
+  const query = document.getElementById('inventoryTableSearch').value.trim().toLowerCase();
+  let rows = state.unifiedItems.filter(item => state.inventoryTableStatus === 'all' || item.health === state.inventoryTableStatus);
+  if (query) rows = rows.filter(item => `${item.sku} ${item.name} ${item.description}`.toLowerCase().includes(query));
+  const sections = ['safe', 'low', 'critical'];
+  const body = document.getElementById('inventoryHealthTableBody');
+  const empty = document.getElementById('inventoryTableEmpty');
+  const html = [];
+  sections.forEach(status => {
+    const sectionRows = rows.filter(item => item.health === status);
+    if (!sectionRows.length) return;
+    const title = status === 'safe' ? '🟢 Safe Stock' : status === 'low' ? '🟡 Low Stock' : '🔴 Critical Out of Stock';
+    html.push(`<tr class="inventory-section-row ${status}"><th colspan="7">${title}<span>${sectionRows.length} item${sectionRows.length === 1 ? '' : 's'}</span></th></tr>`);
+    sectionRows.forEach(item => {
+      const duration = status === 'critical' ? `<strong class="inventory-duration">Stuck for ${Number(item.daysEmpty || 0).toLocaleString()} Days</strong>` : '<span class="inventory-active">Active Stock</span>';
+      const badge = status === 'safe' ? 'Safe' : status === 'low' ? 'Low Stock' : 'Critical';
+      html.push(`<tr><td>${escapeTableText(item.sku || 'N/A')}</td><td><strong>${escapeTableText(item.name)}</strong><small>${escapeTableText(item.description || 'No description')}</small></td><td>${escapeTableText(item.category)}</td><td>${Number(item.quantity || 0).toLocaleString()} units</td><td>${item.reorderPoint === null ? '--' : Number(item.reorderPoint || 0).toLocaleString()}</td><td><span class="inventory-status ${status}"><i></i>${badge}</span></td><td>${duration}</td></tr>`);
+    });
+  });
+  body.innerHTML = html.join('');
+  empty.hidden = html.length > 0;
+}
+function prepareUnifiedItems(payloads) {
+  const criticalById = new Map((payloads['office-supplies'].critical_depletion || []).map(item => [Number(item.item_id), item]));
+  const categories = [
+    ['office-supplies', 'Office Supplies'],
+    ['semi-expendables', 'Semi-Expendables'],
+    ['ppe', 'PPE']
+  ];
+  state.unifiedItems = [];
+  categories.forEach(([key, category]) => {
+    (payloads[key].items || payloads[key].supply_list || []).forEach(item => {
+      const quantity = Number(item.quantity || 0);
+      const critical = criticalById.get(Number(item.item_id));
+      const normalized = { sku: item.stock_number || item.property_no || item.par_no, name: itemName(item), description: item.description || '', category, quantity, reorderPoint: item.reorder_point === undefined ? 0 : Number(item.reorder_point), daysEmpty: critical ? Number(critical.days_empty || 0) : 0 };
+      normalized.health = stockStatus({ quantity: normalized.quantity, reorder_point: normalized.reorderPoint });
+      state.unifiedItems.push(normalized);
+    });
+  });
+  state.unifiedItems.sort((a, b) => a.health === 'critical' && b.health !== 'critical' ? 1 : a.health !== 'critical' && b.health === 'critical' ? -1 : a.health === 'critical' ? b.daysEmpty - a.daysEmpty : a.quantity - b.quantity || a.name.localeCompare(b.name));
+  renderInventoryHealthTable();
+}
+function loadUnifiedInventoryTable() {
+  const horizon = document.getElementById('horizonSelect').value;
+  const categories = ['office-supplies', 'semi-expendables', 'ppe'];
+  Promise.all(categories.map(category => fetch('analytics_data.php?category=' + encodeURIComponent(category) + '&horizon=' + encodeURIComponent(horizon)).then(response => {
+    if (!response.ok) throw new Error(`Unable to load ${category} inventory data.`);
+    return response.json();
+  }))).then(results => prepareUnifiedItems(Object.fromEntries(categories.map((category, index) => [category, results[index]])))).catch(error => console.error('Unified inventory table failed to load:', error));
+}
 function renderCategoryInsights(summary) {
   const insights = document.getElementById('categoryInsights');
   const semiView = document.getElementById('semiInsights');
@@ -255,7 +328,10 @@ function renderAging() { const values = state.items.map(item => Number(item.capi
 document.querySelectorAll('[data-mrp-status]').forEach(button => button.addEventListener('click', () => { const status = button.dataset.mrpStatus; state.mrpStatusFilter = state.mrpStatusFilter === status ? 'all' : status; document.querySelectorAll('[data-mrp-status]').forEach(item => item.classList.toggle('active', item.dataset.mrpStatus === state.mrpStatusFilter)); document.getElementById('mrpFilterSelect').value = 'all'; state.mrpViewMode = 'all'; renderAllItemsChart(); }));
 document.getElementById('mrpFilterSelect').addEventListener('change', event => { state.mrpStatusFilter = event.target.value === 'attention' ? 'attention' : 'all'; state.mrpViewMode = event.target.value === 'lowest' ? 'lowest' : 'all'; document.querySelectorAll('[data-mrp-status]').forEach(item => item.classList.remove('active')); renderAllItemsChart(); });
 document.getElementById('mrpSearchInput').addEventListener('input', event => { state.mrpSearch = event.target.value.trim().toLowerCase(); renderAllItemsChart(); });
-document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); })); document.getElementById('horizonSelect').addEventListener('change', () => loadCategory(state.category)); loadCategory(state.category);
+document.getElementById('inventoryTableSearch').addEventListener('input', renderInventoryHealthTable);
+document.querySelectorAll('[data-table-status]').forEach(button => button.addEventListener('click', () => { state.inventoryTableStatus = button.dataset.tableStatus; document.querySelectorAll('[data-table-status]').forEach(item => item.classList.toggle('active', item.dataset.tableStatus === state.inventoryTableStatus)); renderInventoryHealthTable(); }));
+document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); })); document.getElementById('horizonSelect').addEventListener('change', () => { loadCategory(state.category); loadUnifiedInventoryTable(); }); loadCategory(state.category);
+loadUnifiedInventoryTable();
 </script>
 </body>
 </html>
