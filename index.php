@@ -1,10 +1,11 @@
 <?php
 session_start();
 
-// Already logged in? Skip login page
-if (isset($_SESSION['user_id']) && $_SESSION['logged_in'] === true) {
-    header('Location: inventory.php');
-    exit;
+// The application entry point always starts at the login form.
+if (!empty($_SESSION)) {
+    session_unset();
+    session_destroy();
+    session_start();
 }
 
 require 'config.php';
@@ -13,22 +14,9 @@ $error = '';
 $cookie_username = '';
 $remember_checked = false;
 
-// Pre-fill username if remember_token exists
-if (!empty($_COOKIE['remember_token'])) {
-    $token = $_COOKIE['remember_token'];
-
-    $stmt = $conn->prepare("SELECT username FROM users WHERE remember_token = ? LIMIT 1");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result && $result->num_rows > 0) {
-        $user_data = $result->fetch_assoc();
-        $cookie_username = $user_data['username'];
-        $remember_checked = true;
-    } else {
-        setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
-    }
+if (!empty($_COOKIE['remember_username'])) {
+    $cookie_username = $_COOKIE['remember_username'];
+    $remember_checked = true;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,15 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['logged_in'] = true;
                 $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 
-                if ($remember) {
-                    $token = bin2hex(random_bytes(16));
-                    $stmtToken = $conn->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
-                    $stmtToken->bind_param("si", $token, $user['user_id']);
-                    $stmtToken->execute();
+                // Login is session-only; do not persist authentication across visits.
+                $stmtToken = $conn->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
+                $stmtToken->bind_param("i", $user['user_id']);
+                $stmtToken->execute();
+                $stmtToken->close();
+                setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
 
-                    setcookie('remember_token', $token, time() + 30*24*60*60, "/", "localhost", false, true);
+                if ($remember) {
+                    setcookie('remember_username', $username, time() + 30 * 24 * 60 * 60, '/', 'localhost', false, true);
                 } else {
-                    setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
+                    setcookie('remember_username', '', time() - 3600, '/', 'localhost', false, true);
                 }
 
                 header('Location:inventory.php');
@@ -128,6 +118,16 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
 
         .form-group input[type="checkbox"] {
             width: auto !important;
+            margin: 0 6px 0 0;
+        }
+        .remember-group {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .remember-group label {
+            display: inline;
+            margin: 0;
         }
         label { 
             display: block; 
@@ -240,7 +240,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password" required>
             </div>
-            <div class="form-group">
+            <div class="form-group remember-group">
                 <input type="checkbox" name="remember" id="remember" <?= $remember_checked ? 'checked' : '' ?>>
                 <label for="remember">Remember Me</label>
             </div>
