@@ -102,7 +102,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		.pill-export { background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }
 		.pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
 		.description-col { width: 280px; }
-		.actions-col { width: 300px; white-space: nowrap; }
+		.actions-col { width: 100px; white-space: nowrap; text-align: left !important; }
 		table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
 		.action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
 		.amount-col { white-space: nowrap; min-width: 100px; }
@@ -213,7 +213,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 								$issueQty = (int)($row['issue_qty'] ?? 0);
 								$balanceQty = (int)($row['balance_qty'] ?? 0);
 								$amount = (float)($row['unit_cost'] ?? 0) * (int)($row['quantity_on_hand'] ?? 0);
-								$rowClass = !empty($row['ppe_id']) ? ' class="clickable-row"' : '';
+								$rowClass = !empty($row['ppe_id']);
 								$rowViewAttr = !empty($row['ppe_id']) ? ' data-view-url="view_ppe_items.php?id=' . (int)$row['ppe_id'] . '"' : '';
 								echo '<tr' . $rowClass . $rowViewAttr . '>';
 								echo '<td class="description-col">' . htmlspecialchars($itemName);
@@ -232,10 +232,27 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 								$qs = [];
 								if ($search !== '') { $qs['search'] = $search; }
 								if (!empty($qs)) { $returnUrl .= '?' . http_build_query($qs); }
-								echo '<td class="text-center actions-col">';
-								echo '<div class="action-stack">';
-								echo '<a href="PPE_PC_export.php?id=' . (int)$row['id'] . '" class="pill-btn pill-export"><i class="fas fa-download"></i> Export</a>';
-								echo '<a href="PPE_PC.php?delete_id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="pill-btn pill-delete" onclick="return confirm(\'Are you sure you want to delete this entry?\')"><i class="fas fa-trash"></i> Delete</a>';
+								echo '<td class="actions-col">';
+								echo '<div class="actions-menu">';
+								echo '<button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">';
+								echo '<i class="fas fa-ellipsis-v"></i>';
+								echo '</button>';
+
+								echo '<div class="actions-menu-list">';
+
+								echo '<a href="view_ppe_items.php?id=' . (int)$row['ppe_id'] . '" class="view-action">';
+								echo '<i class="fas fa-eye"></i> View';
+								echo '</a>';
+
+								echo '<a href="PPE_PC_export.php?id=' . (int)$row['id'] . '" class="export-action">';
+								echo '<i class="fas fa-download"></i> Export';
+								echo '</a>';
+
+								echo '<a href="PPE_PC.php?delete_id=' . (int)$row['id'] . '&return=' . urlencode($returnUrl) . '" class="delete-action" onclick="return confirm(\'Are you sure you want to delete this entry?\')">';
+								echo '<i class="fas fa-trash"></i> Delete';
+								echo '</a>';
+
+								echo '</div>';
 								echo '</div>';
 								echo '</td>';
 								echo '</tr>';
@@ -248,23 +265,8 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 			</table>
 		</div>
 	</div>
-	<script>
-		document.addEventListener('DOMContentLoaded', function() {
-			const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-			rows.forEach(function(row) {
-				row.addEventListener('click', function(event) {
-					if (event.target.closest('a, button, input, select, textarea, form, .actions-col')) {
-						return;
-					}
+	<script src="js/actions_menu.js"></script>
 
-					const viewUrl = row.getAttribute('data-view-url');
-					if (viewUrl) {
-						window.location.href = viewUrl;
-					}
-				});
-			});
-		});
-	</script>
 </body>
 </html>

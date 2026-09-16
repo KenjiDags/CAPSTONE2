@@ -162,7 +162,7 @@ $result = $conn->query($query);
             <tbody>
             <?php if ($result && $result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
-                <tr class="clickable-row" data-view-url="view_ppe_iirup.php?id=<?= (int)$row['id'] ?>">
+                <tr>
                         <td><?= date('M d, Y', strtotime($row['date_reported'])) ?></td>
                         <td><?= htmlspecialchars($row['particulars']) ?></td>
                         <td><?= htmlspecialchars($row['PPE_no']) ?></td>
@@ -173,10 +173,37 @@ $result = $conn->query($query);
                         <td><?= number_format($row['carrying_amount'] ?? 0, 2) ?></td>
                         <td><?= htmlspecialchars($row['remarks']) ?></td>
                         <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
-                        <td>
-                            <a href="edit_ppe_iirup.php?id=<?= $row['id'] ?>" class="pill-btn pill-edit" title="Edit PPE IIRUP"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="PPE_iirup_export.php?id=<?= $row['id'] ?>" class="pill-btn pill-export" title="Export PPE IIRUP"><i class="fas fa-download"></i> Export</a>
-                            <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= $row['id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')" title="Delete PPE IIRUP"><i class="fas fa-trash"></i> Delete</a>
+                        <td class="actions-cell">
+                            <div class="actions-menu">
+                                <button type="button"
+                                        class="actions-menu-toggle"
+                                        aria-label="Open actions"
+                                        aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+
+                                <div class="actions-menu-list">
+
+                                    <a href="view_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="view-action">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+
+                                    <a href="edit_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="edit-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+
+                                    <a href="PPE_iirup_export.php?id=<?= (int)$row['id'] ?>" class="export-action">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
+
+                                    <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= (int)$row['id'] ?>"
+                                      class="delete-action"
+                                      onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -190,23 +217,8 @@ $result = $conn->query($query);
             </tbody>
     </table>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-  rows.forEach(function(row) {
-    row.addEventListener('click', function(event) {
-      if (event.target.closest('a, button, input, select, textarea, form')) {
-        return;
-      }
+<script src="js/actions_menu.js"></script>
 
-      const viewUrl = row.getAttribute('data-view-url');
-      if (viewUrl) {
-        window.location.href = viewUrl;
-      }
-    });
-  });
-});
-</script>
 </body>
 </html>

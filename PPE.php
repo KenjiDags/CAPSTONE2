@@ -223,7 +223,7 @@ try {
                 </td></tr>
             <?php else: ?>
                 <?php foreach ($items as $item): ?>
-                <tr class="clickable-row" data-view-url="view_ppe_items.php?id=<?= (int)$item['id']; ?>">
+                <tr>
                     <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
                     <td><?= htmlspecialchars($item['item_name']); ?></td>
                     <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
@@ -235,13 +235,39 @@ try {
                     <td><?= htmlspecialchars($item['condition']); ?></td>
                     <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                     <td class="actions-cell">
-                        <div class="action-buttons">
-                            <a href="edit_ppe.php?id=<?= $item['id']; ?>" class="pill-btn pill-edit" style="height: 30px;"><i class="fas fa-edit"></i> Edit</a>
-                            <form method="POST" onsubmit="return confirm('Delete this item permanently?');" style="display: inline;">
-                                <input type="hidden" name="delete_id" value="<?= $item['id']; ?>">
-                                <button type="submit" class="pill-btn pill-delete"><i class="fas fa-trash"></i> Delete</button>
-                            </form>
+                        <div class="actions-menu">
+                            <button type="button"
+                                    class="actions-menu-toggle"
+                                    aria-label="Open actions"
+                                    aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+
+                            <div class="actions-menu-list">
+
+                                <a href="view_ppe_items.php?id=<?= (int)$item['id']; ?>" class="view-action">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+
+                                <a href="edit_ppe.php?id=<?= (int)$item['id']; ?>" class="edit-action">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+
+                                <a href="#"
+                                class="delete-action"
+                                onclick="event.preventDefault(); document.getElementById('delete-form-<?= (int)$item['id']; ?>').submit();">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+
+                            </div>
                         </div>
+
+                        <form id="delete-form-<?= (int)$item['id']; ?>"
+                            method="POST"
+                            style="display: none;"
+                            onsubmit="return confirm('Delete this item permanently?');">
+                            <input type="hidden" name="delete_id" value="<?= (int)$item['id']; ?>">
+                        </form>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -249,23 +275,8 @@ try {
         </tbody>
     </table>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-    rows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('a, button, input, select, textarea, form, .actions-cell')) {
-                return;
-            }
+<script src="js/actions_menu.js"></script>
 
-            const viewUrl = row.getAttribute('data-view-url');
-            if (viewUrl) {
-                window.location.href = viewUrl;
-            }
-        });
-    });
-});
-</script>
 </body>
 </html>

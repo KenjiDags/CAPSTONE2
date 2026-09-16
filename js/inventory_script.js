@@ -576,3 +576,4 @@ function clearEntries(itemId) {
         });
     }
 }
+

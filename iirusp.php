@@ -170,16 +170,47 @@ $result = $conn->query($query);
             <tbody>
             <?php if ($result && $result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
-                <tr class="clickable-row" data-view-url="view_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>">
+                <tr>
                         <td><strong><?= htmlspecialchars($row['iirusp_no']) ?></strong></td>
                         <td><?= date('M d, Y', strtotime($row['as_at'])) ?></td>
                         <td><?= htmlspecialchars($row['entity_name']) ?></td>
                         <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
                         <td class="currency">₱ <?= number_format($row['total_amount'] ?? 0, 2) ?></td>
-                        <td>
-                            <a href="edit_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-edit" title="Edit IIRUSP"><i class="fas fa-edit"></i> Edit</a>
-                            <a href="export_iirusp.php?iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-export" title="Export IIRUSP"><i class="fas fa-download"></i> Export</a>
-                            <a href="iirusp.php?delete_iirusp_id=<?= $row['iirusp_id'] ?>" class="pill-btn pill-delete" onclick="return confirm('Are you sure you want to delete this IIRUSP?')" title="Delete IIRUSP"><i class="fas fa-trash"></i> Delete</a>
+                        <td class="actions-cell">
+                            <div class="actions-menu">
+
+                                <button type="button"
+                                        class="actions-menu-toggle"
+                                        aria-label="Open actions"
+                                        aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+
+                                <div class="actions-menu-list">
+
+                                    <a href="view_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                      class="view-action">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+
+                                    <a href="edit_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                      class="edit-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+
+                                    <a href="export_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                      class="export-action">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
+
+                                    <a href="iirusp.php?delete_iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                      class="delete-action"
+                                      onclick="return confirm('Are you sure you want to delete this IIRUSP?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -193,23 +224,8 @@ $result = $conn->query($query);
             </tbody>
     </table>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-  rows.forEach(function(row) {
-    row.addEventListener('click', function(event) {
-      if (event.target.closest('a, button, input, select, textarea')) {
-        return;
-      }
+<script src="js/actions_menu.js"></script>
 
-      const viewUrl = row.getAttribute('data-view-url');
-      if (viewUrl) {
-        window.location.href = viewUrl;
-      }
-    });
-  });
-});
-</script>
 </body>
 </html>

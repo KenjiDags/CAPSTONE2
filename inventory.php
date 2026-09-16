@@ -661,68 +661,6 @@ case 'update':
             font-family: inherit;
         }
 
-        .actions-menu {
-            position: relative;
-            display: inline-block;
-        }
-
-        .actions-menu-toggle {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border: 0;
-            border-radius: 5px;
-            background: #fff;
-            color: #6b7280;
-            cursor: pointer;
-        }
-
-        .actions-menu-toggle:hover,
-        .actions-menu.is-open .actions-menu-toggle {
-            color: #2563eb;
-        }
-
-        .actions-menu-list {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            min-width: 110px;
-            padding: 4px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: #fff;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, .12);
-        }
-
-        .actions-menu.is-open .actions-menu-list {
-            display: block;
-        }
-
-        .actions-menu-list button,
-        .actions-menu-list a {
-            display: flex;
-            width: 100%;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 8px;
-            border: 0;
-            border-radius: 4px;
-            background: transparent;
-            color: #374151;
-            cursor: pointer;
-            font-size: 12px;
-            text-align: left;
-            text-decoration: none;
-        }
-
-        .actions-menu-list button:hover,
-        .actions-menu-list a:hover {
-            background: #f3f4f6;
-        }
-
-        .actions-menu-list .delete-action {
-            color: #dc2626;
-        }
 
         @media (max-width: 700px) {
             .item-detail-content {
@@ -862,11 +800,22 @@ case 'update':
                             <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
                             <td class='actions-cell'>
                                 <div class='actions-menu'>
-                                    <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'><i class='fas fa-ellipsis-v'></i></button>
+                                    <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'>
+                                        <i class='fas fa-ellipsis-v'></i>
+                                    </button>
+
                                     <div class='actions-menu-list'>
-                                        <button type='button' class='view-action' onclick='window.location.href=\"view_item.php?item_id={$row['item_id']}\"'><i class='fas fa-eye'></i> View</button>
-                                        <a href='edit_item_OFS.php?item_id={$row['item_id']}' class='edit-action'><i class='fas fa-edit'></i> Edit</a>
-                                        <button type='button' class='delete-action' onclick='deleteItem({$row['item_id']})'><i class='fas fa-trash'></i> Delete</button>
+                                        <a href='view_item.php?item_id={$row['item_id']}' class='view-action'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+
+                                        <a href='edit_item_OFS.php?item_id={$row['item_id']}' class='edit-action'>
+                                            <i class='fas fa-edit'></i> Edit
+                                        </a>
+
+                                        <a href='inventory.php?delete_id={$row['item_id']}' class='delete-action' onclick='return confirm(\"Delete this item permanently?\")'>
+                                            <i class='fas fa-trash'></i> Delete
+                                        </a>
                                     </div>
                                 </div>
                             </td>
@@ -1173,59 +1122,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function closeActionsMenu(menu) {
-        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
-        menuList.style.display = '';
-        menuList.style.left = '';
-        menuList.style.right = '';
-        menuList.style.top = '';
-        menu.appendChild(menuList);
-        menu.classList.remove('is-open');
-    }
-
-    tableBody.addEventListener('click', function(event) {
-        const menuToggle = event.target.closest('.actions-menu-toggle');
-        if (menuToggle) {
-            event.stopPropagation();
-            const menu = menuToggle.closest('.actions-menu');
-            document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
-                if (openMenu !== menu) {
-                    closeActionsMenu(openMenu);
-                    openMenu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
-                }
-            });
-            const isOpen = menu.classList.toggle('is-open');
-            if (isOpen) {
-                const menuList = menu.querySelector('.actions-menu-list');
-                menu._actionsMenuList = menuList;
-                menuList.style.display = 'block';
-                document.body.appendChild(menuList);
-                positionActionsMenu(menu, menuList);
-            } else {
-                closeActionsMenu(menu);
-            }
-            menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            return;
-        }
-
-        const row = event.target.closest('.inventory-clickable-row');
-        if (row && !event.target.closest('.actions-cell')) {
-            toggleExpandedRow(row);
-        }
-    });
-
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
-            document.querySelectorAll('.actions-menu.is-open').forEach(function(menu) {
-                closeActionsMenu(menu);
-                menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
-            });
-        }
-    });
 });
 </script>
 
 <script src="js/inventory_script.js?v=<?= time() ?>"></script>
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>

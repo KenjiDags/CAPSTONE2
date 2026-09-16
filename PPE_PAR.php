@@ -190,21 +190,39 @@ if ($search !== '') {
             
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    echo '<tr class="clickable-row" data-view-url="view_par.php?id=' . (int)$row["par_id"] . '">';
+                    echo '<tr>';
                     echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
                     echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
                     echo '<td>' . htmlspecialchars($row['property_number'] ?? 'N/A') . '</td>';
                     echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
                     echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
-                    echo '<td>
-                        <a href="export_par.php?id=' . $row["par_id"] . '" title="Export PAR">
-                            <i class="fas fa-download"></i> Export
-                        </a>
-                        <a href="PPE_PAR.php?delete_par_id=' . $row["par_id"] . '" 
-                           onclick="return confirm(\'Are you sure you want to delete this PAR?\')"
-                           title="Delete PAR">
-                            <i class="fas fa-trash"></i> Delete
-                        </a>
+                    echo '<td class="actions-cell">
+                        <div class="actions-menu">
+                            <button type="button"
+                                    class="actions-menu-toggle"
+                                    aria-label="Open actions"
+                                    aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+
+                            <div class="actions-menu-list">
+
+                                <a href="view_par.php?id=' . (int)$row["par_id"] . '" class="view-action">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+
+                                <a href="export_par.php?id=' . (int)$row["par_id"] . '" class="export-action">
+                                    <i class="fas fa-download"></i> Export
+                                </a>
+
+                                <a href="PPE_PAR.php?delete_par_id=' . (int)$row["par_id"] . '"
+                                class="delete-action"
+                                onclick="return confirm(\'Are you sure you want to delete this PAR?\')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+
+                            </div>
+                        </div>
                     </td>';
                     echo '</tr>';
                 }
@@ -220,24 +238,7 @@ if ($search !== '') {
     </table>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
-
-    rows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('a, button, input, select, textarea, form')) {
-                return;
-            }
-
-            const viewUrl = row.getAttribute('data-view-url');
-            if (viewUrl) {
-                window.location.href = viewUrl;
-            }
-        });
-    });
-});
-</script>
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>

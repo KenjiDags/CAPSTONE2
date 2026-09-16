@@ -106,8 +106,7 @@ $result = $conn->query("SELECT r.*, (
     .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
     .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
-    .clickable-row { cursor: pointer; }
-    .clickable-row:hover { background: #f8fafc; }
+
     </style>
 </head>
 <body class="rrsp-page">
@@ -156,20 +155,41 @@ $result = $conn->query("SELECT r.*, (
         <?php 
         if ($result && $result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
-            echo '<tr class="clickable-row" data-view-url="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '">';
+            echo '<tr>';
                 echo '<td><strong>' . htmlspecialchars($row['rrsp_no']) . '</strong></td>';
                 echo '<td>' . date('M d, Y', strtotime($row['date_prepared'])) . '</td>';
                 echo '<td>' . htmlspecialchars($row['returned_by']) . '</td>';
                 echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
                 echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
                 echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
-                // Actions cell (separate echoes to avoid complex escaping issues)
-                echo '<td>';
-                echo '<a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-edit" title="Edit RRSP"><i class="fas fa-edit"></i> Edit</a> ';
-                echo '<a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-export" title="Export RRSP"><i class="fas fa-download"></i> Export</a> ';
-                echo '<a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" class="pill-btn pill-delete" onclick="return confirm(\'Delete this RRSP form?\')" title="Delete RRSP"><i class="fas fa-trash"></i> Delete</a>';
+                // Actions cell
+                echo '<td class="actions-cell">';
+                echo '  <div class="actions-menu">';
+                echo '      <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">';
+                echo '          <i class="fas fa-ellipsis-v"></i>';
+                echo '      </button>';
+                echo '      <div class="actions-menu-list">';
+
+                echo '          <a href="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="view-action">';
+                echo '              <i class="fas fa-eye"></i> View';
+                echo '          </a>';
+
+                echo '          <a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="edit-action">';
+                echo '              <i class="fas fa-edit"></i> Edit';
+                echo '          </a>';
+
+                echo '          <a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="export-action">';
+                echo '              <i class="fas fa-download"></i> Export';
+                echo '          </a>';
+
+                echo '          <a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" class="delete-action" onclick="return confirm(\'Delete this RRSP form?\')">';
+                echo '              <i class="fas fa-trash"></i> Delete';
+                echo '          </a>';
+
+                echo '      </div>';
+                echo '  </div>';
                 echo '</td>';
-                echo '</tr>';
+            echo '</tr>';
             }
         } else {
             echo '<tr><td colspan="7"><i class="fas fa-inbox"></i> No RRSP forms found.</td></tr>';
@@ -178,23 +198,7 @@ $result = $conn->query("SELECT r.*, (
         </tbody>
     </table>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
 
-  rows.forEach(function(row) {
-    row.addEventListener('click', function(event) {
-      if (event.target.closest('a, button, input, select, textarea')) {
-        return;
-      }
-
-      const viewUrl = row.getAttribute('data-view-url');
-      if (viewUrl) {
-        window.location.href = viewUrl;
-      }
-    });
-  });
-});
-</script>
+<script src="js/actions_menu.js"></script>
 </body>
 </html>

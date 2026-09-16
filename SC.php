@@ -114,7 +114,7 @@ if ($search !== '') {
                 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<tr data-id='{$row['item_id']}' data-view-url='view_sc.php?item_id={$row['item_id']}' class='clickable-row'>
+                        echo "<tr>
                             <td><strong>{$row['stock_number']}</strong></td>
                             <td>{$row['iar']}</td>
                             <td>{$row['item_name']}</td>
@@ -122,11 +122,23 @@ if ($search !== '') {
                             <td>{$row['unit']}</td>
                             <td>{$row['quantity_on_hand']}</td>
                             <td>{$row['reorder_point']}</td>
-                            <td>
-                                <a class='scexport' href='sc_export.php?item_id={$row['item_id']}' title='Export SC'>
-                                    <i class='fas fa-download'></i> Export
-                                </a>
-                            
+
+                            <td class='actions-cell'>
+                                <div class='actions-menu'>
+                                    <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'>
+                                        <i class='fas fa-ellipsis-v'></i>
+                                    </button>
+
+                                    <div class='actions-menu-list'>
+                                        <a href='view_sc.php?item_id={$row['item_id']}' class='view-action'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+
+                                        <a href='sc_export.php?item_id={$row['item_id']}' class='export-action'>
+                                            <i class='fas fa-download'></i> Export
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
                             
                         </tr>";
@@ -188,20 +200,10 @@ document.addEventListener('DOMContentLoaded', function() {
         filterRows();
     }
 
-    rows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('a, button, input, select, textarea')) {
-                return;
-            }
-
-            const viewUrl = row.getAttribute('data-view-url');
-            if (viewUrl) {
-                window.location.href = viewUrl;
-            }
-        });
-    });
 });
 </script>
+
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>

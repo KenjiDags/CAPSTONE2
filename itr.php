@@ -239,7 +239,7 @@ body.dark-mode .actions-cell {
                 $rs = $conn->query($sql);
                 if ($rs && $rs->num_rows > 0) {
                     while ($row = $rs->fetch_assoc()) {
-                        echo '<tr class="clickable-row" data-view-url="view_itr.php?itr_id=' . (int)$row['itr_id'] . '">';
+                        echo '<tr>';
                         echo '<td>' . htmlspecialchars($row['itr_no']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['itr_date']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['from_accountable']) . '</td>';
@@ -289,106 +289,7 @@ body.dark-mode .actions-cell {
     </table>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tr.clickable-row[data-view-url]');
-
-    rows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('a, button, input, select, textarea')) {
-                return;
-            }
-
-            const viewUrl = row.getAttribute('data-view-url');
-            if (viewUrl) {
-                window.location.href = viewUrl;
-            }
-        });
-    });
-});
-
-    function positionActionsMenu(menu, menuList) {
-        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
-
-        menuList.style.right = 'auto';
-        menuList.style.left = `${Math.max(4, toggleRect.right - 120)}px`;
-        menuList.style.top = `${toggleRect.bottom + 4}px`;
-
-        const listRect = menuList.getBoundingClientRect();
-
-        // If there isn't enough room below, open upward
-        if (listRect.bottom > window.innerHeight - 4) {
-            menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
-        }
-    }
-
-    function closeActionsMenu(menu) {
-        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
-
-        menuList.style.display = '';
-        menuList.style.left = '';
-        menuList.style.right = '';
-        menuList.style.top = '';
-
-        menu.appendChild(menuList);
-        menu.classList.remove('is-open');
-
-        const toggle = menu.querySelector('.actions-menu-toggle');
-        if (toggle) {
-            toggle.setAttribute('aria-expanded', 'false');
-        }
-    }
-
-    document.addEventListener('click', function(event) {
-        const menuToggle = event.target.closest('.actions-menu-toggle');
-
-        if (menuToggle) {
-            event.stopPropagation();
-
-            const menu = menuToggle.closest('.actions-menu');
-
-            // Close any other open action menus
-            document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
-                if (openMenu !== menu) {
-                    closeActionsMenu(openMenu);
-                }
-            });
-
-            const isOpen = menu.classList.toggle('is-open');
-
-            if (isOpen) {
-                const menuList = menu.querySelector('.actions-menu-list');
-
-                menu._actionsMenuList = menuList;
-
-                menuList.style.display = 'block';
-
-                // Move the menu outside the table so it isn't clipped
-                document.body.appendChild(menuList);
-
-                positionActionsMenu(menu, menuList);
-            } else {
-                closeActionsMenu(menu);
-            }
-
-            menuToggle.setAttribute(
-                'aria-expanded',
-                isOpen ? 'true' : 'false'
-            );
-
-            return;
-        }
-
-        // Close menu when clicking elsewhere
-        if (!event.target.closest('.actions-menu') &&
-            !event.target.closest('.actions-menu-list')) {
-
-            document.querySelectorAll('.actions-menu.is-open').forEach(function(menu) {
-                closeActionsMenu(menu);
-            });
-        }
-    });
-</script>
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>

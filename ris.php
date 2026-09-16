@@ -244,7 +244,7 @@ switch ($sort_by) {
             $result = $conn->query("SELECT * FROM ris $order_clause");
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
-                    echo '<tr class="clickable-row" data-view-url="view_ris.php?ris_id=' . $row["ris_id"] . '">';
+                    echo '<tr>';
                     echo '<td><strong>' . htmlspecialchars($row['ris_no']) . '</strong></td>';
                     echo '<td>' . date('M d, Y', strtotime($row['date_requested'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['requested_by']) . '</td>';
@@ -282,73 +282,8 @@ function sortTable(sortBy) {
     // Redirect to new URL with sort parameter
     window.location.href = url.toString();
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('#risTable tbody tr[data-view-url]');
-
-    function closeActionsMenu(menu) {
-        const menuList = menu._actionsMenuList || menu.querySelector('.actions-menu-list');
-        menuList.style.display = '';
-        menuList.style.left = '';
-        menuList.style.top = '';
-        menu.appendChild(menuList);
-        menu.classList.remove('is-open');
-        menu.querySelector('.actions-menu-toggle').setAttribute('aria-expanded', 'false');
-    }
-
-    function positionActionsMenu(menu, menuList) {
-        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
-        menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
-        menuList.style.top = `${toggleRect.bottom + 4}px`;
-
-        const listRect = menuList.getBoundingClientRect();
-        if (listRect.bottom > window.innerHeight - 4) {
-            menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
-        }
-    }
-
-    document.addEventListener('click', function(event) {
-        const toggle = event.target.closest('.actions-menu-toggle');
-        if (toggle) {
-            event.stopPropagation();
-            const menu = toggle.closest('.actions-menu');
-            document.querySelectorAll('.actions-menu.is-open').forEach(function(openMenu) {
-                if (openMenu !== menu) closeActionsMenu(openMenu);
-            });
-
-            const isOpen = menu.classList.toggle('is-open');
-            if (isOpen) {
-                const menuList = menu.querySelector('.actions-menu-list');
-                menu._actionsMenuList = menuList;
-                menuList.style.display = 'block';
-                document.body.appendChild(menuList);
-                positionActionsMenu(menu, menuList);
-            } else {
-                closeActionsMenu(menu);
-            }
-            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            return;
-        }
-
-        if (!event.target.closest('.actions-menu') && !event.target.closest('.actions-menu-list')) {
-            document.querySelectorAll('.actions-menu.is-open').forEach(closeActionsMenu);
-        }
-    });
-
-    rows.forEach(function(row) {
-        row.addEventListener('click', function(event) {
-            if (event.target.closest('a, button, input, select, textarea')) {
-                return;
-            }
-
-            const viewUrl = row.getAttribute('data-view-url');
-            if (viewUrl) {
-                window.location.href = viewUrl;
-            }
-        });
-    });
-});
 </script>
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>

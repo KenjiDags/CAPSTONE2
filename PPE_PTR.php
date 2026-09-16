@@ -277,19 +277,32 @@ if ($search !== '') {
                     echo '<td>' . htmlspecialchars($row['to_officer']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['transfer_type']) . '</td>';
                     echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
-                    echo '<td>
-                        <a href="edit_ptr.php?ptr_id=' . $row["ptr_id"] . '" title="Edit PTR">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        
-                        <a href="export_ptr.php?ptr_id=' . $row["ptr_id"] . '" title="Export PTR">
-                            <i class="fas fa-download"></i> Export
-                        </a>
-                        <a href="PPE_PTR.php?delete_ptr_id=' . $row["ptr_id"] . '" 
-                           onclick="return confirm(\'Are you sure you want to delete this PTR?\')"
-                           title="Delete PTR">
-                            <i class="fas fa-trash"></i> Delete
-                        </a>
+                    echo '<td class="actions-cell">
+                        <div class="actions-menu">
+                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+
+                            <div class="actions-menu-list">
+                                <a href="view_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="view-action">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+
+                                <a href="edit_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="edit-action">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+
+                                <a href="export_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="export-action">
+                                    <i class="fas fa-download"></i> Export
+                                </a>
+
+                                <a href="PPE_PTR.php?delete_ptr_id=' . (int)$row["ptr_id"] . '"
+                                class="delete-action"
+                                onclick="return confirm(\'Are you sure you want to delete this PTR?\')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
                     </td>';
                     echo '</tr>';
                 }
@@ -304,6 +317,8 @@ if ($search !== '') {
         </tbody>
     </table>
 </div>
+
+<script src="js/actions_menu.js"></script>
 
 </body>
 </html>
