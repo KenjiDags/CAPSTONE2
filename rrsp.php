@@ -139,64 +139,66 @@ $result = $conn->query("SELECT r.*, (
         <i class="fas fa-plus"></i> Add RRSP Form
       </a>
     </form>
-    <table id="rrsp-list">
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> RRSP No.</th>
-                <th><i class="fas fa-calendar"></i> Date Prepared</th>
-                <th><i class="fas fa-user"></i> Returned By</th>
-                <th><i class="fas fa-user-check"></i> Received By</th>
-                <th><i class="fas fa-building"></i> Fund Cluster</th>
-                <th><i class="fas fa-coins"></i> Amount</th>
-                <th style="text-align:center;"><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php 
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-            echo '<tr>';
-                echo '<td><strong>' . htmlspecialchars($row['rrsp_no']) . '</strong></td>';
-                echo '<td>' . date('M d, Y', strtotime($row['date_prepared'])) . '</td>';
-                echo '<td>' . htmlspecialchars($row['returned_by']) . '</td>';
-                echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
-                echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
-                echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
-                // Actions cell
-                echo '<td class="actions-cell">';
-                echo '  <div class="actions-menu">';
-                echo '      <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">';
-                echo '          <i class="fas fa-ellipsis-v"></i>';
-                echo '      </button>';
-                echo '      <div class="actions-menu-list">';
+    <div class="table-container">
+      <table id="rrsp-list">
+          <thead>
+              <tr>
+                  <th><i class="fas fa-hashtag"></i> RRSP No.</th>
+                  <th><i class="fas fa-calendar"></i> Date Prepared</th>
+                  <th><i class="fas fa-user"></i> Returned By</th>
+                  <th><i class="fas fa-user-check"></i> Received By</th>
+                  <th><i class="fas fa-building"></i> Fund Cluster</th>
+                  <th><i class="fas fa-coins"></i> Amount</th>
+                  <th style="text-align:center;"><i class="fas fa-cogs"></i> Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+          <?php 
+          if ($result && $result->num_rows > 0) {
+              while ($row = $result->fetch_assoc()) {
+              echo '<tr>';
+                  echo '<td><strong>' . htmlspecialchars($row['rrsp_no']) . '</strong></td>';
+                  echo '<td>' . date('M d, Y', strtotime($row['date_prepared'])) . '</td>';
+                  echo '<td>' . htmlspecialchars($row['returned_by']) . '</td>';
+                  echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
+                  echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
+                  echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                  // Actions cell
+                  echo '<td class="actions-cell">';
+                  echo '  <div class="actions-menu">';
+                  echo '      <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">';
+                  echo '          <i class="fas fa-ellipsis-v"></i>';
+                  echo '      </button>';
+                  echo '      <div class="actions-menu-list">';
 
-                echo '          <a href="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="view-action">';
-                echo '              <i class="fas fa-eye"></i> View';
-                echo '          </a>';
+                  echo '          <a href="view_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="view-action">';
+                  echo '              <i class="fas fa-eye"></i> View';
+                  echo '          </a>';
 
-                echo '          <a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="edit-action">';
-                echo '              <i class="fas fa-edit"></i> Edit';
-                echo '          </a>';
+                  echo '          <a href="edit_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="edit-action">';
+                  echo '              <i class="fas fa-edit"></i> Edit';
+                  echo '          </a>';
 
-                echo '          <a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="export-action">';
-                echo '              <i class="fas fa-download"></i> Export';
-                echo '          </a>';
+                  echo '          <a href="export_rrsp.php?rrsp_id=' . (int)$row['rrsp_id'] . '" class="export-action">';
+                  echo '              <i class="fas fa-download"></i> Export';
+                  echo '          </a>';
 
-                echo '          <a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" class="delete-action" onclick="return confirm(\'Delete this RRSP form?\')">';
-                echo '              <i class="fas fa-trash"></i> Delete';
-                echo '          </a>';
+                  echo '          <a href="rrsp.php?delete_rrsp_id=' . (int)$row['rrsp_id'] . '" class="delete-action" onclick="return confirm(\'Delete this RRSP form?\')">';
+                  echo '              <i class="fas fa-trash"></i> Delete';
+                  echo '          </a>';
 
-                echo '      </div>';
-                echo '  </div>';
-                echo '</td>';
-            echo '</tr>';
-            }
-        } else {
-            echo '<tr><td colspan="7"><i class="fas fa-inbox"></i> No RRSP forms found.</td></tr>';
-        }
-        ?>
-        </tbody>
-    </table>
+                  echo '      </div>';
+                  echo '  </div>';
+                  echo '</td>';
+              echo '</tr>';
+              }
+          } else {
+              echo '<tr><td colspan="7"><i class="fas fa-inbox"></i> No RRSP forms found.</td></tr>';
+          }
+          ?>
+          </tbody>
+      </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

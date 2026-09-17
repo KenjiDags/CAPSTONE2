@@ -122,14 +122,6 @@ switch ($sort_by) {
             font-size: 15px;
         }
 
-        .clickable-row {
-            cursor: pointer;
-        }
-
-        .clickable-row:hover {
-            background: #f8fafc;
-        }
-
         .actions-menu {
             position: relative;
             display: inline-block;
@@ -249,14 +241,28 @@ switch ($sort_by) {
                     echo '<td>' . date('M d, Y', strtotime($row['date_requested'])) . '</td>';
                     echo '<td>' . htmlspecialchars($row['requested_by']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['purpose']) . '</td>';
-                    echo '<td>
+                    echo '<td class="actions-cell">
                         <div class="actions-menu">
-                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+
                             <div class="actions-menu-list">
-                                <a href="view_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-eye"></i> View</a>
-                                <a href="add_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-edit"></i> Edit</a>
-                                <a href="export_ris.php?ris_id=' . $row["ris_id"] . '"><i class="fas fa-download"></i> Export</a>
-                                <a class="delete-action" href="ris.php?delete_ris_id=' . $row["ris_id"] . '" onclick="return confirm(\'Are you sure you want to delete this RIS?\')"><i class="fas fa-trash"></i> Delete</a>
+                                <a href="view_ris.php?ris_id=' . $row['ris_id'] . '">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+
+                                <a href="edit_ris.php?ris_id=' . $row['ris_id'] . '">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+
+                                <a href="export_ris.php?ris_id=' . $row['ris_id'] . '">
+                                    <i class="fas fa-download"></i> Export
+                                </a>
+
+                                <a class="delete-action" href="ris.php?delete_ris_id=' . $row['ris_id'] . '" onclick="return confirm(\'Are you sure you want to delete this RIS?\')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
                             </div>
                         </div>
                     </td>';

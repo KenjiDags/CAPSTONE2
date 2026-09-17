@@ -121,8 +121,6 @@ $result = $conn->query($query);
     .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
     .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
-    .clickable-row { cursor: pointer; }
-    .clickable-row:hover { background: #f8fafc; }
 </style>
 </head>
 <body class="iirusp-page">
@@ -156,73 +154,75 @@ $result = $conn->query($query);
       </a>
     </form>
 
-    <table>
-            <thead>
-                <tr>
-                <th><i class="fas fa-hashtag"></i> IIRUSP No.</th>
-                <th><i class="fas fa-calendar"></i> As At</th>
-                <th><i class="fas fa-building"></i> Entity Name</th>
-                <th><i class="fas fa-building"></i> Fund Cluster</th>
-                <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php if ($result && $result->num_rows > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                <tr>
-                        <td><strong><?= htmlspecialchars($row['iirusp_no']) ?></strong></td>
-                        <td><?= date('M d, Y', strtotime($row['as_at'])) ?></td>
-                        <td><?= htmlspecialchars($row['entity_name']) ?></td>
-                        <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
-                        <td class="currency">₱ <?= number_format($row['total_amount'] ?? 0, 2) ?></td>
-                        <td class="actions-cell">
-                            <div class="actions-menu">
+    <div class="table-container">
+      <table>
+              <thead>
+                  <tr>
+                  <th><i class="fas fa-hashtag"></i> IIRUSP No.</th>
+                  <th><i class="fas fa-calendar"></i> As At</th>
+                  <th><i class="fas fa-building"></i> Entity Name</th>
+                  <th><i class="fas fa-building"></i> Fund Cluster</th>
+                  <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                  <th><i class="fas fa-cogs"></i> Actions</th>
+                  </tr>
+              </thead>
+              <tbody>
+              <?php if ($result && $result->num_rows > 0): ?>
+                  <?php while ($row = $result->fetch_assoc()): ?>
+                  <tr>
+                          <td><strong><?= htmlspecialchars($row['iirusp_no']) ?></strong></td>
+                          <td><?= date('M d, Y', strtotime($row['as_at'])) ?></td>
+                          <td><?= htmlspecialchars($row['entity_name']) ?></td>
+                          <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
+                          <td class="currency">₱ <?= number_format($row['total_amount'] ?? 0, 2) ?></td>
+                          <td class="actions-cell">
+                              <div class="actions-menu">
 
-                                <button type="button"
-                                        class="actions-menu-toggle"
-                                        aria-label="Open actions"
-                                        aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
+                                  <button type="button"
+                                          class="actions-menu-toggle"
+                                          aria-label="Open actions"
+                                          aria-expanded="false">
+                                      <i class="fas fa-ellipsis-v"></i>
+                                  </button>
 
-                                <div class="actions-menu-list">
+                                  <div class="actions-menu-list">
 
-                                    <a href="view_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
-                                      class="view-action">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
+                                      <a href="view_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="view-action">
+                                          <i class="fas fa-eye"></i> View
+                                      </a>
 
-                                    <a href="edit_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
-                                      class="edit-action">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                      <a href="edit_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="edit-action">
+                                          <i class="fas fa-edit"></i> Edit
+                                      </a>
 
-                                    <a href="export_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
-                                      class="export-action">
-                                        <i class="fas fa-download"></i> Export
-                                    </a>
+                                      <a href="export_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="export-action">
+                                          <i class="fas fa-download"></i> Export
+                                      </a>
 
-                                    <a href="iirusp.php?delete_iirusp_id=<?= (int)$row['iirusp_id'] ?>"
-                                      class="delete-action"
-                                      onclick="return confirm('Are you sure you want to delete this IIRUSP?')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </a>
+                                      <a href="iirusp.php?delete_iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="delete-action"
+                                        onclick="return confirm('Are you sure you want to delete this IIRUSP?')">
+                                          <i class="fas fa-trash"></i> Delete
+                                      </a>
 
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6">
-                        <i class="fas fa-inbox"></i> No IIRUSP records found.
-                    </td>
-                </tr>
-            <?php endif; ?>
-            </tbody>
-    </table>
+                                  </div>
+                              </div>
+                          </td>
+                      </tr>
+                  <?php endwhile; ?>
+              <?php else: ?>
+                  <tr>
+                      <td colspan="6">
+                          <i class="fas fa-inbox"></i> No IIRUSP records found.
+                      </td>
+                  </tr>
+              <?php endif; ?>
+              </tbody>
+      </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

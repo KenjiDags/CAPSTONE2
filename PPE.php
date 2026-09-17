@@ -145,14 +145,6 @@ try {
         table tbody td:nth-child(8) {
             color: #0891b2;
         }
-
-        .clickable-row {
-            cursor: pointer;
-        }
-
-        .clickable-row:hover {
-            background: #f8fafc;
-        }
     </style>
 </head>
 <body>
@@ -199,81 +191,83 @@ try {
         <div class="alert alert-success">Item added successfully.</div>
     <?php endif; ?>
 
-    <table>
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> PPE No.</th>
-                <th><i class="fas fa-box"></i> Item Name</th>
-                <th><i class="fas fa-align-left"></i> Description</th>
-                <th><i class="fas fa-list-ol"></i> Quantity</th>
-                <th><i class="fas fa-ruler"></i> Unit</th>
-                <th><i class="fas fa-calendar"></i> Date Acquired</th>
-                <th><i class="fas fa-user-tie"></i> Officer in charge</th>
-                <th><i class="fas fa-info-circle"></i> Status</th>
-                <th><i class="fas fa-check-circle"></i> Condition</th>
-                <th><i class="fas fa-dollar-sign"></i> Amount</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($items)): ?>
-                <tr><td colspan="11">
-                    <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
-                    <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
-                </td></tr>
-            <?php else: ?>
-                <?php foreach ($items as $item): ?>
+    <div class="table-container">    
+        <table>
+            <thead>
                 <tr>
-                    <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
-                    <td><?= htmlspecialchars($item['item_name']); ?></td>
-                    <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
-                    <td><?= number_format($item['quantity']); ?></td>
-                    <td><?= htmlspecialchars($item['unit']); ?></td>
-                    <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A'); ?></td>
-                    <td><?= htmlspecialchars($item['custodian']); ?></td>
-                    <td><?= htmlspecialchars($item['status']); ?></td>
-                    <td><?= htmlspecialchars($item['condition']); ?></td>
-                    <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
-                    <td class="actions-cell">
-                        <div class="actions-menu">
-                            <button type="button"
-                                    class="actions-menu-toggle"
-                                    aria-label="Open actions"
-                                    aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-
-                            <div class="actions-menu-list">
-
-                                <a href="view_ppe_items.php?id=<?= (int)$item['id']; ?>" class="view-action">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-
-                                <a href="edit_ppe.php?id=<?= (int)$item['id']; ?>" class="edit-action">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-
-                                <a href="#"
-                                class="delete-action"
-                                onclick="event.preventDefault(); document.getElementById('delete-form-<?= (int)$item['id']; ?>').submit();">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
-
-                            </div>
-                        </div>
-
-                        <form id="delete-form-<?= (int)$item['id']; ?>"
-                            method="POST"
-                            style="display: none;"
-                            onsubmit="return confirm('Delete this item permanently?');">
-                            <input type="hidden" name="delete_id" value="<?= (int)$item['id']; ?>">
-                        </form>
-                    </td>
+                    <th><i class="fas fa-hashtag"></i> PPE No.</th>
+                    <th><i class="fas fa-box"></i> Item Name</th>
+                    <th><i class="fas fa-align-left"></i> Description</th>
+                    <th><i class="fas fa-list-ol"></i> Quantity</th>
+                    <th><i class="fas fa-ruler"></i> Unit</th>
+                    <th><i class="fas fa-calendar"></i> Date Acquired</th>
+                    <th><i class="fas fa-user-tie"></i> Officer in charge</th>
+                    <th><i class="fas fa-info-circle"></i> Status</th>
+                    <th><i class="fas fa-check-circle"></i> Condition</th>
+                    <th><i class="fas fa-dollar-sign"></i> Amount</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
                 </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php if (empty($items)): ?>
+                    <tr><td colspan="11">
+                        <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
+                        <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
+                    </td></tr>
+                <?php else: ?>
+                    <?php foreach ($items as $item): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
+                        <td><?= htmlspecialchars($item['item_name']); ?></td>
+                        <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
+                        <td><?= number_format($item['quantity']); ?></td>
+                        <td><?= htmlspecialchars($item['unit']); ?></td>
+                        <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A'); ?></td>
+                        <td><?= htmlspecialchars($item['custodian']); ?></td>
+                        <td><?= htmlspecialchars($item['status']); ?></td>
+                        <td><?= htmlspecialchars($item['condition']); ?></td>
+                        <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
+                        <td class="actions-cell">
+                            <div class="actions-menu">
+                                <button type="button"
+                                        class="actions-menu-toggle"
+                                        aria-label="Open actions"
+                                        aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+
+                                <div class="actions-menu-list">
+
+                                    <a href="view_ppe_items.php?id=<?= (int)$item['id']; ?>" class="view-action">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+
+                                    <a href="edit_ppe.php?id=<?= (int)$item['id']; ?>" class="edit-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+
+                                    <a href="#"
+                                    class="delete-action"
+                                    onclick="event.preventDefault(); document.getElementById('delete-form-<?= (int)$item['id']; ?>').submit();">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+
+                                </div>
+                            </div>
+
+                            <form id="delete-form-<?= (int)$item['id']; ?>"
+                                method="POST"
+                                style="display: none;"
+                                onsubmit="return confirm('Delete this item permanently?');">
+                                <input type="hidden" name="delete_id" value="<?= (int)$item['id']; ?>">
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

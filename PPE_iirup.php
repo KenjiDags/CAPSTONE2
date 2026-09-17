@@ -143,79 +143,81 @@ $result = $conn->query($query);
       </a>
     </form>
 
-    <table>
-            <thead>
-                <tr>
-                <th>Date Reported</th>
-                <th>Particulars</th>
-                <th>PPE Number</th>
-                <th>Quantity</th>
-                <th>Unit Cost</th>
-                <th>Depreciation</th>
-                <th>Impairment Loss</th>
-                <th>Carrying Amount</th>
-                <th>Remarks</th>
-                <th>Total Amount</th>
-                <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php if ($result && $result->num_rows > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                <tr>
-                        <td><?= date('M d, Y', strtotime($row['date_reported'])) ?></td>
-                        <td><?= htmlspecialchars($row['particulars']) ?></td>
-                        <td><?= htmlspecialchars($row['PPE_no']) ?></td>
-                        <td><?= htmlspecialchars($row['quantity']) ?></td>
-                        <td><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
-                        <td><?= number_format($row['depreciation'] ?? 0, 2) ?></td>
-                        <td><?= number_format($row['impairment_loss'] ?? 0, 2) ?></td>
-                        <td><?= number_format($row['carrying_amount'] ?? 0, 2) ?></td>
-                        <td><?= htmlspecialchars($row['remarks']) ?></td>
-                        <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
-                        <td class="actions-cell">
-                            <div class="actions-menu">
-                                <button type="button"
-                                        class="actions-menu-toggle"
-                                        aria-label="Open actions"
-                                        aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
+    <div class="table-container">
+        <table>
+                <thead>
+                    <tr>
+                    <th>Date Reported</th>
+                    <th>Particulars</th>
+                    <th>PPE Number</th>
+                    <th>Quantity</th>
+                    <th>Unit Cost</th>
+                    <th>Depreciation</th>
+                    <th>Impairment Loss</th>
+                    <th>Carrying Amount</th>
+                    <th>Remarks</th>
+                    <th>Total Amount</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ($result && $result->num_rows > 0): ?>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                            <td><?= date('M d, Y', strtotime($row['date_reported'])) ?></td>
+                            <td><?= htmlspecialchars($row['particulars']) ?></td>
+                            <td><?= htmlspecialchars($row['PPE_no']) ?></td>
+                            <td><?= htmlspecialchars($row['quantity']) ?></td>
+                            <td><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
+                            <td><?= number_format($row['depreciation'] ?? 0, 2) ?></td>
+                            <td><?= number_format($row['impairment_loss'] ?? 0, 2) ?></td>
+                            <td><?= number_format($row['carrying_amount'] ?? 0, 2) ?></td>
+                            <td><?= htmlspecialchars($row['remarks']) ?></td>
+                            <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
+                            <td class="actions-cell">
+                                <div class="actions-menu">
+                                    <button type="button"
+                                            class="actions-menu-toggle"
+                                            aria-label="Open actions"
+                                            aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
 
-                                <div class="actions-menu-list">
+                                    <div class="actions-menu-list">
 
-                                    <a href="view_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="view-action">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
+                                        <a href="view_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="view-action">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
 
-                                    <a href="edit_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="edit-action">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                        <a href="edit_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="edit-action">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
 
-                                    <a href="PPE_iirup_export.php?id=<?= (int)$row['id'] ?>" class="export-action">
-                                        <i class="fas fa-download"></i> Export
-                                    </a>
+                                        <a href="PPE_iirup_export.php?id=<?= (int)$row['id'] ?>" class="export-action">
+                                            <i class="fas fa-download"></i> Export
+                                        </a>
 
-                                    <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= (int)$row['id'] ?>"
-                                      class="delete-action"
-                                      onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </a>
+                                        <a href="PPE_iirup.php?delete_ppe_iirup_id=<?= (int)$row['id'] ?>"
+                                        class="delete-action"
+                                        onclick="return confirm('Are you sure you want to delete this PPE IIRUP?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
 
+                                    </div>
                                 </div>
-                            </div>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="12">
+                            <i class="fas fa-inbox"></i> No PPE IIRUP records found.
                         </td>
                     </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="12">
-                        <i class="fas fa-inbox"></i> No PPE IIRUP records found.
-                    </td>
-                </tr>
-            <?php endif; ?>
-            </tbody>
-    </table>
+                <?php endif; ?>
+                </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

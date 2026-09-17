@@ -88,14 +88,6 @@ if ($search !== '') {
             font-weight: 900;
             color: #3b82f6;
         }
-
-        .clickable-row {
-            cursor: pointer;
-        }
-
-        .clickable-row:hover {
-            background: #f8fafc;
-        }
     </style>
 </head>
 <body>
@@ -128,66 +120,88 @@ if ($search !== '') {
                  <i class="fas fa-plus"></i> Add ICS Form
             </a>
         </form>
-    
-    <table>
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> ICS No.</th>
-                <th><i class="fas fa-calendar"></i> Date Issued</th>
-                <th><i class="fas fa-user"></i> Received By</th>
-                <th><i class="fas fa-building"></i> Fund Cluster</th>
-                <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            $query = "
-                SELECT * FROM (
-                    SELECT 
-                        i.*,
-                        (
-                            SELECT COALESCE(SUM(ii2.quantity * COALESCE(sep.amount, ii2.unit_cost)), 0)
-                            FROM ics_items ii2
-                            LEFT JOIN semi_expendable_property sep 
-                              ON sep.semi_expendable_property_no = ii2.stock_number COLLATE utf8mb4_general_ci
-                            WHERE ii2.ics_id = i.ics_id AND ii2.quantity > 0
-                        ) AS total_amount
-                    FROM ics i
-                ) t
-                $whereClause
-                $order_clause";
-            $result = $conn->query($query);
-            
-            if ($result && $result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
-                    echo '<td><strong>' . htmlspecialchars(formatICSNo($row['ics_no'])) . '</strong></td>';
-                    echo '<td>' . date('M d, Y', strtotime($row['date_issued'])) . '</td>';
-                    echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
-                    echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
-                    echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
-                    echo '<td class=>
-                        <div class="actions-menu">
-                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
-                            <div class="actions-menu-list">
-                                <a href="view_ics.php?ics_id=' . $row["ics_id"] . '"><i class="fas fa-eye"></i> View</a>
-                                <a href="edit_ics.php?ics_id=' . $row["ics_id"] . '"><i class="fas fa-edit"></i> Edit</a>
-                                <a href="export_ics.php?ics_id=' . $row["ics_id"] . '"><i class="fas fa-download"></i> Export</a>
-                                <a href="ics.php?delete_ics_id=' . $row["ics_id"] . '" class="delete-action" onclick="return confirm(\'Are you sure you want to delete this ICS?\')"><i class="fas fa-trash"></i> Delete</a>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> ICS No.</th>
+                    <th><i class="fas fa-calendar"></i> Date Issued</th>
+                    <th><i class="fas fa-user"></i> Received By</th>
+                    <th><i class="fas fa-building"></i> Fund Cluster</th>
+                    <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $query = "
+                    SELECT * FROM (
+                        SELECT 
+                            i.*,
+                            (
+                                SELECT COALESCE(SUM(ii2.quantity * COALESCE(sep.amount, ii2.unit_cost)), 0)
+                                FROM ics_items ii2
+                                LEFT JOIN semi_expendable_property sep 
+                                ON sep.semi_expendable_property_no = ii2.stock_number COLLATE utf8mb4_general_ci
+                                WHERE ii2.ics_id = i.ics_id AND ii2.quantity > 0
+                            ) AS total_amount
+                        FROM ics i
+                    ) t
+                    $whereClause
+                    $order_clause";
+                $result = $conn->query($query);
+                
+                if ($result && $result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td><strong>' . htmlspecialchars(formatICSNo($row['ics_no'])) . '</strong></td>';
+                        echo '<td>' . date('M d, Y', strtotime($row['date_issued'])) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
+                        echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
+                        echo '<td class="actions-cell">';
+                        ?>
+                            <div class="actions-menu">
+                                <button type="button"
+                                        class="actions-menu-toggle"
+                                        aria-label="Open actions"
+                                        aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+
+                                <div class="actions-menu-list">
+                                    <a href="view_ics.php?ics_id=<?= $row['ics_id'] ?>">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+
+                                    <a href="edit_ics.php?ics_id=<?= $row['ics_id'] ?>">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+
+                                    <a href="export_ics.php?ics_id=<?= $row['ics_id'] ?>">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
+
+                                    <a href="ics.php?delete_ics_id=<?= $row['ics_id'] ?>"
+                                    class="delete-action"
+                                    onclick="return confirm('Are you sure you want to delete this ICS?');">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    </td>';
-                    echo '</tr>';
+                        <?php
+                        echo '</td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="6">
+                            <i class="fas fa-inbox"></i> No ICS records found.
+                        </td></tr>';
                 }
-            } else {
-                echo '<tr><td colspan="6">
-                        <i class="fas fa-inbox"></i> No ICS records found.
-                      </td></tr>';
-            }
-            ?>
-        </tbody>
-    </table>
+                ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

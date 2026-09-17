@@ -239,83 +239,84 @@ if ($search !== '') {
                 <i class="fas fa-plus"></i> Add PTR Form
             </a>
         </form>
-    
-    <table>
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> PTR No.</th>
-                <th><i class="fas fa-calendar"></i> Transfer Date</th>
-                <th><i class="fas fa-user"></i> From Officer</th>
-                <th><i class="fas fa-user"></i> To Officer</th>
-                <th><i class="fas fa-exchange-alt"></i> Transfer Type</th>
-                <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            $query = "
-                SELECT 
-                    p.*,
-                    (
-                        SELECT COALESCE(SUM(ppe.amount), 0)
-                        FROM ppe_ptr_items pi
-                        LEFT JOIN ppe_property ppe ON ppe.id = pi.ppe_id
-                        WHERE pi.ptr_id = p.ptr_id
-                    ) AS total_amount
-                FROM ppe_ptr p
-                $whereClause
-                $order_clause";
-            $result = $conn->query($query);
-            
-            if ($result && $result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
-                    echo '<td><strong>' . htmlspecialchars($row['ptr_no']) . '</strong></td>';
-                    echo '<td>' . date('M d, Y', strtotime($row['transfer_date'])) . '</td>';
-                    echo '<td>' . htmlspecialchars($row['from_officer']) . '</td>';
-                    echo '<td>' . htmlspecialchars($row['to_officer']) . '</td>';
-                    echo '<td>' . htmlspecialchars($row['transfer_type']) . '</td>';
-                    echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
-                    echo '<td class="actions-cell">
-                        <div class="actions-menu">
-                            <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> PTR No.</th>
+                    <th><i class="fas fa-calendar"></i> Transfer Date</th>
+                    <th><i class="fas fa-user"></i> From Officer</th>
+                    <th><i class="fas fa-user"></i> To Officer</th>
+                    <th><i class="fas fa-exchange-alt"></i> Transfer Type</th>
+                    <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $query = "
+                    SELECT 
+                        p.*,
+                        (
+                            SELECT COALESCE(SUM(ppe.amount), 0)
+                            FROM ppe_ptr_items pi
+                            LEFT JOIN ppe_property ppe ON ppe.id = pi.ppe_id
+                            WHERE pi.ptr_id = p.ptr_id
+                        ) AS total_amount
+                    FROM ppe_ptr p
+                    $whereClause
+                    $order_clause";
+                $result = $conn->query($query);
+                
+                if ($result && $result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td><strong>' . htmlspecialchars($row['ptr_no']) . '</strong></td>';
+                        echo '<td>' . date('M d, Y', strtotime($row['transfer_date'])) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['from_officer']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['to_officer']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['transfer_type']) . '</td>';
+                        echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
+                        echo '<td class="actions-cell">
+                            <div class="actions-menu">
+                                <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
 
-                            <div class="actions-menu-list">
-                                <a href="view_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="view-action">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
+                                <div class="actions-menu-list">
+                                    <a href="view_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="view-action">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
 
-                                <a href="edit_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="edit-action">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
+                                    <a href="edit_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="edit-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
 
-                                <a href="export_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="export-action">
-                                    <i class="fas fa-download"></i> Export
-                                </a>
+                                    <a href="export_ptr.php?ptr_id=' . (int)$row["ptr_id"] . '" class="export-action">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
 
-                                <a href="PPE_PTR.php?delete_ptr_id=' . (int)$row["ptr_id"] . '"
-                                class="delete-action"
-                                onclick="return confirm(\'Are you sure you want to delete this PTR?\')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
+                                    <a href="PPE_PTR.php?delete_ptr_id=' . (int)$row["ptr_id"] . '"
+                                    class="delete-action"
+                                    onclick="return confirm(\'Are you sure you want to delete this PTR?\')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    </td>';
-                    echo '</tr>';
+                        </td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="7" style="text-align: center;">
+                            <i class="fas fa-inbox"></i>
+                            <div style="font-weight: 600; margin-bottom: 8px;">No PTR Records Found</div>
+                            <div style="font-size: 14px;">Start by creating a new Property Transfer Report</div>
+                        </td></tr>';
                 }
-            } else {
-                echo '<tr><td colspan="7" style="text-align: center;">
-                        <i class="fas fa-inbox"></i>
-                        <div style="font-weight: 600; margin-bottom: 8px;">No PTR Records Found</div>
-                        <div style="font-size: 14px;">Start by creating a new Property Transfer Report</div>
-                      </td></tr>';
-            }
-            ?>
-        </tbody>
-    </table>
+                ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

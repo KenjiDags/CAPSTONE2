@@ -161,81 +161,83 @@ if ($search !== '') {
       </div>
     </form>
     
-    <table>
-        <thead>
-            <tr>
-                <th><i class="fas fa-hashtag"></i> PAR No.</th>
-                <th><i class="fas fa-calendar"></i> Date Acquired</th>
-                <th><i class="fas fa-barcode"></i> Property Number</th>
-                <th><i class="fas fa-user"></i> Received By</th>
-                <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            $query = "
-                SELECT 
-                    p.*,
-                    (
-                        SELECT COALESCE(SUM(ppe.amount), 0)
-                        FROM ppe_par_items pi
-                        LEFT JOIN ppe_property ppe ON ppe.id = pi.ppe_id
-                        WHERE pi.par_id = p.par_id
-                    ) AS total_amount
-                FROM ppe_par p
-                $whereClause
-                $order_clause";
-            $result = $conn->query($query);
-            
-            if ($result && $result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo '<tr>';
-                    echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
-                    echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
-                    echo '<td>' . htmlspecialchars($row['property_number'] ?? 'N/A') . '</td>';
-                    echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
-                    echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
-                    echo '<td class="actions-cell">
-                        <div class="actions-menu">
-                            <button type="button"
-                                    class="actions-menu-toggle"
-                                    aria-label="Open actions"
-                                    aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> PAR No.</th>
+                    <th><i class="fas fa-calendar"></i> Date Acquired</th>
+                    <th><i class="fas fa-barcode"></i> Property Number</th>
+                    <th><i class="fas fa-user"></i> Received By</th>
+                    <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $query = "
+                    SELECT 
+                        p.*,
+                        (
+                            SELECT COALESCE(SUM(ppe.amount), 0)
+                            FROM ppe_par_items pi
+                            LEFT JOIN ppe_property ppe ON ppe.id = pi.ppe_id
+                            WHERE pi.par_id = p.par_id
+                        ) AS total_amount
+                    FROM ppe_par p
+                    $whereClause
+                    $order_clause";
+                $result = $conn->query($query);
+                
+                if ($result && $result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
+                        echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
+                        echo '<td>' . htmlspecialchars($row['property_number'] ?? 'N/A') . '</td>';
+                        echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
+                        echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                        echo '<td class="actions-cell">
+                            <div class="actions-menu">
+                                <button type="button"
+                                        class="actions-menu-toggle"
+                                        aria-label="Open actions"
+                                        aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
 
-                            <div class="actions-menu-list">
+                                <div class="actions-menu-list">
 
-                                <a href="view_par.php?id=' . (int)$row["par_id"] . '" class="view-action">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
+                                    <a href="view_par.php?id=' . (int)$row["par_id"] . '" class="view-action">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
 
-                                <a href="export_par.php?id=' . (int)$row["par_id"] . '" class="export-action">
-                                    <i class="fas fa-download"></i> Export
-                                </a>
+                                    <a href="export_par.php?id=' . (int)$row["par_id"] . '" class="export-action">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
 
-                                <a href="PPE_PAR.php?delete_par_id=' . (int)$row["par_id"] . '"
-                                class="delete-action"
-                                onclick="return confirm(\'Are you sure you want to delete this PAR?\')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
+                                    <a href="PPE_PAR.php?delete_par_id=' . (int)$row["par_id"] . '"
+                                    class="delete-action"
+                                    onclick="return confirm(\'Are you sure you want to delete this PAR?\')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
 
+                                </div>
                             </div>
-                        </div>
-                    </td>';
-                    echo '</tr>';
+                        </td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="6" style="text-align: center;">
+                            <i class="fas fa-inbox"></i>
+                            <div style="font-weight: 600; margin-bottom: 8px;">No PAR Records Found</div>
+                            <div style="font-size: 14px;">No Property Acknowledgement Receipts available</div>
+                        </td></tr>';
                 }
-            } else {
-                echo '<tr><td colspan="6" style="text-align: center;">
-                        <i class="fas fa-inbox"></i>
-                        <div style="font-weight: 600; margin-bottom: 8px;">No PAR Records Found</div>
-                        <div style="font-size: 14px;">No Property Acknowledgement Receipts available</div>
-                      </td></tr>';
-            }
-            ?>
-        </tbody>
-    </table>
+                ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="js/actions_menu.js"></script>

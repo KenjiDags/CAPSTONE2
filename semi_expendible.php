@@ -364,10 +364,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 
         .table-container tbody tr,
         .table-container tbody td,
-        body.dark-mode .table-container tbody tr,
-        body.dark-mode .table-container tbody td {
-            border-bottom: none !important;
-        }
+
     </style>
 </head>
 <body>

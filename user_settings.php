@@ -6,18 +6,36 @@ require 'config.php';
 $user_id = $_SESSION['user_id'];
 $current_username = $_SESSION['username'];
 
-// Fetch current full name and user_position from database
-$stmt = $conn->prepare("SELECT user_full_name, user_position FROM users WHERE user_id = ? LIMIT 1");
+// Fetch current user information
+$stmt = $conn->prepare("
+    SELECT 
+        u.user_full_name,
+        u.username,
+        o.officer_position
+    FROM users u
+    LEFT JOIN officers o 
+        ON TRIM(LOWER(u.user_full_name)) COLLATE utf8mb4_unicode_ci
+        = TRIM(LOWER(o.officer_name)) COLLATE utf8mb4_unicode_ci
+    WHERE u.user_id = ?
+    LIMIT 1
+");
+
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
 $current_full_name = '';
 $current_user_position = '';
+$current_username = $_SESSION['username'] ?? '';
+
 if ($result && $result->num_rows > 0) {
     $user_data = $result->fetch_assoc();
+
     $current_full_name = $user_data['user_full_name'] ?? '';
-    $current_user_position = $user_data['user_position'] ?? '';
+    $current_username = $user_data['username'] ?? $current_username;
+    $current_user_position = $user_data['officer_position'] ?? '';
 }
+
 $stmt->close();
 // Handle user_position update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user_position'])) {

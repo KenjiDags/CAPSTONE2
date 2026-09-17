@@ -45,13 +45,6 @@ if (isset($_GET['delete_id'])) {
       margin-right: 12px;
     }
     .export-section { display:flex; gap:10px; }
-    .table-wrapper { 
-      overflow-x:auto;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 0;
-    }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .currency { text-align: right; }
@@ -101,14 +94,7 @@ if (isset($_GET['delete_id'])) {
     .pill-view { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
     .pill-export { background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }
     .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
-    .description-col { width: 280px; }
-    .actions-col { width: 300px; white-space: nowrap; }
-    table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
     .action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
-    .amount-col { white-space: nowrap; min-width: 100px; }
-    .clickable-row { cursor: pointer; }
-    .clickable-row:hover { background: #f8fafc; }
-    .pc-semi-table tbody td { text-align: left !important; }
   </style>
 </head>
 <body>
@@ -155,8 +141,8 @@ if (isset($_GET['delete_id'])) {
       </a>
     </form>
 
-    <div class="table-wrapper">
-      <table class="pc-semi-table">
+    <div class="table-container">
+      <table>
         <thead>
           <tr>
             <th>Description</th>
@@ -166,8 +152,8 @@ if (isset($_GET['delete_id'])) {
             <th>Receipt Qty.</th>
             <th>Issue Qty.</th>
             <th>Balance Qty.</th>
-            <th class="amount-col">Amount</th>
-            <th class="actions-col">Actions</th>
+            <th>Amount</th>
+            <th><i class="fas fa-cogs"></i>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -219,7 +205,7 @@ if (isset($_GET['delete_id'])) {
                 echo '<td class="text-center">' . ($issueQty ?: '') . '</td>';
                 echo '<td class="text-center">' . ($balanceQty ?: '') . '</td>';
                 echo '<td class="currency amount-col">' . ($amount ? ('₱ ' . number_format($amount, 2)) : '') . '</td>';
-                echo '<td class="text-center actions-col">';
+                echo '<td class="actions-cell">';
                 echo '<div class="actions-menu">';
                 echo '<button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>';
                 echo '<div class="actions-menu-list">';

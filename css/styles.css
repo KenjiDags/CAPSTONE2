@@ -86,7 +86,6 @@ body.dark-mode table thead th {
 body.dark-mode table tbody td {
     background-color: #1e293b !important;
     color: #e2e8f0 !important;
-    border-bottom-color: #334155 !important;
 }
 
 body.dark-mode table tbody td strong {
@@ -110,7 +109,7 @@ body.dark-mode #inventoryTable tbody td {
 }
 
 body.dark-mode #inventoryTable tbody td.actions-cell {
-    border-bottom: 0 !important;
+    border-bottom: 1px solid #334155 !important;
 }
 
 body.dark-mode #inventoryTable tbody tr:hover,
@@ -3048,4 +3047,21 @@ h3 {
     padding: 40px;
 }
 
+table tbody td.actions-cell {
+    display: table-cell !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    vertical-align: middle !important;
+    text-align: left !important;
 
+    /* Same border as normal table cells */
+    border-bottom: 1px solid #e8f0fe !important;
+}
+
+/* Dark mode - same border as other cells */
+body.dark-mode table tbody td.actions-cell {
+    border-bottom: 1px solid #334155 !important;
+}
