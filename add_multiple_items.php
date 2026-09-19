@@ -33,16 +33,41 @@ $items = $conn->query("SELECT i.*,
     <link href="css/PPE.css?v=<?= time() ?>" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Table styling specific to restock page */
-        .form-container {
-            max-width: 1600px;
+        /* An explicit shell keeps navigation and the scrollable page side by side. */
+        body.restock-page {
+            margin: 0 !important;
+            width: 100%;
         }
-        .table-container {
+        .restock-page .container {
+            flex: 1 1 0%;
+            width: 0;
+            min-width: 0;
+            padding: clamp(12px, 2vw, 28px);
+        }
+        .restock-page .form-container {
+            width: 100%;
+            max-width: none;
+            min-width: 0;
+            padding: clamp(12px, 2vw, 30px);
+        }
+        /* Keep horizontal scrolling inside the table on narrow screens. */
+        .restock-page .form-container,
+        .restock-page form,
+        .restock-page .table-container {
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .restock-page .table-container {
+            width: 100%;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             overflow-x: auto;
             margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
         }
+        .restock-page .filter-container > * { min-width: 0; max-width: 100%; }
+        .restock-page .page-header h1 { flex-wrap: wrap; overflow-wrap: anywhere; }
         table {
             width: 100%;
             min-width: 1250px;
@@ -97,6 +122,9 @@ $items = $conn->query("SELECT i.*,
         .hidden-row {
             display: none;
         }
+        .restock-page .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        #restockSearch { flex: 1 1 280px; min-width: 0; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        #restockSearch:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
         body.dark-mode {
             background: var(--background-gradient) !important;
             color: #e2e8f0;
@@ -124,6 +152,7 @@ $items = $conn->query("SELECT i.*,
             background-color: #334155;
         }
         body.dark-mode input[type="number"],
+        body.dark-mode #restockSearch,
         body.dark-mode .filter-dropdown {
             background-color: #0f172a;
             border-color: #475569;
@@ -131,15 +160,15 @@ $items = $conn->query("SELECT i.*,
         }
     </style>
 </head>
-<body>
+<body class="restock-page">
+<div class="app-layout restock-layout">
+<?php require 'sidebar.php'; ?>
 
-<?php include 'sidebar.php'; ?>
-
-<div class="container">
+<main class="container app-main">
     <div class="form-container">
         <header class="page-header">
             <h1>
-                <i class="fas fa-boxes"></i>
+                <i class="fas fa-boxes" aria-hidden="true"></i>
                 Restock Inventory
             </h1>
         </header>
@@ -153,13 +182,16 @@ $items = $conn->query("SELECT i.*,
                 <option value="all">Show All Items</option>
                 <option value="low-stock">Show Low-Stock Items Only</option>
             </select>
+            <label for="restockSearch">Search items:</label>
+            <input id="restockSearch" type="search" placeholder="Stock number, item name, or description..." autocomplete="off" aria-controls="restockTable">
         </div>
+        <p id="restockNoResults" role="status" hidden>No items match your search or stock filter.</p>
 
         <!-- FORM NOW SUBMITS TO THIS SAME PAGE -->
         <form method="POST">
 
-            <div class="table-container">
-                <table>
+            <div class="table-container" tabindex="0" role="region" aria-label="Restock inventory table, scroll horizontally to see all columns">
+                <table id="restockTable">
                     <thead>
                         <tr>
                             <th><i class="fas fa-barcode"></i> Stock #</th>
@@ -167,7 +199,6 @@ $items = $conn->query("SELECT i.*,
                             <th><i class="fas fa-align-left"></i> Description</th>
                             <th><i class="fas fa-ruler"></i> Unit</th>
                             <th><i class="fas fa-cubes"></i> Current Qty</th>
-                            <th><i class="fas fa-file-invoice"></i> IAR</th>
                             <th style="text-align:center;"><i class="fas fa-plus-circle"></i> Qty to Add</th>
                             <th><i class="fas fa-dollar-sign"></i> Unit Cost</th>
                         </tr>
@@ -175,14 +206,12 @@ $items = $conn->query("SELECT i.*,
 
                     <tbody>
                         <?php while ($row = $items->fetch_assoc()): ?>
-                            <tr data-quantity="<?= $row['quantity_on_hand'] ?>" data-reorder-point="<?= $row['reorder_point'] ?>">
+                            <tr data-item-id="<?= (int)$row['item_id'] ?>" data-quantity="<?= $row['quantity_on_hand'] ?>" data-reorder-point="<?= $row['reorder_point'] ?>">
                                 <td><strong><?= htmlspecialchars($row['stock_number']) ?></strong></td>
                                 <td><?= htmlspecialchars($row['item_name']) ?></td>
                                 <td><?= htmlspecialchars($row['description']) ?></td>
                                 <td><?= htmlspecialchars($row['unit']) ?></td>
                                 <td><?= htmlspecialchars($row['quantity_on_hand']) ?></td>
-
-                                <td><?= htmlspecialchars($row['iar']) ?></td>
 
                                 <!-- HIDDEN FIELD FOR STOCK NUMBER -->
                                 <input type="hidden" name="stock_number[]" value="<?= $row['stock_number'] ?>">
@@ -225,31 +254,39 @@ $items = $conn->query("SELECT i.*,
                 </a>
         </form>
     </div>
+</main>
 </div>
 
 <script>
     const filterDropdown = document.getElementById('stockFilter');
-    const tableRows = document.querySelectorAll('tbody tr');
-    
-    filterDropdown.addEventListener('change', function() {
-        const filterValue = this.value;
-        
+    const searchInput = document.getElementById('restockSearch');
+    const tableRows = document.querySelectorAll('#restockTable tbody tr');
+    const searchableRows = new Map(Array.from(tableRows, row => [row,
+        Array.from(row.cells).slice(0, 3).map(cell => cell.textContent).join(' ').toLowerCase()
+    ]));
+
+    function filterRestockItems() {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
         tableRows.forEach(row => {
-            const quantity = parseInt(row.getAttribute('data-quantity'));
-            const reorderPoint = parseInt(row.getAttribute('data-reorder-point'));
-            
-            if (filterValue === 'all') {
-                row.classList.remove('hidden-row');
-            } else if (filterValue === 'low-stock') {
-                // Show items at or below their reorder point
-                if (quantity <= reorderPoint) {
-                    row.classList.remove('hidden-row');
-                } else {
-                    row.classList.add('hidden-row');
-                }
-            }
+            const matchesStock = filterDropdown.value === 'all' || Number(row.dataset.quantity) <= Number(row.dataset.reorderPoint);
+            const visible = matchesStock && searchableRows.get(row).includes(query);
+            row.classList.toggle('hidden-row', !visible);
+            if (visible) visibleCount++;
         });
-    });
+        document.getElementById('restockNoResults').hidden = visibleCount > 0;
+    }
+    filterDropdown.addEventListener('change', filterRestockItems);
+    searchInput.addEventListener('input', filterRestockItems);
+    filterRestockItems();
+    // Deep links from MRP focus the requested item without submitting stock changes.
+    const selectedItemId = new URLSearchParams(window.location.search).get('item_id');
+    const selectedRow = Array.from(tableRows).find(row => row.dataset.itemId === selectedItemId);
+    if (selectedRow) {
+        selectedRow.style.outline = '2px solid #2563eb';
+        selectedRow.scrollIntoView({ block: 'center' });
+        selectedRow.querySelector('input[name="quantity_on_hand[]"]')?.focus({ preventScroll: true });
+    }
 </script>
 
 </body>

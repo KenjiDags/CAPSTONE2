@@ -1,8 +1,10 @@
 <?php
 require 'config.php';
 require 'auth.php';
+require_once 'mrp_dates.php';
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store');
 
 // Get category parameter (default to office-supplies)
 $category = $_GET['category'] ?? 'office-supplies';
@@ -169,77 +171,65 @@ if ($category === 'semi-expendables') {
     }
     $response['supply_list'] = $supply;
 
+    // First zero in the current episode; later zero-balance edits must not reset it.
+    // history_id orders transactions that share the same timestamp.
     $criticalSql = "
-        SELECT i.item_id, i.stock_number, i.item_name, i.description,
-               d.depleted_at,
-               COALESCE(d.depleted_at, li.last_issued_at, ie.created_at) AS fallback_at
+        SELECT i.item_id, MIN(h.changed_at) AS depleted_at
         FROM items i
-        LEFT JOIN (
-            SELECT h.item_id, MAX(h.changed_at) AS depleted_at
-            FROM item_history h
-            WHERE h.quantity_on_hand = 0
-              AND NOT EXISTS (
-                  SELECT 1 FROM item_history newer
-                  WHERE newer.item_id = h.item_id
-                    AND newer.changed_at > h.changed_at
-                    AND newer.quantity_on_hand > 0
-              )
-            GROUP BY h.item_id
-        ) d ON d.item_id = i.item_id
-        LEFT JOIN (
-            SELECT item_id, MAX(changed_at) AS last_issued_at
-            FROM item_history
-            WHERE quantity_change < 0 OR change_direction = 'decrease'
-            GROUP BY item_id
-        ) li ON li.item_id = i.item_id
-        LEFT JOIN (
-            SELECT item_id, MAX(created_at) AS created_at
-            FROM inventory_entries
-            GROUP BY item_id
-        ) ie ON ie.item_id = i.item_id
+        LEFT JOIN item_history h ON h.item_id = i.item_id
+          AND h.quantity_on_hand = 0
+          AND NOT EXISTS (
+              SELECT 1 FROM item_history newer
+              WHERE newer.item_id = h.item_id AND newer.quantity_on_hand > 0
+                AND (newer.changed_at > h.changed_at OR
+                    (newer.changed_at = h.changed_at AND newer.history_id > h.history_id))
+          )
         WHERE i.quantity_on_hand = 0
-        ORDER BY COALESCE(d.depleted_at, li.last_issued_at, ie.created_at) ASC, i.item_name ASC
+        GROUP BY i.item_id
     ";
     $criticalResult = $conn->query($criticalSql);
-    $criticalItems = [];
-    $today = new DateTimeImmutable('today');
+    $stockoutDates = [];
     while ($row = $criticalResult->fetch_assoc()) {
-        $depletedAt = trim((string)($row['depleted_at'] ?? ''));
-        $fallbackAt = trim((string)($row['fallback_at'] ?? ''));
-        $dateSource = 'unrecorded';
-        $stockoutDate = $depletedAt !== '' ? $depletedAt : $fallbackAt;
-        $daysEmpty = 1;
-        if ($stockoutDate !== '') {
-            try {
-                $depletedDate = (new DateTimeImmutable($stockoutDate))->setTime(0, 0, 0);
-                // Use whole calendar days and keep today's/missing dates visible.
-                $daysEmpty = max(1, (int)floor(($today->getTimestamp() - $depletedDate->getTimestamp()) / 86400));
-                $dateSource = $depletedAt !== '' ? 'stockout' : 'fallback';
-            } catch (Exception $exception) {
-                error_log('Invalid stock date for item ' . (int)$row['item_id'] . ': ' . $stockoutDate);
-                $stockoutDate = '';
-            }
-        }
-        $criticalItems[] = [
-            'item_id' => (int)$row['item_id'],
-            'stock_number' => $row['stock_number'],
-            'item_name' => $row['item_name'],
-            'description' => $row['description'],
-            'depleted_at' => $stockoutDate !== '' ? substr($stockoutDate, 0, 10) : null,
-            'date_stock_reached_zero' => $stockoutDate !== '' ? substr($stockoutDate, 0, 10) : null,
-            'date_source' => $dateSource,
-            'days_empty' => $daysEmpty
-        ];
+        $date = mrpDate($row['depleted_at']);
+        $stockoutDates[(int)$row['item_id']] = $date ? $date->format('Y-m-d') : null;
     }
+    $criticalItems = [];
+    foreach ($supply as &$item) {
+        $quantity = $item['quantity'];
+        $safetyStock = max(0, $item['reorder_point']);
+        $stockoutDate = $quantity === 0 ? ($stockoutDates[$item['item_id']] ?? null) : null;
+        $item += [
+            'id' => $item['item_id'], 'sku' => $item['stock_number'],
+            'itemName' => $item['item_name'], 'onHandQty' => $quantity,
+            'safetyStock' => $safetyStock,
+            'status' => $quantity === 0 ? 'critical' : ($quantity > $safetyStock ? 'safe' : ($quantity > 0 ? 'low' : 'invalid')),
+            'stockoutDate' => $stockoutDate,
+            // Supplier and PO records are not present in the current schema.
+            'leadTimeDays' => null, 'poExpectedDeliveryDate' => null,
+            'expectedResolutionDate' => mrpExpectedResolution($stockoutDate, null),
+            'netRequirement' => max(0, $safetyStock - $quantity),
+            'netRequirementBasis' => 'Safety stock deficit; demand and open POs are not recorded',
+            'daysOutOfStock' => $quantity === 0 ? mrpDaysOutOfStock($stockoutDate) : 0,
+        ];
+        if ($quantity === 0) {
+            $criticalItems[] = $item + [
+                'depleted_at' => $stockoutDate, 'date_stock_reached_zero' => $stockoutDate,
+                'date_source' => $stockoutDate ? 'stockout' : 'unrecorded',
+                'days_empty' => $item['daysOutOfStock'],
+            ];
+        }
+    }
+    unset($item);
+    $response['supply_list'] = $supply;
     $response['critical_depletion'] = $criticalItems;
-
+    $response['businessDate'] = (new DateTimeImmutable('today', new DateTimeZone('Asia/Manila')))->format('Y-m-d');
     // --- Low stock: items at or below reorder point ---
     $lowSql = "
         SELECT item_id, stock_number, item_name,
                quantity_on_hand AS quantity,
                reorder_point
         FROM items
-        WHERE quantity_on_hand <= reorder_point
+        WHERE quantity_on_hand > 0 AND quantity_on_hand <= reorder_point
         ORDER BY item_name ASC
         LIMIT 50
     ";

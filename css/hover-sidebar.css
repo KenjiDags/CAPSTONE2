@@ -1,0 +1,128 @@
+/* PHP pages use the body as the layout; React uses an explicit app-layout. */
+body:has(> .sidebar--hover), .app-layout {
+    display: flex;
+    align-items: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0;
+}
+body:has(> .sidebar--hover) > :is(main, .container, .content),
+.app-layout > .app-main {
+    flex: 1 1 0%;
+    min-width: 0;
+    width: 0;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    box-sizing: border-box;
+}
+.main-container { width: 100%; min-width: 0; }
+.sidebar.sidebar--hover {
+    --nav-text: #334155;
+    --nav-accent: #1d4ed8;
+    --nav-hover: rgba(15, 23, 42, .05);
+    --nav-active: rgba(37, 99, 235, .09);
+    --nav-border: #e2e8f0;
+    /* Sticky retains its flex column while keeping navigation in view. */
+    position: sticky;
+    inset: auto;
+    top: 0;
+    align-self: flex-start;
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    z-index: auto;
+    width: 64px;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: #f8fafc;
+    color: var(--nav-text);
+    border-right: 1px solid var(--nav-border);
+    font: 14px/1.5 system-ui, sans-serif;
+    transition: width .3s ease-in-out, box-shadow .3s ease-in-out;
+}
+.sidebar--hover, .sidebar--hover * { box-sizing: border-box; }
+.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) {
+    width: 240px;
+    box-shadow: none;
+}
+.sidebar.sidebar--hover .logo {
+    width: 239px;
+    min-height: 76px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 14px;
+    border-bottom: 1px solid var(--nav-border);
+}
+.sidebar.sidebar--hover .logo img { width: 36px; height: 36px; flex: 0 0 36px; object-fit: contain; }
+.sidebar.sidebar--hover .logo h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--nav-accent); }
+.sidebar.sidebar--hover nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 239px;
+    gap: 4px;
+    padding: 8px;
+}
+.sidebar.sidebar--hover nav a,
+.sidebar.sidebar--hover .dropdown-toggle,
+.sidebar.sidebar--hover .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    border: 0;
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--nav-text);
+    font: inherit;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+.sidebar.sidebar--hover .dropdown-toggle { font-weight: 600; }
+.sidebar.sidebar--hover .nav-icon { display: block; width: 20px; height: 20px; flex: 0 0 20px; }
+.sidebar.sidebar--hover :is(a, button) > span,
+.sidebar.sidebar--hover .logo h3 {
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity .18s ease-in-out;
+}
+.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) :is(a, button) > span,
+.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) .logo h3 { opacity: 1; }
+.sidebar.sidebar--hover :is(a, button):hover { background: var(--nav-hover); }
+.sidebar.sidebar--hover nav a.active { color: var(--nav-accent); background: var(--nav-active); border-left-color: var(--nav-accent); }
+.sidebar.sidebar--hover .dropdown-toggle.active { color: var(--nav-accent); }
+.sidebar.sidebar--hover :is(a, button):focus-visible { outline: 2px solid var(--nav-accent); outline-offset: -2px; }
+.sidebar.sidebar--hover .nav-chevron { margin-left: auto; }
+.sidebar.sidebar--hover .dropdown-menu { display: none; margin: 4px 0 4px 14px; }
+.sidebar.sidebar--hover .dropdown.open .dropdown-menu { display: none; }
+.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) .dropdown.open .dropdown-menu { display: flex; }
+.sidebar.sidebar--hover .logout-wrapper { width: 239px; padding: 8px; margin-top: auto; border-top: 1px solid var(--nav-border); }
+.sidebar.sidebar--hover .logout-btn { color: #b91c1c; }
+body.dark-mode .sidebar.sidebar--hover {
+    --nav-text: #cbd5e1;
+    --nav-accent: #93c5fd;
+    --nav-hover: rgba(148, 163, 184, .1);
+    --nav-active: rgba(96, 165, 250, .14);
+    --nav-border: #334155;
+    background: #111827;
+}
+body.dark-mode .sidebar.sidebar--hover .logout-btn { color: #fca5a5; }
+@media (prefers-reduced-motion: reduce) {
+    .sidebar.sidebar--hover, .sidebar.sidebar--hover * { transition: none; }
+}
