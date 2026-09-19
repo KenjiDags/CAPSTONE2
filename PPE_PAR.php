@@ -113,26 +113,6 @@ if ($search !== '') {
         color: #3b82f6;
     }
     
-    /* Amount Column Styling */
-    table td:nth-child(5) {
-        font-family: 'Century Gothic', Century Gothic, sans-serif;
-        font-weight: 600;
-        color: #059669;
-    }
-    
-    /* Date Column Styling */
-    table td:nth-child(2) {
-        color: #64748b;
-        font-size: 13px;
-    }
-
-    .clickable-row {
-        cursor: pointer;
-    }
-
-    .clickable-row:hover {
-        background: #f8fafc;
-    }
     </style>
 </head>
 <body class="par-page">
@@ -167,7 +147,6 @@ if ($search !== '') {
                 <tr>
                     <th><i class="fas fa-hashtag"></i> PAR No.</th>
                     <th><i class="fas fa-calendar"></i> Date Acquired</th>
-                    <th><i class="fas fa-barcode"></i> Property Number</th>
                     <th><i class="fas fa-user"></i> Received By</th>
                     <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
                     <th><i class="fas fa-cogs"></i> Actions</th>
@@ -194,7 +173,6 @@ if ($search !== '') {
                         echo '<tr>';
                         echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
                         echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
-                        echo '<td>' . htmlspecialchars($row['property_number'] ?? 'N/A') . '</td>';
                         echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
                         echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
                         echo '<td class="actions-cell">

@@ -2012,7 +2012,7 @@ body {
     border-bottom: 1px solid var(--border-gray);
     text-align: center;
     vertical-align: middle;
-    font-size: 0.85rem;
+    font-size: 13px;
     white-space: normal;
     word-wrap: break-word;
 }
@@ -3064,4 +3064,71 @@ table tbody td.actions-cell {
 /* Dark mode - same border as other cells */
 body.dark-mode table tbody td.actions-cell {
     border-bottom: 1px solid #334155 !important;
+}
+
+/* =========================================================
+   INVENTORY CONTROLS
+   Sort By + Search + Action Buttons
+   ========================================================= */
+
+.inventory-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+/* Sort By section */
+.inventory-controls .control-sort {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    color: #001F80;
+}
+
+/* Search section */
+.inventory-controls .control-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 20px;
+}
+
+/* Search label */
+.inventory-controls .control-search label {
+    margin-bottom: 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #001F80;
+    white-space: nowrap;
+}
+
+/* Search input */
+.inventory-controls .control-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Add / Restock buttons */
+.inventory-controls .control-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+/* Prevent buttons from shrinking */
+.inventory-controls .control-actions .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
 }

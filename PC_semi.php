@@ -108,38 +108,70 @@ if (isset($_GET['delete_id'])) {
       </div>
     <?php endif; ?>
 
-  <form id="pc-semi-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+  <form id="pc-semi-filters" method="get" class="filters">
+
       <?php
-        $category = isset($_GET['category']) ? $_GET['category'] : '';
-        $search = isset($_GET['search']) ? $_GET['search'] : '';
-        $valid_categories = ['Other PPE', 'Office Equipment', 'ICT Equipment', 'Communication Equipment', 'Furniture and Fixtures'];
+          $category = isset($_GET['category']) ? $_GET['category'] : '';
+          $search = isset($_GET['search']) ? $_GET['search'] : '';
+          $valid_categories = [
+              'Other PPE',
+              'Office Equipment',
+              'ICT Equipment',
+              'Communication Equipment',
+              'Furniture and Fixtures'
+          ];
       ?>
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
-        <div class="control">
-          <label for="category-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-            <i class="fas fa-filter"></i> Category:
-          </label>
-          <select id="category-select" name="category" onchange="this.form.submit()">
-            <option value="">All</option>
-            <?php foreach ($valid_categories as $cat): ?>
-              <option value="<?= htmlspecialchars($cat) ?>" <?= $cat === $category ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="control">
-          <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001f80;">
-            <i class="fas fa-search"></i> Search:
-          </label>
-          <input type="text" id="searchInput" name="search"
-                value="<?= htmlspecialchars($search) ?>"
-                placeholder="Search description or property no..." />
-        </div>
+
+      <div class="inventory-controls">
+
+          <!-- Categories -->
+          <div class="control-sort">
+              <label for="category-select">
+                  <i class="fas fa-filter"></i> Category:
+              </label>
+
+              <select id="category-select" name="category" onchange="this.form.submit()">
+                  <option value="">All</option>
+
+                  <?php foreach ($valid_categories as $cat): ?>
+                      <option value="<?= htmlspecialchars($cat) ?>"
+                          <?= $cat === $category ? 'selected' : '' ?>>
+                          <?= htmlspecialchars($cat) ?>
+                      </option>
+                  <?php endforeach; ?>
+              </select>
+          </div>
+
+          <!-- Search -->
+          <div class="control-search">
+              <label for="searchInput">
+                  <i class="fas fa-search"></i> Search:
+              </label>
+
+              <input
+                  type="text"
+                  id="searchInput"
+                  name="search"
+                  value="<?= htmlspecialchars($search) ?>"
+                  placeholder="Search description or property no..."
+              >
+          </div>
+
+          <!-- Actions -->
+          <div class="control-actions">
+              <a
+                  href="semi_expendable_export_all.php<?= ($category !== '' || $search !== '') ? ('?' . http_build_query(array_filter(['category' => $category, 'search' => $search], fn($v) => $v !== ''))) : '' ?>"
+                  class="pill-btn pill-export"
+                  title="Export All Items"
+                  style="border-radius: 8px !important;"
+              >
+                  <i class="fas fa-file-export"></i> Export All
+              </a>
+          </div>
+
       </div>
-      <a href="semi_expendable_export_all.php<?= ($category!==''||$search!=='') ? ('?' . http_build_query(array_filter(['category'=>$category,'search'=>$search], fn($v)=>$v!==''))) : '' ?>"
-        class="pill-btn pill-export" style="margin-left:auto; border-radius: 8px !important;">
-          <i class="fas fa-file-export"></i> Export All
-      </a>
-    </form>
+
+  </form>
 
     <div class="table-container">
       <table>

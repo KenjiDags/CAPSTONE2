@@ -600,16 +600,6 @@ case 'update':
             box-shadow: none;
         }
 
-        #inventoryTable th {
-            padding: 10px 12px;
-            background: #f8fafc;
-            color: #6b7280;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-        }
 
         #inventoryTable td {
             padding: 10px 12px;
@@ -692,32 +682,56 @@ case 'update':
     <h2>Office Supplies</h2>
 
     <form id="inventory-filters" method="get" class="filters">
-        <div class="control">
-            <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
-                <i class="fas fa-sort"></i> Sort by:
-            </label>
-            <select id="sort-select" name="sort">
-                <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
-                <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
-                <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
-                <option value="quantity_high" <?= ($sort_by == 'quantity_high') ? 'selected' : '' ?>>Quantity (High to Low)</option>
-                <option value="cost_low" <?= ($sort_by == 'cost_low') ? 'selected' : '' ?>>Unit Cost (Low to High)</option>
-                <option value="cost_high" <?= ($sort_by == 'cost_high') ? 'selected' : '' ?>>Unit Cost (High to Low)</option>
-            </select>
-        </div>
-        <div class="control" style="flex: 1; display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding-left: 20px;">
-            <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
-                <i class="fas fa-search"></i> Search:
-            </label>
-            <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by stock number, item name, description, or unit..." />
-        </div>
-        <div class="control" style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" class="btn btn-success" onclick="window.location.href='add_o.f_item.php'">
-                <i class="fas fa-plus"></i> Add New Item
-            </button>
-            <button type="button" class="btn btn-success" onclick="window.location.href='add_multiple_items.php'">
-                <i class="fas fa-box"></i> Restock Items
-            </button>
+        <div class="inventory-controls">
+
+            <!-- Sort By -->
+            <div class="control-sort">
+                <label for="sortBy">Sort By:</label>
+
+                <select id="sortBy" name="sort">
+                    <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
+                    <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
+                    <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
+                    <option value="quantity_high" <?= ($sort_by == 'quantity_high') ? 'selected' : '' ?>>Quantity (High to Low)</option>
+                    <option value="cost_low" <?= ($sort_by == 'cost_low') ? 'selected' : '' ?>>Unit Cost (Low to High)</option>
+                    <option value="cost_high" <?= ($sort_by == 'cost_high') ? 'selected' : '' ?>>Unit Cost (High to Low)</option>
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="control-search">
+                <label for="searchInput">
+                    <i class="fas fa-search"></i> Search:
+                </label>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    name="search"
+                    value="<?= htmlspecialchars($search) ?>"
+                    placeholder="Search by stock number, item name, description, or unit..."
+                >
+            </div>
+
+            <!-- Actions -->
+            <div class="control-actions">
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="window.location.href='add_o.f_item.php'"
+                >
+                    <i class="fas fa-plus"></i> Add New Item
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="window.location.href='add_multiple_items.php'"
+                >
+                    <i class="fas fa-box"></i> Restock Items
+                </button>
+            </div>
+
         </div>
     </form>
 
@@ -883,6 +897,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortSelect = document.getElementById('sort-select');
     const tableBody = document.querySelector('#inventoryTable tbody');
     let activeCategory = 'office-supplies';
+
+    // Expand/collapse item details when clicking a table row
+    tableBody.addEventListener('click', function(event) {
+        const row = event.target.closest('.inventory-clickable-row');
+
+        if (!row) return;
+
+        // Don't expand the row when clicking the actions menu/button
+        if (event.target.closest('.actions-menu')) {
+            return;
+        }
+
+        toggleExpandedRow(row);
+    });
 
     function closeExpandedRow() {
         const detailRow = tableBody.querySelector('.item-detail-row');

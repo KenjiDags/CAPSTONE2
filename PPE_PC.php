@@ -106,8 +106,6 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
 		.action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
 		.amount-col { white-space: nowrap; min-width: 100px; }
-		.clickable-row { cursor: pointer; }
-		.clickable-row:hover { background: #f8fafc; }
 	</style>
 </head>
 <body>
