@@ -171,27 +171,20 @@ if ($category === 'semi-expendables') {
     }
     $response['supply_list'] = $supply;
 
-    // First zero in the current episode; later zero-balance edits must not reset it.
-    // history_id orders transactions that share the same timestamp.
+    // Durable episode dates survive stock-card archiving and dashboard refreshes.
     $criticalSql = "
-        SELECT i.item_id, MIN(h.changed_at) AS depleted_at
+        SELECT i.item_id, s.started_at AS depleted_at, s.date_source
         FROM items i
-        LEFT JOIN item_history h ON h.item_id = i.item_id
-          AND h.quantity_on_hand = 0
-          AND NOT EXISTS (
-              SELECT 1 FROM item_history newer
-              WHERE newer.item_id = h.item_id AND newer.quantity_on_hand > 0
-                AND (newer.changed_at > h.changed_at OR
-                    (newer.changed_at = h.changed_at AND newer.history_id > h.history_id))
-          )
+        LEFT JOIN item_stockouts s ON s.item_id = i.item_id
         WHERE i.quantity_on_hand = 0
-        GROUP BY i.item_id
     ";
     $criticalResult = $conn->query($criticalSql);
     $stockoutDates = [];
+    $stockoutSources = [];
     while ($row = $criticalResult->fetch_assoc()) {
         $date = mrpDate($row['depleted_at']);
         $stockoutDates[(int)$row['item_id']] = $date ? $date->format('Y-m-d') : null;
+        $stockoutSources[(int)$row['item_id']] = $row['date_source'];
     }
     $criticalItems = [];
     foreach ($supply as &$item) {
@@ -204,6 +197,7 @@ if ($category === 'semi-expendables') {
             'safetyStock' => $safetyStock,
             'status' => $quantity === 0 ? 'critical' : ($quantity > $safetyStock ? 'safe' : ($quantity > 0 ? 'low' : 'invalid')),
             'stockoutDate' => $stockoutDate,
+            'stockoutDateSource' => $quantity === 0 ? ($stockoutSources[$item['item_id']] ?? null) : null,
             // Supplier and PO records are not present in the current schema.
             'leadTimeDays' => null, 'poExpectedDeliveryDate' => null,
             'expectedResolutionDate' => mrpExpectedResolution($stockoutDate, null),
@@ -214,7 +208,7 @@ if ($category === 'semi-expendables') {
         if ($quantity === 0) {
             $criticalItems[] = $item + [
                 'depleted_at' => $stockoutDate, 'date_stock_reached_zero' => $stockoutDate,
-                'date_source' => $stockoutDate ? 'stockout' : 'unrecorded',
+                'date_source' => $item['stockoutDateSource'] ?? 'unrecorded',
                 'days_empty' => $item['daysOutOfStock'],
             ];
         }

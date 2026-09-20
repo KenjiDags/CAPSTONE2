@@ -50,10 +50,26 @@ unknown or invalid dates remain `null`, not zero or one. Expected resolution
 is stockout date plus supplier lead time. The committed PO delivery date is
 displayed separately because it may differ from that projection.
 
-The SQL selects the earliest zero-balance history record after the most recent
-positive balance, including history-ID ordering for equal timestamps. It does
-not substitute unrelated receipt/issue dates. Accurate duration depends on
-complete balance history; a missing episode start is not reconstructed.
+Stockout episodes are stored in `item_stockouts`, independently of visible stock
+cards. Database triggers record zero-balance inserts and stock transitions,
+preserve the date during zero-balance edits, and clear it on restocking. Dates
+use Manila time regardless of the database connection timezone. RIS edits that
+temporarily restore and reissue the same stock preserve an ongoing episode.
+
+After importing the database, run once before serving the updated application
+(pause inventory writes during installation):
+
+```text
+C:\xampp\php\php.exe db/migrate_stockout_tracking.php
+```
+
+The migration recovers the earliest zero balance after the latest nonzero
+balance from active and archived history, breaking timestamp ties by history
+ID. Items without recoverable history start at installation time with
+`stockoutDateSource: 'observed'`; their tooltip explicitly says the actual
+duration may be longer. No earlier date is invented. Rerunning the migration
+preserves existing episode dates. The installer needs CREATE TABLE and TRIGGER
+privileges; ordinary dashboard requests perform no schema changes.
 
 The current schema has no supplier lead times, PO delivery dates, demand plan,
 or open receipt quantities. The API returns null planning dates and uses the
@@ -68,9 +84,13 @@ by a chart click. The current action focuses the item in Restock Inventory.
 ```text
 node tests/mrp-stock.test.cjs
 C:\xampp\php\php.exe tests/mrp_dates_test.php
+C:\xampp\php\php.exe tests/stockout_tracking_test.php
 ```
 
 The Node tests require Node 22.13+ with `node:sqlite`. They test calendar dates,
 strict status boundaries, date projections, SQL stockout episodes using an
 in-memory fixture database, and actual chart-renderer transitions. They do not
 modify the live database. PHP date tests use explicit dates for repeatability.
+The stockout integration test creates and removes a uniquely named fixture
+database on local MySQL/MariaDB; it checks backfill, archived history, repeat
+installation, inserts, depletion, restocking, and transactional rollback.

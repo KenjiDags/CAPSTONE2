@@ -40,6 +40,9 @@ const { DatabaseSync } = require('node:sqlite');
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE items (item_id INTEGER, quantity_on_hand INTEGER);
 CREATE TABLE item_history (history_id INTEGER, item_id INTEGER, changed_at TEXT, quantity_on_hand INTEGER);
+CREATE TABLE item_stockouts (item_id INTEGER, started_at TEXT, date_source TEXT);
+INSERT INTO item_stockouts VALUES (1,'2026-09-03 08:00:00','history'),
+ (2,'2026-09-08 08:00:00','history'), (5,'2026-09-04 08:00:00','history');
 INSERT INTO items VALUES (1,0),(2,0),(3,0),(4,5),(5,0);
 INSERT INTO item_history VALUES
  (1,1,'2026-09-01 08:00:00',5), (2,1,'2026-09-03 08:00:00',0), (3,1,'2026-09-09 08:00:00',0),
@@ -52,6 +55,10 @@ assert.deepEqual(episodes.map(row => [row.item_id, row.depleted_at]), [
   [1, '2026-09-03 08:00:00'], [2, '2026-09-08 08:00:00'], [3, null], [5, '2026-09-04 08:00:00'],
 ]);
 db.close();
+const observed = mrp.normalize({ ...items[2], stockoutDateSource: 'observed' }, '2026-09-13');
+assert.equal(observed.daysOutOfStock, 3);
+assert.match(mrp.tooltip(observed)[0], /3.*since tracking began/);
+assert.equal(mrp.normalize(observed, '2026-09-14').daysOutOfStock, 4);
 
 // Syntax-check inline dashboard JS after replacing PHP expressions with literals.
 const page = fs.readFileSync('analytics.php', 'utf8');

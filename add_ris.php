@@ -36,7 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $issued_by_date = $_POST['issued_by_date'] ?? '';
     $received_by_date = $_POST['received_by_date'] ?? '';
 
+    $previousStockouts = [];
     if ($is_editing) {
+        // Editing temporarily restores issued stock. Preserve an uninterrupted
+        // zero-balance episode when the final balance is still zero.
+        $snapshot = $conn->prepare("SELECT s.* FROM item_stockouts s
+            JOIN items i ON i.item_id = s.item_id
+            WHERE i.quantity_on_hand = 0 AND i.stock_number IN
+                (SELECT stock_number FROM ris_items WHERE ris_id = ?)");
+        $snapshot->bind_param('i', $ris_id);
+        $snapshot->execute();
+        $previousStockouts = $snapshot->get_result()->fetch_all(MYSQLI_ASSOC);
+        $snapshot->close();
         // Update existing RIS
         $stmt = $conn->prepare("UPDATE ris SET entity_name = ?, fund_cluster = ?, division = ?, office = ?, 
                                responsibility_center_code = ?, date_requested = ?, purpose = ?, 
@@ -158,6 +169,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 updateAverageCost($conn, $item_id);
             }
         }
+    }
+
+    foreach ($previousStockouts as $episode) {
+        $restore = $conn->prepare("UPDATE item_stockouts s JOIN items i ON i.item_id = s.item_id
+            SET s.started_at = ?, s.date_source = ? WHERE s.item_id = ? AND i.quantity_on_hand = 0");
+        $restore->bind_param('ssi', $episode['started_at'], $episode['date_source'], $episode['item_id']);
+        $restore->execute();
+        $restore->close();
     }
 
     // Redirect after successful submission

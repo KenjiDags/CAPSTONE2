@@ -46,7 +46,7 @@
         : sort === 'highest' ? b.onHandQty - a.onHandQty : 0) || a.itemName.localeCompare(b.itemName));
   }
   function tooltip(item) {
-    return [`Days Out of Stock: ${item.daysOutOfStock ?? 'Not recorded'}`,
+    return [`Days Out of Stock: ${item.daysOutOfStock ?? 'Not recorded'}${item.stockoutDateSource === 'observed' ? ' (since tracking began; actual duration may be longer)' : ''}`,
       `Net Requirement Qty: ${item.netRequirement} units`,
       `Projected Lead Time: ${item.leadTimeDays === null ? 'Not recorded' : item.leadTimeDays + ' days'}`,
       `Expected Resolution Date: ${item.expectedResolutionDate ?? 'Not recorded'}`,

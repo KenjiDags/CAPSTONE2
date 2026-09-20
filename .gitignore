@@ -17,7 +17,9 @@ composer.phar
 *.zip
 *.sql
 *.sqlite
-/db/
+/db/*
+!/db/stockout_tracking.php
+!/db/migrate_stockout_tracking.php
 /images/
 /uploads/
 /www/cache/
