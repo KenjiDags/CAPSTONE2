@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Development environment
 .vscode/
 .idea/
@@ -9,24 +8,18 @@
 # Dependencies
 /vendor/
 /node_modules/
-composer.lock
 composer.phar
 
 # Project specific
 *.log
 *.zip
-*.sql
 *.sqlite
-/db/*
-!/db/stockout_tracking.php
-!/db/migrate_stockout_tracking.php
-/images/
+# Keep database migrations, application images, and composer.lock in Git.
+# Store private database dumps and machine-specific configuration here instead.
+/backups/
+/db/backups/
+/config.local.php
 /uploads/
 /www/cache/
 /tcpdf1/
 tcpdf_temp.zip
-config.php
-=======
-/vendor/
-/composer.lock
->>>>>>> cda79f2e5558555862d2f0fac50fd6938ecc3e8e
