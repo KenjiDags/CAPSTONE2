@@ -1344,8 +1344,8 @@ body {
 .sidebar .nav-chevron { margin-left: auto; transition: transform 150ms ease; }
 .sidebar .nav-chevron .nav-icon { width: 14px; height: 14px; }
 .sidebar .dropdown.open .nav-chevron { transform: rotate(90deg); }
-.sidebar .dropdown-menu { display: none; flex-direction: column; gap: 3px; margin: 4px 0 4px 14px; }
-.sidebar .dropdown.open .dropdown-menu { display: flex; }
+.sidebar:not(.sidebar--hover) .dropdown-menu { display: none; flex-direction: column; gap: 3px; margin: 4px 0 4px 14px; }
+.sidebar:not(.sidebar--hover) .dropdown.open .dropdown-menu { display: flex; }
 .sidebar nav a:hover, .sidebar .dropdown-toggle:hover { background: var(--nav-hover); }
 .sidebar nav a.active { background: var(--nav-active); color: var(--nav-accent); border-left-color: var(--nav-accent); }
 .sidebar .dropdown-toggle.active { color: var(--nav-accent); }

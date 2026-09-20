@@ -37,26 +37,26 @@ $sidebarIcon = static function ($name) {
 
                 ?>
 
-                <nav aria-label="Main navigation">
-                    <div class="dropdown <?= $dropdownActive ? 'open' : '' ?>">
-                        <button type="button" class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>" aria-expanded="<?= $dropdownActive ? 'true' : 'false' ?>" aria-controls="office-menu">
+                <nav id="sidebar-navigation" aria-label="Main navigation">
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="office-menu">
                             <?= $sidebarIcon('folder') ?><span>Office Supplies</span><span id="office-stock-warning" class="stock-count-badge stock-warning-badge" hidden aria-label="Office supplies out of stock">!</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
-                        <div class="dropdown-menu" id="office-menu">
+                        <div class="dropdown-menu" id="office-menu"><div class="submenu-content">
                             <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'inventory.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Supply List</span><span id="office-stock-badge" class="stock-count-badge" hidden role="status" aria-live="polite" aria-atomic="true"></span></a>
                             <a href="ris.php" class="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RIS</span></a>
                             <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rsmi.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RSMI</span></a>
                             <a href="SC.php" class="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>SC</span></a>
                             <a href="rpci.php" class="<?= $currentPage == 'rpci.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rpci.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCI</span></a>
-                        </div>
+                        </div></div>
                     </div>
 
                     <!-- Semi Expendables Dropdown -->
-                    <div class="dropdown <?= $expendablesDropdownActive ? 'open' : '' ?>">
-                        <button type="button" class="dropdown-toggle <?= $expendablesDropdownActive ? 'active' : '' ?>" aria-expanded="<?= $expendablesDropdownActive ? 'true' : 'false' ?>" aria-controls="semi-menu">
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle <?= $expendablesDropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="semi-menu">
                             <?= $sidebarIcon('folder') ?><span>Semi Expendables</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
-                        <div class="dropdown-menu" id="semi-menu">
+                        <div class="dropdown-menu" id="semi-menu"><div class="submenu-content">
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'semi_expendible.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Inventory List</span></a>
                             <a href="PC_semi.php" class="<?= $currentPage == 'PC_semi.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PC_semi.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>SPC</span></a>
                             <a href="ics.php" class="<?= in_array($currentPage, ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>ICS</span></a>
@@ -66,22 +66,22 @@ $sidebarIcon = static function ($name) {
                             <a href="rpcsp.php" class="<?= $currentPage == 'rpcsp.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rpcsp.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCSP</span></a>
                             <a href="rrsp.php" class="<?= $currentPage == 'rrsp.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rrsp.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RRSP</span></a>
                             <a href="iirusp.php" class="<?= $currentPage == 'iirusp.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'iirusp.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>IIRUSP</span></a>
-                        </div>
+                        </div></div>
                     </div>
 
                     <!-- PPE Dropdown -->
-                    <div class="dropdown <?= $ppeDropdownActive ? 'open' : '' ?>">
-                        <button type="button" class="dropdown-toggle <?= $ppeDropdownActive ? 'active' : '' ?>" aria-expanded="<?= $ppeDropdownActive ? 'true' : 'false' ?>" aria-controls="ppe-menu">
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle <?= $ppeDropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="ppe-menu">
                             <?= $sidebarIcon('folder') ?><span>PPE</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
-                        <div class="dropdown-menu" id="ppe-menu">
+                        <div class="dropdown-menu" id="ppe-menu"><div class="submenu-content">
                             <a href="PPE.php" class="<?= $currentPage == 'PPE.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Inventory List</span></a>
                             <a href="PPE_PC.php" class="<?= $currentPage == 'PPE_PC.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PC.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PC</span></a>
                             <a href="PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PTR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PTR</span></a>
                             <a href="PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PAR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PAR</span></a>
                             <a href="RPCPPE.php" class="<?= $currentPage == 'RPCPPE.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'RPCPPE.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCPPE</span></a>
                             <a href="PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_iirup.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>IIRUP</span></a>
-                        </div>
+                        </div></div>
                     </div>
 
                     <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'analytics.php' ? 'page' : '' ?>"><?= $sidebarIcon('chart') ?><span>Analytics</span></a>

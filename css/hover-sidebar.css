@@ -49,7 +49,7 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
     transition: width .3s ease-in-out, box-shadow .3s ease-in-out;
 }
 .sidebar--hover, .sidebar--hover * { box-sizing: border-box; }
-.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) {
+.sidebar.sidebar--hover.is-open {
     width: 240px;
     box-shadow: none;
 }
@@ -102,8 +102,8 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
     white-space: nowrap;
     transition: opacity .18s ease-in-out;
 }
-.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) :is(a, button) > span,
-.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) .logo h3 { opacity: 1; }
+.sidebar.sidebar--hover.is-open :is(a, button) > span,
+.sidebar.sidebar--hover.is-open .logo h3 { opacity: 1; }
 .sidebar.sidebar--hover :is(a, button):hover { background: var(--nav-hover); }
 .sidebar.sidebar--hover nav a.active { color: var(--nav-accent); background: var(--nav-active); border-left-color: var(--nav-accent); }
 .sidebar.sidebar--hover .dropdown-toggle.active { color: var(--nav-accent); }
@@ -131,9 +131,25 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
     padding: 0;
     border-radius: 50%;
 }
-.sidebar.sidebar--hover .dropdown-menu { display: none; margin: 4px 0 4px 14px; }
-.sidebar.sidebar--hover .dropdown.open .dropdown-menu { display: none; }
-.sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) .dropdown.open .dropdown-menu { display: flex; }
+.sidebar.sidebar--hover .dropdown-menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    margin: 0 0 0 14px;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: grid-template-rows .25s ease, opacity .25s ease, transform .25s ease, visibility .25s;
+}
+.sidebar.sidebar--hover .submenu-content { min-height: 0; overflow: hidden; }
+.sidebar.sidebar--hover.is-open .dropdown.open .dropdown-menu {
+    display: grid;
+    grid-template-rows: 1fr;
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+.sidebar.sidebar--hover .nav-chevron { transition: transform .25s ease; }
+.sidebar.sidebar--hover .dropdown.open > .dropdown-toggle .nav-chevron { transform: rotate(90deg); }
 .sidebar.sidebar--hover .logout-wrapper { width: 239px; padding: 8px; margin-top: auto; border-top: 1px solid var(--nav-border); }
 .sidebar.sidebar--hover .logout-btn { color: #b91c1c; }
 body.dark-mode .sidebar.sidebar--hover {
