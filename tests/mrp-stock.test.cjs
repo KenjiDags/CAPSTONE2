@@ -57,7 +57,16 @@ assert.deepEqual(episodes.map(row => [row.item_id, row.depleted_at]), [
 db.close();
 const observed = mrp.normalize({ ...items[2], stockoutDateSource: 'observed' }, '2026-09-13');
 assert.equal(observed.daysOutOfStock, 3);
-assert.match(mrp.tooltip(observed)[0], /3.*since tracking began/);
+assert.equal(mrp.tooltip(observed)[0], 'Days Out of Stock: 3');
+for (const missing of [null, undefined, 0, '0', 'Not recorded', '']) {
+  assert.deepEqual(mrp.tooltip({ daysOutOfStock: 0, netRequirement: missing,
+    leadTimeDays: missing, expectedResolutionDate: missing, poExpectedDeliveryDate: missing }),
+    ['Days Out of Stock: 0']);
+}
+assert.deepEqual(mrp.tooltip(critical[0]), [
+  'Days Out of Stock: 9', 'Net Requirement Qty: 10 units', 'Projected Lead Time: 14 days',
+  'Expected Resolution Date: 2026-09-24', 'PO Expected Replenishment: 2026-09-26'
+]);
 assert.equal(mrp.normalize(observed, '2026-09-14').daysOutOfStock, 4);
 
 // Syntax-check inline dashboard JS after replacing PHP expressions with literals.

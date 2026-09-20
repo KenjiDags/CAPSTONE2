@@ -322,8 +322,8 @@ function renderAllItemsChart() {
   }
   details.hidden = !critical;
   // This list also exposes zero-day and unknown-date items without inventing a bar height.
-  details.innerHTML = critical ? '<p>Net requirement currently measures the safety-stock deficit. Supplier lead times and PO dates are not recorded.</p>' + items.map(item =>
-    `<article class="mrp-critical-item"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong><p>${MRPStock.tooltip(item).map(escapeTableText).join('<br>')}</p><a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
+  details.innerHTML = critical ? items.map(item =>
+    `<article class="mrp-critical-item"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${MRPStock.tooltip(item).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
   ).join('') : '';
   if (items.length) state.mrpStockChart = new Chart(canvas, MRPStock.chartConfig(items, state.mrpStatusFilter,
     item => { window.location.href = 'add_multiple_items.php?item_id=' + encodeURIComponent(item.id); }));

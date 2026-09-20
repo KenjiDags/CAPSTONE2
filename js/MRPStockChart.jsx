@@ -42,9 +42,8 @@ export default function MRPStockChart({ items, onRestock }) {
     {status === 'critical' && <div className="mrp-critical-details">
       {rows.map(item => <article className="mrp-critical-item" key={item.id}>
         <strong>{item.sku} — {item.itemName}</strong>
-        {MRPStock.tooltip(item).map(line => <div key={line}>{line}</div>)}
-        {item.netRequirementBasis && <p>{item.netRequirementBasis}</p>}
-        <button type="button" onClick={() => onRestock(item)}>Open Restock Inventory / Create PO</button>
+        {MRPStock.tooltip(item).map((line, index) => <p key={line} className={index === 0 ? 'mrp-primary-metric' : undefined}>{line}</p>)}
+        <button type="button" onClick={() => onRestock(item)}>Open Restock Inventory</button>
       </article>)}
     </div>}
   </section>;
