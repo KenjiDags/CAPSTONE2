@@ -109,6 +109,28 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
 .sidebar.sidebar--hover .dropdown-toggle.active { color: var(--nav-accent); }
 .sidebar.sidebar--hover :is(a, button):focus-visible { outline: 2px solid var(--nav-accent); outline-offset: -2px; }
 .sidebar.sidebar--hover .nav-chevron { margin-left: auto; }
+.sidebar.sidebar--hover .stock-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: -4px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+.sidebar.sidebar--hover .stock-count-badge[hidden] { display: none; }
+.sidebar.sidebar--hover .stock-warning-badge {
+    width: 20px;
+    padding: 0;
+    border-radius: 50%;
+}
 .sidebar.sidebar--hover .dropdown-menu { display: none; margin: 4px 0 4px 14px; }
 .sidebar.sidebar--hover .dropdown.open .dropdown-menu { display: none; }
 .sidebar.sidebar--hover:is(:hover, :has(:focus-visible)) .dropdown.open .dropdown-menu { display: flex; }

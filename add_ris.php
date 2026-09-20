@@ -2,6 +2,8 @@
 require 'auth.php';
 require 'config.php';
 require 'functions.php';
+require_once 'inventory_count_cache.php';
+invalidateInventoryCountAfterWrite();
 ob_start();
 include 'sidebar.php';
 ?>

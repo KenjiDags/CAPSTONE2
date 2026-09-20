@@ -144,6 +144,7 @@ document.getElementById('addForm').addEventListener('submit', function(e) {
     })
     .then(data => {
         if (data.success) {
+            window.dispatchEvent(new Event('inventory:updated'));
             showNotification(data.message, 'success');
             
             if (data.updated) {
@@ -286,6 +287,7 @@ if (editForm) editForm.addEventListener('submit', function(e) {
     })
     .then(data => {
         if (data.success) {
+            window.dispatchEvent(new Event('inventory:updated'));
             showNotification(data.message, 'success');
             document.getElementById('editModal').style.display = 'none';
             
@@ -441,6 +443,7 @@ function deleteItem(id) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+            window.dispatchEvent(new Event('inventory:updated'));
                 showNotification(data.message, 'success');
                 removeRowFromTable(id);
             } else {
@@ -558,6 +561,7 @@ function clearEntries(itemId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+            window.dispatchEvent(new Event('inventory:updated'));
                 showNotification(data.message, 'success');
                 
                 // Refresh the page to show updated data

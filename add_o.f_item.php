@@ -325,6 +325,7 @@ addForm.addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            window.dispatchEvent(new Event('inventory:updated'));
             showAlert(data.message || 'Item saved successfully.', 'success');
             setTimeout(() => {
                 window.location.href = 'inventory.php';

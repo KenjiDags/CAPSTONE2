@@ -216,6 +216,7 @@ form.addEventListener('submit', function(event) {
         .then(response => response.json())
         .then(data => {
             if (!data.success) throw new Error(data.message || 'Failed to update item.');
+            window.dispatchEvent(new Event('inventory:updated'));
             showAlert(data.message || 'Item updated successfully.', 'success');
             setTimeout(() => { window.location.href = 'inventory.php'; }, 900);
         })

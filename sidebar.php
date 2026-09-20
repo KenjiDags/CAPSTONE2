@@ -40,10 +40,10 @@ $sidebarIcon = static function ($name) {
                 <nav aria-label="Main navigation">
                     <div class="dropdown <?= $dropdownActive ? 'open' : '' ?>">
                         <button type="button" class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>" aria-expanded="<?= $dropdownActive ? 'true' : 'false' ?>" aria-controls="office-menu">
-                            <?= $sidebarIcon('folder') ?><span>Office Supplies</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
+                            <?= $sidebarIcon('folder') ?><span>Office Supplies</span><span id="office-stock-warning" class="stock-count-badge stock-warning-badge" hidden aria-label="Office supplies out of stock">!</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
                         <div class="dropdown-menu" id="office-menu">
-                            <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'inventory.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Supply List</span></a>
+                            <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'inventory.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Supply List</span><span id="office-stock-badge" class="stock-count-badge" hidden role="status" aria-live="polite" aria-atomic="true"></span></a>
                             <a href="ris.php" class="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RIS</span></a>
                             <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rsmi.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RSMI</span></a>
                             <a href="SC.php" class="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>SC</span></a>
@@ -102,3 +102,4 @@ $sidebarIcon = static function ($name) {
 
     <script src="js/password.js?v=<?= time() ?>"></script>
     <script src="js/sidebar_script.js?v=<?= time() ?>"></script>
+    <script src="js/inventory-badge.js?v=<?= time() ?>" defer></script>
