@@ -41,7 +41,7 @@
     const query = search.trim().toLowerCase();
     return items.map(item => normalize(item, today)).filter(item => item.status === status &&
       `${item.sku} ${item.itemName} ${item.description ?? ''}`.toLowerCase().includes(query))
-      .sort((a, b) => (status === 'critical' ? (b.daysOutOfStock ?? -1) - (a.daysOutOfStock ?? -1)
+      .sort((a, b) => (status === 'critical' ? (sort === 'lowest' ? (a.daysOutOfStock ?? -1) - (b.daysOutOfStock ?? -1) : (b.daysOutOfStock ?? -1) - (a.daysOutOfStock ?? -1))
         : sort === 'lowest' ? a.onHandQty - b.onHandQty
         : sort === 'highest' ? b.onHandQty - a.onHandQty : 0) || a.itemName.localeCompare(b.itemName));
   }

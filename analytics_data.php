@@ -11,6 +11,17 @@ $category = $_GET['category'] ?? 'office-supplies';
 $horizon = $_GET['horizon'] ?? '12m';
 $historyInterval = $horizon === '24m' ? 24 : 12;
 
+if (isset($_GET['demand_forecast'])) {
+    require_once 'inventory_demand_forecast.php';
+    try {
+        echo json_encode(inventoryDemandForecast($conn, $historyInterval));
+    } catch (Throwable $error) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Unable to load demand history.']);
+    }
+    exit;
+}
+
 // If an item_id is provided, return that item's history (stock card)
 if (!empty($_GET['item_id'])) {
     $item_id = intval($_GET['item_id']);

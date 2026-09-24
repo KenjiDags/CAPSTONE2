@@ -24,6 +24,7 @@ assert.deepEqual(mrp.selectItems(items, 'safe').map(item => item.id), [1]);
 assert.deepEqual(mrp.selectItems(items, 'low').map(item => item.id), [2]);
 const critical = mrp.selectItems(items, 'critical', '', '2026-09-19');
 assert.deepEqual(critical.map(item => item.id), [3, 4]);
+assert.deepEqual(mrp.selectItems(items, 'critical', '', '2026-09-19', 'lowest').map(item => item.id), [4, 3]);
 assert.equal(critical[0].daysOutOfStock, 9);
 assert.equal(critical[0].expectedResolutionDate, '2026-09-24');
 assert.equal(critical[0].poExpectedDeliveryDate, '2026-09-26');
@@ -81,7 +82,7 @@ const buttons = ['safe', 'low', 'critical'].map(status => ({ ...element(), datas
 let creations = 0, destructions = 0;
 const state = { items, mrpStatusFilter: 'critical', mrpSearch: '', mrpViewMode: 'all', mrpStockChart: null };
 const context = { state, MRPStock: mrp, escapeTableText: String,
-  document: { getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); }, querySelectorAll: () => buttons },
+  document: { getElementById(id) { if (!elements.has(id)) elements.set(id, { ...element(), options: [{}, {}, {}] }); return elements.get(id); }, querySelectorAll: () => buttons },
   Chart: function (_, chartConfig) { creations++; this.config = chartConfig; this.destroy = () => destructions++; },
 };
 vm.createContext(context);

@@ -94,6 +94,24 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     </article>
   </section>
 
+  <section id="demandForecastSection" class="demand-forecast-section" aria-labelledby="demandForecastTitle">
+    <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly issued quantity across recorded inventory activity</p></div>
+    <article class="panel">
+      <p class="panel-caption" id="demandForecastCoverage">Forecast based on recorded issuance history.</p>
+      <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>
+      <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
+      <div class="demand-summary" id="demandForecastSummary" hidden>
+        <div><span>Average monthly issuance</span><strong id="demandAverage"></strong></div>
+        <div><span>Forecasted demand</span><strong id="demandNext"></strong></div>
+        <div><span>Previous complete month</span><strong id="demandPrevious"></strong></div>
+        <div><span>Office supply additions last month</span><strong id="demandReceipts"></strong></div>
+        <div><span>Projected change</span><strong id="demandChange"></strong></div>
+        <div><span>Demand trend</span><strong id="demandTrend"></strong></div>
+      </div>
+      <p class="panel-caption demand-method" id="demandForecastMethod" hidden></p>
+    </article>
+  </section>
+
   <section id="inventoryHealthSection" class="inventory-table-section" aria-labelledby="inventoryTableTitle">
     <div class="section-heading"><h2 id="inventoryTableTitle">Inventory Health Table</h2><p>Office supplies grouped by current stock health.</p></div>
     <article class="panel">
@@ -162,6 +180,52 @@ new Chart(document.getElementById('officeStatusChart'), {
 <script>
 const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'safe', mrpViewMode: 'all', mrpSearch: '' };
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
+let demandForecastChart = null;
+let demandForecastRequest = 0;
+async function loadDemandForecast() {
+  const request = ++demandForecastRequest;
+  const message = document.getElementById('demandForecastMessage');
+  try {
+    const horizon = document.getElementById('horizonSelect').value;
+    const response = await fetch('analytics_data.php?demand_forecast=1&horizon=' + encodeURIComponent(horizon), { cache: 'no-store' });
+    if (!response.ok) throw new Error('Demand history unavailable');
+    const data = await response.json();
+    if (request !== demandForecastRequest) return;
+    if (demandForecastChart) { demandForecastChart.destroy(); demandForecastChart = null; }
+    document.getElementById('demandForecastCoverage').textContent = data.coverage;
+    const available = data.forecast !== null;
+    document.getElementById('demandChartFrame').hidden = !available;
+    document.getElementById('demandForecastSummary').hidden = !available;
+    document.getElementById('demandForecastMethod').hidden = !available;
+    message.hidden = available;
+    if (!available) { message.textContent = 'Insufficient historical data to generate a forecast. At least three months of issuance history, including two of the last three complete months, are required.'; return; }
+    const number = value => Number(value).toLocaleString();
+    document.getElementById('demandAverage').textContent = number(data.average) + ' items';
+    document.getElementById('demandNext').textContent = number(data.forecast) + ' items';
+    document.getElementById('demandPrevious').textContent = number(data.previous) + ' items';
+    document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
+    document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
+    document.getElementById('demandTrend').textContent = data.trend;
+    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the last three complete months. The current month is excluded from actuals.';
+    const labels = [...data.months, data.forecastMonth].map(month => new Date(month + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+    const dark = document.body.classList.contains('dark-mode');
+    const axisColor = dark ? '#cbd5e1' : '#526168';
+    demandForecastChart = new Chart(document.getElementById('demandForecastChart'), {
+      type: 'bar', data: { labels, datasets: [
+        { label: 'Actual issued', data: [...data.actual, null], backgroundColor: '#4b7e87', borderRadius: 4 },
+        { label: 'Forecast issued', data: [...data.actual.map(() => null), data.forecast], backgroundColor: '#b44b31', borderColor: '#b44b31', borderWidth: 2, borderRadius: 4 }
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: axisColor } }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${number(context.parsed.y)} items` } } }, scales: { x: { ticks: { color: axisColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: axisColor, precision: 0 }, grid: { color: dark ? '#334155' : '#e7edef' }, title: { display: true, text: 'Items issued', color: axisColor } } } }
+    });
+  } catch (error) {
+    if (request !== demandForecastRequest) return;
+    message.hidden = false;
+    message.textContent = 'Unable to load demand history.';
+    document.getElementById('demandChartFrame').hidden = true;
+    document.getElementById('demandForecastSummary').hidden = true;
+  }
+}
+loadDemandForecast();
 function itemName(item) { return item.item_name || item.property_no || 'Unnamed item'; }
 function movement(item) { return Number(item.usage_volume || item.quantity || 0); }
 function shortName(name) { return name.length > 25 ? name.slice(0, 23) + '...' : name; }
@@ -266,6 +330,7 @@ function loadCategory(category) {
   document.getElementById('mrpFilterSelect').value = 'all';
   document.querySelectorAll('.scope-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.category === category));
   document.getElementById('mrpSection').hidden = category !== 'office-supplies';
+  document.getElementById('demandForecastSection').hidden = category !== 'office-supplies';
   document.getElementById('inventoryHealthSection').hidden = category !== 'office-supplies';
   if (category === 'office-supplies') renderAllItemsChart();
   const horizon = document.getElementById('horizonSelect').value;
@@ -308,6 +373,10 @@ function renderAllItemsChart() {
   empty.textContent = state.mrpSearch ? 'No matching items in this view.' : 'No items in this stock status.';
   document.getElementById('mrpNoResults').hidden = true;
   document.getElementById('criticalChartAction').hidden = !critical;
+  const sortOptions = document.getElementById('mrpFilterSelect').options;
+  sortOptions[0].textContent = critical ? 'Sort by Days Out of Stock' : 'Sort by Item Name';
+  sortOptions[1].textContent = critical ? 'Shortest Out of Stock First' : 'Sort by Lowest Quantity First';
+  sortOptions[2].textContent = critical ? 'Longest Out of Stock First' : 'Sort by Highest Quantity First';
   document.getElementById('forecastTitle').textContent = critical ? 'Critical stock — Days Out of Stock' : 'Stock levels — Quantity (units)';
   document.querySelectorAll('[data-mrp-status]').forEach(button => {
     const active = button.dataset.mrpStatus === state.mrpStatusFilter;
@@ -323,7 +392,7 @@ function renderAllItemsChart() {
   details.hidden = !critical;
   // This list also exposes zero-day and unknown-date items without inventing a bar height.
   details.innerHTML = critical ? items.map(item =>
-    `<article class="mrp-critical-item"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${MRPStock.tooltip(item).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
+    `<article class="mrp-critical-item" tabindex="0" role="button" aria-expanded="false" aria-label="Show description for ${escapeTableText(item.itemName)}"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${MRPStock.tooltip(item).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<p class="mrp-item-description" hidden><strong>Description:</strong> ${escapeTableText(item.description || 'No description available.')}</p><a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
   ).join('') : '';
   if (items.length) state.mrpStockChart = new Chart(canvas, MRPStock.chartConfig(items, state.mrpStatusFilter,
     item => { window.location.href = 'add_multiple_items.php?item_id=' + encodeURIComponent(item.id); }));
@@ -339,6 +408,19 @@ document.querySelectorAll('[data-mrp-status]').forEach(button => button.addEvent
   state.mrpStatusFilter = button.dataset.mrpStatus;
   renderAllItemsChart();
 }));
+document.getElementById('mrpSection').addEventListener('click', event => {
+  const card = event.target.closest('.mrp-critical-item');
+  if (!card || event.target.closest('a')) return;
+  const description = card.querySelector('.mrp-item-description');
+  description.hidden = !description.hidden;
+  card.setAttribute('aria-expanded', String(!description.hidden));
+});
+document.getElementById('mrpSection').addEventListener('keydown', event => {
+  if (event.target.matches('.mrp-critical-item') && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    event.target.click();
+  }
+});
 document.getElementById('mrpFilterSelect').addEventListener('change', event => {
   state.mrpViewMode = event.target.value;
   renderAllItemsChart();
@@ -346,7 +428,7 @@ document.getElementById('mrpFilterSelect').addEventListener('change', event => {
 document.getElementById('mrpSearchInput').addEventListener('input', event => { state.mrpSearch = event.target.value.trim().toLowerCase(); renderAllItemsChart(); });
 document.getElementById('inventoryTableSearch').addEventListener('input', renderInventoryHealthTable);
 document.querySelectorAll('[data-table-status]').forEach(button => button.addEventListener('click', () => { state.inventoryTableStatus = button.dataset.tableStatus; document.querySelectorAll('[data-table-status]').forEach(item => item.classList.toggle('active', item.dataset.tableStatus === state.inventoryTableStatus)); renderInventoryHealthTable(); }));
-document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); })); document.getElementById('horizonSelect').addEventListener('change', () => { loadCategory(state.category); loadUnifiedInventoryTable(); }); loadCategory(state.category);
+document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); })); document.getElementById('horizonSelect').addEventListener('change', () => { loadCategory(state.category); loadUnifiedInventoryTable(); loadDemandForecast(); }); loadCategory(state.category);
 loadUnifiedInventoryTable();
 // Recalculate dates while open; fetch current balances every minute and on return.
 let mrpRefreshing = false;
@@ -362,6 +444,7 @@ async function refreshMrp() {
     if (request !== categoryRequest || state.category !== 'office-supplies') return;
     state.items = data.supply_list || [];
     state.criticalItems = data.critical_depletion || [];
+    prepareUnifiedItems({ 'office-supplies': data });
     renderAllItemsChart();
   } catch (error) {
     document.getElementById('forecastTitle').textContent += ' — refresh failed; showing last loaded stock';
