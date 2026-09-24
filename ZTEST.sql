@@ -1,3 +1,5 @@
+USE tesda_inventory;
+
 SELECT 
     DATE_FORMAT(r.date_requested, '%Y-%m') AS month,
     SUM(ri.issued_quantity) AS total_issued
