@@ -97,7 +97,6 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="demandForecastSection" class="demand-forecast-section" aria-labelledby="demandForecastTitle">
     <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly issued quantity across recorded inventory activity</p></div>
     <article class="panel">
-      <p class="panel-caption" id="demandForecastCoverage">Forecast based on recorded issuance history.</p>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>
       <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
       <div class="demand-summary" id="demandForecastSummary" hidden>
@@ -192,7 +191,6 @@ async function loadDemandForecast() {
     const data = await response.json();
     if (request !== demandForecastRequest) return;
     if (demandForecastChart) { demandForecastChart.destroy(); demandForecastChart = null; }
-    document.getElementById('demandForecastCoverage').textContent = data.coverage;
     const available = data.forecast !== null;
     document.getElementById('demandChartFrame').hidden = !available;
     document.getElementById('demandForecastSummary').hidden = !available;

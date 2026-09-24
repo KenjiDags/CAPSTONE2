@@ -75,7 +75,6 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12): array {
         'months' => array_keys($monthly), 'actual' => $values,
         'forecastMonth' => $currentMonth->format('Y-m'), 'forecast' => $forecast,
         'average' => $average, 'previous' => $previousMonth, 'receiptsPreviousMonth' => $receipts, 'changePercent' => $change,
-        'trend' => $trend, 'method' => 'Three-month moving average',
-        'coverage' => 'Recorded RIS and semi-expendable issuances; total activity counts, not value or item-level requirements.'
+        'trend' => $trend, 'method' => 'Three-month moving average'
     ];
 }
