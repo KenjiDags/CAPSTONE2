@@ -2903,7 +2903,7 @@ body.dark-mode table tbody td.actions-cell {
 
 /* =========================================================
    INVENTORY CONTROLS
-   Sort By + Search + Action Buttons
+   Category/Sort By + Search + Action Buttons
    ========================================================= */
 
 .inventory-controls {
@@ -2914,21 +2914,20 @@ body.dark-mode table tbody td.actions-cell {
     flex-wrap: nowrap;
 }
 
-/* Sort By section */
+/* Category / Sort By section */
 .inventory-controls .control-sort {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 0 1 auto;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: max-content;
     white-space: nowrap;
-    color: #001F80;
 }
 
 /* Search section */
 .inventory-controls .control-search {
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 250px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -2949,11 +2948,11 @@ body.dark-mode table tbody td.actions-cell {
 /* Search input */
 .inventory-controls .control-search input {
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 150px;
     width: 100%;
 }
 
-/* Add / Restock buttons */
+/* Add / Restock / Export buttons */
 .inventory-controls .control-actions {
     display: flex;
     align-items: center;
@@ -2963,7 +2962,8 @@ body.dark-mode table tbody td.actions-cell {
 }
 
 /* Prevent buttons from shrinking */
-.inventory-controls .control-actions .btn {
+.inventory-controls .control-actions .btn,
+.inventory-controls .control-actions .pill-btn {
     flex-shrink: 0;
     white-space: nowrap;
 }
