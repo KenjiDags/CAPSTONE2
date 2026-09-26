@@ -21,10 +21,8 @@ function formatICSNo($ics_no) {
 // DELETE LOGIC
 if (isset($_GET['delete_ics_id'])) {
     $ics_id = (int)$_GET['delete_ics_id'];
-    // Delete ICS items first due to foreign key constraint
-    $conn->query("DELETE FROM ics_items WHERE ics_id = $ics_id");
-    // Then delete ICS header
-    $conn->query("DELETE FROM ics WHERE ics_id = $ics_id");
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'ICS', $ics_id);
     // Redirect to avoid resubmission on refresh (preserve sort param if present)
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
     header("Location: ics.php" . $sortParam);

@@ -96,15 +96,14 @@ if (isset($_GET['action'])) {
         case 'delete':
             if (isset($_POST['id'])) {
                 $id = intval($_POST['id']);
-                $stmt = $conn->prepare("DELETE FROM items WHERE item_id = ?");
-                $stmt->bind_param("i", $id);
-                
-                if ($stmt->execute()) {
-                    echo json_encode(['success' => true, 'message' => 'Item deleted successfully']);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error deleting item']);
+                require_once 'archive_helpers.php';
+                try {
+                    archiveRecord($conn, 'Supply', $id);
+                    echo json_encode(['success' => true, 'message' => 'Item moved to Archive']);
+                } catch (Throwable $error) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Unable to archive item. No records were deleted.']);
                 }
-                $stmt->close();
             }
             break;
             

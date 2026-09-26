@@ -5,23 +5,8 @@ require_once 'config.php';
 // DELETE LOGIC (moved from pc_delete.php)
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 	$id = (int)$_GET['delete_id'];
-	// Get PPE_no for the selected entry
-	$ppe_no = '';
-	$ppe_q = $conn->prepare("SELECT PPE_no FROM item_history_ppe WHERE id = ? LIMIT 1");
-	$ppe_q->bind_param("i", $id);
-	$ppe_q->execute();
-	$ppe_res = $ppe_q->get_result();
-	if ($ppe_row = $ppe_res->fetch_assoc()) {
-		$ppe_no = $ppe_row['PPE_no'];
-	}
-	$ppe_q->close();
-	if ($ppe_no !== '') {
-		// Delete all history for this PPE_no
-		$del_q = $conn->prepare("DELETE FROM item_history_ppe WHERE PPE_no = ?");
-		$del_q->bind_param("s", $ppe_no);
-		$del_q->execute();
-		$del_q->close();
-	}
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'PC', $id);
 	// Redirect back to the return URL or PPE_PC.php
 	$return = isset($_GET['return']) ? $_GET['return'] : 'PPE_PC.php';
 	header('Location: ' . $return);

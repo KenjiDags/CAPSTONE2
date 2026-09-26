@@ -19,7 +19,11 @@ body { background: #f4f6f8; color: #263238; }
 .office-status-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; grid-column: 1 / span 2; color: #78868b; font-size: 11px; }
 .office-status-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 50%; }
 .office-status-legend i.above { background: #43a047; } .office-status-legend i.at { background: #fb8c00; } .office-status-legend i.empty { background: #e53935; }
-.scope-bar { display: grid; grid-template-columns: 1fr 210px; gap: 20px; align-items: center; padding: 14px; background: #fff; border: 1px solid #dce3e5; box-shadow: 0 3px 12px rgba(33, 55, 62, .05); }
+.scope-bar { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: center; padding: 14px; background: #fff; border: 1px solid #dce3e5; box-shadow: 0 3px 12px rgba(33, 55, 62, .05); }
+.demand-forecast-toolbar { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.demand-forecast-toolbar .scope-control { width: 284px; max-width: 100%; }
+.demand-forecast-toolbar .scope-control label { font-size: 12px; letter-spacing: .14em; margin-bottom: 10px; }
+.demand-forecast-toolbar .scope-control select { min-height: 51px; padding: 12px 15px; font-size: 16px; }
 .scope-tabs { display: flex; gap: 6px; }
 .scope-tab { border: 0; background: transparent; color: #64747a; cursor: pointer; padding: 12px 16px; font-weight: 700; border-bottom: 3px solid transparent; }
 .scope-tab.active { color: #b44b31; border-color: #b44b31; background: #fff8f5; }

@@ -27,26 +27,25 @@
   function normalize(item, today = businessDate()) {
     const onHandQty = Number(item.onHandQty ?? item.quantity);
     const safetyStock = Math.max(0, Number(item.safetyStock ?? item.reorder_point ?? 0));
-    const status = onHandQty === 0 ? 'critical' : onHandQty > safetyStock ? 'safe' : onHandQty > 0 ? 'low' : 'invalid';
-    const stockoutDate = status === 'critical' ? (item.stockoutDate ?? null) : null;
+    const status = onHandQty === 0 ? 'empty' : onHandQty > 1 && onHandQty < 5 ? 'critical' : onHandQty > safetyStock ? 'safe' : onHandQty > 0 ? 'low' : 'invalid';
+    const stockoutDate = status === 'empty' ? (item.stockoutDate ?? null) : null;
     return { ...item, id: item.id ?? item.item_id, sku: item.sku ?? item.stock_number ?? '',
       itemName: item.itemName ?? item.item_name ?? 'Unnamed item', onHandQty, safetyStock, status, stockoutDate,
       leadTimeDays: item.leadTimeDays ?? null,
       netRequirement: item.netRequirement ?? Math.max(0, safetyStock - onHandQty),
-      daysOutOfStock: status === 'critical' ? daysOutOfStock(stockoutDate, today) : 0,
+      daysOutOfStock: status === 'empty' ? daysOutOfStock(stockoutDate, today) : 0,
       expectedResolutionDate: expectedResolution(stockoutDate, item.leadTimeDays),
       poExpectedDeliveryDate: dateValue(item.poExpectedDeliveryDate) === null ? null : item.poExpectedDeliveryDate };
   }
   function selectItems(items, status, search = '', today = businessDate(), sort = 'all') {
     const query = search.trim().toLowerCase();
-    return items.map(item => normalize(item, today)).filter(item => item.status === status &&
+    return items.map(item => normalize(item, today)).filter(item => (status === 'all' || item.status === status) && Number.isFinite(item.onHandQty) &&
       `${item.sku} ${item.itemName} ${item.description ?? ''}`.toLowerCase().includes(query))
-      .sort((a, b) => (status === 'critical' ? (sort === 'lowest' ? (a.daysOutOfStock ?? -1) - (b.daysOutOfStock ?? -1) : (b.daysOutOfStock ?? -1) - (a.daysOutOfStock ?? -1))
-        : sort === 'lowest' ? a.onHandQty - b.onHandQty
+      .sort((a, b) => (sort === 'lowest' ? a.onHandQty - b.onHandQty
         : sort === 'highest' ? b.onHandQty - a.onHandQty : 0) || a.itemName.localeCompare(b.itemName));
   }
   function tooltip(item) {
-    const lines = [`Days Out of Stock: ${item.daysOutOfStock ?? 'Not recorded'}`];
+    const lines = [item.onHandQty > 0 ? `Quantity: ${item.onHandQty} units` : `Days Out of Stock: ${item.daysOutOfStock ?? 'Not recorded'}`];
     if (Number.isFinite(Number(item.netRequirement)) && Number(item.netRequirement) > 0)
       lines.push(`Net Requirement Qty: ${item.netRequirement} units`);
     if (Number.isFinite(Number(item.leadTimeDays)) && Number(item.leadTimeDays) > 0)
@@ -59,16 +58,18 @@
   }
   function chartConfig(items, status, onRestock) {
     const critical = status === 'critical';
-    const metric = critical ? 'Days Out of Stock' : 'Quantity (units)';
+    const metric = 'Quantity (units)';
+    const colors = { safe: '#15803d', low: '#d97706', critical: '#dc2626', empty: '#64748b', invalid: '#7c3aed' };
+    const names = { safe: 'Safe', low: 'Low Stock', critical: 'Critical', empty: 'Out of Stock', invalid: 'Invalid balance' };
     return { type: 'bar', data: { labels: items.map(item => `${item.sku} — ${item.itemName}`), datasets: [{
-      label: metric, data: items.map(item => critical ? item.daysOutOfStock : item.onHandQty),
-      backgroundColor: critical ? '#dc2626' : status === 'low' ? '#d97706' : '#15803d', borderRadius: 4
+      label: metric, data: items.map(item => item.onHandQty),
+      backgroundColor: items.map(item => colors[item.status]), borderRadius: 4
     }] }, options: { responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: 'index', intersect: false },
-      onClick: (_, elements) => { if (critical && elements.length) onRestock(items[elements[0].index]); },
+      onClick: (_, elements) => { if (critical && elements.length && onRestock) onRestock(items[elements[0].index]); },
       plugins: { legend: { display: false }, tooltip: { callbacks: {
         title: contexts => contexts.length ? `${items[contexts[0].dataIndex].sku} — ${items[contexts[0].dataIndex].itemName}` : '',
-        label: context => critical ? tooltip(items[context.dataIndex]) : `Quantity: ${items[context.dataIndex].onHandQty} units`
+        label: context => { const item = items[context.dataIndex]; return [`Status: ${names[item.status]}`, ...(critical ? tooltip(item) : [`Quantity: ${item.onHandQty} units`])]; }
       } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: metric } } } } };
   }
   return { businessDate, daysOutOfStock, expectedResolution, normalize, selectItems, tooltip, chartConfig };

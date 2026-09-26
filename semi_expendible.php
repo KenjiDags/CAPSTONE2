@@ -10,11 +10,8 @@ if ((
     )) {
     $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_id'];
     if ($delete_id > 0) {
-        if ($stmt = $conn->prepare("DELETE FROM semi_expendable_property WHERE id = ?")) {
-            $stmt->bind_param("i", $delete_id);
-            $stmt->execute();
-            $stmt->close();
-        }
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'Semi-expendable', $delete_id);
     }
     $redirectCategory = isset($_POST['category']) ? $_POST['category'] : (isset($_GET['category']) ? $_GET['category'] : '');
     if (ob_get_level() > 0) { ob_end_clean(); }

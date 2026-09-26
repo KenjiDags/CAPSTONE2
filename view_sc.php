@@ -1,19 +1,18 @@
 <?php 
     require 'config.php'; 
     require 'auth.php';
-    include 'sidebar.php';
+    require_once 'archive_helpers.php';
+    if (empty($_SESSION['archive_csrf'])) $_SESSION['archive_csrf'] = bin2hex(random_bytes(32));
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_history']) && isset($_POST['item_id'])) {
-        $item_id_to_clear = (int)$_POST['item_id'];
-        $conn->query("INSERT INTO item_history_archive SELECT * FROM item_history WHERE item_id = $item_id_to_clear");
-        $conn->query("DELETE FROM item_history WHERE item_id = $item_id_to_clear");
-
-        if ($conn->affected_rows > 0) {
-            header("Location: view_sc.php?item_id=" . $item_id_to_clear . "&cleared=1");
-            exit;
-        } else {
-            echo "<script>alert('❌ Failed to clear history');</script>";
+        if (!hash_equals($_SESSION['archive_csrf'], (string)($_POST['csrf'] ?? ''))) {
+            http_response_code(403);
+            exit('Invalid request. Reload the page and try again.');
         }
+        $item_id_to_clear = (int)$_POST['item_id'];
+        archiveRecord($conn, 'SC', $item_id_to_clear, false);
+        header("Location: view_sc.php?item_id=" . $item_id_to_clear . "&cleared=1");
+        exit;
     }
 
         if (isset($_GET['cleared']) && $_GET['cleared'] == 1) {
@@ -72,6 +71,7 @@
     </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 
 <?php
         if (!isset($_GET['item_id'])) {
@@ -126,13 +126,14 @@
 			</a>
 
             <?php if (!empty($history_rows)): ?>
-                <a href="view_sc.php?item_id=<?= $item_id ?>&clear_history=1" 
-                   class="btn btn-danger"
-                   id="clearHistoryBtn"
-                   data-item-id="<?= $item_id ?>"
-                   onclick="return confirm('Are you sure you want to delete this item\'s history?')">
+                <form method="post" action="view_sc.php?item_id=<?= $item_id ?>" style="display:inline" onsubmit="return confirm('Move this stock card history to Archive?')">
+                <input type="hidden" name="item_id" value="<?= $item_id ?>">
+                <input type="hidden" name="clear_history" value="1">
+                <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['archive_csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                <button type="submit" class="btn btn-danger" id="clearHistoryBtn">
                     <i class="fas fa-trash"></i> Clear History
-                </a>
+                </button>
+                </form>
             <?php endif; ?>
         </div>
 

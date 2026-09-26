@@ -7,11 +7,11 @@ require 'functions.php';
 if (isset($_GET['delete_itr_id'])) {
     $del_id = (int)$_GET['delete_itr_id'];
     try {
-        // Ensure tables exist defensively
-        @$conn->query("DELETE FROM itr_items WHERE itr_id = $del_id");
-        @$conn->query("DELETE FROM itr WHERE itr_id = $del_id");
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'ITR', $del_id);
     } catch (Throwable $e) {
-        // swallow errors to avoid breaking UI; deletion attempt made
+        http_response_code(500);
+        exit('Unable to archive ITR. No records were deleted.');
     }
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
     header('Location: itr.php' . $sortParam);

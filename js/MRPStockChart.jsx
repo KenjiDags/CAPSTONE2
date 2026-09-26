@@ -5,7 +5,7 @@ import MRPStock from './mrp-stock.js';
 // Use with a React bundler supporting CommonJS imports. Pass fresh, immutable
 // items from the API and a handler that opens the restock or PO creation flow.
 export default function MRPStockChart({ items, onRestock }) {
-  const [status, setStatus] = useState('safe');
+  const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [today, setToday] = useState(() => MRPStock.businessDate());
   const canvas = useRef(null);
@@ -30,12 +30,12 @@ export default function MRPStockChart({ items, onRestock }) {
 
   return <section aria-label="MRP stock chart">
     <div className="mrp-status-legend" role="group" aria-label="Stock status">
-      {[['safe', 'Safe'], ['low', 'Low Stock'], ['critical', 'Critical (MRP)']].map(([value, label]) =>
+      {[['all', 'All'], ['safe', 'Safe'], ['low', 'Low Stock'], ['critical', 'Critical (MRP)']].map(([value, label]) =>
         <button key={value} type="button" aria-pressed={status === value}
           className={status === value ? 'active' : ''} onClick={() => setStatus(value)}>{label}</button>)}
     </div>
     <label>Search stock items <input type="search" value={search} onChange={event => setSearch(event.target.value)} /></label>
-    <p>{status === 'critical' ? 'Days Out of Stock' : 'Quantity (units)'}</p>
+    <p>Quantity (units). Critical: greater than 1 and less than 5.</p>
     {rows.length ? <div style={{ height: 390, position: 'relative' }}>
       <canvas ref={canvas} role="img" aria-label={`${status} stock chart`} />
     </div> : <p role="status">No matching items in this view.</p>}

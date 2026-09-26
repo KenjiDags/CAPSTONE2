@@ -8,7 +8,8 @@ require 'functions.php';
 if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) || isset($_GET['delete_iirusp_id'])) {
     $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_iirusp_id'];
     if ($delete_id > 0) {
-        $conn->query("DELETE FROM iirusp WHERE iirusp_id=$delete_id");
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'IIRUSP', $delete_id);
     }
     if (ob_get_level() > 0) { ob_end_clean(); }
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort']) . '&deleted=1') : '?deleted=1';

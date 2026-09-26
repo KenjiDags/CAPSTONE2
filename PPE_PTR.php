@@ -82,10 +82,8 @@ $conn->query("CREATE TABLE IF NOT EXISTS ppe_ptr_items (
 // DELETE LOGIC
 if (isset($_GET['delete_ptr_id'])) {
     $ptr_id = (int)$_GET['delete_ptr_id'];
-    // Delete PTR items first due to foreign key constraint
-    $conn->query("DELETE FROM ppe_ptr_items WHERE ptr_id = $ptr_id");
-    // Then delete PTR header
-    $conn->query("DELETE FROM ppe_ptr WHERE ptr_id = $ptr_id");
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'PTR', $ptr_id);
     // Redirect to avoid resubmission on refresh
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
     header("Location: PPE_PTR.php" . $sortParam);

@@ -61,7 +61,6 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       <button type="button" class="scope-tab" data-category="semi-expendables" role="tab">Semi-Expendables</button>
       <button type="button" class="scope-tab" data-category="ppe" role="tab">PPE</button>
     </div>
-    <div class="scope-control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
   </section>
 
   <section id="categoryInsights" class="category-insights" hidden>
@@ -80,8 +79,8 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="mrpSection" class="mrp-section">
     <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
-      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical items measure calendar days without stock.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
-      <div class="mrp-status-legend"><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
+      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
+      <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">
           <div class="mrp-multi-chart-frame">
@@ -97,6 +96,9 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="demandForecastSection" class="demand-forecast-section" aria-labelledby="demandForecastTitle">
     <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly issued quantity across recorded inventory activity</p></div>
     <article class="panel">
+      <div class="demand-forecast-toolbar">
+        <div class="scope-control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
+      </div>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>
       <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
       <div class="demand-summary" id="demandForecastSummary" hidden>
@@ -177,7 +179,7 @@ new Chart(document.getElementById('officeStatusChart'), {
 </script>
 
 <script>
-const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'safe', mrpViewMode: 'all', mrpSearch: '' };
+const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 let demandForecastChart = null;
 let demandForecastRequest = 0;
@@ -271,9 +273,8 @@ function prepareUnifiedItems(payloads) {
   renderInventoryHealthTable();
 }
 function loadUnifiedInventoryTable() {
-  const horizon = document.getElementById('horizonSelect').value;
   const categories = ['office-supplies'];
-  Promise.all(categories.map(category => fetch('analytics_data.php?category=' + encodeURIComponent(category) + '&horizon=' + encodeURIComponent(horizon)).then(response => {
+  Promise.all(categories.map(category => fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => {
     if (!response.ok) throw new Error(`Unable to load ${category} inventory data.`);
     return response.json();
   }))).then(results => prepareUnifiedItems(Object.fromEntries(categories.map((category, index) => [category, results[index]])))).catch(error => console.error('Unified inventory table failed to load:', error));
@@ -320,7 +321,7 @@ function loadCategory(category) {
   if (state.mrpStockChart) { state.mrpStockChart.destroy(); state.mrpStockChart = null; }
   const scrollPosition = window.scrollY;
   state.category = category;
-  state.mrpStatusFilter = 'safe';
+  state.mrpStatusFilter = 'all';
   state.mrpViewMode = 'all';
   state.mrpSearch = '';
   document.getElementById('mrpSearchInput').value = '';
@@ -331,8 +332,7 @@ function loadCategory(category) {
   document.getElementById('demandForecastSection').hidden = category !== 'office-supplies';
   document.getElementById('inventoryHealthSection').hidden = category !== 'office-supplies';
   if (category === 'office-supplies') renderAllItemsChart();
-  const horizon = document.getElementById('horizonSelect').value;
-  fetch('analytics_data.php?category=' + encodeURIComponent(category) + '&horizon=' + encodeURIComponent(horizon)).then(response => response.json()).then(data => {
+  fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => response.json()).then(data => {
     if (request !== categoryRequest) return;
     state.items = data.items || data.supply_list || [];
     state.criticalItems = data.critical_depletion || [];
@@ -372,10 +372,10 @@ function renderAllItemsChart() {
   document.getElementById('mrpNoResults').hidden = true;
   document.getElementById('criticalChartAction').hidden = !critical;
   const sortOptions = document.getElementById('mrpFilterSelect').options;
-  sortOptions[0].textContent = critical ? 'Sort by Days Out of Stock' : 'Sort by Item Name';
-  sortOptions[1].textContent = critical ? 'Shortest Out of Stock First' : 'Sort by Lowest Quantity First';
-  sortOptions[2].textContent = critical ? 'Longest Out of Stock First' : 'Sort by Highest Quantity First';
-  document.getElementById('forecastTitle').textContent = critical ? 'Critical stock — Days Out of Stock' : 'Stock levels — Quantity (units)';
+  sortOptions[0].textContent = 'Sort by Item Name';
+  sortOptions[1].textContent = 'Sort by Lowest Quantity First';
+  sortOptions[2].textContent = 'Sort by Highest Quantity First';
+  document.getElementById('forecastTitle').textContent = critical ? 'Critical stock — Quantity greater than 1 and less than 5' : 'Stock levels — Quantity (units)';
   document.querySelectorAll('[data-mrp-status]').forEach(button => {
     const active = button.dataset.mrpStatus === state.mrpStatusFilter;
     button.classList.toggle('active', active);
@@ -388,7 +388,7 @@ function renderAllItemsChart() {
     canvas.closest('.mrp-chart-sections').after(details);
   }
   details.hidden = !critical;
-  // This list also exposes zero-day and unknown-date items without inventing a bar height.
+  // Critical item cards show quantity and replenishment details.
   details.innerHTML = critical ? items.map(item =>
     `<article class="mrp-critical-item" tabindex="0" role="button" aria-expanded="false" aria-label="Show description for ${escapeTableText(item.itemName)}"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${MRPStock.tooltip(item).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<p class="mrp-item-description" hidden><strong>Description:</strong> ${escapeTableText(item.description || 'No description available.')}</p><a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
   ).join('') : '';
@@ -426,7 +426,9 @@ document.getElementById('mrpFilterSelect').addEventListener('change', event => {
 document.getElementById('mrpSearchInput').addEventListener('input', event => { state.mrpSearch = event.target.value.trim().toLowerCase(); renderAllItemsChart(); });
 document.getElementById('inventoryTableSearch').addEventListener('input', renderInventoryHealthTable);
 document.querySelectorAll('[data-table-status]').forEach(button => button.addEventListener('click', () => { state.inventoryTableStatus = button.dataset.tableStatus; document.querySelectorAll('[data-table-status]').forEach(item => item.classList.toggle('active', item.dataset.tableStatus === state.inventoryTableStatus)); renderInventoryHealthTable(); }));
-document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); })); document.getElementById('horizonSelect').addEventListener('change', () => { loadCategory(state.category); loadUnifiedInventoryTable(); loadDemandForecast(); }); loadCategory(state.category);
+document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); }));
+document.getElementById('horizonSelect').addEventListener('change', loadDemandForecast);
+loadCategory(state.category);
 loadUnifiedInventoryTable();
 // Recalculate dates while open; fetch current balances every minute and on return.
 let mrpRefreshing = false;
@@ -436,7 +438,7 @@ async function refreshMrp() {
   const request = categoryRequest;
   mrpRefreshing = true;
   try {
-    const response = await fetch('analytics_data.php?category=office-supplies&horizon=' + encodeURIComponent(document.getElementById('horizonSelect').value), { cache: 'no-store' });
+    const response = await fetch('analytics_data.php?category=office-supplies', { cache: 'no-store' });
     if (!response.ok) throw new Error('Stock refresh failed');
     const data = await response.json();
     if (request !== categoryRequest || state.category !== 'office-supplies') return;

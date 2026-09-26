@@ -6,12 +6,8 @@ require_once 'config.php';
 if (isset($_GET['delete_id'])) {
   $deleteId = (int)$_GET['delete_id'];
   if ($deleteId > 0) {
-    $deleteStmt = $conn->prepare("DELETE FROM semi_expendable_property WHERE id = ?");
-    if ($deleteStmt) {
-      $deleteStmt->bind_param("i", $deleteId);
-      $deleteStmt->execute();
-      $deleteStmt->close();
-    }
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'Semi-expendable', $deleteId);
   }
 
   $redirectParams = ['deleted' => '1'];

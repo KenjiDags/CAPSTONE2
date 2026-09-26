@@ -95,9 +95,9 @@ function editIctEntry($conn, $data) {
 }
 
 function deleteIctEntry($conn, $id) {
-    $stmt = $conn->prepare("DELETE FROM ict_registry WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    return $stmt->execute();
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'ICT', $id);
+    return true;
 }
 
 function calculateBalance($data) {

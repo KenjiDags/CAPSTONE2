@@ -6,8 +6,8 @@ require 'functions.php';
 // RRSP listing page (mirrors ICS listing). If deletion requested, process first.
 if (isset($_GET['delete_rrsp_id'])) {
     $del_id = (int)$_GET['delete_rrsp_id'];
-    $conn->query("DELETE FROM rrsp_items WHERE rrsp_id = $del_id");
-    $conn->query("DELETE FROM rrsp WHERE rrsp_id = $del_id");
+    require_once 'archive_helpers.php';
+    archiveRecord($conn, 'RRSP', $del_id);
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
     header("Location: rrsp.php" . $sortParam);
     exit();

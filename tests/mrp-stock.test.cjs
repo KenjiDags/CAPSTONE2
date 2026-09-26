@@ -19,21 +19,30 @@ const items = [
   { id: 3, sku: 'ZERO', itemName: 'Zero', onHandQty: 0, safetyStock: 10, stockoutDate: '2026-09-10', leadTimeDays: 14, poExpectedDeliveryDate: '2026-09-26' },
   { id: 4, itemName: 'Unknown date', onHandQty: 0, safetyStock: 10 },
   { id: 5, itemName: 'Invalid balance', onHandQty: -1, safetyStock: 10 },
+  { id: 6, itemName: 'Critical Two', onHandQty: 2, safetyStock: 10 },
+  { id: 7, itemName: 'Critical Three', onHandQty: 3, safetyStock: 0 },
+  { id: 8, itemName: 'Critical Four', onHandQty: 4, safetyStock: 10 },
 ];
 assert.deepEqual(mrp.selectItems(items, 'safe').map(item => item.id), [1]);
 assert.deepEqual(mrp.selectItems(items, 'low').map(item => item.id), [2]);
-const critical = mrp.selectItems(items, 'critical', '', '2026-09-19');
-assert.deepEqual(critical.map(item => item.id), [3, 4]);
-assert.deepEqual(mrp.selectItems(items, 'critical', '', '2026-09-19', 'lowest').map(item => item.id), [4, 3]);
+const critical = [mrp.normalize(items[2], '2026-09-19'), mrp.normalize(items[3], '2026-09-19')];
+const criticalStock = mrp.selectItems(items, 'critical', '', '2026-09-19', 'lowest');
+assert.deepEqual(criticalStock.map(item => item.id), [6, 7, 8]);
+const boundaries = [0, 1, 2, 3, 4, 5].map(onHandQty => ({ onHandQty, safetyStock: 10 }));
+assert.deepEqual(mrp.selectItems(boundaries, 'critical', '', undefined, 'lowest').map(item => item.onHandQty), [2, 3, 4]);
+assert.equal(mrp.selectItems(items, 'all').length, items.length);
+assert.equal(mrp.selectItems(items, 'all', 'ZERO')[0].status, 'empty');
+assert.deepEqual(mrp.selectItems(items, 'all', '', undefined, 'highest').map(item => item.onHandQty), [11, 10, 4, 3, 2, 0, 0, -1]);
 assert.equal(critical[0].daysOutOfStock, 9);
 assert.equal(critical[0].expectedResolutionDate, '2026-09-24');
 assert.equal(critical[0].poExpectedDeliveryDate, '2026-09-26');
 assert.equal(critical[0].netRequirement, 10);
 assert.equal(mrp.normalize({ ...items[2], onHandQty: 5 }).stockoutDate, null);
-assert.equal(mrp.selectItems(items, 'critical', 'ZERO').length, 1);
-const config = mrp.chartConfig(critical, 'critical', () => {});
-assert.deepEqual(config.data.datasets[0].data, [9, null]);
-assert.equal(config.options.scales.y.title.text, 'Days Out of Stock');
+assert.equal(mrp.selectItems(items, 'critical', 'ZERO').length, 0);
+assert.equal(mrp.selectItems(items, 'critical', 'TWO').length, 1);
+const config = mrp.chartConfig(criticalStock, 'critical', () => {});
+assert.deepEqual(config.data.datasets[0].data, [2, 3, 4]);
+assert.equal(config.options.scales.y.title.text, 'Quantity (units)');
 assert.equal(mrp.chartConfig([], 'safe').options.scales.y.title.text, 'Quantity (units)');
 
 // Verify the actual SQL against isolated transaction fixtures, never production data.
@@ -78,7 +87,7 @@ for (const match of page.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 // Run the actual chart renderer through critical -> safe -> empty transitions.
 const elements = new Map();
 function element() { return { hidden: false, textContent: '', innerHTML: '', classList: { toggle() {} }, setAttribute() {} }; }
-const buttons = ['safe', 'low', 'critical'].map(status => ({ ...element(), dataset: { mrpStatus: status } }));
+const buttons = ['all', 'safe', 'low', 'critical'].map(status => ({ ...element(), dataset: { mrpStatus: status } }));
 let creations = 0, destructions = 0;
 const state = { items, mrpStatusFilter: 'critical', mrpSearch: '', mrpViewMode: 'all', mrpStockChart: null };
 const context = { state, MRPStock: mrp, escapeTableText: String,
@@ -88,7 +97,7 @@ const context = { state, MRPStock: mrp, escapeTableText: String,
 vm.createContext(context);
 vm.runInContext(page.slice(page.indexOf('function renderAllItemsChart()'), page.indexOf('function renderForecast(')), context);
 context.renderAllItemsChart();
-assert.equal(state.mrpStockChart.config.options.scales.y.title.text, 'Days Out of Stock');
+assert.equal(state.mrpStockChart.config.options.scales.y.title.text, 'Quantity (units)');
 state.mrpStatusFilter = 'safe'; context.renderAllItemsChart();
 assert.equal(destructions, 1);
 assert.deepEqual(state.mrpStockChart.config.data.datasets[0].data, [11]);
@@ -96,4 +105,8 @@ state.mrpSearch = 'NO MATCH'; context.renderAllItemsChart();
 assert.equal(destructions, 2);
 assert.equal(creations, 2);
 assert.equal(state.mrpStockChart, null);
-console.log('MRP date, filtering, stockout SQL, and chart transition checks passed.');
+state.mrpStatusFilter = 'all'; state.mrpSearch = ''; context.renderAllItemsChart();
+assert.equal(state.mrpStockChart.config.data.datasets[0].data.length, items.length);
+assert.equal(new Set(state.mrpStockChart.config.data.datasets[0].backgroundColor).size, 5);
+assert.equal(elements.get('criticalChartAction').hidden, true);
+console.log('MRP All view, critical boundaries, quantity sorting, stockout SQL, and chart transitions passed.');

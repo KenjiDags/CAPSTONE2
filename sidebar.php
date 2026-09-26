@@ -86,6 +86,8 @@ $sidebarIcon = static function ($name) {
 
                     <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'analytics.php' ? 'page' : '' ?>"><?= $sidebarIcon('chart') ?><span>Analytics</span></a>
 
+                    <a href="archive.php" class="<?= $currentPage == 'archive.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'archive.php' ? 'page' : '' ?>"><?= $sidebarIcon('folder') ?><span>Archive</span></a>
+
                     <a href="user_settings.php" class="<?= $currentPage == 'user_settings.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'user_settings.php' ? 'page' : '' ?>">
                         <?= $sidebarIcon('user') ?><span>User Settings</span>
                     </a>
