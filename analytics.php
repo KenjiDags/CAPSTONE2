@@ -80,7 +80,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
       <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
-      <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
+      <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><button type="button" data-mrp-status="empty"><i class="empty"></i>Empty</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">
           <div class="mrp-multi-chart-frame">
@@ -364,18 +364,20 @@ function renderAllItemsChart() {
   if (state.mrpStockChart) { state.mrpStockChart.destroy(); state.mrpStockChart = null; }
   const items = MRPStock.selectItems(state.items, state.mrpStatusFilter, state.mrpSearch, MRPStock.businessDate(), state.mrpViewMode);
   const critical = state.mrpStatusFilter === 'critical';
+  const emptyStock = state.mrpStatusFilter === 'empty';
   const canvas = document.getElementById('mrpStockChart');
   const empty = document.getElementById('mrpEmptyState');
   canvas.hidden = items.length === 0;
   empty.hidden = items.length > 0;
   empty.textContent = state.mrpSearch ? 'No matching items in this view.' : 'No items in this stock status.';
   document.getElementById('mrpNoResults').hidden = true;
-  document.getElementById('criticalChartAction').hidden = !critical;
+  document.getElementById('criticalChartAction').hidden = !(critical || emptyStock);
   const sortOptions = document.getElementById('mrpFilterSelect').options;
   sortOptions[0].textContent = 'Sort by Item Name';
   sortOptions[1].textContent = 'Sort by Lowest Quantity First';
   sortOptions[2].textContent = 'Sort by Highest Quantity First';
   document.getElementById('forecastTitle').textContent = critical ? 'Critical stock — Quantity greater than 1 and less than 5' : 'Stock levels — Quantity (units)';
+  if (emptyStock) document.getElementById('forecastTitle').textContent = 'Empty stock - Zero quantity';
   document.querySelectorAll('[data-mrp-status]').forEach(button => {
     const active = button.dataset.mrpStatus === state.mrpStatusFilter;
     button.classList.toggle('active', active);
@@ -387,10 +389,10 @@ function renderAllItemsChart() {
     details.id = 'mrpCriticalDetails';
     canvas.closest('.mrp-chart-sections').after(details);
   }
-  details.hidden = !critical;
-  // Critical item cards show quantity and replenishment details.
-  details.innerHTML = critical ? items.map(item =>
-    `<article class="mrp-critical-item" tabindex="0" role="button" aria-expanded="false" aria-label="Show description for ${escapeTableText(item.itemName)}"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${MRPStock.tooltip(item).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<p class="mrp-item-description" hidden><strong>Description:</strong> ${escapeTableText(item.description || 'No description available.')}</p><a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
+  details.hidden = !(critical || emptyStock);
+  // Include readable cards for zero-quantity items, whose bars have no height.
+  details.innerHTML = (critical || emptyStock) ? items.map(item =>
+    `<article class="mrp-critical-item" tabindex="0" role="button" aria-expanded="false" aria-label="Show description for ${escapeTableText(item.itemName)}"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${(emptyStock ? ['Quantity: 0 units', ...MRPStock.tooltip(item)] : MRPStock.tooltip(item)).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<p class="mrp-item-description" hidden><strong>Description:</strong> ${escapeTableText(item.description || 'No description available.')}</p><a href="add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
   ).join('') : '';
   if (items.length) state.mrpStockChart = new Chart(canvas, MRPStock.chartConfig(items, state.mrpStatusFilter,
     item => { window.location.href = 'add_multiple_items.php?item_id=' + encodeURIComponent(item.id); }));

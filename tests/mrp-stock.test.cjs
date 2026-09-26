@@ -32,6 +32,8 @@ const boundaries = [0, 1, 2, 3, 4, 5].map(onHandQty => ({ onHandQty, safetyStock
 assert.deepEqual(mrp.selectItems(boundaries, 'critical', '', undefined, 'lowest').map(item => item.onHandQty), [2, 3, 4]);
 assert.equal(mrp.selectItems(items, 'all').length, items.length);
 assert.equal(mrp.selectItems(items, 'all', 'ZERO')[0].status, 'empty');
+assert.deepEqual(mrp.selectItems(items, 'empty').map(item => item.id), [4, 3]);
+assert.deepEqual(mrp.selectItems(items, 'empty', 'ZERO').map(item => item.id), [3]);
 assert.deepEqual(mrp.selectItems(items, 'all', '', undefined, 'highest').map(item => item.onHandQty), [11, 10, 4, 3, 2, 0, 0, -1]);
 assert.equal(critical[0].daysOutOfStock, 9);
 assert.equal(critical[0].expectedResolutionDate, '2026-09-24');
@@ -87,7 +89,7 @@ for (const match of page.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 // Run the actual chart renderer through critical -> safe -> empty transitions.
 const elements = new Map();
 function element() { return { hidden: false, textContent: '', innerHTML: '', classList: { toggle() {} }, setAttribute() {} }; }
-const buttons = ['all', 'safe', 'low', 'critical'].map(status => ({ ...element(), dataset: { mrpStatus: status } }));
+const buttons = ['all', 'safe', 'low', 'critical', 'empty'].map(status => ({ ...element(), dataset: { mrpStatus: status } }));
 let creations = 0, destructions = 0;
 const state = { items, mrpStatusFilter: 'critical', mrpSearch: '', mrpViewMode: 'all', mrpStockChart: null };
 const context = { state, MRPStock: mrp, escapeTableText: String,
@@ -109,4 +111,10 @@ state.mrpStatusFilter = 'all'; state.mrpSearch = ''; context.renderAllItemsChart
 assert.equal(state.mrpStockChart.config.data.datasets[0].data.length, items.length);
 assert.equal(new Set(state.mrpStockChart.config.data.datasets[0].backgroundColor).size, 5);
 assert.equal(elements.get('criticalChartAction').hidden, true);
+state.mrpStatusFilter = 'empty'; context.renderAllItemsChart();
+assert.deepEqual(state.mrpStockChart.config.data.datasets[0].data, [0, 0]);
+assert.equal(elements.get('mrpCriticalDetails').hidden, false);
+assert.ok(elements.get('mrpCriticalDetails').innerHTML.includes('Quantity: 0 units'));
+assert.ok(elements.get('mrpCriticalDetails').innerHTML.includes('Unknown date'));
+assert.equal(elements.get('criticalChartAction').hidden, false);
 console.log('MRP All view, critical boundaries, quantity sorting, stockout SQL, and chart transitions passed.');

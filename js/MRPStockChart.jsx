@@ -30,7 +30,7 @@ export default function MRPStockChart({ items, onRestock }) {
 
   return <section aria-label="MRP stock chart">
     <div className="mrp-status-legend" role="group" aria-label="Stock status">
-      {[['all', 'All'], ['safe', 'Safe'], ['low', 'Low Stock'], ['critical', 'Critical (MRP)']].map(([value, label]) =>
+      {[['all', 'All'], ['safe', 'Safe'], ['low', 'Low Stock'], ['critical', 'Critical (MRP)'], ['empty', 'Empty']].map(([value, label]) =>
         <button key={value} type="button" aria-pressed={status === value}
           className={status === value ? 'active' : ''} onClick={() => setStatus(value)}>{label}</button>)}
     </div>
@@ -39,10 +39,10 @@ export default function MRPStockChart({ items, onRestock }) {
     {rows.length ? <div style={{ height: 390, position: 'relative' }}>
       <canvas ref={canvas} role="img" aria-label={`${status} stock chart`} />
     </div> : <p role="status">No matching items in this view.</p>}
-    {status === 'critical' && <div className="mrp-critical-details">
+    {(status === 'critical' || status === 'empty') && <div className="mrp-critical-details">
       {rows.map(item => <article className="mrp-critical-item" key={item.id}>
         <strong>{item.sku} — {item.itemName}</strong>
-        {MRPStock.tooltip(item).map((line, index) => <p key={line} className={index === 0 ? 'mrp-primary-metric' : undefined}>{line}</p>)}
+        {(status === 'empty' ? ['Quantity: 0 units', ...MRPStock.tooltip(item)] : MRPStock.tooltip(item)).map((line, index) => <p key={line} className={index === 0 ? 'mrp-primary-metric' : undefined}>{line}</p>)}
         <button type="button" onClick={() => onRestock(item)}>Open Restock Inventory</button>
       </article>)}
     </div>}
