@@ -14,7 +14,26 @@ $historyInterval = $horizon === '24m' ? 24 : 12;
 if (isset($_GET['demand_forecast'])) {
     require_once 'inventory_demand_forecast.php';
     try {
-        echo json_encode(inventoryDemandForecast($conn, $historyInterval));
+        $timezone = new DateTimeZone('Asia/Manila');
+        $end = new DateTimeImmutable('first day of this month 00:00:00', $timezone);
+        $start = null;
+        if ($horizon === 'ytd') {
+            $start = $end->setDate((int)$end->format('Y'), 1, 1);
+        } elseif ($horizon === 'custom') {
+            $parseMonth = static function ($value) use ($timezone) {
+                if (!is_string($value) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/D', $value)) return false;
+                return DateTimeImmutable::createFromFormat('!Y-m', $value, $timezone);
+            };
+            $start = $parseMonth($_GET['start'] ?? '');
+            $last = $parseMonth($_GET['end'] ?? '');
+            if (!$start || !$last || $start > $last || $last >= $end) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Select a valid range of complete months.']);
+                exit;
+            }
+            $end = $last->modify('+1 month');
+        }
+        echo json_encode(inventoryDemandForecast($conn, $historyInterval, $start, $end));
     } catch (Throwable $error) {
         http_response_code(500);
         echo json_encode(['error' => 'Unable to load demand history.']);

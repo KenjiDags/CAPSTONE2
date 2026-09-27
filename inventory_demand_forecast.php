@@ -1,9 +1,10 @@
 <?php
 // Aggregate recorded issues across inventory categories. Receipts are deliberately excluded.
-function inventoryDemandForecast(mysqli $conn, int $months = 12): array {
+function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmutable $rangeStart = null, ?DateTimeImmutable $rangeEnd = null): array {
     $timezone = new DateTimeZone('Asia/Manila');
     $currentMonth = new DateTimeImmutable('first day of this month', $timezone);
-    $start = $currentMonth->modify('-' . $months . ' months');
+    $currentMonth = $rangeEnd ?? $currentMonth;
+    $start = $rangeStart ?? $currentMonth->modify('-' . $months . ' months');
     $monthly = [];
     for ($date = $start; $date < $currentMonth; $date = $date->modify('+1 month')) {
         $monthly[$date->format('Y-m')] = 0;
@@ -63,7 +64,7 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12): array {
     if ($activeMonths >= 3 && count(array_filter($recent, static fn($value) => $value > 0)) >= 2) {
         $forecast = max(0, (int)round(array_sum($recent) / 3));
     }
-    $previousMonth = $values[count($values) - 1];
+    $previousMonth = $values ? $values[count($values) - 1] : 0;
     $firstActive = 0;
     while ($firstActive < count($values) && $values[$firstActive] === 0) $firstActive++;
     $observed = array_slice($values, $firstActive);

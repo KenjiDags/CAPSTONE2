@@ -98,6 +98,10 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <article class="panel">
       <div class="demand-forecast-toolbar">
         <div class="scope-control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
+        <div id="demandCustomRange" class="demand-custom-range" hidden>
+          <div class="scope-control"><label for="demandStartMonth">From month</label><input id="demandStartMonth" type="month" required></div>
+          <div class="scope-control"><label for="demandEndMonth">Through month</label><input id="demandEndMonth" type="month" required></div>
+        </div>
       </div>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>
       <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
@@ -186,9 +190,27 @@ let demandForecastRequest = 0;
 async function loadDemandForecast() {
   const request = ++demandForecastRequest;
   const message = document.getElementById('demandForecastMessage');
+  const horizon = document.getElementById('horizonSelect').value;
+  const custom = horizon === 'custom';
+  document.getElementById('demandCustomRange').hidden = !custom;
+  document.getElementById('demandChartFrame').hidden = true;
+  document.getElementById('demandForecastSummary').hidden = true;
+  document.getElementById('demandForecastMethod').hidden = true;
+  message.hidden = false;
+  const params = new URLSearchParams({ demand_forecast: '1', horizon });
+  if (custom) {
+    const start = document.getElementById('demandStartMonth');
+    const end = document.getElementById('demandEndMonth');
+    if (!start.value || !end.value || !start.validity.valid || !end.validity.valid || start.value > end.value) {
+      message.textContent = 'Select a valid range of complete months.';
+      return;
+    }
+    params.set('start', start.value);
+    params.set('end', end.value);
+  }
+  message.textContent = 'Loading demand history...';
   try {
-    const horizon = document.getElementById('horizonSelect').value;
-    const response = await fetch('analytics_data.php?demand_forecast=1&horizon=' + encodeURIComponent(horizon), { cache: 'no-store' });
+    const response = await fetch('analytics_data.php?' + params, { cache: 'no-store' });
     if (!response.ok) throw new Error('Demand history unavailable');
     const data = await response.json();
     if (request !== demandForecastRequest) return;
@@ -206,7 +228,7 @@ async function loadDemandForecast() {
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
-    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the last three complete months. The current month is excluded from actuals.';
+    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the final three months in the selected range. Forecast is for the following month; incomplete months are excluded.';
     const labels = [...data.months, data.forecastMonth].map(month => new Date(month + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
     const dark = document.body.classList.contains('dark-mode');
     const axisColor = dark ? '#cbd5e1' : '#526168';
@@ -430,6 +452,12 @@ document.getElementById('inventoryTableSearch').addEventListener('input', render
 document.querySelectorAll('[data-table-status]').forEach(button => button.addEventListener('click', () => { state.inventoryTableStatus = button.dataset.tableStatus; document.querySelectorAll('[data-table-status]').forEach(item => item.classList.toggle('active', item.dataset.tableStatus === state.inventoryTableStatus)); renderInventoryHealthTable(); }));
 document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); }));
 document.getElementById('horizonSelect').addEventListener('change', loadDemandForecast);
+const demandLastMonth = <?= json_encode((new DateTimeImmutable('first day of last month', new DateTimeZone('Asia/Manila')))->format('Y-m')) ?>;
+['demandStartMonth', 'demandEndMonth'].forEach(id => {
+  const input = document.getElementById(id);
+  input.max = demandLastMonth;
+  input.addEventListener('change', loadDemandForecast);
+});
 loadCategory(state.category);
 loadUnifiedInventoryTable();
 // Recalculate dates while open; fetch current balances every minute and on return.
