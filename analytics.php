@@ -126,6 +126,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
           <button type="button" class="inventory-filter" data-table-status="safe"><i class="safe"></i> Safe</button>
           <button type="button" class="inventory-filter" data-table-status="low"><i class="low"></i> Low</button>
           <button type="button" class="inventory-filter" data-table-status="critical"><i class="critical"></i> Critical</button>
+          <button type="button" class="inventory-filter" data-table-status="empty"><i class="empty"></i> Empty</button>
         </div>
       </div>
       <div class="inventory-table-wrap">
@@ -257,18 +258,18 @@ function renderInventoryHealthTable() {
   const query = document.getElementById('inventoryTableSearch').value.trim().toLowerCase();
   let rows = state.unifiedItems.filter(item => state.inventoryTableStatus === 'all' || item.health === state.inventoryTableStatus);
   if (query) rows = rows.filter(item => `${item.sku} ${item.name} ${item.description}`.toLowerCase().includes(query));
-  const sections = ['safe', 'low', 'critical'];
+  const sections = ['safe', 'low', 'critical', 'empty'];
   const body = document.getElementById('inventoryHealthTableBody');
   const empty = document.getElementById('inventoryTableEmpty');
   const html = [];
   sections.forEach(status => {
     const sectionRows = rows.filter(item => item.health === status);
     if (!sectionRows.length) return;
-    const title = status === 'safe' ? '🟢 Safe Stock' : status === 'low' ? '🟡 Low Stock' : '🔴 Critical Out of Stock';
+    const title = { safe: '🟢 Safe Stock', low: '🟡 Low Stock', critical: '🔴 Critical Stock (1–5 units)', empty: '⚫ Empty Stock' }[status];
     html.push(`<tr class="inventory-section-row ${status}"><th colspan="7">${title}<span>${sectionRows.length} item${sectionRows.length === 1 ? '' : 's'}</span></th></tr>`);
     sectionRows.forEach(item => {
-      const duration = status === 'critical' ? `<strong class="inventory-duration">Stuck for ${Number(item.daysEmpty || 0).toLocaleString()} Days</strong>` : '<span class="inventory-active">Active Stock</span>';
-      const badge = status === 'safe' ? 'Safe' : status === 'low' ? 'Low Stock' : 'Critical';
+      const duration = status === 'empty' ? `<strong class="inventory-duration">Stuck for ${Number(item.daysEmpty || 0).toLocaleString()} Days</strong>` : '<span class="inventory-active">Active Stock</span>';
+      const badge = { safe: 'Safe', low: 'Low Stock', critical: 'Critical', empty: 'Empty' }[status];
       html.push(`<tr><td>${escapeTableText(item.sku || 'N/A')}</td><td><strong>${escapeTableText(item.name)}</strong><small>${escapeTableText(item.description || 'No description')}</small></td><td>${escapeTableText(item.category)}</td><td>${Number(item.quantity || 0).toLocaleString()} units</td><td>${item.reorderPoint === null ? '--' : Number(item.reorderPoint || 0).toLocaleString()}</td><td><span class="inventory-status ${status}"><i></i>${badge}</span></td><td>${duration}</td></tr>`);
     });
   });
@@ -286,11 +287,11 @@ function prepareUnifiedItems(payloads) {
       const quantity = Number(item.quantity || 0);
       const critical = criticalById.get(Number(item.item_id));
       const normalized = { sku: item.stock_number || item.property_no || item.par_no, name: itemName(item), description: item.description || '', category, quantity, reorderPoint: item.reorder_point === undefined ? 0 : Number(item.reorder_point), daysEmpty: critical ? Number(critical.days_empty || 0) : 0 };
-      normalized.health = stockStatus({ quantity: normalized.quantity, reorder_point: normalized.reorderPoint });
+      normalized.health = quantity <= 0 ? 'empty' : quantity <= 5 ? 'critical' : quantity <= normalized.reorderPoint ? 'low' : 'safe';
       state.unifiedItems.push(normalized);
     });
   });
-  state.unifiedItems.sort((a, b) => a.health === 'critical' && b.health !== 'critical' ? 1 : a.health !== 'critical' && b.health === 'critical' ? -1 : a.health === 'critical' ? b.daysEmpty - a.daysEmpty : a.quantity - b.quantity || a.name.localeCompare(b.name));
+  state.unifiedItems.sort((a, b) => a.health === 'empty' && b.health !== 'empty' ? 1 : a.health !== 'empty' && b.health === 'empty' ? -1 : a.health === 'empty' ? b.daysEmpty - a.daysEmpty : a.quantity - b.quantity || a.name.localeCompare(b.name));
   renderInventoryHealthTable();
 }
 function loadUnifiedInventoryTable() {

@@ -131,6 +131,7 @@ body.dark-mode .demand-summary > div { background: #273449; border-color: #47556
 .inventory-filter i.safe { background: #43a047; }
 .inventory-filter i.low { background: #fbc02d; }
 .inventory-filter i.critical { background: #e53935; }
+.inventory-filter i.empty { background: #64748b; }
 .inventory-table-wrap { overflow-x: auto; }
 .inventory-health-table { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 12px; }
 .inventory-health-table th, .inventory-health-table td { padding: 11px 10px; border-bottom: 1px solid #edf0f1; text-align: left; vertical-align: middle; }
@@ -141,6 +142,7 @@ body.dark-mode .demand-summary > div { background: #273449; border-color: #47556
 .inventory-section-row.safe th { color: #2e7d32; background: #f1f9f2; }
 .inventory-section-row.low th { color: #986b00; background: #fff9e8; }
 .inventory-section-row.critical th { color: #b52d28; background: #fff3f2; }
+.inventory-section-row.empty th { color: #475569; background: #f1f5f9; }
 .inventory-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .inventory-status i { width: 7px; height: 7px; border-radius: 50%; }
 .inventory-status.safe { color: #2e7d32; background: #e8f5e9; }
@@ -149,6 +151,8 @@ body.dark-mode .demand-summary > div { background: #273449; border-color: #47556
 .inventory-status.low i { background: #fbc02d; }
 .inventory-status.critical { color: #b52d28; background: #fde4e2; }
 .inventory-status.critical i { background: #e53935; }
+.inventory-status.empty { color: #475569; background: #e2e8f0; }
+.inventory-status.empty i { background: #64748b; }
 .inventory-duration { color: #b52d28; white-space: nowrap; }
 .inventory-active { color: #849095; }
 .chart-frame canvas { width: 100% !important; height: 100% !important; }
