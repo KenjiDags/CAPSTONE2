@@ -40,7 +40,6 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
 <main class="analytics-shell">
   <header class="analytics-header">
     <div><div class="eyebrow">TESDA Inventory / Intelligence</div><h1>Inventory Analytics</h1></div>
-    <p class="header-note">Movement signals, demand horizons, and capital exposure<br>for informed replenishment planning.</p>
   </header>
 
   <section class="office-overview" aria-label="Office Supplies overview">
@@ -79,7 +78,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="mrpSection" class="mrp-section">
     <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
-      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
+      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by Stock number, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
       <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><button type="button" data-mrp-status="empty"><i class="empty"></i>Empty</button><a id="criticalChartAction" class="critical-chart-action" href="add_multiple_items.php" hidden>Open Restock Inventory</a></div>
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">
@@ -121,7 +120,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="section-heading"><h2 id="inventoryTableTitle">Inventory Health Table</h2><p>Office supplies grouped by current stock health.</p></div>
     <article class="panel">
       <div class="inventory-table-toolbar">
-        <label class="mrp-search inventory-table-search"><span aria-hidden="true">&#128269;</span><input id="inventoryTableSearch" type="search" aria-label="Search inventory table" placeholder="Search by SKU, item name, or description..." autocomplete="off"></label>
+        <label class="mrp-search inventory-table-search"><span aria-hidden="true">&#128269;</span><input id="inventoryTableSearch" type="search" aria-label="Search inventory table" placeholder="Search by Stock number, item name, or description..." autocomplete="off"></label>
         <div class="inventory-table-filters" role="group" aria-label="Filter inventory health">
           <button type="button" class="inventory-filter active" data-table-status="all">Show All</button>
           <button type="button" class="inventory-filter" data-table-status="safe"><i class="safe"></i> Safe</button>
@@ -131,7 +130,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       </div>
       <div class="inventory-table-wrap">
         <table class="inventory-health-table">
-          <thead><tr><th>SKU / Stock Number</th><th>Item Name &amp; Description</th><th>Category</th><th>Current Quantity</th><th>Reorder Threshold</th><th>Health Status</th><th>Depletion / Duration</th></tr></thead>
+          <thead><tr><th>Stock Number</th><th>Item Name &amp; Description</th><th>Category</th><th>Current Quantity</th><th>Reorder Threshold</th><th>Health Status</th><th>Depletion / Duration</th></tr></thead>
           <tbody id="inventoryHealthTableBody"></tbody>
         </table>
         <div id="inventoryTableEmpty" class="empty-state" hidden>No inventory items match the current search or filter.</div>
