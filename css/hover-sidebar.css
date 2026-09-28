@@ -53,6 +53,9 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
     width: 240px;
     box-shadow: none;
 }
+.sidebar-restore-open .sidebar.sidebar--hover { width: 240px; transition: none; }
+.sidebar.sidebar--hover.is-restoring,
+.sidebar.sidebar--hover.is-restoring * { transition: none !important; }
 .sidebar.sidebar--hover .logo {
     width: 239px;
     min-height: 76px;
