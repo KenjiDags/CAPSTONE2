@@ -2,7 +2,6 @@
 require 'auth.php';
 require 'config.php';
 require 'functions.php';
-include 'sidebar.php';
 
 $error = '';
 $success = '';
@@ -129,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
 <style>
     .form-container {
+        width: 100%;
         max-width: 800px;
         margin: 30px auto;
         background: rgba(255, 255, 255, 0.95);
@@ -149,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .form-group input,
     .form-group select,
     .form-group textarea {
+        min-width: 0;
         width: 100%;
         padding: 10px;
         border: 1px solid #ddd;
@@ -161,8 +162,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     .form-row {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
+    }
+    @media (max-width: 700px) {
+        .form-container { padding: 24px; margin: 0 auto; }
+        .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
     }
     .btn {
         padding: 10px 20px;
@@ -202,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 <div class="container">
     <div class="form-container">
         <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">

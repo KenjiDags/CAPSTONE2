@@ -1,4 +1,4 @@
-<?php ob_start(); include 'sidebar.php'; ?>
+<?php ob_start(); require 'auth.php'; ?>
 <?php require 'config.php'; ?>
 
 <?php
