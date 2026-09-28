@@ -5,7 +5,6 @@ require 'functions.php';
 require_once 'inventory_count_cache.php';
 invalidateInventoryCountAfterWrite();
 ob_start();
-include 'sidebar.php';
 ?>
 
 <?php
@@ -447,6 +446,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
     </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
     <div class="content">
         <div class="form-container">
             <header class="page-header">

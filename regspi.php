@@ -1,7 +1,7 @@
 <?php
 require 'config.php';
 require_once 'functions.php';
-include 'sidebar.php';
+require 'auth.php';
 
 
 $rows = [];
@@ -206,6 +206,7 @@ if (!empty($rows)) {
     </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
     <div class="container">
         <h2>Registry of Semi-Expendable Property Issued</h2>
 

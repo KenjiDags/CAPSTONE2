@@ -1,7 +1,6 @@
 <?php
 require 'auth.php';
 require 'config.php';
-include 'sidebar.php';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_report'])) {
@@ -288,6 +287,7 @@ if (isset($_SESSION['user_id'])) {
     </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 
 <div class="container">
     <div class="rpcppe-form">

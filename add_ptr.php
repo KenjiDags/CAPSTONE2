@@ -196,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
 // Fetch all PPE items for selection
 $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, id ASC");
 
-include 'sidebar.php';
 ?>
 
 <!DOCTYPE html>
@@ -428,6 +427,7 @@ include 'sidebar.php';
 </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 <div class="content">
     <div class="form-container">
         <header class="page-header">

@@ -69,9 +69,12 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
     display: flex;
     flex: 1;
     flex-direction: column;
+    min-height: 0;
     width: 239px;
     gap: 4px;
     padding: 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 .sidebar.sidebar--hover nav a,
 .sidebar.sidebar--hover .dropdown-toggle,
@@ -100,6 +103,9 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
 .sidebar.sidebar--hover .logo h3 {
     opacity: 0;
     white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: opacity .18s ease-in-out;
 }
 .sidebar.sidebar--hover.is-open :is(a, button) > span,
@@ -150,7 +156,7 @@ body:has(> .sidebar--hover) > :is(main, .container, .content),
 }
 .sidebar.sidebar--hover .nav-chevron { transition: transform .25s ease; }
 .sidebar.sidebar--hover .dropdown.open > .dropdown-toggle .nav-chevron { transform: rotate(90deg); }
-.sidebar.sidebar--hover .logout-wrapper { width: 239px; padding: 8px; margin-top: auto; border-top: 1px solid var(--nav-border); }
+.sidebar.sidebar--hover .logout-wrapper { width: 239px; flex-shrink: 0; padding: 8px; margin-top: auto; border-top: 1px solid var(--nav-border); }
 .sidebar.sidebar--hover .logout-btn { color: #b91c1c; }
 body.dark-mode .sidebar.sidebar--hover {
     --nav-text: #cbd5e1;

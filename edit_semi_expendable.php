@@ -4,7 +4,6 @@ ob_start();
 require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'sidebar.php'; 
 try {
     if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {
         @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");
@@ -370,6 +369,7 @@ if (!$item && empty($error)) {
     </style>
 </head>
 <body>
+<?php require_once 'sidebar.php'; ?>
     <div class="container">
         <div class="form-container">
             <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">

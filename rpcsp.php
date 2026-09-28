@@ -1,7 +1,6 @@
 <?php
 require 'auth.php';
 require 'config.php';
-include 'sidebar.php';
 
 // Fetch semi-expendable items from database
 $items = [];
@@ -65,6 +64,7 @@ if ($result) {
     </script>
 </head>
 <body class="rpci-page">
+<?php include 'sidebar.php'; ?>
     <div class="container">
         <div class="rpci-form">
             <div class="rpci-header">

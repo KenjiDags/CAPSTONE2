@@ -2,7 +2,6 @@
 require 'auth.php';
 require 'config.php';
 require 'functions.php';
-include 'sidebar.php';
 
 $item_id = filter_input(INPUT_GET, 'item_id', FILTER_VALIDATE_INT);
 $item = null;
@@ -91,6 +90,7 @@ function edit_ofs_value($value): string
 </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 <div class="container">
     <div class="form-container">
         <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">

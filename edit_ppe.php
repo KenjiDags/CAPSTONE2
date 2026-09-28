@@ -2,7 +2,6 @@
 require 'auth.php';
 require 'config.php';
 require 'functions.php';
-include 'sidebar.php';
 
 $error = '';
 $success = '';
@@ -158,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 </head>
 <body>
+<?php include 'sidebar.php'; ?>
 <div class="container">
     <div class="form-container">
         <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
