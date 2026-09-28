@@ -4,7 +4,6 @@ ob_start();
 require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'sidebar.php'; 
 // Ensure required columns exist (idempotent)
 ensure_semi_expendable_amount_columns($conn);
 // Ensure 'unit' column exists on semi_expendable_property (idempotent)
@@ -305,6 +304,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         }
         
         .form-container {
+            width: 100%;
             max-width: 800px;
             margin: 30px auto;
             background: rgba(255, 255, 255, 0.95);
@@ -325,6 +325,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         .form-group input,
         .form-group select,
         .form-group textarea {
+            min-width: 0;
             width: 100%;
             padding: 12px;
             border: 2px solid #e5e7eb;
@@ -345,8 +346,12 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         }
         .form-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 20px;
+        }
+        @media (max-width: 700px) {
+            .form-container { padding: 24px; margin: 0 auto; }
+            .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
         }
         .btn {
             padding: 12px 24px;
@@ -432,6 +437,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     </style>
 </head>
 <body>
+    <?php require_once 'sidebar.php'; ?>
     <div class="container">
         <div class="form-container">
             <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
