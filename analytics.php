@@ -228,15 +228,48 @@ async function loadDemandForecast() {
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
-    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the final three months in the selected range. Forecast is for the following month; incomplete months are excluded.';
-    const labels = [...data.months, data.forecastMonth].map(month => new Date(month + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the last three complete months. Current-month actual usage is updated from recorded issuances.';
+    const labels = data.months.map(month =>
+      new Date(month + '-01T00:00:00').toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric'
+      })
+    );
     const dark = document.body.classList.contains('dark-mode');
     const axisColor = dark ? '#cbd5e1' : '#526168';
+    const currentActual = Number(data.actual[data.actual.length - 1] || 0);
+    const currentForecast = Number(data.forecast || 0);
+
+    // Chart.js draws higher-order datasets first.
+    // Lower order = drawn later = appears in front.
+    const actualOrder = currentActual < currentForecast ? 0 : 1;
+    const forecastOrder = currentForecast < currentActual ? 0 : 1;
     demandForecastChart = new Chart(document.getElementById('demandForecastChart'), {
       type: 'bar', data: { labels, datasets: [
-        { label: 'Actual issued', data: [...data.actual, null], backgroundColor: '#4b7e87', borderRadius: 4 },
-        { label: 'Forecast issued', data: [...data.actual.map(() => null), data.forecast], backgroundColor: '#b44b31', borderColor: '#b44b31', borderWidth: 2, borderRadius: 4 }
-      ] },
+        {
+          label: 'Actual issued',
+          data: data.actual,
+          backgroundColor: '#4b7e87',
+          borderRadius: 4,
+          grouped: false,
+          order: actualOrder,
+        },
+        {
+          label: 'Forecast issued',
+          data: data.actual.map((_, index) =>
+            index === data.actual.length - 1 ? data.forecast : null
+          ),
+          backgroundColor: '#b44b31',
+          order: forecastOrder,
+          borderColor: '#b44b31',
+          borderWidth: 2,
+          borderRadius: 4,
+          grouped: false,
+          barPercentage: 0.7,
+          categoryPercentage: 0.8
+        }
+        ]
+      },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: axisColor } }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${number(context.parsed.y)} items` } } }, scales: { x: { ticks: { color: axisColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: axisColor, precision: 0 }, grid: { color: dark ? '#334155' : '#e7edef' }, title: { display: true, text: 'Items issued', color: axisColor } } } }
     });
   } catch (error) {
@@ -489,6 +522,11 @@ setInterval(() => {
   }
 }, 1000);
 setInterval(refreshMrp, 60000);
+setInterval(() => {
+  if (!document.hidden && state.category === 'office-supplies') {
+    loadDemandForecast();
+  }
+}, 600000);
 window.addEventListener('focus', refreshMrp);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshMrp(); });
 window.addEventListener('inventory:updated', refreshMrp);

@@ -66,9 +66,9 @@ INSERT INTO ris_items (
     unit_cost_at_issue
 )
 VALUES
-(3, 45, 'A.03.a', 'YES', 20, 'TEMPORARY FORECAST TEST', 0.00),
-(3, 46, 'A.03.a', 'YES', 30, 'TEMPORARY FORECAST TEST', 0.00),
-(3, 47, 'A.03.a', 'YES', 25, 'TEMPORARY FORECAST TEST', 0.00);
+(3, 33, 'A.03.a', 'YES', 20, 'TEMPORARY FORECAST TEST', 0.00),
+(3, 34, 'A.03.a', 'YES', 30, 'TEMPORARY FORECAST TEST', 0.00),
+(3, 35, 'A.03.a', 'YES', 25, 'TEMPORARY FORECAST TEST', 0.00);
 
 SELECT
     r.ris_id,
