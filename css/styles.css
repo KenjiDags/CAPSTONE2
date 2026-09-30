@@ -119,7 +119,11 @@ body.dark-mode #inventoryTable tbody tr:hover td {
 
 body.dark-mode .filters {
     background: #1e293b;
-    color: #e2e8f0;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .filters .inventory-controls .control-search label {
+    color: #e2e8f0 !important;
 }
 
 body.dark-mode .container h2 {
@@ -2966,4 +2970,9 @@ body.dark-mode table tbody td.actions-cell {
 .inventory-controls .control-actions .pill-btn {
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+.inventory-controls .control-sort label {
+    color: #001F80;
+    font-weight: 500;
 }

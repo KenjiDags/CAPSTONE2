@@ -153,9 +153,6 @@ $result = $conn->query($query);
                     <th>PPE Number</th>
                     <th>Quantity</th>
                     <th>Unit Cost</th>
-                    <th>Depreciation</th>
-                    <th>Impairment Loss</th>
-                    <th>Carrying Amount</th>
                     <th>Remarks</th>
                     <th>Total Amount</th>
                     <th>Actions</th>
@@ -170,9 +167,6 @@ $result = $conn->query($query);
                             <td><?= htmlspecialchars($row['PPE_no']) ?></td>
                             <td><?= htmlspecialchars($row['quantity']) ?></td>
                             <td><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
-                            <td><?= number_format($row['depreciation'] ?? 0, 2) ?></td>
-                            <td><?= number_format($row['impairment_loss'] ?? 0, 2) ?></td>
-                            <td><?= number_format($row['carrying_amount'] ?? 0, 2) ?></td>
                             <td><?= htmlspecialchars($row['remarks']) ?></td>
                             <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
                             <td class="actions-cell">
