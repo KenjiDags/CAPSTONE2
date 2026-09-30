@@ -5,6 +5,7 @@
         if (controller) controller.abort();
         const sidebar = document.querySelector('.sidebar--hover');
         if (!sidebar) return;
+        sidebar.classList.add('is-restoring');
         controller = new AbortController();
         const options = { signal: controller.signal };
         const toggles = sidebar.querySelectorAll('.dropdown-toggle');
@@ -37,11 +38,13 @@
         const candidates = saved?.activeCategory ? [saved.activeCategory] : (Array.isArray(saved?.menus) ? saved.menus : []);
         activeCategory = candidates.find(id => Array.from(toggles).some(toggle => toggle.getAttribute('aria-controls') === id)) ?? null;
         setOpen(saved?.open === true);
+        document.documentElement.classList.remove('sidebar-restore-open');
+        void sidebar.offsetWidth;
+        sidebar.classList.remove('is-restoring');
         // Keep normal link navigation, but don't bubble into global close handlers.
         sidebar.addEventListener('click', event => {
             event.stopPropagation();
-            // Direct navigation from the icon rail also retains the expanded drawer.
-            if (event.target.closest?.('a')) setOpen(true);
+            if (event.target.closest?.('a')) saveState();
         }, options);
         toggles.forEach(toggle => {
             toggle.addEventListener('click', () => {
