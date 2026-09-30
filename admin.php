@@ -30,13 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'disable' && in_array($target['status'], ['active', 'approved'], true)) {
                 $sql = "UPDATE users SET status = 'disabled' WHERE user_id = ?";
             } elseif ($action === 'enable' && $target['status'] === 'disabled') {
-                $sql = "UPDATE users SET status = IF(totp_secret IS NULL, 'approved', 'active') WHERE user_id = ?";
+                $sql = "UPDATE users SET status = 'active' WHERE user_id = ?";
             } elseif ($action === 'promote' && $target['role'] === 'user' && $target['status'] === 'active') {
                 $sql = "UPDATE users SET role = 'admin' WHERE user_id = ?";
             } elseif ($action === 'demote' && $target['role'] === 'admin' && $target['status'] === 'active') {
                 $sql = "UPDATE users SET role = 'user' WHERE user_id = ?";
-            } elseif ($action === 'reset_mfa' && $target['status'] === 'active') {
-                $sql = "UPDATE users SET totp_secret = NULL, status = 'approved' WHERE user_id = ?";
             }
             if ($sql !== null) {
                 $update = $conn->prepare($sql);
@@ -54,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$accounts = $conn->query("SELECT user_id, username, email, COALESCE(NULLIF(full_name, ''), NULLIF(user_full_name, ''), username) AS display_name, role, status, totp_secret FROM users ORDER BY FIELD(status, 'pending', 'approved', 'active', 'disabled', 'rejected'), user_id DESC")->fetch_all(MYSQLI_ASSOC);
+$accounts = $conn->query("SELECT user_id, username, email, COALESCE(NULLIF(full_name, ''), NULLIF(user_full_name, ''), username) AS display_name, role, status FROM users ORDER BY FIELD(status, 'pending', 'approved', 'active', 'disabled', 'rejected'), user_id DESC")->fetch_all(MYSQLI_ASSOC);
 $counts = ['pending' => 0, 'active' => 0, 'disabled' => 0];
 foreach ($accounts as $account) if (isset($counts[$account['status']])) $counts[$account['status']]++;
 
@@ -78,8 +76,17 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; background: #f2f5fa; color: #1e293b; font-family: 'Century Gothic', Arial, sans-serif; }
-    header { background: #123d80; color: white; padding: 20px max(24px, calc((100% - 1180px)/2)); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-    header strong { font-size: 20px; } header a { color: white; }
+    .admin-header { background: #123d80; color: white; }
+    .admin-header-inner { max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .admin-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .admin-brand strong { font-size: 19px; line-height: 1.2; }
+    .admin-brand-label { border: 1px solid #ffffff66; border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .admin-session { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .admin-username { color: #dbeafe; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .admin-logout { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 1px solid #ffffff99; border-radius: 8px; color: white; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background .2s, border-color .2s; }
+    .admin-logout:hover, .admin-logout:focus-visible { background: #ffffff22; border-color: white; }
+    .admin-logout:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+    .admin-logout svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; }
     h1 { margin: 0 0 8px; color: #123d80; } .intro { margin: 0 0 28px; color: #64748b; }
     .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
@@ -95,11 +102,22 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     button { border: 1px solid #bad0ed; background: #f3f7ff; color: #16468a; border-radius: 6px; padding: 7px 10px; cursor: pointer; font: inherit; font-size: 12px; }
     button.primary { border-color: #1554a6; background: #1554a6; color: white; } button.danger { border-color: #fecaca; background: #fff4f4; color: #9f1239; }
     .notice { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; background: #e9f8ef; color: #166534; } .notice.error { background: #fee2e2; color: #991b1b; }
-    @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } header { padding: 18px 24px; } }
+    @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } .admin-header-inner { flex-wrap: wrap; gap: 12px; } .admin-session { width: 100%; justify-content: space-between; } }
   </style>
 </head>
 <body>
-<header><strong>TESDA Inventory · Administration</strong><span><?= htmlspecialchars($_SESSION['username']) ?> &nbsp; <a href="logout.php">Log out</a></span></header>
+<header class="admin-header">
+  <div class="admin-header-inner">
+    <div class="admin-brand"><strong>TESDA Inventory</strong><span class="admin-brand-label">Administration</span></div>
+    <div class="admin-session">
+      <span class="admin-username">Signed in as <?= htmlspecialchars($_SESSION['username']) ?></span>
+      <a class="admin-logout" href="logout.php">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Log out
+      </a>
+    </div>
+  </div>
+</header>
 <main>
   <h1>Account access</h1>
   <p class="intro">Review registration requests and control who can use the inventory system. Confirm each applicant against institutional records before approving.</p>
@@ -113,14 +131,13 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
   <section class="panel">
     <h2>Accounts</h2>
     <div class="table-wrap"><table>
-      <thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Authenticator</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
       <?php foreach ($accounts as $account): ?>
         <tr>
           <td><strong><?= htmlspecialchars($account['display_name']) ?></strong><small><?= htmlspecialchars($account['username']) ?><?= $account['email'] ? ' · ' . htmlspecialchars($account['email']) : '' ?></small></td>
           <td><span class="badge"><?= htmlspecialchars($account['role']) ?></span></td>
           <td><span class="badge <?= htmlspecialchars($account['status']) ?>"><?= htmlspecialchars($account['status']) ?></span></td>
-          <td><?= $account['totp_secret'] ? 'Configured' : 'Not configured' ?></td>
           <td><div class="actions">
           <?php if ((int)$account['user_id'] !== (int)$_SESSION['user_id']): ?>
             <?php if ($account['status'] === 'pending'): ?>
@@ -130,7 +147,6 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
               <?php admin_action((int)$account['user_id'], 'disable', 'Disable', $_SESSION['admin_csrf'], 'danger'); ?>
               <?php if ($account['status'] === 'active'): ?>
                 <?php admin_action((int)$account['user_id'], $account['role'] === 'admin' ? 'demote' : 'promote', $account['role'] === 'admin' ? 'Make user' : 'Make admin', $_SESSION['admin_csrf']); ?>
-                <?php admin_action((int)$account['user_id'], 'reset_mfa', 'Reset authenticator', $_SESSION['admin_csrf']); ?>
               <?php endif; ?>
             <?php elseif ($account['status'] === 'disabled'): ?>
               <?php admin_action((int)$account['user_id'], 'enable', 'Enable', $_SESSION['admin_csrf']); ?>

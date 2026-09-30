@@ -1117,7 +1117,6 @@ ADD user_position VARCHAR(255) NULL;
 
 ALTER TABLE users ADD role VARCHAR(16) NOT NULL DEFAULT 'user';
 ALTER TABLE users ADD status VARCHAR(16) NOT NULL DEFAULT 'active';
-ALTER TABLE users ADD totp_secret VARCHAR(64) NULL;
 ALTER TABLE users ADD email VARCHAR(255) NULL;
 ALTER TABLE users ADD UNIQUE KEY unique_user_email (email);
 -- --------------------------------------------------------

@@ -47,8 +47,8 @@ Do not reimport `tesda_inventory.sql` to update an existing database: it contain
 DROP TABLE statements and can replace local records. Back up existing databases
 before schema changes.
 
-The user access migration adds account roles, approval status, work email, and
-authenticator setup. If the installation has exactly one existing account, it
+The user access migration adds account roles, approval status, and work email.
+If the installation has exactly one existing account, it
 becomes the initial administrator. With multiple existing accounts, choose a
 trusted administrator explicitly:
 
@@ -57,10 +57,8 @@ trusted administrator explicitly:
 ```
 
 New registrations remain pending until an administrator verifies and approves
-them. All accounts set up an authenticator app at their next login. If someone
-loses access to that app, another administrator can reset it on the admin page.
-For the only administrator, a trusted server operator can run
-`db/reset_authenticator.php <existing-username>` from the command line.
+them. Approved users sign in with a password and open the inventory system;
+administrators sign in with a password and open the account access page.
 
 If Composer dependencies changed, run `composer install`. Commit `composer.lock`
 when generated so teammates install the same dependency versions; do not commit

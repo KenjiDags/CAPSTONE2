@@ -35,8 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
                 session_regenerate_id(true);
-                $_SESSION['mfa_pending_user_id'] = (int)$user['user_id'];
-                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
                 // Login is session-only; do not persist authentication across visits.
                 $stmtToken = $conn->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
@@ -51,7 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     setcookie('remember_username', '', time() - 3600, '/', 'localhost', false, true);
                 }
 
-                header('Location:mfa.php');
+                if ($user['status'] === 'approved') {
+                    $activate = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
+                    $activate->bind_param('i', $user['user_id']);
+                    $activate->execute();
+                    $activate->close();
+                }
+                $_SESSION['user_id'] = (int)$user['user_id'];
+                $_SESSION['username'] = $username;
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['logged_in'] = true;
+                header('Location: ' . ($user['role'] === 'admin' ? 'admin.php' : 'analytics.php'));
                 exit;
             } else {
                 $error = 'Invalid credentials or account awaiting administrator approval.';

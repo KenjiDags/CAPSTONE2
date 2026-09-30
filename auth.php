@@ -45,7 +45,7 @@ if ($accessUser['role'] !== 'admin' && defined('ADMIN_PAGE')) {
 // Optional extra security: check if the user agent matches
 if (
     isset($_SESSION['user_agent']) && 
-    $_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']
+    $_SESSION['user_agent'] !== ($_SERVER['HTTP_USER_AGENT'] ?? '')
 ) {
     session_unset();
     session_destroy();

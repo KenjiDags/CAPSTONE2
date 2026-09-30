@@ -21,7 +21,6 @@ $hadRole = access_column_exists($conn, 'role');
 foreach ([
     'role' => "VARCHAR(16) NOT NULL DEFAULT 'user'",
     'status' => "VARCHAR(16) NOT NULL DEFAULT 'active'",
-    'totp_secret' => 'VARCHAR(64) NULL',
     'email' => 'VARCHAR(255) NULL',
 ] as $column => $definition) {
     if (!access_column_exists($conn, $column)) {
@@ -39,7 +38,7 @@ if (!$conn->query("SHOW INDEX FROM users WHERE Key_name = 'unique_user_email'")-
 if (!$hadRole) {
     $row = $conn->query('SELECT COUNT(*) AS total, MIN(user_id) AS first_id FROM users')->fetch_assoc();
     if ((int)$row['total'] === 1) {
-        $stmt = $conn->prepare("UPDATE users SET role = 'admin', status = 'approved' WHERE user_id = ?");
+        $stmt = $conn->prepare("UPDATE users SET role = 'admin', status = 'active' WHERE user_id = ?");
         $stmt->bind_param('i', $row['first_id']);
         $stmt->execute();
         $stmt->close();

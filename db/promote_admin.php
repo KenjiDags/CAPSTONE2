@@ -21,8 +21,8 @@ if (!$user) {
     exit(1);
 }
 
-$stmt = $conn->prepare("UPDATE users SET role = 'admin', status = 'approved' WHERE user_id = ?");
+$stmt = $conn->prepare("UPDATE users SET role = 'admin', status = 'active' WHERE user_id = ?");
 $stmt->bind_param('i', $user['user_id']);
 $stmt->execute();
 $stmt->close();
-echo "Administrator access granted. Set up the authenticator at next login.\n";
+echo "Administrator access granted. Sign in with the account password.\n";
