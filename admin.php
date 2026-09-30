@@ -79,8 +79,10 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     .admin-header { background: #123d80; color: white; }
     .admin-header-inner { max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
     .admin-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .admin-brand-logo { width: 46px; height: 46px; flex: none; object-fit: contain; padding: 3px; border-radius: 50%; background: white; }
+    .admin-brand-text { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
     .admin-brand strong { font-size: 19px; line-height: 1.2; }
-    .admin-brand-label { border: 1px solid #ffffff66; border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .admin-brand-label { color: #dbeafe; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
     .admin-session { display: flex; align-items: center; gap: 16px; min-width: 0; }
     .admin-username { color: #dbeafe; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .admin-logout { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 1px solid #ffffff99; border-radius: 8px; color: white; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background .2s, border-color .2s; }
@@ -108,7 +110,10 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
 <body>
 <header class="admin-header">
   <div class="admin-header-inner">
-    <div class="admin-brand"><strong>TESDA Inventory</strong><span class="admin-brand-label">Administration</span></div>
+    <div class="admin-brand">
+      <img class="admin-brand-logo" src="images/tesda_logo.png" alt="TESDA logo" width="46" height="46">
+      <div class="admin-brand-text"><strong>TESDA Inventory</strong><span class="admin-brand-label">Administration</span></div>
+    </div>
     <div class="admin-session">
       <span class="admin-username">Signed in as <?= htmlspecialchars($_SESSION['username']) ?></span>
       <a class="admin-logout" href="logout.php">
