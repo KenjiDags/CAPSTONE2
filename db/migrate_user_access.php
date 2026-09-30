@@ -22,6 +22,8 @@ foreach ([
     'role' => "VARCHAR(16) NOT NULL DEFAULT 'user'",
     'status' => "VARCHAR(16) NOT NULL DEFAULT 'active'",
     'email' => 'VARCHAR(255) NULL',
+    'removed_at' => 'DATETIME NULL',
+    'removed_from_status' => 'VARCHAR(16) NULL',
 ] as $column => $definition) {
     if (!access_column_exists($conn, $column)) {
         if (!$conn->query("ALTER TABLE users ADD COLUMN $column $definition")) {

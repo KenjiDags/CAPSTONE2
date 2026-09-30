@@ -47,7 +47,8 @@ Do not reimport `tesda_inventory.sql` to update an existing database: it contain
 DROP TABLE statements and can replace local records. Back up existing databases
 before schema changes.
 
-The user access migration adds account roles, approval status, and work email.
+The user access migration adds account roles, approval status, work email, and
+recoverable account removal.
 If the installation has exactly one existing account, it
 becomes the initial administrator. With multiple existing accounts, choose a
 trusted administrator explicitly:
@@ -59,6 +60,9 @@ trusted administrator explicitly:
 New registrations remain pending until an administrator verifies and approves
 them. Approved users sign in with a password and open the inventory system;
 administrators sign in with a password and open the account access page.
+Removing an account now blocks access and moves it to Recover accounts. Restoring
+it returns the account to its previous status. Accounts permanently deleted
+before this change can only be restored from a database backup.
 
 If Composer dependencies changed, run `composer install`. Commit `composer.lock`
 when generated so teammates install the same dependency versions; do not commit
