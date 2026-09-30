@@ -3,10 +3,13 @@
 -- The password is a PHP password_hash() value, not plaintext.
 -- Re-running this file resets admin's password.
 
+<<<<<<< HEAD
 CREATE DATABASE IF NOT EXISTS tesda_inventory
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tesda_inventory;
 
+=======
+>>>>>>> d71d10b9de0608db923392b784bb80fc524af087
 CREATE TABLE IF NOT EXISTS users (
     user_id INT NOT NULL AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL,
@@ -18,11 +21,16 @@ CREATE TABLE IF NOT EXISTS users (
     remember_token VARCHAR(255) NULL,
     role VARCHAR(16) NOT NULL DEFAULT 'user',
     status VARCHAR(16) NOT NULL DEFAULT 'active',
+<<<<<<< HEAD
+=======
+    totp_secret VARCHAR(64) NULL,
+>>>>>>> d71d10b9de0608db923392b784bb80fc524af087
     PRIMARY KEY (user_id),
     UNIQUE KEY username (username),
     UNIQUE KEY unique_user_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+<<<<<<< HEAD
 -- CREATE TABLE does not change an older users table, so add missing columns.
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS full_name VARCHAR(255) NULL,
@@ -37,6 +45,10 @@ ALTER TABLE users ADD UNIQUE INDEX IF NOT EXISTS unique_user_email (email);
 
 INSERT INTO users (username, password, full_name, role, status)
 VALUES (
+=======
+INSERT INTO users (username, password, full_name, role, status, totp_secret)
+SELECT
+>>>>>>> d71d10b9de0608db923392b784bb80fc524af087
     'admin',
     '$2y$10$QulA.kft0OBoeo2sf6u5pOXnRmUxVpcphVG4G1BFsCFCivJjFkFW6',
     'Administrator',
