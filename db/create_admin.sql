@@ -39,6 +39,38 @@ ALTER TABLE users
 
 ALTER TABLE users ADD UNIQUE INDEX IF NOT EXISTS unique_user_email (email);
 
+-- Archive snapshots used by archive_helpers.php.
+CREATE TABLE IF NOT EXISTS deleted_records (
+    archive_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    record_type VARCHAR(40) NOT NULL,
+    record_label VARCHAR(255) NOT NULL,
+    source_id INT NOT NULL,
+    snapshot LONGTEXT NOT NULL,
+    deleted_by INT NOT NULL,
+    deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (archive_id),
+    KEY archive_date (deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Stockout tracking depends on the inventory's items table. On a fresh admin-only
+-- database, db/migrate_stockout_tracking.php creates it after items is imported.
+SET @create_item_stockouts := IF(
+    EXISTS (
+        SELECT 1 FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'items'
+    ),
+    'CREATE TABLE IF NOT EXISTS item_stockouts (
+        item_id INT NOT NULL PRIMARY KEY,
+        started_at DATETIME NOT NULL,
+        date_source VARCHAR(20) NOT NULL,
+        CONSTRAINT fk_stockout_item FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB',
+    'DO 0'
+);
+PREPARE create_item_stockouts FROM @create_item_stockouts;
+EXECUTE create_item_stockouts;
+DEALLOCATE PREPARE create_item_stockouts;
+
 INSERT INTO users (username, password, full_name, role, status)
 VALUES (
     'admin',
