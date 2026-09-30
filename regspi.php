@@ -343,33 +343,34 @@ if (!empty($rows)) {
             </div>
             <div class="modal-body">
                 <form class="modal-form" id="itemForm">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <div class="modal-field">
-                        <label for="itemDate">Date:</label>
+                        <label for="itemDate">Date: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="date" id="itemDate" name="date" required>
                     </div>
                     
                     <div class="modal-field">
-                        <label for="icsRrspNo">ICS/RRSP No.:</label>
+                        <label for="icsRrspNo">ICS/RRSP No.: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="icsRrspNo" name="ics_rrsp_no" placeholder="Enter ICS/RRSP Number" required>
                     </div>
                     
                     <div class="modal-field">
-                        <label for="propertyNo">Semi-Expendable Property No.:</label>
+                        <label for="propertyNo">Semi-Expendable Property No.: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="propertyNo" name="property_no" placeholder="Enter Property Number" required>
                     </div>
                     
                     <div class="modal-field full-width">
-                        <label for="itemDescription">Item Description:</label>
+                        <label for="itemDescription">Item Description: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <textarea id="itemDescription" name="item_description" placeholder="Enter detailed item description" required></textarea>
                     </div>
                     
                     <div class="modal-field">
-                        <label for="usefulLife">Estimated Useful Life:</label>
+                        <label for="usefulLife">Estimated Useful Life: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="usefulLife" name="useful_life" placeholder="e.g., 5 Years" required>
                     </div>
                     
                     <div class="modal-field">
-                        <label for="issuedQty">Issued Quantity:</label>
+                        <label for="issuedQty">Issued Quantity: <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="number" id="issuedQty" name="issued_qty" placeholder="0" min="0" required>
                     </div>
                     

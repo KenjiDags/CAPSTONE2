@@ -2981,3 +2981,16 @@ body.dark-mode .inventory-controls .control-sort label {
     font-weight: 500;
 }
 
+<<<<<<< HEAD
+=======
+.required-indicator {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.required-fields-note {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0 0 1rem;
+}
+>>>>>>> 5762a043ffc1c0a98078acc98d39e7053a6dbc43

@@ -109,6 +109,7 @@ function edit_ofs_value($value): string
         <?php endif; ?>
 
         <form id="editForm" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <input type="hidden" name="item_id" value="<?= (int) $item['item_id'] ?>">
             <div class="form-row">
                 <div class="form-group">

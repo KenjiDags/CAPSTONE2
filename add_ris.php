@@ -484,6 +484,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             </header>
 
             <form method="post" action="">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <?php if ($is_editing): ?>
                     <input type="hidden" name="ris_id" value="<?php echo $ris_id; ?>">
                     <input type="hidden" name="is_editing" value="1">
