@@ -687,7 +687,7 @@ case 'update':
 
             <!-- Sort By -->
             <div class="control-sort">
-                <label for="sortBy">Sort By:</label>
+                <label for="sortBy"><i class="fas fa-sort"></i> Sort By:</label>
 
                 <select id="sortBy" name="sort">
                     <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>

@@ -2905,6 +2905,10 @@ body.dark-mode table tbody td.actions-cell {
     border-bottom: 1px solid #334155 !important;
 }
 
+body.dark-mode .inventory-controls .control-sort label {
+    color: #e2e8f0 !important;
+}
+
 /* =========================================================
    INVENTORY CONTROLS
    Category/Sort By + Search + Action Buttons
@@ -2976,3 +2980,4 @@ body.dark-mode table tbody td.actions-cell {
     color: #001F80;
     font-weight: 500;
 }
+

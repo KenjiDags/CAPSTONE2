@@ -123,13 +123,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Only insert if there's an issued quantity or remarks
         if ($issued_qty > 0 || !empty($remark)) {
-            // GET THE CURRENT AVERAGE UNIT COST BEFORE ANY CHANGES
-            $stmt = $conn->prepare("SELECT average_unit_cost FROM items WHERE stock_number = ?");
-            $stmt->bind_param("s", $stock_no);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $current_unit_cost = $result->fetch_assoc()['average_unit_cost'];
-            $stmt->close();
+
+        // Get the CURRENT inventory data from the database
+        $stmt = $conn->prepare("
+            SELECT item_id, quantity_on_hand, average_unit_cost
+            FROM items
+            WHERE stock_number = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param("s", $stock_no);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $item = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$item) {
+            throw new Exception("Item with stock number {$stock_no} was not found.");
+        }
+
+        $item_id = (int)$item['item_id'];
+        $current_quantity = (int)$item['quantity_on_hand'];
+        $current_unit_cost = (float)$item['average_unit_cost'];
+
+        // NEVER allow issuing more than what is actually available
+        if ($issued_qty < 0) {
+            throw new Exception("Issued quantity cannot be negative for {$stock_no}.");
+        }
+
+        if ($issued_qty > $current_quantity) {
+            throw new Exception(
+                "Cannot issue {$issued_qty} of {$stock_no}. " .
+                "Only {$current_quantity} item(s) are available."
+            );
+        }
 
             // INSERT INTO RIS_ITEMS WITH UNIT COST AT TIME OF ISSUE
             $stmt = $conn->prepare("INSERT INTO ris_items (ris_id, stock_number, stock_available, issued_quantity, remarks, unit_cost_at_issue)
@@ -509,7 +535,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Date: <span class="required">*</span></label>
-                            <input type="date" name="date_requested" value="<?php echo $ris_data['date_requested'] ?? ''; ?>" required>
+                            <input type="date" name="date_requested" value="<?php echo htmlspecialchars($ris_data['date_requested'] ?? date('Y-m-d')); ?>" required>
                         </div>
                     </div>
                 </div>
@@ -539,7 +565,12 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                 </thead>
                                 <tbody>
                                     <?php 
-                                    $result = $conn->query("SELECT * FROM items");
+                                    $result = $conn->query("
+                                        SELECT *
+                                        FROM items
+                                        WHERE quantity_on_hand > 0
+                                        ORDER BY stock_number
+                                    ");
                                     if ($result && $result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
                                             $stock_number = $row['stock_number'];
