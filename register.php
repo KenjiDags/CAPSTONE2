@@ -5,25 +5,28 @@ $error = '';
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim($_POST['full_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm = trim($_POST['confirm_password'] ?? '');
 
-    if ($full_name && $username && $password && $confirm) {
-        if ($password !== $confirm) {
+    if ($full_name && $email && $username && $password && $confirm) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Enter a valid work email address.';
+        } elseif ($password !== $confirm) {
             $error = 'Passwords do not match.';
         } else {
             // Check if username exists
-            $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ? LIMIT 1");
-            $stmt->bind_param("s", $username);
+            $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ? OR email = ? LIMIT 1");
+            $stmt->bind_param("ss", $username, $email);
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result && $result->num_rows > 0) {
-                $error = 'Username already taken.';
+                $error = 'Username or email already registered.';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = $conn->prepare("INSERT INTO users (full_name, username, password) VALUES (?, ?, ?)");
-                $insert->bind_param("sss", $full_name, $username, $hash);
+                $insert = $conn->prepare("INSERT INTO users (full_name, email, username, password, role, status) VALUES (?, ?, ?, ?, 'user', 'pending')");
+                $insert->bind_param("ssss", $full_name, $email, $username, $hash);
                 if ($insert->execute()) {
                     header('Location: index.php?registered=1');
                     exit;
@@ -94,7 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #333;
             font-size: 13px;
         }
-        input[type="text"], 
+        input[type="text"],
+        input[type="email"],
         input[type="password"] { 
             width: 100%; 
             padding: 12px 14px; 
@@ -104,7 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-sizing: border-box;
             transition: border-color 0.3s;
         }
-        input[type="text"]:focus, 
+        input[type="text"]:focus,
+        input[type="email"]:focus,
         input[type="password"]:focus { 
             outline: none;
             border-color: #0066cc;
@@ -187,6 +192,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" name="full_name" id="full_name" required autofocus>
             </div>
             <div class="form-group">
+                <label for="email">Work Email <span class="required-indicator" aria-hidden="true">*</span></label>
+                <input type="email" name="email" id="email" autocomplete="email" required>
+            </div>
+            <div class="form-group">
                 <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="username" id="username" required>
             </div>
@@ -198,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="confirm_password">Confirm Password <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="password" name="confirm_password" id="confirm_password" required>
             </div>
-            <button type="submit">Register</button>
+            <button type="submit">Request account</button>
         </form>
 
         <div class="login-link">

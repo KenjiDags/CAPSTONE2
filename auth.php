@@ -19,6 +19,29 @@ if (
     exit;
 }
 
+require_once 'config.php';
+$accessStmt = $conn->prepare('SELECT username, role, status FROM users WHERE user_id = ? LIMIT 1');
+$accessStmt->bind_param('i', $_SESSION['user_id']);
+$accessStmt->execute();
+$accessUser = $accessStmt->get_result()->fetch_assoc();
+$accessStmt->close();
+if (!$accessUser || $accessUser['status'] !== 'active') {
+    session_unset();
+    session_destroy();
+    header('Location: index.php');
+    exit;
+}
+$_SESSION['role'] = $accessUser['role'];
+$_SESSION['username'] = $accessUser['username'];
+if ($accessUser['role'] === 'admin' && !defined('ADMIN_PAGE')) {
+    header('Location: admin.php');
+    exit;
+}
+if ($accessUser['role'] !== 'admin' && defined('ADMIN_PAGE')) {
+    header('Location: analytics.php');
+    exit;
+}
+
 // Optional extra security: check if the user agent matches
 if (
     isset($_SESSION['user_agent']) && 
@@ -26,6 +49,6 @@ if (
 ) {
     session_unset();
     session_destroy();
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }

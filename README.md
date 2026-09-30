@@ -32,6 +32,7 @@ and branch. For the current `main` branch:
 git switch main
 git pull --ff-only origin main
 & C:\xampp\php\php.exe db/migrate_stockout_tracking.php
+& C:\xampp\php\php.exe db/migrate_user_access.php
 ```
 
 Run the migration while inventory writes are paused. It installs the stockout
@@ -46,6 +47,21 @@ Do not reimport `tesda_inventory.sql` to update an existing database: it contain
 DROP TABLE statements and can replace local records. Back up existing databases
 before schema changes.
 
+The user access migration adds account roles, approval status, work email, and
+authenticator setup. If the installation has exactly one existing account, it
+becomes the initial administrator. With multiple existing accounts, choose a
+trusted administrator explicitly:
+
+```powershell
+& C:\xampp\php\php.exe db/promote_admin.php <existing-username>
+```
+
+New registrations remain pending until an administrator verifies and approves
+them. All accounts set up an authenticator app at their next login. If someone
+loses access to that app, another administrator can reset it on the admin page.
+For the only administrator, a trusted server operator can run
+`db/reset_authenticator.php <existing-username>` from the command line.
+
 If Composer dependencies changed, run `composer install`. Commit `composer.lock`
 when generated so teammates install the same dependency versions; do not commit
 the generated `vendor/` directory. Reload the page with Ctrl+F5 after updating.
@@ -57,9 +73,11 @@ the generated `vendor/` directory. Reload the page with Ctrl+F5 after updating.
 3. Import `tesda_inventory.sql` only into a new, disposable local database.
 4. Check the database connection in `config.php`. This file is currently tracked;
    do not commit private database credentials.
-5. Run the stockout migration command above.
+5. Run the migration commands above.
 6. Run `composer install` for the dependencies in `composer.json`.
 7. Open `http://localhost/CAPSTONE2/` (adjust the folder name if needed).
+8. Register the first account, then use `db/promote_admin.php <username>` from
+   the command line to make it the initial administrator.
 
 ## Diagnose missing changes
 

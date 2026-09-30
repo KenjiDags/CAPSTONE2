@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 require 'config.php';
 
 // Get PTR ID from URL

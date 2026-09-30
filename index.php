@@ -21,11 +21,11 @@ if (!empty($_COOKIE['remember_username'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
 
     if ($username && $password) {
-        $stmt = $conn->prepare("SELECT user_id, password FROM users WHERE username = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT user_id, password, role, status FROM users WHERE username = ? LIMIT 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -33,12 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result && $result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            if (password_verify($password, $user['password'])) {
+            if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
                 session_regenerate_id(true);
-
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['username'] = $username;
-                $_SESSION['logged_in'] = true;
+                $_SESSION['mfa_pending_user_id'] = (int)$user['user_id'];
                 $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 
                 // Login is session-only; do not persist authentication across visits.
@@ -54,10 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     setcookie('remember_username', '', time() - 3600, '/', 'localhost', false, true);
                 }
 
-                header('Location:analytics.php');
+                header('Location:mfa.php');
                 exit;
             } else {
-                $error = 'Invalid username or password.';
+                $error = 'Invalid credentials or account awaiting administrator approval.';
             }
         } else {
             $error = 'Invalid username or password.';
@@ -223,7 +220,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <?php endif; ?>
 
         <?php if ($registered): ?>
-            <div class="success">Account created successfully! You can now login.</div>
+            <div class="success">Registration submitted. An administrator must approve your account before you can log in.</div>
         <?php endif; ?>
 
         <?php if ($logged_out): ?>
@@ -249,7 +246,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         </form>
 
         <div class="signup-link">
-            Don't have an account? <a href="register.php">Register</a>
+            Don't have an account? <a href="register.php">Request access</a>
         </div>
     </div>
 </body>
