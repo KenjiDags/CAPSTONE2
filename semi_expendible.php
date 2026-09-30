@@ -379,29 +379,67 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             <?php endforeach; ?>
         </div>
 
-        <!-- Search and Add Container -->
-        <div class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
-            <div class="control" style="flex: 1;">
-                <form method="GET" class="search-form" style="display: flex; align-items: center; gap: 10px;">
-                    <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
+        <!-- Sort, Search and Add Container -->
+        <form method="GET" class="filters">
+            <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
+
+            <div class="inventory-controls">
+
+                <!-- Sort By -->
+                <div class="control-sort">
+                    <label for="sortBy">Sort By:</label>
+                    <select id="sortBy" name="sort" onchange="this.form.submit()">
+                        <option value="date_desc" <?php echo (($_GET['sort'] ?? 'date_desc') === 'date_desc') ? 'selected' : ''; ?>>
+                            Newest
+                        </option>
+                        <option value="date_asc" <?php echo (($_GET['sort'] ?? '') === 'date_asc') ? 'selected' : ''; ?>>
+                            Oldest
+                        </option>
+                        <option value="quantity_low" <?php echo (($_GET['sort'] ?? '') === 'quantity_low') ? 'selected' : ''; ?>>
+                            Quantity: Low to High
+                        </option>
+                        <option value="quantity_high" <?php echo (($_GET['sort'] ?? '') === 'quantity_high') ? 'selected' : ''; ?>>
+                            Quantity: High to Low
+                        </option>
+                        <option value="amount_low" <?php echo (($_GET['sort'] ?? '') === 'amount_low') ? 'selected' : ''; ?>>
+                            Amount: Low to High
+                        </option>
+                        <option value="amount_high" <?php echo (($_GET['sort'] ?? '') === 'amount_high') ? 'selected' : ''; ?>>
+                            Amount: High to Low
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Search -->
+                <div class="control-search">
+                    <label for="searchInput">
                         <i class="fas fa-search"></i> Search:
                     </label>
-                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
-                           placeholder="Search by description, property number, or officer..." 
-                           class="search-input">
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        name="search"
+                        value="<?php echo htmlspecialchars($search); ?>"
+                        placeholder="Search by description, property number, or officer..."
+                    >
+
                     <?php if (!empty($search)): ?>
                         <a href="?category=<?php echo urlencode($category); ?>" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Clear
                         </a>
                     <?php endif; ?>
-                </form>
+                </div>
+
+                <!-- Add Button -->
+                <div class="control-actions">
+                    <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-add">
+                        <i class="fas fa-plus"></i> Add New Item
+                    </a>
+                </div>
+
             </div>
-            <div class="add-btn-section" style="margin-left: auto;">
-                <a href="add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-add">
-                    <i class="fas fa-plus"></i> Add New Item
-                </a>
-            </div>
-        </div>
+        </form>
 
     <!-- Statistics Cards -->
     <div class="stats-cards">
