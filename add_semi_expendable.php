@@ -461,6 +461,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             <?php endif; ?>
 
             <form method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="date">Date <span class="required">*</span></label>

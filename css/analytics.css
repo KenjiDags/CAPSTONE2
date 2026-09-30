@@ -274,3 +274,5 @@ td.ok {
 .mrp-critical-item p { margin: 8px 0; }
 .mrp-critical-item .mrp-primary-metric { font-weight: 600; }
 .mrp-critical-item > a, .mrp-critical-item > button { align-self: flex-start; margin-top: auto; display: inline-block; padding: 8px 0; font-weight: 600; }
+.required-indicator { color: #dc2626; font-weight: 700; }
+.required-fields-note { color: #64748b; font-size: 0.875rem; margin: 0 0 1rem; }

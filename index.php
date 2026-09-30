@@ -231,13 +231,14 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <?php endif; ?>
 
         <form method="post" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="username" id="username" required autofocus
                        value="<?= htmlspecialchars($cookie_username) ?>">
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Password <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="password" name="password" id="password" required>
             </div>
             <div class="form-group remember-group">

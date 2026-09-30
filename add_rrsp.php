@@ -218,6 +218,8 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     margin-bottom: 6px;
     color: #374151;
   }
+  .required-indicator { color: #dc2626; font-weight: 700; }
+  .required-fields-note { color: #64748b; font-size: 0.875rem; margin: 0 0 1rem; }
   .form-grid .form-group input,
   .form-grid .form-group select,
   .form-grid .form-group textarea {
@@ -249,6 +251,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 
 <div class="content">
   <div class="form-container rrsp-add-page">
+      <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <header class="page-header">
         <h1><i class="fa-solid fa-file-invoice"></i>Add RRSP Form</h1>
     </header>
@@ -267,7 +270,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       </div>
       <div class="form-grid">
         <div class="form-group">
-          <label>RRSP No.:</label>
+          <label>RRSP No.: <span class="required-indicator" aria-hidden="true">*</span></label>
           <input type="text" id="rrsp_no" required>
           <small class="input-hint">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
         </div>

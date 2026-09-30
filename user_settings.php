@@ -571,8 +571,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     User Information
                 </h2>
                     <form method="POST" id="inlineNameForm" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
+                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input 
                                 type="text" 
                                 id="inline_full_name" 
@@ -587,8 +588,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </form>
 
                     <form method="POST" id="inlineUserPositionForm" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position:</label>
+                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input 
                                 type="text" 
                                 id="inline_user_position" 
@@ -603,8 +605,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </form>
 
                     <form method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
+                            <label for="inline_username"><i class="fas fa-user"></i> Username: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input 
                                 type="text" 
                                 id="inline_username" 
@@ -626,8 +629,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </h2>
                 
                 <form method="POST">
+                    <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <div class="form-row">
-                        <label for="current_password">Current Password</label>
+                        <label for="current_password">Current Password <span class="required-indicator" aria-hidden="true">*</span></label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
@@ -643,7 +647,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="new_password">New Password</label>
+                        <label for="new_password">New Password <span class="required-indicator" aria-hidden="true">*</span></label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
@@ -660,7 +664,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="confirm_password">Confirm New Password</label>
+                        <label for="confirm_password">Confirm New Password <span class="required-indicator" aria-hidden="true">*</span></label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
@@ -691,9 +695,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 
                 <!-- Add Officer Form -->
                 <form method="POST" style="margin-bottom: 30px;">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div class="form-row" style="margin-bottom: 0;">
-                            <label for="officer_name">Officer Name</label>
+                            <label for="officer_name">Officer Name <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input 
                                 type="text" 
                                 id="officer_name" 
@@ -703,7 +708,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                             >
                         </div>
                         <div class="form-row" style="margin-bottom: 0;">
-                            <label for="officer_position">Officer Position</label>
+                            <label for="officer_position">Officer Position <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input 
                                 type="text" 
                                 id="officer_position" 
@@ -732,10 +737,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 <thead>
                                     <tr style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);">
                                         <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-user"></i> Name
+                                            <i class="fas fa-user"></i> Name <span class="required-indicator" aria-hidden="true">*</span>
                                         </th>
                                         <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-briefcase"></i> Position
+                                            <i class="fas fa-briefcase"></i> Position <span class="required-indicator" aria-hidden="true">*</span>
                                         </th>
                                         <th style="padding: 12px; text-align: center; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb; width: 100px;">
                                             <i class="fas fa-cog"></i> Actions

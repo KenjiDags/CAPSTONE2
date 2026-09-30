@@ -857,29 +857,30 @@ case 'update':
         <span class="close" onclick="closeAddModal()">&times;</span>
         <h3><i class="fas fa-plus-circle"></i> Add New Item</h3>
         <form id="addForm">
-            <label for="add_stock_number">Stock Number</label>
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
+            <label for="add_stock_number">Stock Number <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" name="stock_number" id="add_stock_number" placeholder="Enter stock number" required>
             <div id="stock_status" class="stock-status"></div>
 
-            <label for="add_iar">I.A.R</label>
+            <label for="add_iar">I.A.R <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" name="iar" id="add_iar" placeholder="Enter I.A.R" required readonly>
 
-            <label for="add_item_name">Item Name</label>
+            <label for="add_item_name">Item Name <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" name="item_name" id="add_item_name" placeholder="Name" required readonly>
 
-            <label for="add_description">Description</label>
+            <label for="add_description">Description <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" name="description" id="add_description" placeholder="Description" required readonly>
 
-            <label for="add_unit">Unit (pcs, box, etc.)</label>
+            <label for="add_unit">Unit (pcs, box, etc.) <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" name="unit" id="add_unit" placeholder="Unit (pcs, box, etc.)" required readonly>
 
-            <label for="add_reorder_point">Reorder Point</label>
+            <label for="add_reorder_point">Reorder Point <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="number" name="reorder_point" id="add_reorder_point" placeholder="Reorder Point" required min="0" readonly>
 
-            <label for="add_unit_cost">Unit Cost (₱)</label>
+            <label for="add_unit_cost">Unit Cost (₱) <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="number" step="0.01" name="unit_cost" id="add_unit_cost" placeholder="Unit Cost (₱)" required min="0" readonly>
 
-            <label for="add_quantity_on_hand">Quantity on Hand</label>
+            <label for="add_quantity_on_hand">Quantity on Hand <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="number" name="quantity_on_hand" id="add_quantity_on_hand" placeholder="Quantity on Hand" required min="0">
             
             <button type="submit" class="save-btn">

@@ -407,14 +407,15 @@ if (!$item && empty($error)) {
                                     $orig_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $orig_qty_base - ($orig_qty_reissued + $orig_qty_disposed));
                 ?>
                 <form method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <input type="hidden" name="return" value="<?php echo htmlspecialchars($_GET['return'] ?? ''); ?>">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="date">Date</label>
+                            <label for="date">Date <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="date" id="date" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? $item['date']); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label for="semi_expendable_property_no">Semi-Expendable Property No.</label>
+                            <label for="semi_expendable_property_no">Semi-Expendable Property No. <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" id="semi_expendable_property_no" name="semi_expendable_property_no" 
                                    value="<?php echo htmlspecialchars($_POST['semi_expendable_property_no'] ?? $item['semi_expendable_property_no']); ?>" required>
                         </div>
@@ -422,7 +423,7 @@ if (!$item && empty($error)) {
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="category">Category</label>
+                            <label for="category">Category <span class="required-indicator" aria-hidden="true">*</span></label>
                             <select id="category" name="category" required>
                                 <?php foreach ($valid_categories as $cat): ?>
                     <option value="<?php echo htmlspecialchars($cat); ?>" 
@@ -435,18 +436,18 @@ if (!$item && empty($error)) {
                     </div>
 
                     <div class="form-group">
-                        <label for="item_description">Item Description</label>
+                        <label for="item_description">Item Description <span class="required-indicator" aria-hidden="true">*</span></label>
                         <textarea id="item_description" name="item_description" required><?php echo htmlspecialchars($_POST['item_description'] ?? $item['item_description']); ?></textarea>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="estimated_useful_life">Estimated Useful Life (years)</label>
+                            <label for="estimated_useful_life">Estimated Useful Life (years) <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="number" id="estimated_useful_life" name="estimated_useful_life" 
                     value="<?php echo htmlspecialchars($_POST['estimated_useful_life'] ?? $item['estimated_useful_life']); ?>" min="1" max="20" required>
                         </div>
                         <div class="form-group">
-                            <label for="amount">Amount</label>
+                            <label for="amount">Amount <span class="required-indicator" aria-hidden="true">*</span></label>
                             <?php 
                                 $unitAmount = null;
                                 if (isset($_POST['amount'])) {
@@ -468,7 +469,7 @@ if (!$item && empty($error)) {
                                    placeholder="e.g., pc, box, set">
                         </div>
                         <div class="form-group">
-                            <label for="quantity_issued">Quantity</label>
+                            <label for="quantity_issued">Quantity <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="number" id="quantity_issued" name="quantity_issued" min="0"
                     value="<?php echo htmlspecialchars(isset($_POST['quantity_issued']) ? $_POST['quantity_issued'] : (isset($item['quantity']) ? $item['quantity'] : ($item['quantity_issued'] ?? 0))); ?>" required>
                         </div>
@@ -521,7 +522,7 @@ if (!$item && empty($error)) {
                     value="<?php echo htmlspecialchars($_POST['quantity_disposed'] ?? $item['quantity_disposed']); ?>" data-original="<?php echo htmlspecialchars((int)($item['quantity_disposed'] ?? 0)); ?>">
                         </div>
                         <div class="form-group">
-                            <label for="quantity_balance">Quantity Balance</label>
+                            <label for="quantity_balance">Quantity Balance <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="number" id="quantity_balance" name="quantity_balance" min="0"
                                    value="<?php echo htmlspecialchars($_POST['quantity_balance'] ?? $item['quantity_balance']); ?>" required>                   
                         </div>

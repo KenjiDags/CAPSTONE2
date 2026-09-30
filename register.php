@@ -181,20 +181,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="post" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
-                <label for="full_name">Full Name</label>
+                <label for="full_name">Full Name <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="full_name" id="full_name" required autofocus>
             </div>
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="username" id="username" required>
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Password <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="password" name="password" id="password" required>
             </div>
             <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
+                <label for="confirm_password">Confirm Password <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="password" name="confirm_password" id="confirm_password" required>
             </div>
             <button type="submit">Register</button>

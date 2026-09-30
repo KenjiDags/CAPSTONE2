@@ -2976,3 +2976,14 @@ body.dark-mode table tbody td.actions-cell {
     color: #001F80;
     font-weight: 500;
 }
+
+.required-indicator {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.required-fields-note {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0 0 1rem;
+}

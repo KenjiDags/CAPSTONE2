@@ -145,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
         <p>Create a new inventory transfer report</p>
       </header>
       <form method="post" action="">
+        <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
         <div class="section-card">
           <h3><i class="fas fa-info-circle"></i> ITR Details</h3>
           <div class="form-grid">
@@ -171,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
           </div>
           <div class="form-grid">
             <div class="form-group">
-              <label>ITR No.:</label>
+              <label>ITR No.: <span class="required-indicator" aria-hidden="true">*</span></label>
               <input type="text" id="itr_no" required>
               <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
             </div>
