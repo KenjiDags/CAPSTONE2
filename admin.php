@@ -114,6 +114,8 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     th:first-child { width: 34%; } th:nth-child(2), th:nth-child(3) { width: 14%; } th:last-child { width: 38%; }
     .account-actions-cell { min-width: 0; }
     th { background: #f8fafc; color: #475569; font-size: 13px; } td small { display: block; color: #64748b; margin-top: 4px; }
+    .person-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+    .person-email { color: #64748b; font-size: 13px; font-weight: 400; overflow-wrap: anywhere; }
     .badge { display: inline-block; border-radius: 20px; padding: 4px 9px; background: #e8eef8; color: #174b8f; font-size: 12px; text-transform: capitalize; }
     .badge.pending { background: #fff3d6; color: #92400e; } .badge.disabled, .badge.rejected { background: #fee2e2; color: #991b1b; } .badge.removed { background: #e2e8f0; color: #475569; }
     .account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
@@ -140,6 +142,7 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     body.dark-mode .card, body.dark-mode .panel { background: #1e293b; border-color: #334155; }
     body.dark-mode .admin-content h1, body.dark-mode .panel h2, body.dark-mode .card strong { color: #bfdbfe; }
     body.dark-mode .intro, body.dark-mode .card span, body.dark-mode td small, body.dark-mode .empty-state { color: #cbd5e1; }
+    body.dark-mode .person-email { color: #cbd5e1; }
     body.dark-mode th { background: #273449; color: #e2e8f0; }
     body.dark-mode th, body.dark-mode td, body.dark-mode .empty-state { border-color: #334155; }
     body.dark-mode .account-actions button { background: #273449; border-color: #47617e; color: #dbeafe; }
@@ -219,7 +222,7 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
       <tbody>
       <?php foreach ($visibleAccounts as $account): ?>
         <tr>
-          <td data-label="Person"><strong><?= htmlspecialchars($account['display_name']) ?></strong><small><?= htmlspecialchars($account['username']) ?><?= $account['email'] ? ' · ' . htmlspecialchars($account['email']) : '' ?></small>
+          <td data-label="Person"><div class="person-heading"><strong><?= htmlspecialchars($account['display_name']) ?></strong><?php if ($account['email']): ?><span class="person-email"><?= htmlspecialchars($account['email']) ?></span><?php endif; ?></div>
             <?php if ($account['status'] === 'pending' && (int)$account['user_id'] !== (int)$_SESSION['user_id']): ?>
               <label class="verify"><input type="checkbox" name="verified_identity" value="1" form="account-action-approve-<?= (int)$account['user_id'] ?>" required> Identity verified</label>
             <?php endif; ?>
