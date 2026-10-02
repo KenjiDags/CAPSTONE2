@@ -68,7 +68,7 @@ $items = $conn->query("SELECT i.*,
             margin-bottom: 20px;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
         }
-        .restock-page .filter-container > * { min-width: 0; max-width: 100%; }
+        .restock-page .inventory-controls { flex-wrap: wrap; }
         .restock-page .page-header h1 { flex-wrap: wrap; overflow-wrap: anywhere; }
         table {
             width: 100%;
@@ -124,9 +124,6 @@ $items = $conn->query("SELECT i.*,
         .hidden-row {
             display: none;
         }
-        .restock-page .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-        #restockSearch { flex: 1 1 280px; min-width: 0; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
-        #restockSearch:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
         body.dark-mode {
             background: var(--background-gradient) !important;
             color: #e2e8f0;
@@ -139,7 +136,7 @@ $items = $conn->query("SELECT i.*,
             color: #e2e8f0;
         }
         body.dark-mode .page-header h1,
-        body.dark-mode .filter-container label {
+        body.dark-mode .inventory-controls label {
             color: #e2e8f0 !important;
         }
         body.dark-mode table {
@@ -175,17 +172,23 @@ $items = $conn->query("SELECT i.*,
             </h1>
         </header>
 
-        <!-- FILTER DROPDOWN -->
-        <div class="filter-container">
-            <label for="stockFilter">
-                <i class="fas fa-filter"></i> Filter Items:
-            </label>
-            <select id="stockFilter" class="filter-dropdown">
-                <option value="all">Show All Items</option>
-                <option value="low-stock">Show Low-Stock Items Only</option>
-            </select>
-            <label for="restockSearch">Search items:</label>
-            <input id="restockSearch" type="search" placeholder="Stock number, item name, or description..." autocomplete="off" aria-controls="restockTable">
+        <!-- FILTER AND SEARCH CONTROLS -->
+        <div class="filters">
+            <div class="inventory-controls">
+                <div class="control-sort">
+                    <label for="stockFilter">
+                        <i class="fas fa-filter"></i> Filter Items:
+                    </label>
+                    <select id="stockFilter">
+                        <option value="all">Show All Items</option>
+                        <option value="low-stock">Show Low-Stock Items Only</option>
+                    </select>
+                </div>
+                <div class="control-search">
+                    <label for="restockSearch"><i class="fas fa-search"></i> Search:</label>
+                    <input id="restockSearch" type="search" placeholder="Stock number, item name, or description..." autocomplete="off" aria-controls="restockTable">
+                </div>
+            </div>
         </div>
         <p id="restockNoResults" role="status" hidden>No items match your search or stock filter.</p>
 
