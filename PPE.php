@@ -23,10 +23,10 @@ $params = [];
 $types = "";
 
 if (!empty($search)) {
-    $sql .= " WHERE par_no LIKE ? OR item_name LIKE ? OR item_description LIKE ? OR custodian LIKE ?";
+    $sql .= " WHERE PPE_no LIKE ? OR property_no LIKE ? OR item_name LIKE ? OR item_description LIKE ? OR custodian LIKE ?";
     $search_param = "%$search%";
-    $params = [$search_param, $search_param, $search_param, $search_param];
-    $types = "ssss";
+    $params = array_fill(0, 5, $search_param);
+    $types = "sssss";
 }
 
 // Sorting logic
@@ -38,7 +38,7 @@ switch ($sort_by) {
         $sql .= " ORDER BY id ASC";
         break;
     case 'property_no':
-        $sql .= " ORDER BY par_no ASC";
+        $sql .= " ORDER BY property_no ASC";
         break;
     case 'amount_highest':
         $sql .= " ORDER BY amount DESC";
@@ -63,51 +63,6 @@ try {
     $items = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // If redirected from add_ppe.php with ?added=1, log initial add to history for the last inserted item
-    if (isset($_GET['added']) && $_GET['added'] == 1 && !empty($items)) {
-        $latest = $items[0];
-        // Check if already logged to avoid duplicate
-        $check = $conn->prepare("SELECT COUNT(*) as cnt FROM item_history_ppe WHERE property_no = ? AND change_type = 'add'");
-        $check->bind_param("i", $latest['id']);
-        $check->execute();
-        $res = $check->get_result()->fetch_assoc();
-        $check->close();
-        if ($res['cnt'] == 0) {
-            // Insert to item_history_ppe using correct fields
-            $insert = $conn->prepare("
-                INSERT INTO item_history_ppe 
-                (property_no, PAR_number, refference_no, item_name, description, unit, 
-                unit_cost, quantity_on_hand, quantity_change, receipt_qty, issue_qty, 
-                balance_qty, officer_incharge, change_direction, change_type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $change_direction = 'increase';
-            $change_type = 'add';
-            $receipt_qty = $latest['quantity'];
-            $balance_qty = $latest['quantity'];
-            $quantity_change = $latest['quantity'];
-            $refference_no = null; // no reference on initial add
-
-            $insert->bind_param(
-                "isssssdi iiisss",
-                $latest['id'],           // property_no
-                $latest['par_no'],       // PAR_number
-                $refference_no,          // refference_no
-                $latest['item_name'],    // item_name
-                $latest['item_description'], // description
-                $latest['unit'],         // unit
-                $latest['amount'],       // unit_cost
-                $latest['quantity'],     // quantity_on_hand
-                $quantity_change,        // quantity_change
-                $receipt_qty,            // receipt_qty
-                $issue_qty,              // issue_qty
-                $balance_qty,            // balance_qty
-                $latest['custodian'],    // officer_incharge
-                $change_direction,       // change_direction
-                $change_type             // change_type
-            );
-        }
-    }
 } catch (Exception $e) {
     $items = [];
     $error = "Database error: " . $e->getMessage();
@@ -171,7 +126,7 @@ try {
                 <label for="searchInput" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
                     <i class="fas fa-search"></i> Search:
                 </label>
-                <input type="text" id="searchInput" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PAR no, name, description, or officer">
+                <input type="text" id="searchInput" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by PPE or property no., name, description, or officer">
                 <?php if (!empty($search)): ?>
                     <a href="PPE.php" class="btn btn-secondary"><i class="fas fa-times"></i> Clear</a>
                 <?php endif; ?>
@@ -187,6 +142,9 @@ try {
         <div class="alert alert-success">Item deleted successfully.</div>
     <?php elseif (isset($_GET['added'])): ?>
         <div class="alert alert-success">Item added successfully.</div>
+    <?php endif; ?>
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <div class="table-container">    

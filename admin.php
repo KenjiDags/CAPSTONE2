@@ -69,12 +69,11 @@ $visibleAccounts = array_values(array_filter($accounts, static function ($accoun
 
 function admin_action(int $id, string $action, string $label, string $csrf, string $view, string $class = ''): void
 {
-    echo '<form method="post" class="action-form">';
+    echo '<form method="post" id="account-action-' . htmlspecialchars($action) . '-' . $id . '" class="action-form action-form--' . htmlspecialchars($action) . '">';
     echo '<input type="hidden" name="csrf" value="' . htmlspecialchars($csrf) . '">';
     echo '<input type="hidden" name="user_id" value="' . $id . '">';
     echo '<input type="hidden" name="action" value="' . htmlspecialchars($action) . '">';
     echo '<input type="hidden" name="return_view" value="' . htmlspecialchars($view) . '">';
-    if ($action === 'approve') echo '<label class="verify"><input type="checkbox" name="verified_identity" value="1" required> Identity verified</label>';
     $confirmation = $action === 'remove' ? ' onclick="return confirm(\'Move this account to Removed accounts? You can recover it later.\')"' : '';
     echo '<button class="' . htmlspecialchars($class) . '" type="submit"' . $confirmation . '>' . htmlspecialchars($label) . '</button>';
     echo '</form>';
@@ -111,14 +110,27 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     .card, .panel { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 3px 12px #1e293b0a; }
     .card { padding: 20px; } .card span { color: #64748b; } .card strong { display: block; font-size: 30px; margin-top: 8px; color: #123d80; }
     .panel { overflow: hidden; } .panel h2 { padding: 20px; margin: 0; font-size: 19px; text-align: left; text-shadow: none; }
-    .table-wrap { overflow-x: auto; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 14px 18px; border-top: 1px solid #e2e8f0; vertical-align: middle; }
+    .table-wrap { max-width: 100%; overflow-x: auto; } table { width: 100%; table-layout: fixed; border-collapse: collapse; } th, td { text-align: left; padding: 14px 16px; border-top: 1px solid #e2e8f0; vertical-align: middle; overflow-wrap: anywhere; }
+    th:first-child { width: 34%; } th:nth-child(2), th:nth-child(3) { width: 14%; } th:last-child { width: 38%; }
+    .account-actions-cell { min-width: 0; }
     th { background: #f8fafc; color: #475569; font-size: 13px; } td small { display: block; color: #64748b; margin-top: 4px; }
     .badge { display: inline-block; border-radius: 20px; padding: 4px 9px; background: #e8eef8; color: #174b8f; font-size: 12px; text-transform: capitalize; }
     .badge.pending { background: #fff3d6; color: #92400e; } .badge.disabled, .badge.rejected { background: #fee2e2; color: #991b1b; } .badge.removed { background: #e2e8f0; color: #475569; }
-    .actions { display: flex; flex-wrap: wrap; gap: 6px; } .action-form { margin: 0; }
-    .verify { display: block; font-size: 12px; margin-bottom: 5px; white-space: nowrap; }
-    button { border: 1px solid #bad0ed; background: #f3f7ff; color: #16468a; border-radius: 6px; padding: 7px 10px; cursor: pointer; font: inherit; font-size: 12px; }
-    button.primary { border-color: #1554a6; background: #1554a6; color: white; } button.danger { border-color: #fecaca; background: #fff4f4; color: #9f1239; }
+    .account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
+    .action-form { margin: 0; }
+    .verify { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; color: #475569; font-size: 12px; line-height: 1.3; cursor: pointer; }
+    .verify input { width: 16px; height: 16px; margin: 0; accent-color: #1554a6; }
+    .account-actions button { min-height: 36px; border: 1px solid #bad0ed; background: #f3f7ff; color: #16468a; border-radius: 7px; padding: 7px 14px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .account-actions--pending .action-form { flex: 1 1 90px; }
+    .account-actions--pending button { width: 100%; }
+    .account-actions button:hover { background: #e4eeff; }
+    .account-actions button:focus-visible { outline: 2px solid #1554a6; outline-offset: 2px; }
+    .account-actions button.primary { border-color: #1554a6; background: #1554a6; color: white; }
+    .account-actions button.primary:hover { background: #123d80; }
+    .account-actions button.danger { border-color: #fecaca; background: #fff4f4; color: #9f1239; }
+    .account-actions button.danger:hover { background: #fee2e2; }
+    .account-actions button.remove { border-color: #e2e8f0; background: transparent; color: #9f1239; }
+    .account-actions button.remove:hover { border-color: #fecaca; background: #fff4f4; }
     .notice { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; background: #e9f8ef; color: #166534; } .notice.error { background: #fee2e2; color: #991b1b; }
     .admin-shortcuts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 28px; }
     .admin-shortcuts a { display: inline-flex; align-items: center; min-height: 40px; padding: 9px 14px; border-radius: 7px; background: #e8eef8; color: #174b8f; font-size: 14px; font-weight: 700; text-decoration: none; }
@@ -130,8 +142,37 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     body.dark-mode .intro, body.dark-mode .card span, body.dark-mode td small, body.dark-mode .empty-state { color: #cbd5e1; }
     body.dark-mode th { background: #273449; color: #e2e8f0; }
     body.dark-mode th, body.dark-mode td, body.dark-mode .empty-state { border-color: #334155; }
+    body.dark-mode .account-actions button { background: #273449; border-color: #47617e; color: #dbeafe; }
+    body.dark-mode .account-actions button:hover { background: #334861; }
+    body.dark-mode .account-actions button.primary { background: #2563b8; border-color: #2563b8; color: white; }
+    body.dark-mode .account-actions button.danger { background: #4c2633; border-color: #8b4356; color: #fecdd3; }
+    body.dark-mode .verify { color: #cbd5e1; }
+    body.dark-mode .account-actions button.remove { background: transparent; border-color: #475569; color: #fecdd3; }
     @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) {
+      table, tbody { display: block; }
+      thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      tbody { padding: 12px; }
+      tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px; }
+      tr + tr { margin-top: 12px; }
+      td { display: block; min-width: 0; padding: 0; border: 0; }
+      td::before { content: attr(data-label); display: block; margin-bottom: 5px; color: #64748b; font-size: 12px; font-weight: 700; }
+      td:first-child, .account-actions-cell { grid-column: 1 / -1; }
+      .account-actions { max-width: 420px; }
+      body.dark-mode tr { border-color: #334155; }
+      body.dark-mode td::before { color: #cbd5e1; }
+    }
+    @media (max-width: 640px) {
+      .admin-content { padding: 24px 14px 40px; }
+      .admin-header-inner { padding-inline: 14px; }
+      .admin-content h1 { font-size: 26px; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .card { padding: 14px; }
+      .card strong { font-size: 25px; }
+      tbody { padding: 8px; }
+      tr { padding: 12px; gap: 10px; }
+    }
+    @media (max-width: 420px) { .cards, tr { grid-template-columns: 1fr; } td:first-child, .account-actions-cell { grid-column: auto; } }
   </style>
 </head>
 <body>
@@ -178,12 +219,16 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
       <tbody>
       <?php foreach ($visibleAccounts as $account): ?>
         <tr>
-          <td><strong><?= htmlspecialchars($account['display_name']) ?></strong><small><?= htmlspecialchars($account['username']) ?><?= $account['email'] ? ' · ' . htmlspecialchars($account['email']) : '' ?></small></td>
-          <td><span class="badge"><?= htmlspecialchars($account['role']) ?></span></td>
-          <td><span class="badge <?= htmlspecialchars($account['status']) ?>"><?= htmlspecialchars($account['status']) ?></span>
+          <td data-label="Person"><strong><?= htmlspecialchars($account['display_name']) ?></strong><small><?= htmlspecialchars($account['username']) ?><?= $account['email'] ? ' · ' . htmlspecialchars($account['email']) : '' ?></small>
+            <?php if ($account['status'] === 'pending' && (int)$account['user_id'] !== (int)$_SESSION['user_id']): ?>
+              <label class="verify"><input type="checkbox" name="verified_identity" value="1" form="account-action-approve-<?= (int)$account['user_id'] ?>" required> Identity verified</label>
+            <?php endif; ?>
+          </td>
+          <td data-label="Role"><span class="badge"><?= htmlspecialchars($account['role']) ?></span></td>
+          <td data-label="Status"><span class="badge <?= htmlspecialchars($account['status']) ?>"><?= htmlspecialchars($account['status']) ?></span>
             <?php if ($account['status'] === 'removed'): ?><small>Previously <?= htmlspecialchars($account['removed_from_status'] ?: 'disabled') ?><?= $account['removed_at'] ? ' · ' . htmlspecialchars($account['removed_at']) : '' ?></small><?php endif; ?>
           </td>
-          <td><div class="actions">
+          <td class="account-actions-cell" data-label="Actions"><div class="account-actions<?= $account['status'] === 'pending' ? ' account-actions--pending' : '' ?>">
           <?php if ((int)$account['user_id'] !== (int)$_SESSION['user_id']): ?>
             <?php if ($account['status'] === 'removed'): ?>
               <?php admin_action((int)$account['user_id'], 'restore', 'Recover', $_SESSION['admin_csrf'], $view, 'primary'); ?>
@@ -198,7 +243,7 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
             <?php elseif ($account['status'] === 'disabled'): ?>
               <?php admin_action((int)$account['user_id'], 'enable', 'Enable', $_SESSION['admin_csrf'], $view); ?>
             <?php endif; ?>
-            <?php if ($account['status'] !== 'removed'): ?><?php admin_action((int)$account['user_id'], 'remove', 'Remove', $_SESSION['admin_csrf'], $view, 'danger'); ?><?php endif; ?>
+            <?php if (!in_array($account['status'], ['removed', 'pending'], true)): ?><?php admin_action((int)$account['user_id'], 'remove', 'Remove', $_SESSION['admin_csrf'], $view, 'remove'); ?><?php endif; ?>
           <?php else: ?>Your account<?php endif; ?>
           </div></td>
         </tr>
