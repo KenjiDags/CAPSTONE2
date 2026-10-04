@@ -166,9 +166,9 @@ $result = $conn->query($query);
                             <td><?= htmlspecialchars($row['particulars']) ?></td>
                             <td><?= htmlspecialchars($row['PPE_no']) ?></td>
                             <td><?= htmlspecialchars($row['quantity']) ?></td>
-                            <td><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
+                            <td class="currency"><?= number_format($row['unit_cost'] ?? 0, 2) ?></td>
                             <td><?= htmlspecialchars($row['remarks']) ?></td>
-                            <td><?= number_format($row['amount'] ?? 0, 2) ?></td>
+                            <td class="currency"><?= number_format($row['amount'] ?? 0, 2) ?></td>
                             <td class="actions-cell">
                                 <div class="actions-menu">
                                     <button type="button"

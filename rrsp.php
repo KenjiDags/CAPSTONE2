@@ -162,7 +162,7 @@ $result = $conn->query("SELECT r.*, (
                   echo '<td>' . htmlspecialchars($row['returned_by']) . '</td>';
                   echo '<td>' . htmlspecialchars($row['received_by']) . '</td>';
                   echo '<td>' . htmlspecialchars($row['fund_cluster']) . '</td>';
-                  echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                  echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                   // Actions cell
                   echo '<td class="actions-cell">';
                   echo '  <div class="actions-menu">';

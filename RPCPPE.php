@@ -81,6 +81,15 @@ if (isset($_SESSION['user_id'])) {
         $stmt_user->close();
     }
 }
+// Fetch all officer names for autocomplete
+$officer_names = [];
+$officers_result = $conn->query("SELECT officer_name FROM officers ORDER BY officer_name ASC");
+if ($officers_result && $officers_result->num_rows > 0) {
+    while ($row = $officers_result->fetch_assoc()) {
+        $officer_names[] = $row['officer_name'];
+    }
+}
+$officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
 
 <!DOCTYPE html>
@@ -284,6 +293,35 @@ if (isset($_SESSION['user_id'])) {
             content: "₱";
             margin-right: 2px;
         }
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .autocomplete-item:hover {
+            background: #f0f4f8;
+        }
+        
+        .autocomplete-item.selected {
+            background: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -331,7 +369,7 @@ if (isset($_SESSION['user_id'])) {
                             <input type="text" id="official_designation" name="official_designation" value="<?= htmlspecialchars($current_user_position) ?>" placeholder="Official Designation" style="min-width: 250px;">,
                             <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" placeholder="Entity Name" style="min-width: 250px;">
                             is accountable, having assumed such accountability on
-                            <input type="date" id="assumption_date" name="assumption_date">
+                            <input type="date" id="assumption_date" name="assumption_date" value="<?= date('Y-m-d') ?>">
                             .
                             </label>
                         </div>
@@ -388,7 +426,7 @@ if (isset($_SESSION['user_id'])) {
                                 }
                                 echo '<td>' . $description . '</td>';
                                 // Property Number (PAR No)
-                                echo '<td>' . htmlspecialchars($item['par_no'] ?? '') . '</td>';
+                                echo '<td>' . htmlspecialchars($item['PPE_no'] ?? '') . '</td>';
                                 // Unit of Measure
                                 echo '<td>' . htmlspecialchars($item['unit'] ?? '') . '</td>';
                                 // Unit Value
@@ -411,7 +449,10 @@ if (isset($_SESSION['user_id'])) {
                 <div class="signature-section">
                     <div class="signature-box">
                         <h4>Certified Correct by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_1" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_1" name="signature_name_1" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_1_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of Inventory<br>
                             Committee Chair and Members
@@ -420,7 +461,10 @@ if (isset($_SESSION['user_id'])) {
                     
                     <div class="signature-box">
                         <h4>Approved by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_2" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_2" name="signature_name_2" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_2_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of Head of Agency/Entity<br>
                             or Authorized Representative
@@ -429,7 +473,10 @@ if (isset($_SESSION['user_id'])) {
                     
                     <div class="signature-box">
                         <h4>Verified by:</h4>
-                        <input type="text" class="signature-input" name="signature_name_3" placeholder="Signature over Printed Name">
+                        <div style="position: relative;">
+                            <input type="text" class="signature-input" id="signature_name_3" name="signature_name_3" placeholder="Signature over Printed Name" autocomplete="off">
+                            <div id="signature_name_3_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                         <div class="signature-text">
                             Signature over Printed Name of COA Representative
                         </div>
@@ -444,6 +491,194 @@ if (isset($_SESSION['user_id'])) {
     </div>
     
     <script>
+        const officerNames = <?php echo $officer_names_json; ?>;
+
+        function setupAutocomplete(inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            
+            if (!input || !dropdown) return;
+
+            // Show dropdown on focus
+            input.addEventListener('focus', function() {
+                if (this.value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(this.value, dropdown, input);
+                }
+            });
+
+            // Prevent click on input from closing dropdown
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.style.display !== 'block') {
+                    if (this.value.trim() === '') {
+                        showAllSuggestions(dropdown, input);
+                    } else {
+                        filterSuggestions(this.value, dropdown, input);
+                    }
+                }
+            });
+
+            // Filter on input
+            input.addEventListener('input', function() {
+                const value = this.value;
+                if (value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(value, dropdown, input);
+                }
+            });
+
+            // Handle keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                if (dropdown.style.display !== 'block') return;
+
+                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
+                if (items.length === 0) return;
+
+                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
+                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = (currentIndex + 1) % items.length;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedItem) {
+                            const text = selectedItem.textContent || selectedItem.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Tab':
+                        const itemToSelect = selectedItem || items[0];
+                        if (itemToSelect) {
+                            const text = itemToSelect.textContent || itemToSelect.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        break;
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Highlight selected item and scroll into view
+        function highlightItem(items, index, dropdown) {
+            items.forEach(item => item.classList.remove('selected'));
+            
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+                
+                const item = items[index];
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+                
+                if (itemRect.bottom > dropdownRect.bottom) {
+                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                } else if (itemRect.top < dropdownRect.top) {
+                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+        }
+
+        function showAllSuggestions(dropdown, input) {
+            dropdown.innerHTML = '';
+            
+            if (officerNames.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            officerNames.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = name;
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        function filterSuggestions(value, dropdown, input) {
+            dropdown.innerHTML = '';
+            const searchValue = value.toLowerCase();
+            
+            const filtered = officerNames.filter(name => 
+                name.toLowerCase().includes(searchValue)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                
+                const index = name.toLowerCase().indexOf(searchValue);
+                if (index !== -1) {
+                    const before = name.substring(0, index);
+                    const match = name.substring(index, index + searchValue.length);
+                    const after = name.substring(index + searchValue.length);
+                    const highlighted = document.createElement('strong');
+                    highlighted.textContent = match;
+                    item.append(document.createTextNode(before), highlighted, document.createTextNode(after));
+                } else {
+                    item.textContent = name;
+                }
+                
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+        }
+
+        // Initialize autocomplete on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAutocomplete('signature_name_1', 'signature_name_1_dropdown');
+            setupAutocomplete('signature_name_2', 'signature_name_2_dropdown');
+            setupAutocomplete('signature_name_3', 'signature_name_3_dropdown');
+        });
+
         function openExport() {
             const params = new URLSearchParams({
                 report_date: document.getElementById('report_date').value,
@@ -456,7 +691,24 @@ if (isset($_SESSION['user_id'])) {
                 approved_by: document.querySelector('input[name="signature_name_2"]').value,
                 verified_by: document.querySelector('input[name="signature_name_3"]').value,
             });
-            window.location.href = './export_rpcppe.php?' + params.toString();
+            // Post all row values so large reports do not exceed URL limits.
+            const exportForm = document.createElement('form');
+            exportForm.method = 'POST';
+            exportForm.action = './export_rpcppe.php';
+            const addField = (name, value) => {
+                const field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = name;
+                field.value = value;
+                exportForm.appendChild(field);
+            };
+            params.forEach((value, name) => addField(name, value));
+            document.querySelectorAll('#rpcppe-table tbody input[name]').forEach(input => {
+                addField(input.name, input.value);
+            });
+            document.body.appendChild(exportForm);
+            exportForm.submit();
+            exportForm.remove();
         }
     </script>
 
