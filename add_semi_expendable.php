@@ -436,7 +436,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
         }
     </style>
 </head>
-<body>
+<body class="add-page">
     <?php require_once 'sidebar.php'; ?>
     <div class="container">
         <div class="form-container">

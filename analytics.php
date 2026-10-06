@@ -63,14 +63,8 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </section>
 
   <section id="categoryInsights" class="category-insights" hidden>
-    <div class="section-heading"><h2 id="categoryInsightsTitle">Category analytics</h2><p id="categoryInsightsSubtitle">Current asset condition and action signals</p></div>
+    <div class="section-heading"><h2 id="categoryInsightsTitle">Category analytics</h2><p id="categoryInsightsSubtitle">Item status and current assignments</p></div>
     <div class="category-summary-cards" id="categorySummaryCards"></div>
-    <div id="semiInsights" class="category-view" hidden>
-      <article class="panel category-chart-panel"><h3>Semi-Expendables condition</h3><p class="panel-caption">Current balance across active and depleted property records.</p><div class="category-chart-frame"><canvas id="semiStatusChart"></canvas></div></article>
-    </div>
-    <div id="ppeInsights" class="category-view" hidden>
-      <article class="panel category-chart-panel"><h3>Serviceability health</h3><p class="panel-caption">Equipment condition across the current PPE register.</p><div class="category-chart-frame"><canvas id="ppeServiceabilityChart"></canvas></div></article>
-    </div>
     <article class="panel category-register-panel" aria-labelledby="categoryRegisterTitle">
       <h3 id="categoryRegisterTitle">Item status and current holders</h3>
       <p class="panel-caption">Recorded assignments in the current property register.</p>
@@ -191,7 +185,7 @@ new Chart(document.getElementById('officeStatusChart'), {
 </script>
 
 <script>
-const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, semiStatusChart: null, ppeServiceabilityChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
+const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 let demandForecastChart = null;
 let demandForecastRequest = 0;
@@ -402,33 +396,15 @@ function renderCategoryRegister() {
 }
 function renderCategoryInsights(summary) {
   const insights = document.getElementById('categoryInsights');
-  const semiView = document.getElementById('semiInsights');
-  const ppeView = document.getElementById('ppeInsights');
   const isSemi = state.category === 'semi-expendables';
   const isPpe = state.category === 'ppe';
   insights.hidden = !isSemi && !isPpe;
-  semiView.hidden = !isSemi;
-  ppeView.hidden = !isPpe;
   if (!isSemi && !isPpe) return;
   document.getElementById('categoryInsightsTitle').textContent = isSemi ? 'Semi-Expendables analytics' : 'PPE analytics';
-  document.getElementById('categoryInsightsSubtitle').textContent = isSemi ? 'Condition distribution and balance actions' : 'Serviceability health and maintenance actions';
+  document.getElementById('categoryInsightsSubtitle').textContent = 'Item status and current assignments';
   const summaryCards = document.getElementById('categorySummaryCards');
   summaryCards.innerHTML = isSemi ? `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.not_issued || 0).toLocaleString()}</strong><span>Not issued</span></article><article class="category-summary-card active"><strong>${Number(summary.currently_issued || 0).toLocaleString()}</strong><span>Currently issued</span></article><article class="category-summary-card disposed"><strong>${Number(summary.disposed || 0).toLocaleString()}</strong><span>Disposed / For disposal</span></article>` : `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.serviceable || 0).toLocaleString()}</strong><span>Serviceable Items</span></article><article class="category-summary-card disposed"><strong>${Number(summary.unserviceable || 0).toLocaleString()}</strong><span>Unserviceable Items</span></article>`;
   renderCategoryRegister();
-  if (isSemi) renderSemiInsights();
-  if (isPpe) renderPpeInsights();
-}
-function renderSemiInsights() {
-  const active = state.items.filter(item => String(item.status).toLowerCase() !== 'depleted').length;
-  const depleted = state.items.length - active;
-  if (state.semiStatusChart) state.semiStatusChart.destroy();
-  state.semiStatusChart = new Chart(document.getElementById('semiStatusChart'), { type: 'doughnut', data: { labels: ['Active balance', 'Depleted'], datasets: [{ data: [active, depleted], backgroundColor: ['#43a047', '#d28a3d'], borderColor: '#ffffff', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { position: 'bottom' } } } });
-}
-function renderPpeInsights() {
-  const serviceable = state.items.filter(item => ['good', 'serviceable', 'fair'].includes(String(item.condition || '').toLowerCase()) && String(item.status || '').toLowerCase() !== 'unserviceable').length;
-  const unserviceable = state.items.length - serviceable;
-  if (state.ppeServiceabilityChart) state.ppeServiceabilityChart.destroy();
-  state.ppeServiceabilityChart = new Chart(document.getElementById('ppeServiceabilityChart'), { type: 'doughnut', data: { labels: ['Serviceable Items', 'Unserviceable Items'], datasets: [{ data: [serviceable, unserviceable], backgroundColor: ['#43a047', '#e53935'], borderColor: '#ffffff', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { position: 'bottom' } } } });
 }
 let categoryRequest = 0;
 let categoryLoading = false;

@@ -426,7 +426,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
     }
 </style>
 </head>
-<body>
+<body class="add-page">
 <?php include 'sidebar.php'; ?>
 <div class="content">
     <div class="form-container">

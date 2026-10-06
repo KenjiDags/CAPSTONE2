@@ -187,7 +187,7 @@ ensure_iirusp_tables($conn);
     }
 </style>
 </head>
-<body class="iirusp-page">
+<body class="add-page iirusp-page">
 <?php include 'sidebar.php'; ?>
 
 <div class="content">

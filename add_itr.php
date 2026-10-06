@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     }
   </style>
 </head>
-<body>
+<body class="add-page">
   <?php include 'sidebar.php'; ?>
   <div class="add-ics-page content">
     <div class="form-container">

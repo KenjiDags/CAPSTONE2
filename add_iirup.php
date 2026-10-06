@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .section-card h3 { border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
 </style>
 </head>
-<body class="iirup-page">
+<body class="add-page iirup-page">
 <?php include 'sidebar.php'; ?>
 <div class="content">
     <div class="form-container">

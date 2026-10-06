@@ -113,7 +113,7 @@ require 'functions.php';
     }
 </style>
 </head>
-<body>
+<body class="add-page">
 <?php include 'sidebar.php'; ?>
 <div class="container">
     <div class="form-container">

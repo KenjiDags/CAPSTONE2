@@ -469,7 +469,7 @@ function generateICSNumberSimple($conn) {
     }
     </style>
 </head>
-<body>
+<body class="add-page">
 <?php include 'sidebar.php'; ?>
 <div class="add-ris-page content">
     <div class="form-container">
@@ -570,7 +570,7 @@ function generateICSNumberSimple($conn) {
                                 echo '<td>' . htmlspecialchars($displayDesc) . '</td>';
                                 echo '<td>' . htmlspecialchars($unitDisp) . '</td>';
                                 echo '<td>' . htmlspecialchars($qtyOnHand) . '</td>';
-                                echo '<td>₱' . number_format($unitCost, 2) . '</td>';
+                                echo '<td class="currency">₱' . number_format($unitCost, 2) . '</td>';
                                 $initialQty = $existing_item ? (float)$existing_item['quantity'] : 0;
                                 $initialTotal = $unitCost * $initialQty;
                                 echo '<td class="cell-total-cost">₱' . number_format($initialTotal, 2) . '</td>';

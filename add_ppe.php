@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 </style>
 </head>
-<body>
+<body class="add-page">
 <?php include 'sidebar.php'; ?>
 <div class="container">
     <div class="form-container">

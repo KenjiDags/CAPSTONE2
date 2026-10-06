@@ -2991,3 +2991,36 @@ body.dark-mode .inventory-controls .control-sort label {
     font-size: 0.875rem;
     margin: 0 0 1rem;
 }
+
+/* Match currency values on all add forms to the registry currency styling. */
+body.add-page .currency,
+body.add-page .cost-cell,
+body.add-page .unitcost-cell,
+body.add-page .amount-cell,
+body.add-page .cell-total-cost,
+body.add-page input[name="amount"],
+body.add-page input[id="amount"],
+body.add-page input[id="carrying_amount"],
+body.add-page input[name="unit_cost"],
+body.add-page input[name="unit_cost[]"],
+body.add-page #itr-total-amount,
+body.add-page #grand_total,
+body.add-page #grand_total_display {
+    color: #059669 !important;
+    font-weight: 600;
+}
+body.add-page.dark-mode .currency,
+body.add-page.dark-mode .cost-cell,
+body.add-page.dark-mode .unitcost-cell,
+body.add-page.dark-mode .amount-cell,
+body.add-page.dark-mode .cell-total-cost,
+body.add-page.dark-mode input[name="amount"],
+body.add-page.dark-mode input[id="amount"],
+body.add-page.dark-mode input[id="carrying_amount"],
+body.add-page.dark-mode input[name="unit_cost"],
+body.add-page.dark-mode input[name="unit_cost[]"],
+body.add-page.dark-mode #itr-total-amount,
+body.add-page.dark-mode #grand_total,
+body.add-page.dark-mode #grand_total_display {
+    color: #34d399 !important;
+}

@@ -229,7 +229,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
 </style>
 
 </head>
-<body class="rrsp-page">
+<body class="add-page rrsp-page">
 <?php include 'sidebar.php'; ?>
 
 <div class="content">
@@ -300,7 +300,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                 <td><?= $escape($option['stock_number']) ?></td>
                 <td class="icsinfo-cell"><?= $escape($option['ics_no']) ?><br><small><?= $escape($option['date']) ?> &middot; <?= $escape($option['status']) ?></small></td>
                 <td class="desc-cell"><?= $escape($option['description']) ?></td>
-                <td>&#8369;<?= number_format($option['unit_cost'], 2) ?></td>
+                <td class="currency">&#8369;<?= number_format($option['unit_cost'], 2) ?></td>
                 <td class="balance-cell"><?= $option['quantity'] ?></td>
                 <td><input class="qty-input" type="number" min="0" max="<?= $option['quantity'] ?>" step="1" value="0" aria-label="Return quantity for <?= $escape($option['description']) ?>"></td>
                 <td class="amount-cell">&#8369;0.00</td>
