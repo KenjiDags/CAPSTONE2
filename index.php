@@ -21,11 +21,11 @@ if (!empty($_COOKIE['remember_username'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
 
     if ($username && $password) {
-        $stmt = $conn->prepare("SELECT user_id, password FROM users WHERE username = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT user_id, password, role, status FROM users WHERE username = ? LIMIT 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -33,13 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result && $result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            if (password_verify($password, $user['password'])) {
+            if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
                 session_regenerate_id(true);
-
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['username'] = $username;
-                $_SESSION['logged_in'] = true;
-                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
                 // Login is session-only; do not persist authentication across visits.
                 $stmtToken = $conn->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
@@ -54,10 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     setcookie('remember_username', '', time() - 3600, '/', 'localhost', false, true);
                 }
 
-                header('Location:analytics.php');
+                if ($user['status'] === 'approved') {
+                    $activate = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
+                    $activate->bind_param('i', $user['user_id']);
+                    $activate->execute();
+                    $activate->close();
+                }
+                $_SESSION['user_id'] = (int)$user['user_id'];
+                $_SESSION['username'] = $username;
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['logged_in'] = true;
+                header('Location: ' . ($user['role'] === 'admin' ? 'admin.php' : 'analytics.php'));
                 exit;
             } else {
-                $error = 'Invalid username or password.';
+                $error = 'Invalid credentials or account awaiting administrator approval.';
             }
         } else {
             $error = 'Invalid username or password.';
@@ -223,7 +229,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <?php endif; ?>
 
         <?php if ($registered): ?>
-            <div class="success">Account created successfully! You can now login.</div>
+            <div class="success">Registration submitted. An administrator must approve your account before you can log in.</div>
         <?php endif; ?>
 
         <?php if ($logged_out): ?>
@@ -231,13 +237,14 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <?php endif; ?>
 
         <form method="post" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="username" id="username" required autofocus
                        value="<?= htmlspecialchars($cookie_username) ?>">
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Password <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="password" name="password" id="password" required>
             </div>
             <div class="form-group remember-group">
@@ -248,7 +255,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         </form>
 
         <div class="signup-link">
-            Don't have an account? <a href="register.php">Register</a>
+            Don't have an account? <a href="register.php">Request access</a>
         </div>
     </div>
 </body>

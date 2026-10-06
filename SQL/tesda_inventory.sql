@@ -1114,6 +1114,13 @@ ADD full_name VARCHAR(255) NULL;
 
 ALTER TABLE users
 ADD user_position VARCHAR(255) NULL;
+
+ALTER TABLE users ADD role VARCHAR(16) NOT NULL DEFAULT 'user';
+ALTER TABLE users ADD status VARCHAR(16) NOT NULL DEFAULT 'active';
+ALTER TABLE users ADD removed_at DATETIME NULL;
+ALTER TABLE users ADD removed_from_status VARCHAR(16) NULL;
+ALTER TABLE users ADD email VARCHAR(255) NULL;
+ALTER TABLE users ADD UNIQUE KEY unique_user_email (email);
 -- --------------------------------------------------------
 
 --

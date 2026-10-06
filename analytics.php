@@ -98,8 +98,9 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       <div class="demand-forecast-toolbar">
         <div class="scope-control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
         <div id="demandCustomRange" class="demand-custom-range" hidden>
-          <div class="scope-control"><label for="demandStartMonth">From month</label><input id="demandStartMonth" type="month" required></div>
-          <div class="scope-control"><label for="demandEndMonth">Through month</label><input id="demandEndMonth" type="month" required></div>
+          <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
+          <div class="scope-control"><label for="demandStartMonth">From month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandStartMonth" type="month" required></div>
+          <div class="scope-control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" type="month" required></div>
         </div>
       </div>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>

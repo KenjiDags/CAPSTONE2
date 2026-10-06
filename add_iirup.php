@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $depreciation = $_POST['depreciation'] ?? 0;
         $impairment_loss = $_POST['impairment_loss'] ?? 0;
         $carrying_amount = $_POST['carrying_amount'] ?? 0;
-        $remarks = $_POST['remarks'] ?? '';
+        $remarks = $items[0]['remarks'] ?? '';
         $sale = $_POST['sale'] ?? 0;
         $transfer = $_POST['transfer'] ?? 0;
         $destruction = $_POST['destruction'] ?? 0;

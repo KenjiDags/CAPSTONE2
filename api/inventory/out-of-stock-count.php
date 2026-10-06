@@ -10,6 +10,17 @@ if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || empty($_
     exit;
 }
 session_write_close();
+require_once __DIR__ . '/../../config.php';
+$access = $conn->prepare('SELECT role, status FROM users WHERE user_id = ? LIMIT 1');
+$access->bind_param('i', $_SESSION['user_id']);
+$access->execute();
+$account = $access->get_result()->fetch_assoc();
+$access->close();
+if (!$account || $account['role'] !== 'user' || $account['status'] !== 'active') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Access denied']);
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET');
     http_response_code(405);

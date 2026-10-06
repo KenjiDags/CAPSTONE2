@@ -127,6 +127,7 @@ require 'functions.php';
         <div id="formAlert" class="alert"></div>
 
         <form id="addForm" autocomplete="off">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-row">
                 <div class="form-group">
                     <label for="stock_number">Stock Number <span class="required">*</span></label>

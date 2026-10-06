@@ -385,36 +385,37 @@ $recap_result = $conn->query("
             <h3 id="modalTitle">Add New ICT Entry</h3>
             
             <form id="entryForm" method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <input type="hidden" id="formAction" name="action" value="add">
                 <input type="hidden" id="entryId" name="id" value="">
                 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Date</label>
+                        <label>Date <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="date" name="entry_date" id="entryDate" required>
                     </div>
                     <div class="form-group">
-                        <label>Reference No.</label>
+                        <label>Reference No. <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" name="reference_no" id="referenceNo" required>
                     </div>
                     <div class="form-group">
-                        <label>Semi-Expendable Property No.</label>
+                        <label>Semi-Expendable Property No. <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" name="property_no" id="propertyNo" required>
                     </div>
                     <div class="form-group">
-                        <label>Estimated Useful Life</label>
+                        <label>Estimated Useful Life <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="number" name="useful_life" id="usefulLife" value="5" required>
                     </div>
                     <div class="form-group full-width">
-                        <label>Item Description</label>
+                        <label>Item Description <span class="required-indicator" aria-hidden="true">*</span></label>
                         <textarea name="item_description" id="itemDescription" rows="3" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Issued Quantity</label>
+                        <label>Issued Quantity <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="number" name="issued_qty" id="issuedQty" min="1" required>
                     </div>
                     <div class="form-group">
-                        <label>Issued Officer</label>
+                        <label>Issued Officer <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" name="issued_officer" id="issuedOfficer" required>
                     </div>
                     <div class="form-group">
@@ -438,7 +439,7 @@ $recap_result = $conn->query("
                         <input type="number" name="disposed_qty" id="disposedQty" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label>Amount (Total)</label>
+                        <label>Amount (Total) <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="number" name="total_amount" id="totalAmount" step="0.01" required>
                     </div>
                     <div class="form-group full-width">

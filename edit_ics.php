@@ -310,6 +310,7 @@ try {
             </header>
 
             <form method="post" action="">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
                 <input type="hidden" name="is_editing" value="1">
                 
@@ -317,7 +318,7 @@ try {
                     <h3><i class="fas fa-info-circle"></i>ICS Details</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Entity Name:</label>
+                            <label>Entity Name: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="entity_name" value="<?php echo htmlspecialchars($ics_data['entity_name'] ?? 'TESDA Regional Office'); ?>" required>
                         </div>
                         <div class="form-group">
@@ -327,11 +328,11 @@ try {
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>ICS No.:</label>
+                            <label>ICS No.: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="ics_no" value="<?php echo htmlspecialchars($ics_data['ics_no'] ?? ''); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label>Date Issued:</label>
+                            <label>Date Issued: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="date" name="date_issued" value="<?php echo $ics_data['date_issued'] ?? date('Y-m-d'); ?>" required>
                         </div>
                     </div>
@@ -418,21 +419,21 @@ try {
                     <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Received By:</label>
+                            <label>Received By: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="received_by" value="<?php echo htmlspecialchars($ics_data['received_by'] ?? ''); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label>Received By Position:</label>
+                            <label>Received By Position: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="received_by_position" value="<?php echo htmlspecialchars($ics_data['received_by_position'] ?? ''); ?>" required>
                         </div>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Received From:</label>
+                            <label>Received From: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="received_from" value="<?php echo htmlspecialchars($ics_data['received_from'] ?? ''); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label>Received From Position:</label>
+                            <label>Received From Position: <span class="required-indicator" aria-hidden="true">*</span></label>
                             <input type="text" name="received_from_position" value="<?php echo htmlspecialchars($ics_data['received_from_position'] ?? ''); ?>" required>
                         </div>
                     </div>

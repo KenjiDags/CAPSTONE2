@@ -172,7 +172,7 @@ if ($search !== '') {
                         echo '<td><strong>' . htmlspecialchars($row['par_no']) . '</strong></td>';
                         echo '<td>' . ($row['date_acquired'] ? date('M d, Y', strtotime($row['date_acquired'])) : 'N/A') . '</td>';
                         echo '<td>' . htmlspecialchars($row['received_by'] ?? 'N/A') . '</td>';
-                        echo '<td>₱' . number_format($row['total_amount'], 2) . '</td>';
+                        echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                         echo '<td class="actions-cell">
                             <div class="actions-menu">
                                 <button type="button"

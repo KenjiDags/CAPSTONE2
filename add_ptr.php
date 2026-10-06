@@ -448,6 +448,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
         <?php endif; ?>
 
         <form method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="section-card">
                 <h3><i class="fas fa-info-circle"></i> PTR Details </h3>
                 <div class="form-grid">

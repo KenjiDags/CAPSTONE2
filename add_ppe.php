@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         ");
         $stmt_insert->bind_param(
-            "sssssdissssssss",
+            "ssssdisssssssss",
             $PPE_no, $property_no, $item_name, $item_description, $amount, $quantity, $unit,
             $officer_incharge, $custodian, $entity_name, $date_acquired, $condition, $status, $fund_cluster, $remarks
         );
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $today = date('Y-m-d');
             $stmt_pc->bind_param(
-                "sssssdisissss",
+                "sssssdissssss",
                 $today, $PPE_no, $property_no, $item_name, $item_description, $amount, $quantity, $unit,
                 $custodian, $officer_incharge, $entity_name, $fund_cluster, $remarks
             );
@@ -228,6 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-row">
                 <div class="form-group">
                     <label for="item_name">Item Name <span class="required">*</span></label>

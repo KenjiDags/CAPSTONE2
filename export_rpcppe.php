@@ -2,22 +2,29 @@
 require 'auth.php';
 require 'config.php';
 
-// Check if we're exporting from a saved report or creating new
-$report_date = $_GET['report_date'] ?? date('Y-m-d');
-$fund_cluster = $_GET['fund_cluster'] ?? '101';
-$accountable_officer = $_GET['accountable_officer'] ?? '';
-$official_designation = $_GET['official_designation'] ?? '';
-$entity_name = $_GET['entity_name'] ?? 'TESDA Regional Office';
-$assumption_date = $_GET['assumption_date'] ?? '';
-$certified_by = $_GET['certified_by'] ?? '';
-$approved_by = $_GET['approved_by'] ?? '';
-$verified_by = $_GET['verified_by'] ?? '';
+// Accept submitted form values and retain support for existing export links.
+$export_data = $_POST + $_GET;
+$report_date = $export_data['report_date'] ?? date('Y-m-d');
+$fund_cluster = $export_data['fund_cluster'] ?? '101';
+$accountable_officer = $export_data['accountable_officer'] ?? '';
+$official_designation = $export_data['official_designation'] ?? '';
+$entity_name = $export_data['entity_name'] ?? 'TESDA Regional Office';
+$assumption_date = $export_data['assumption_date'] ?? '';
+$certified_by = $export_data['certified_by'] ?? '';
+$approved_by = $export_data['approved_by'] ?? '';
+$verified_by = $export_data['verified_by'] ?? '';
 
+// Keep untouched cells blank while preserving entered zero and signed differences.
+function rpcppe_count_value($data, $field, $id) {
+    $values = $data[$field] ?? [];
+    $value = is_array($values) ? ($values[$id] ?? '') : '';
+    return is_scalar($value) && is_numeric($value) ? (string)$value : '';
+}
 // Fetch PPE items with physical count data if available
 $items = [];
-$sql = "SELECT p.id, p.item_name, p.item_description, p.par_no, p.unit, p.amount, p.quantity 
+$sql = "SELECT p.id, p.item_name, p.item_description, p.PPE_no, p.unit, p.amount, p.quantity 
         FROM ppe_property p 
-        ORDER BY p.par_no";
+        ORDER BY p.PPE_no";
         
 $result = $conn->query($sql);
 if ($result) {
@@ -26,14 +33,14 @@ if ($result) {
             'article' => 'PPE',
             'item_name' => $row['item_name'],
             'item_description' => $row['item_description'] ?? '',
-            'property_number' => $row['par_no'],
+            'property_number' => $row['PPE_no'],
             'unit' => $row['unit'],
             'unit_value' => $row['amount'],
             'qty_property_card' => $row['quantity'],
-            'qty_physical_count' => 0,
-            'shortage_qty' => 0,
-            'shortage_value' => 0.00,
-            'remarks' => ''
+            'qty_physical_count' => rpcppe_count_value($export_data, 'on_hand_count', $row['id']),
+            'shortage_qty' => rpcppe_count_value($export_data, 'shortage_qty', $row['id']),
+            'shortage_value' => rpcppe_count_value($export_data, 'shortage_value', $row['id']),
+            'remarks' => isset($export_data['remarks'][$row['id']]) && is_scalar($export_data['remarks'][$row['id']]) ? (string)$export_data['remarks'][$row['id']] : ''
         ];
     }
 }
@@ -334,7 +341,7 @@ if ($result) {
                 <td><?php echo htmlspecialchars($item['qty_property_card']); ?></td>
                 <td><?php echo htmlspecialchars($item['qty_physical_count']); ?></td>
                 <td><?php echo htmlspecialchars($item['shortage_qty']); ?></td>
-                <td><?php echo number_format($item['shortage_value'], 2); ?></td>
+                <td><?php echo $item['shortage_value'] === '' ? '' : number_format((float)$item['shortage_value'], 2); ?></td>
                 <td><?php echo htmlspecialchars($item['remarks']); ?></td>
             </tr>
         <?php endforeach; ?>

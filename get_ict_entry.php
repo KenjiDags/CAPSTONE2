@@ -1,4 +1,5 @@
 <?php
+require 'auth.php';
 // get_ict_entry.php - For fetching single entry data for editing
 header('Content-Type: application/json');
 

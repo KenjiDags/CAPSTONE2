@@ -2,23 +2,30 @@
 require 'auth.php';
 require 'config.php';
 
+$export_data = $_POST + $_GET;
+
+function rpcsp_count_value($data, $field, $id) {
+    $values = $data[$field] ?? [];
+    $value = is_array($values) ? ($values[$id] ?? '') : '';
+    return is_scalar($value) && is_numeric($value) ? (string)$value : '';
+}
 // Load semi-expendable items
 $items = [];
-$sql = "SELECT category, item_description, semi_expendable_property_no, unit, amount, quantity_balance, remarks FROM semi_expendable_property ORDER BY item_description";
+$sql = "SELECT id, category, item_description, semi_expendable_property_no, unit, amount, quantity_balance, remarks FROM semi_expendable_property ORDER BY item_description";
 $res = $conn->query($sql);
 if ($res) {
     while ($r = $res->fetch_assoc()) { $items[] = $r; }
 }
 
-$report_date = htmlspecialchars($_GET['report_date'] ?? date('Y-m-d'));
-$fund_cluster = htmlspecialchars($_GET['fund_cluster'] ?? '');
-$accountable_officer = htmlspecialchars($_GET['accountable_officer'] ?? '');
-$official_designation = htmlspecialchars($_GET['official_designation'] ?? '');
-$entity_name = htmlspecialchars($_GET['entity_name'] ?? '');
-$assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
-$signature_name_1 = htmlspecialchars($_GET['signature_name_1'] ?? '');
-$signature_name_2 = htmlspecialchars($_GET['signature_name_2'] ?? '');
-$signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
+$report_date = htmlspecialchars($export_data['report_date'] ?? date('Y-m-d'));
+$fund_cluster = htmlspecialchars($export_data['fund_cluster'] ?? '');
+$accountable_officer = htmlspecialchars($export_data['accountable_officer'] ?? '');
+$official_designation = htmlspecialchars($export_data['official_designation'] ?? '');
+$entity_name = htmlspecialchars($export_data['entity_name'] ?? '');
+$assumption_date = htmlspecialchars($export_data['assumption_date'] ?? '');
+$signature_name_1 = htmlspecialchars($export_data['signature_name_1'] ?? '');
+$signature_name_2 = htmlspecialchars($export_data['signature_name_2'] ?? '');
+$signature_name_3 = htmlspecialchars($export_data['signature_name_3'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -285,9 +292,10 @@ $signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
             echo '<td>' . htmlspecialchars($row['unit'] ?? '') . '</td>';
             echo '<td>' . (isset($row['amount']) ? htmlspecialchars(number_format((float)$row['amount'], 2)) : '') . '</td>';
             echo '<td>' . htmlspecialchars((string)($row['quantity_balance'] ?? '')) . '</td>';
-            echo '<td>&nbsp;</td>';
-            echo '<td>&nbsp;</td>';
-            echo '<td>&nbsp;</td>';
+            echo '<td>' . htmlspecialchars(rpcsp_count_value($export_data, 'on_hand_count', $row['id'])) . '</td>';
+            echo '<td>' . htmlspecialchars(rpcsp_count_value($export_data, 'shortage_qty', $row['id'])) . '</td>';
+            $count_value = rpcsp_count_value($export_data, 'shortage_value', $row['id']);
+            echo '<td>' . ($count_value === '' ? '' : number_format((float)$count_value, 2)) . '</td>';
             echo '<td>' . htmlspecialchars($row['remarks'] ?? '') . '</td>';
             echo '</tr>';
             $row_count++;

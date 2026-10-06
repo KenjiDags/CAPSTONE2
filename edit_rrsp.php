@@ -233,13 +233,14 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     <h2>Edit RRSP Form</h2>
 
     <form method="post" action="">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <input type="hidden" name="rrsp_id" value="<?php echo $rrsp_id; ?>">
       
       <div class="section-card">
         <h3>RRSP Details</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label>Entity Name:</label>
+            <label>Entity Name: <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($rrsp['entity_name']) ?>" required />
           </div>
           <div class="form-group">
@@ -249,11 +250,11 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label>RRSP No.:</label>
+            <label>RRSP No.: <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" id="rrsp_no" name="rrsp_no" value="<?= htmlspecialchars($rrsp['rrsp_no']) ?>" required />
           </div>
           <div class="form-group">
-            <label>Date Prepared:</label>
+            <label>Date Prepared: <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="date" id="date_prepared" name="date_prepared" value="<?= htmlspecialchars($rrsp['date_prepared']) ?>" required />
           </div>
         </div>
@@ -271,13 +272,13 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
             <table id="itemsTable" tabindex="-1">
               <thead>
                 <tr>
-                  <th>Description</th>
+                  <th>Description <span class="required-indicator" aria-hidden="true">*</span></th>
                   <th>Qty on Hand</th>
-                  <th>Return Qty</th>
-                  <th>ICS No.</th>
+                  <th>Return Qty <span class="required-indicator" aria-hidden="true">*</span></th>
+                  <th>ICS No. <span class="required-indicator" aria-hidden="true">*</span></th>
                   <th>End-user</th>
                   <th>Remarks</th>
-                  <th>Unit Cost</th>
+                  <th>Unit Cost <span class="required-indicator" aria-hidden="true">*</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -319,7 +320,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         <h3>Signatories</h3>
         <div class="form-grid">
           <div class="form-group">
-            <label>Returned By:</label>
+            <label>Returned By: <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" id="returned_by" name="returned_by" value="<?= htmlspecialchars($rrsp['returned_by']) ?>" required />
           </div>
           <div class="form-group">
@@ -329,7 +330,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label>Received By:</label>
+            <label>Received By: <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="text" id="received_by" name="received_by" value="<?= htmlspecialchars($rrsp['received_by']) ?>" required />
           </div>
           <div class="form-group">

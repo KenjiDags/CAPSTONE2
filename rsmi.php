@@ -38,6 +38,27 @@
         .recapitulation-heading {
             margin-top: 40px !important;
         }
+        .rsmi-table-viewport {
+            max-height: 420px;
+            overflow-y: auto;
+            overflow-x: auto;
+            scrollbar-gutter: stable;
+        }
+        .rsmi-table-viewport table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: visible !important;
+            margin: 0;
+        }
+        .rsmi-table-viewport thead th {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: #fff;
+        }
+        .rsmi-table-viewport tr[hidden] { display: none !important; }
+        body.dark-mode .rsmi-table-viewport { scrollbar-color: #475569 #0f172a; }
     </style>
 </head>
 <body>
@@ -46,8 +67,8 @@
     <div class="container">
         <h2>Report on the Stock of Materials and Supplies Issued (RSMI)</h2>
 
-        <div class="table-container">
-            <table>
+        <div class="table-container rsmi-table-viewport" tabindex="0" role="region" aria-label="RSMI entries, scroll to view rows">
+            <table id="rsmiTable">
             <thead>
                 <tr>
                     <th><i class="fas fa-hashtag"></i> RIS No.</th>
@@ -97,8 +118,9 @@
                 ");
 
                 if ($result && $result->num_rows > 0) {
+                    $rsmi_row_count = 0;
                     while ($row = $result->fetch_assoc()) {
-                        echo '<tr>';
+                        echo '<tr data-report-row' . (++$rsmi_row_count > 10 ? ' hidden' : '') . '>';
                         echo '<td>' . htmlspecialchars($row['ris_no']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['stock_number']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['item_name']) . '</td>';
@@ -118,8 +140,8 @@
 
         <h2 class="recapitulation-heading">Recapitulation</h2>
         
-        <div class="table-container">
-            <table>
+        <div class="table-container rsmi-table-viewport" tabindex="0" role="region" aria-label="Recapitulation, scroll to view rows">
+            <table id="recapTable">
             <thead>
                 <tr>
                     <th><i class="fas fa-barcode"></i> Stock No.</th>
@@ -135,8 +157,9 @@
                 ");
 
                 if ($recap && $recap->num_rows > 0) {
+                    $recap_row_count = 0;
                     while ($row = $recap->fetch_assoc()) {
-                        echo '<tr>';
+                        echo '<tr data-report-row' . (++$recap_row_count > 10 ? ' hidden' : '') . '>';
                         echo '<td>' . htmlspecialchars($row['stock_number']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['total_issued']) . '</td>';
                         echo '</tr>';
