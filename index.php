@@ -2,15 +2,22 @@
 session_start();
 
 // The application entry point always starts at the login form.
-if (!empty($_SESSION) && !isset($_POST['totp_login']) && !isset($_GET['code'])) {
+if (!empty($_SESSION) && !isset($_POST['totp_login']) && !isset($_POST['trust_confirm']) && !isset($_GET['code']) && !isset($_GET['trust'])) {
+    $loginCsrf = $_SESSION['login_csrf'] ?? null;
     session_unset();
     session_destroy();
     session_start();
+    if ($loginCsrf) $_SESSION['login_csrf'] = $loginCsrf;
 }
 
 require 'config.php';
 require_once 'totp.php';
 totpTable($conn);
+require_once 'trusted_devices.php';
+if (empty($_SESSION['login_csrf'])) $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !hash_equals($_SESSION['login_csrf'], (string)($_POST['csrf'] ?? ''))) {
+    http_response_code(400); exit('Invalid request. Reload the login page and try again.');
+}
 
 $error = '';
 $cookie_username = '';
@@ -21,7 +28,25 @@ if (!empty($_COOKIE['remember_username'])) {
     $remember_checked = true;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
+    $pending = $_SESSION['trust_pending'] ?? null;
+    if (!$pending || $pending['expires'] < time()) {
+        unset($_SESSION['trust_pending']);
+        $error = 'Login expired. Enter your username and password again.';
+    } else {
+        $id = (int)$pending['id'];
+        $stmt = $conn->prepare('SELECT u.username, u.password, u.role, u.status, t.secret FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
+        $stmt->bind_param('i', $id); $stmt->execute(); $account = $stmt->get_result()->fetch_assoc(); $stmt->close();
+        if (!$account || !in_array($account['status'], ['approved', 'active'], true) || !hash_equals($pending['fingerprint'], trustedDeviceFingerprint($account['password'], $account['secret']))) {
+            unset($_SESSION['trust_pending']);
+            $error = 'Your account changed. Enter your username and password again.';
+        } elseif (isset($_POST['trust_device']) && !trustedDeviceCreate($conn, $id, $pending['fingerprint'])) {
+            $error = 'Unable to trust this device. Try again, or uncheck the option to continue.';
+        } else {
+            completeDeviceLogin($conn, $id, $account);
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
     $pending = $_SESSION['totp_pending'] ?? null;
     $code = trim((string)($_POST['totp_code'] ?? ''));
     if (!$pending || ($pending['expires'] ?? 0) < time()) {
@@ -29,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
         $error = 'Login expired. Enter your username and password again.';
     } else {
         $id = (int)$pending['id'];
-        $stmt = $conn->prepare('SELECT u.username, u.role, u.status, t.secret, t.last_step, t.recovery_hashes FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
+        $stmt = $conn->prepare('SELECT u.username, u.password, u.role, u.status, t.secret, t.last_step, t.recovery_hashes FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
         $stmt->bind_param('i', $id); $stmt->execute(); $account = $stmt->get_result()->fetch_assoc(); $stmt->close();
         $accepted = false;
         if ($account && in_array($account['status'], ['approved', 'active'], true)) {
@@ -50,14 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
             }
         }
         if ($accepted) {
-            if ($account['status'] === 'approved') {
-                $activate = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
-                $activate->bind_param('i', $id); $activate->execute(); $activate->close();
-            }
+            $_SESSION['trust_pending'] = ['id' => $id, 'expires' => time() + 300,
+                'fingerprint' => trustedDeviceFingerprint($account['password'], $account['secret'])];
             unset($_SESSION['totp_pending']); session_regenerate_id(true);
-            $_SESSION['user_id'] = $id; $_SESSION['username'] = $account['username']; $_SESSION['role'] = $account['role'];
-            $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? ''; $_SESSION['logged_in'] = true;
-            header('Location: ' . ($account['role'] === 'admin' ? 'admin.php' : 'analytics.php')); exit;
+            header('Location: index.php?trust=1'); exit;
         }
         $_SESSION['totp_pending']['attempts'] = ($pending['attempts'] ?? 0) + 1;
         if ($_SESSION['totp_pending']['attempts'] >= 5) unset($_SESSION['totp_pending']);
@@ -69,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
     $remember = isset($_POST['remember']);
 
     if ($username && $password) {
-        $stmt = $conn->prepare("SELECT user_id, password, role, status FROM users WHERE username = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT user_id, username, password, role, status FROM users WHERE username = ? LIMIT 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -78,10 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
-                $factor = $conn->prepare('SELECT enabled_at FROM user_totp WHERE user_id = ?');
+                $factor = $conn->prepare('SELECT enabled_at, secret FROM user_totp WHERE user_id = ?');
                 $factor->bind_param('i', $user['user_id']); $factor->execute();
                 $factorRow = $factor->get_result()->fetch_assoc(); $factor->close();
                 if ($factorRow && $factorRow['enabled_at']) {
+                    if (trustedDeviceValid($conn, (int)$user['user_id'], trustedDeviceFingerprint($user['password'], $factorRow['secret']))) {
+                        completeDeviceLogin($conn, (int)$user['user_id'], $user);
+                    }
                     session_regenerate_id(true);
                     $_SESSION['totp_pending'] = ['id' => (int)$user['user_id'], 'expires' => time() + 300, 'attempts' => 0];
                     header('Location: index.php?code=1'); exit;
@@ -263,8 +287,21 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             <div class="success">You have been logged out successfully.</div>
         <?php endif; ?>
 
-        <?php if (!empty($_SESSION['totp_pending']) && ($_SESSION['totp_pending']['expires'] ?? 0) >= time()): ?>
+        <?php if (!empty($_SESSION['trust_pending']) && $_SESSION['trust_pending']['expires'] >= time()): ?>
+        <form method="post">
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES) ?>">
+            <input type="hidden" name="trust_confirm" value="1">
+            <p>Code verified. Choose whether to trust this browser.</p>
+            <div class="form-group remember-group">
+                <input type="checkbox" name="trust_device" id="trust_device" value="1">
+                <label for="trust_device">Trust this device for 30 days</label>
+            </div>
+            <p>You will still need your username and password. Only select this on a device you control.</p>
+            <button type="submit">Continue to dashboard</button>
+        </form>
+        <?php elseif (!empty($_SESSION['totp_pending']) && ($_SESSION['totp_pending']['expires'] ?? 0) >= time()): ?>
         <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES) ?>">
             <input type="hidden" name="totp_login" value="1">
             <div class="form-group">
                 <label for="totp_code">Authenticator or recovery code</label>
@@ -275,6 +312,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <div class="signup-link"><a href="index.php">Start over</a></div>
         <?php else: ?>
         <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES) ?>">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
                 <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
