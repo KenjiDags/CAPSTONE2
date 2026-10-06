@@ -238,33 +238,54 @@ async function loadDemandForecast() {
     );
     const dark = document.body.classList.contains('dark-mode');
     const axisColor = dark ? '#cbd5e1' : '#526168';
-    const currentActual = Number(data.actual[data.actual.length - 1] || 0);
-    const currentForecast = Number(data.forecast || 0);
-
-    // Chart.js draws higher-order datasets first.
-    // Lower order = drawn later = appears in front.
-    const actualOrder = currentActual < currentForecast ? 0 : 1;
-    const forecastOrder = currentForecast < currentActual ? 0 : 1;
+    const stripeCanvas = document.createElement('canvas');
+    stripeCanvas.width = stripeCanvas.height = 8;
+    const stripeContext = stripeCanvas.getContext('2d');
+    stripeContext.fillStyle = '#9bc5ea';
+    stripeContext.fillRect(0, 0, 8, 8);
+    stripeContext.strokeStyle = '#ffffff';
+    stripeContext.lineWidth = 1;
+    stripeContext.beginPath();
+    for (let offset = -8; offset <= 8; offset += 8) {
+      stripeContext.moveTo(offset, 8);
+      stripeContext.lineTo(offset + 8, 0);
+    }
+    stripeContext.stroke();
+    const forecastPattern = stripeContext.createPattern(stripeCanvas, 'repeat');
+    const forecastBarOffset = {
+      id: 'forecastBarOffset',
+      beforeDatasetDraw(chart, args) {
+        if (args.index !== 1) return;
+        const actualBars = chart.getDatasetMeta(0).data;
+        args.meta.data.forEach((bar, index) => {
+          const actualBar = actualBars[index];
+          if (actualBar && Number.isFinite(actualBar.x) && Number.isFinite(actualBar.width)) {
+            bar.x = actualBar.x + actualBar.width * 0.35;
+          }
+        });
+      }
+    };
     demandForecastChart = new Chart(document.getElementById('demandForecastChart'), {
-      type: 'bar', data: { labels, datasets: [
+      type: 'bar', plugins: [forecastBarOffset], data: { labels, datasets: [
         {
           label: 'Actual issued',
           data: data.actual,
-          backgroundColor: '#4b7e87',
-          borderRadius: 4,
+          backgroundColor: '#4a9ed8',
+          borderRadius: 0,
           grouped: false,
-          order: actualOrder,
+          barPercentage: 0.7,
+          categoryPercentage: 0.8,
+          order: 0,
         },
         {
           label: 'Forecast issued',
           data: data.actual.map((_, index) =>
             index === data.actual.length - 1 ? data.forecast : null
           ),
-          backgroundColor: '#b44b31',
-          order: forecastOrder,
-          borderColor: '#b44b31',
-          borderWidth: 2,
-          borderRadius: 4,
+          backgroundColor: forecastPattern,
+          order: 1,
+          borderWidth: 0,
+          borderRadius: 0,
           grouped: false,
           barPercentage: 0.7,
           categoryPercentage: 0.8
