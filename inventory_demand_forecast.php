@@ -3,7 +3,7 @@
 function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmutable $rangeStart = null, ?DateTimeImmutable $rangeEnd = null): array {
     $timezone = new DateTimeZone('Asia/Manila');
 
-    $currentMonth = new DateTimeImmutable('first day of this month', $timezone);
+    $currentMonth = new DateTimeImmutable('first day of this month 00:00:00', $timezone);
     $nextMonth = $currentMonth->modify('+1 month');
 
     if ($rangeStart !== null) {
@@ -43,7 +43,6 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
         throw new RuntimeException('Demand forecast query failed: ' . $conn->error);
     }
     $from = $start->format('Y-m-d');
-    $until = $nextMonth->format('Y-m-d');
     $statement->bind_param('ss', $from, $until);
     $statement->execute();
     foreach ($statement->get_result() as $row) {
@@ -60,8 +59,10 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
         if (!$receiptStatement) {
             throw new RuntimeException('Receipt query failed: ' . $conn->error);
         }
-    $previousStart = $currentMonth->modify('-1 month')->format('Y-m-d');
-    $receiptStatement->bind_param('ss', $previousStart, $until);
+    $forecastDate = $lastMonth < $currentMonth ? $lastMonth->modify('+1 month') : $currentMonth;
+    $previousStart = $forecastDate->modify('-1 month')->format('Y-m-d');
+    $receiptUntil = $forecastDate->format('Y-m-d');
+    $receiptStatement->bind_param('ss', $previousStart, $receiptUntil);
     $receiptStatement->execute();
     $receipts = (int)($receiptStatement->get_result()->fetch_assoc()['quantity'] ?? 0);
     $receiptStatement->close();
@@ -93,10 +94,13 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
         }
     }
 
-    // The last value is the current, incomplete month.
-    // It is displayed as live actual usage but is NOT used to calculate the forecast.
+    // Exclude only the current incomplete month; historical ranges retain their final month.
     $values = array_values($monthly);
-    $historyValues = array_slice($values, 0, -1);
+    $historyValues = array_values(array_filter(
+        $monthly,
+        static fn($month) => $month < $currentMonth->format('Y-m'),
+        ARRAY_FILTER_USE_KEY
+    ));
 
     $activeMonths = count(array_filter(
         $historyValues,
@@ -113,6 +117,17 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
         $forecast = max(0, (int)round(array_sum($recent) / 3));
     }
 
+    // Predict each displayed month using only issuance recorded before it.
+    $monthlyForecasts = [];
+    foreach ($values as $index => $value) {
+        $priorValues = array_slice($values, 0, $index);
+        $priorRecent = array_slice($priorValues, -3);
+        $priorActive = count(array_filter($priorValues, static fn($quantity) => $quantity > 0));
+        $recentActive = count(array_filter($priorRecent, static fn($quantity) => $quantity > 0));
+        $monthlyForecasts[] = $priorActive >= 3 && count($priorRecent) === 3 && $recentActive >= 2
+            ? max(0, (int)round(array_sum($priorRecent) / 3))
+            : null;
+    }
     // Previous completed month, used for the trend calculation.
     $previousMonth = $historyValues[count($historyValues) - 1] ?? 0;
 
@@ -141,8 +156,8 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
             : ($change < -5 ? 'Decreasing' : 'Relatively Stable'));
     return [
         'months' => array_keys($monthly),
-        'actual' => $values,
-        'forecastMonth' => $currentMonth->format('Y-m'), 'forecast' => $forecast,
+        'actual' => $values, 'monthlyForecasts' => $monthlyForecasts,
+        'forecastMonth' => $forecastDate->format('Y-m'), 'forecast' => $forecast,
         'average' => $average, 'previous' => $previousMonth, 'receiptsPreviousMonth' => $receipts, 'changePercent' => $change,
         'trend' => $trend, 'method' => 'Three-month moving average'
     ];

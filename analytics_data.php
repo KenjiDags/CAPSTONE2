@@ -31,7 +31,7 @@ if (isset($_GET['demand_forecast'])) {
                 echo json_encode(['error' => 'Select a valid range of complete months.']);
                 exit;
             }
-            $end = $last->modify('+1 month');
+            $end = $last;
         }
         echo json_encode(inventoryDemandForecast($conn, $historyInterval, $start, $end));
     } catch (Throwable $error) {
@@ -94,6 +94,11 @@ if ($category === 'semi-expendables') {
                semi_expendable_property_no,
                item_description,
                office_officer_issued,
+               office_officer_reissued,
+               quantity_issued,
+               quantity_reissued,
+               quantity_disposed,
+               quantity_returned,
                quantity_balance,
                amount_total,
                CASE 
@@ -107,6 +112,18 @@ if ($category === 'semi-expendables') {
     $items = [];
     $res = $conn->query($itemsSql);
     while ($row = $res->fetch_assoc()) {
+        $issued = max(0, (int)$row['quantity_issued']);
+        $reissued = max(0, (int)$row['quantity_reissued']);
+        $holders = [];
+        if ($issued > 0) $holders[] = trim((string)$row['office_officer_issued']) ?: 'Issued holder not recorded';
+        if ($reissued > 0) $holders[] = trim((string)$row['office_officer_reissued']) ?: 'Reissued holder not recorded';
+        $issuanceStatus = $issued > 0 && $reissued > 0 ? 'Issued / Reissued'
+            : ($reissued > 0 ? 'Reissued' : ($issued > 0 ? 'Issued'
+            : ((int)$row['quantity_balance'] > 0 ? 'Not issued'
+            : ((int)$row['quantity_disposed'] > 0 ? 'Disposed / For disposal'
+            : ((int)$row['quantity_returned'] > 0 ? 'Returned' : 'Not issued')))));
+        $currentHolder = $holders ? implode('; ', array_unique($holders))
+            : ((int)$row['quantity_disposed'] > 0 && (int)$row['quantity_balance'] <= 0 ? 'No current holder' : 'Stock room / Unassigned');
         $items[] = [
             'item_id' => (int)$row['id'],
             'property_no' => $row['semi_expendable_property_no'],
@@ -114,8 +131,51 @@ if ($category === 'semi-expendables') {
             'description' => '',
             'status' => $row['status'],
             'officer' => $row['office_officer_issued'] ?: 'Unassigned',
+            'current_holder' => $currentHolder,
+            'issuance_status' => $issuanceStatus,
             'quantity' => (int)$row['quantity_balance'],
             'capital_value' => (float)$row['amount_total']
+        ];
+    }
+    // IIRUSP is the source of unserviceable semi-expendables, including records
+    // whose original property-register entry has since been removed.
+    $unserviceable = [];
+    $reportTable = $conn->query("SHOW TABLES LIKE 'iirusp_items'");
+    if ($reportTable && $reportTable->num_rows) {
+        $reportItems = $conn->query("SELECT ii.semi_expendable_property_no, ii.particulars,
+                ii.quantity, ii.total_cost, report.accountable_officer_name
+            FROM iirusp_items ii JOIN iirusp report ON report.iirusp_id = ii.iirusp_id
+            WHERE ii.quantity > 0
+            ORDER BY report.as_at DESC, report.iirusp_id DESC");
+        foreach ($reportItems as $reported) {
+            $property = (string)$reported['semi_expendable_property_no'];
+            if (!isset($unserviceable[$property])) {
+                $unserviceable[$property] = $reported;
+                $unserviceable[$property]['quantity'] = 0;
+                $unserviceable[$property]['total_cost'] = 0;
+            }
+            $unserviceable[$property]['quantity'] += (int)$reported['quantity'];
+            $unserviceable[$property]['total_cost'] += (float)$reported['total_cost'];
+        }
+    }
+    $registeredProperties = [];
+    foreach ($items as &$item) {
+        $property = (string)$item['property_no'];
+        $registeredProperties[$property] = true;
+        $item['unserviceable_quantity'] = (int)($unserviceable[$property]['quantity'] ?? 0);
+    }
+    unset($item);
+    foreach ($unserviceable as $property => $reported) {
+        if (isset($registeredProperties[$property])) continue;
+        $accountable = trim((string)$reported['accountable_officer_name']);
+        $items[] = [
+            'item_id' => null, 'property_no' => (string)$property,
+            'item_name' => $reported['particulars'], 'description' => '',
+            'status' => 'Depleted', 'issuance_status' => 'Unserviceable',
+            'officer' => $accountable ?: 'Not recorded',
+            'current_holder' => $accountable ? 'IIRUSP accountable officer: ' . $accountable : 'Not recorded',
+            'quantity' => 0, 'capital_value' => (float)$reported['total_cost'],
+            'unserviceable_quantity' => (int)$reported['quantity']
         ];
     }
     $response['items'] = $items;
@@ -158,6 +218,8 @@ if ($category === 'semi-expendables') {
             'remarks' => $row['remarks'],
             'status' => $row['status'],
             'officer' => $officer ?: 'Unassigned',
+            'current_holder' => strtolower(trim((string)$row['status'])) === 'disposed' ? 'No current holder' : (trim((string)$row['custodian']) ?: (trim((string)$row['officer_incharge']) ?: 'Unassigned')),
+            'officer_incharge' => trim((string)$row['officer_incharge']),
             'quantity' => (int)$row['quantity'],
             'capital_value' => (float)$row['amount']
         ];

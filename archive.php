@@ -60,6 +60,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     header(
         'Location: archive.php?' .
         http_build_query([
+            'tab' => ($_POST['tab'] ?? '') === 'items' ? 'items' : 'documents',
             'search' => (string) ($_POST['search'] ?? ''),
             'type' => (string) ($_POST['type'] ?? '')
         ])
@@ -83,6 +84,15 @@ function archiveEscape($value): string
 $search = trim((string) ($_GET['search'] ?? ''));
 $type = (string) ($_GET['type'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
+$itemTypes = ['Supply', 'PPE', 'Semi-expendable', 'ICT'];
+$tab = ($_GET['tab'] ?? '') === 'items' || (!isset($_GET['tab']) && in_array($type, $itemTypes, true)) ? 'items' : 'documents';
+$itemTypeLabels = ['Supply' => 'Office Supplies', 'PPE' => 'PPE', 'Semi-expendable' => 'Semi-Expendables', 'ICT' => 'ICT'];
+function archiveItemName(array $record): string {
+    $snapshot = json_decode($record['snapshot'] ?? '{}', true);
+    $source = archiveSources()[$record['record_type']] ?? null;
+    $row = $source ? ($snapshot[$source[0]][0] ?? []) : [];
+    return (string)($row['item_name'] ?? $row['item_description'] ?? $row['description'] ?? $record['record_label']);
+}
 
 $detail = null;
 
@@ -104,47 +114,29 @@ if ($id > 0) {
     }
 }
 
+if ($detail) {
+    $tab = in_array($detail['record_type'], $itemTypes, true) ? 'items' : 'documents';
+}
+$isItems = $tab === 'items';
+$recordTypes = $isItems ? $itemTypes : ['SC', 'RIS', 'RSMI', 'ICS', 'ITR', 'PTR', 'PAR', 'PC', 'IIRUP', 'RRSP', 'IIRUSP'];
+if (!in_array($type, $recordTypes, true)) $type = '';
 $like = '%' . $search . '%';
-
-$stmt = $conn->prepare(
-    "SELECT
-        archive_id,
-        record_type,
-        record_label,
-        deleted_at,
-        deleted_by
+$groupCondition = $isItems
+    ? "record_type IN ('Supply', 'PPE', 'Semi-expendable', 'ICT')"
+    : "record_type NOT IN ('Supply', 'PPE', 'Semi-expendable', 'ICT')";
+$itemSearch = $isItems ? ' OR snapshot LIKE ?' : '';
+$stmt = $conn->prepare("SELECT archive_id, record_type, record_label, snapshot, deleted_at, deleted_by
     FROM deleted_records
-    WHERE
-        (
-            record_label LIKE ?
-            OR record_type LIKE ?
-        )
-        AND (
-            ? = ''
-            OR record_type = ?
-            OR (? = 'RSMI' AND record_type = 'RIS')
-            OR (? = 'SC' AND record_type = 'Supply')
-        )
-    ORDER BY
-        deleted_at DESC,
-        archive_id DESC
-    LIMIT 200"
-);
-
-$stmt->bind_param(
-    'ssssss',
-    $like,
-    $like,
-    $type,
-    $type,
-    $type,
-    $type
-);
-
+    WHERE $groupCondition AND (record_label LIKE ? OR record_type LIKE ? $itemSearch)
+        AND (? = '' OR record_type = ? OR (? = 'RSMI' AND record_type = 'RIS'))
+    ORDER BY deleted_at DESC, archive_id DESC LIMIT 200");
+if ($isItems) {
+    $stmt->bind_param('ssssss', $like, $like, $like, $type, $type, $type);
+} else {
+    $stmt->bind_param('sssss', $like, $like, $type, $type, $type);
+}
 $stmt->execute();
-
 $records = $stmt->get_result();
-
 ?>
 
 <!doctype html>
@@ -336,6 +328,8 @@ $records = $stmt->get_result();
             color: #93c5fd;
         }
 
+        .archive-filters #recordType { padding-right: 44px; min-width: 160px; box-sizing: border-box; }
+
         .archive-filters .control-search {
             flex: 0 1 700px !important;
         }
@@ -363,6 +357,18 @@ $records = $stmt->get_result();
             padding: 12px 0;
         }
 
+        .archive-tabs { display: flex; gap: 8px; margin: 0 20px 20px; border-bottom: 1px solid #cbd5e1; }
+        .archive-tab { padding: 12px 20px; border-bottom: 3px solid transparent; color: #64748b; text-decoration: none; font-weight: 600; }
+        .archive-tab.active { color: #1d4ed8; border-color: #1d4ed8; }
+        .archive-tab:focus-visible { outline: 2px solid #3b82f6; outline-offset: -2px; }
+        body.dark-mode .archive-tab { color: #cbd5e1; }
+        body.dark-mode .archive-tab.active { color: #93c5fd; border-color: #93c5fd; }
+        @media (max-width: 800px) {
+            .archive-filters .inventory-controls { flex-wrap: wrap; }
+            .archive-filters #recordType { padding-right: 44px; min-width: 160px; box-sizing: border-box; }
+
+        .archive-filters .control-search { min-width: 0; padding-left: 0; }
+        }
     </style>
 
 </head>
@@ -374,6 +380,10 @@ $records = $stmt->get_result();
     <main class="container">
 
         <h2>Archive</h2>
+        <nav class="archive-tabs" aria-label="Archive category">
+            <a class="archive-tab <?= !$isItems ? 'active' : '' ?>" href="archive.php?tab=documents"<?= !$isItems ? ' aria-current="page"' : '' ?>>Documents</a>
+            <a class="archive-tab <?= $isItems ? 'active' : '' ?>" href="archive.php?tab=items"<?= $isItems ? ' aria-current="page"' : '' ?>>Items</a>
+        </nav>
 
         <?php if ($notice): ?>
 
@@ -392,13 +402,14 @@ $records = $stmt->get_result();
             class="filters archive-filters"
         >
 
+            <input type="hidden" name="tab" value="<?= archiveEscape($tab) ?>">
             <div class="inventory-controls">
 
                 <!-- Record Type Filter -->
                 <div class="control-sort">
 
                     <label for="recordType">
-                        Record Type:
+                        <?= $isItems ? 'Item category:' : 'Record Type:' ?>
                     </label>
 
                     <select
@@ -407,28 +418,8 @@ $records = $stmt->get_result();
                     >
 
                         <option value="">
-                            All Types
+                            <?= $isItems ? 'All Items' : 'All Types' ?>
                         </option>
-
-                        <?php
-                        $recordTypes = [
-                            'SC',
-                            'RIS',
-                            'RSMI',
-                            'Supply',
-                            'ICS',
-                            'ITR',
-                            'PTR',
-                            'PAR',
-                            'PC',
-                            'IIRUP',
-                            'RRSP',
-                            'IIRUSP',
-                            'PPE',
-                            'Semi-expendable',
-                            'ICT'
-                        ];
-                        ?>
 
                         <?php foreach ($recordTypes as $option): ?>
 
@@ -436,7 +427,7 @@ $records = $stmt->get_result();
                                 value="<?= archiveEscape($option) ?>"
                                 <?= $type === $option ? 'selected' : '' ?>
                             >
-                                <?= archiveEscape($option) ?>
+                                <?= archiveEscape($isItems ? $itemTypeLabels[$option] : $option) ?>
                             </option>
 
                         <?php endforeach; ?>
@@ -459,7 +450,7 @@ $records = $stmt->get_result();
                         id="archiveSearch"
                         name="search"
                         value="<?= archiveEscape($search) ?>"
-                        placeholder="Search by record number or type..."
+                        placeholder="<?= $isItems ? 'Search by item name, description, or property number...' : 'Search by record number or type...' ?>"
                     >
 
                 </div>
@@ -491,6 +482,7 @@ $records = $stmt->get_result();
                     class="archive-back"
                     href="archive.php?<?= archiveEscape(
                         http_build_query([
+                            'tab' => $tab,
                             'search' => $search,
                             'type' => $type
                         ])
@@ -625,7 +617,8 @@ $records = $stmt->get_result();
 
                         <tr>
                             <th>Type</th>
-                            <th>Record</th>
+                            <th><?= $isItems ? 'Property / Stock number' : 'Record' ?></th>
+                            <?php if ($isItems): ?><th>Item</th><?php endif; ?>
                             <th>Deleted at</th>
                             <th>Deleted by (user ID)</th>
                             <th>Action</th>
@@ -639,8 +632,8 @@ $records = $stmt->get_result();
                         <?php if (!$records->num_rows): ?>
 
                             <tr>
-                                <td colspan="5">
-                                    No archived records found.
+                                <td colspan="<?= $isItems ? 6 : 5 ?>">
+                                    <?= $isItems ? 'No archived items found.' : 'No archived documents found.' ?>
                                 </td>
                             </tr>
 
@@ -653,7 +646,7 @@ $records = $stmt->get_result();
 
                                 <td>
                                     <?= archiveEscape(
-                                        $record['record_type']
+                                        $isItems ? ($itemTypeLabels[$record['record_type']] ?? $record['record_type']) : $record['record_type']
                                     ) ?>
                                 </td>
 
@@ -665,6 +658,9 @@ $records = $stmt->get_result();
                                 </td>
 
 
+                                <?php if ($isItems): ?>
+                                    <td><?= archiveEscape(archiveItemName($record)) ?></td>
+                                <?php endif; ?>
                                 <td>
                                     <?= archiveEscape(
                                         $record['deleted_at']
@@ -710,6 +706,7 @@ $records = $stmt->get_result();
                                                 href="archive.php?<?= archiveEscape(
                                                     http_build_query([
                                                         'id' => $record['archive_id'],
+                                                        'tab' => $tab,
                                                         'search' => $search,
                                                         'type' => $type
                                                     ])
@@ -745,6 +742,7 @@ $records = $stmt->get_result();
                                                     data-archive-action="<?= $action ?>"
                                                 >
 
+                                                    <input type="hidden" name="tab" value="<?= archiveEscape($tab) ?>">
                                                     <input
                                                         type="hidden"
                                                         name="csrf"

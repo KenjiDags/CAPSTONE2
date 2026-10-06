@@ -67,12 +67,19 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="category-summary-cards" id="categorySummaryCards"></div>
     <div id="semiInsights" class="category-view" hidden>
       <article class="panel category-chart-panel"><h3>Semi-Expendables condition</h3><p class="panel-caption">Current balance across active and depleted property records.</p><div class="category-chart-frame"><canvas id="semiStatusChart"></canvas></div></article>
-      <article class="panel"><h3>Inventory action queue</h3><p class="panel-caption">Semi-expendable records with no remaining balance.</p><div class="category-list" id="semiActionList"></div></article>
     </div>
     <div id="ppeInsights" class="category-view" hidden>
       <article class="panel category-chart-panel"><h3>Serviceability health</h3><p class="panel-caption">Equipment condition across the current PPE register.</p><div class="category-chart-frame"><canvas id="ppeServiceabilityChart"></canvas></div></article>
-      <article class="panel ppe-actions-panel"><h3>Equipment maintenance &amp; action</h3><p class="panel-caption">Unserviceable equipment requiring repair or replacement.</p><div class="ppe-table-wrap"><table class="ppe-action-table"><thead><tr><th>Asset code</th><th>Equipment</th><th>Location / holder</th><th>Reported issue</th><th>Action</th></tr></thead><tbody id="ppeActionTable"></tbody></table></div></article>
     </div>
+    <article class="panel category-register-panel" aria-labelledby="categoryRegisterTitle">
+      <h3 id="categoryRegisterTitle">Item status and current holders</h3>
+      <p class="panel-caption">Recorded assignments in the current property register.</p>
+      <div class="ppe-table-wrap category-register-wrap">
+        <table class="ppe-action-table" aria-labelledby="categoryRegisterTitle">
+          <thead id="categoryRegisterHead"></thead><tbody id="categoryRegisterBody"></tbody>
+        </table>
+      </div>
+    </article>
   </section>
 
   <section id="mrpSection" class="mrp-section">
@@ -103,11 +110,11 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
           <div class="scope-control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" type="month" required></div>
         </div>
       </div>
-      <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and next-month forecast"></canvas></div>
+      <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and predicted demand"></canvas></div>
       <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
       <div class="demand-summary" id="demandForecastSummary" hidden>
         <div><span>Average monthly issuance</span><strong id="demandAverage"></strong></div>
-        <div><span>Forecasted demand</span><strong id="demandNext"></strong></div>
+        <div><span id="demandNextLabel">Forecasted demand</span><strong id="demandNext"></strong></div>
         <div><span>Previous complete month</span><strong id="demandPrevious"></strong></div>
         <div><span>Office supply additions last month</span><strong id="demandReceipts"></strong></div>
         <div><span>Projected change</span><strong id="demandChange"></strong></div>
@@ -228,11 +235,12 @@ async function loadDemandForecast(background = false) {
     const number = value => Number(value).toLocaleString();
     document.getElementById('demandAverage').textContent = number(data.average) + ' items';
     document.getElementById('demandNext').textContent = number(data.forecast) + ' items';
+    document.getElementById('demandNextLabel').textContent = 'Forecast for ' + new Date(data.forecastMonth + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     document.getElementById('demandPrevious').textContent = number(data.previous) + ' items';
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
-    document.getElementById('demandForecastMethod').textContent = data.method + ' based on the last three complete months. Current-month actual usage is updated from recorded issuances.';
+    document.getElementById('demandForecastMethod').textContent = data.method + ' for each month using its preceding three complete months. Months with insufficient history have no prediction. Current-month actual usage is updated from recorded issuances.';
     const labels = data.months.map(month =>
       new Date(month + '-01T00:00:00').toLocaleDateString('en-US', {
         month: 'short',
@@ -282,9 +290,7 @@ async function loadDemandForecast(background = false) {
         },
         {
           label: 'Forecast issued',
-          data: data.actual.map((_, index) =>
-            index === data.actual.length - 1 ? data.forecast : null
-          ),
+          data: data.monthlyForecasts,
           backgroundColor: forecastPattern,
           order: 1,
           borderWidth: 0,
@@ -360,6 +366,40 @@ function loadUnifiedInventoryTable() {
     return response.json();
   }))).then(results => prepareUnifiedItems(Object.fromEntries(categories.map((category, index) => [category, results[index]])))).catch(error => console.error('Unified inventory table failed to load:', error));
 }
+function categoryStatusText(value) {
+  const label = String(value || 'Not recorded');
+  const status = label.trim().toLowerCase();
+  const color = status.includes('unserviceable') || status.includes('disposal') || status === 'disposed' ? 'red'
+    : status.includes('transfer') || status.includes('reissued') ? 'blue'
+    : ['active', 'issued', 'not issued', 'good', 'serviceable', 'fair'].includes(status) ? 'green' : '';
+  return `<span class="category-status-text${color ? ' category-status-' + color : ''}">${escapeTableText(label)}</span>`;
+}
+function renderCategoryRegister() {
+  const isSemi = state.category === 'semi-expendables';
+  document.getElementById('categoryRegisterTitle').textContent = isSemi
+    ? 'Semi-Expendables status and current holders' : 'PPE status and current holders';
+  const columns = isSemi
+    ? ['Property number', 'Item', 'Status', 'Current holder / office', 'Remaining balance']
+    : ['Property number', 'Item', 'Status', 'Condition', 'Current holder / custodian', 'Officer in charge'];
+  document.getElementById('categoryRegisterHead').innerHTML = '<tr>' + columns.map(label => `<th scope="col">${label}</th>`).join('') + '</tr>';
+  document.getElementById('categoryRegisterBody').innerHTML = state.items.length
+    ? state.items.map(item => {
+      const name = `<strong>${escapeTableText(itemName(item))}</strong>` + (item.description ? `<div>${escapeTableText(item.description)}</div>` : '');
+      const ppeStatus = String(item.condition || '').trim().toLowerCase() === 'unserviceable' && String(item.status || '').trim().toLowerCase() === 'active' ? 'Unserviceable' : item.status;
+      const unserviceableQty = Number(item.unserviceable_quantity || 0);
+      let semiStatus = categoryStatusText(item.issuance_status);
+      if (isSemi && unserviceableQty > 0) {
+        const unserviceableStatus = categoryStatusText(`Unserviceable (${unserviceableQty.toLocaleString()} item${unserviceableQty === 1 ? '' : 's'})`);
+        semiStatus = item.issuance_status === 'Disposed / For disposal' || item.issuance_status === 'Unserviceable'
+          ? unserviceableStatus : semiStatus + '<br>' + unserviceableStatus;
+      }
+      const cells = isSemi
+        ? [escapeTableText(item.property_no || 'N/A'), name, semiStatus, escapeTableText(item.current_holder || 'Not recorded'), Number(item.quantity || 0).toLocaleString()]
+        : [escapeTableText(item.property_no || 'N/A'), name, categoryStatusText(ppeStatus), categoryStatusText(item.condition), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned')];
+      return '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+    }).join('')
+    : `<tr><td colspan="${columns.length}" class="empty-state">No ${isSemi ? 'semi-expendable' : 'PPE'} items recorded.</td></tr>`;
+}
 function renderCategoryInsights(summary) {
   const insights = document.getElementById('categoryInsights');
   const semiView = document.getElementById('semiInsights');
@@ -374,6 +414,7 @@ function renderCategoryInsights(summary) {
   document.getElementById('categoryInsightsSubtitle').textContent = isSemi ? 'Condition distribution and balance actions' : 'Serviceability health and maintenance actions';
   const summaryCards = document.getElementById('categorySummaryCards');
   summaryCards.innerHTML = isSemi ? `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.not_issued || 0).toLocaleString()}</strong><span>Not issued</span></article><article class="category-summary-card active"><strong>${Number(summary.currently_issued || 0).toLocaleString()}</strong><span>Currently issued</span></article><article class="category-summary-card disposed"><strong>${Number(summary.disposed || 0).toLocaleString()}</strong><span>Disposed / For disposal</span></article>` : `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.serviceable || 0).toLocaleString()}</strong><span>Serviceable Items</span></article><article class="category-summary-card disposed"><strong>${Number(summary.unserviceable || 0).toLocaleString()}</strong><span>Unserviceable Items</span></article>`;
+  renderCategoryRegister();
   if (isSemi) renderSemiInsights();
   if (isPpe) renderPpeInsights();
 }
@@ -382,16 +423,12 @@ function renderSemiInsights() {
   const depleted = state.items.length - active;
   if (state.semiStatusChart) state.semiStatusChart.destroy();
   state.semiStatusChart = new Chart(document.getElementById('semiStatusChart'), { type: 'doughnut', data: { labels: ['Active balance', 'Depleted'], datasets: [{ data: [active, depleted], backgroundColor: ['#43a047', '#d28a3d'], borderColor: '#ffffff', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { position: 'bottom' } } } });
-  const depletedItems = state.items.filter(item => String(item.status).toLowerCase() === 'depleted').slice(0, 6);
-  document.getElementById('semiActionList').innerHTML = depletedItems.length ? depletedItems.map(item => `<div class="category-list-row"><span>${item.property_no || 'N/A'} - ${itemName(item)}</span><strong>Replenish</strong></div>`).join('') : '<div class="empty-state">No depleted semi-expendable records.</div>';
 }
 function renderPpeInsights() {
   const serviceable = state.items.filter(item => ['good', 'serviceable', 'fair'].includes(String(item.condition || '').toLowerCase()) && String(item.status || '').toLowerCase() !== 'unserviceable').length;
   const unserviceable = state.items.length - serviceable;
   if (state.ppeServiceabilityChart) state.ppeServiceabilityChart.destroy();
   state.ppeServiceabilityChart = new Chart(document.getElementById('ppeServiceabilityChart'), { type: 'doughnut', data: { labels: ['Serviceable Items', 'Unserviceable Items'], datasets: [{ data: [serviceable, unserviceable], backgroundColor: ['#43a047', '#e53935'], borderColor: '#ffffff', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { position: 'bottom' } } } });
-  const actionItems = state.items.filter(item => !(['good', 'serviceable', 'fair'].includes(String(item.condition || '').toLowerCase())) || String(item.status || '').toLowerCase() === 'unserviceable');
-  document.getElementById('ppeActionTable').innerHTML = actionItems.length ? actionItems.map(item => { const repair = ['for repair', 'fair'].includes(String(item.status || item.condition || '').toLowerCase()); return `<tr><td>${item.property_no || 'N/A'}</td><td>${itemName(item)}</td><td>${item.officer || 'Unassigned'}</td><td>${item.remarks || item.condition || 'Unserviceable'}</td><td><span class="action-pill ${repair ? 'repair' : ''}">${repair ? 'Under Repair' : 'Marked for Replacement'}</span></td></tr>`; }).join('') : '<tr><td colspan="5">No unserviceable equipment requires action.</td></tr>';
 }
 let categoryRequest = 0;
 let categoryLoading = false;
@@ -399,6 +436,7 @@ function loadCategory(category) {
   const request = ++categoryRequest;
   categoryLoading = true;
   state.items = [];
+  document.getElementById('categoryInsights').hidden = true;
   if (state.mrpStockChart) { state.mrpStockChart.destroy(); state.mrpStockChart = null; }
   const scrollPosition = window.scrollY;
   state.category = category;

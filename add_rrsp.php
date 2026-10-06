@@ -35,164 +35,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
   exit;
 }
 
-// Handle submission (standard form POST)
-if($_SERVER['REQUEST_METHOD']==='POST'){
-  if (ob_get_length()) { ob_clean(); }
-  header('Content-Type: application/json');
-  try {
-    $rrsp_no = trim($_POST['rrsp_no'] ?? '');
-    $date_prepared = $_POST['date_prepared'] ?? date('Y-m-d');
-    if ($rrsp_no === '') {
-      $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
-    } else {
-      $ymFromDate = date('Y-m', strtotime($date_prepared));
-      if (strpos($rrsp_no, $ymFromDate . '-') !== 0) {
-        $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
-      }
-    }
-    $entity = trim($_POST['entity_name'] ?? '');
-    $fund = trim($_POST['fund_cluster'] ?? '');
-    $returned_by = trim($_POST['returned_by'] ?? '');
-    $returned_date = $_POST['returned_date'] ?? null;
-    $received_by = trim($_POST['received_by'] ?? '');
-    $received_date = $_POST['received_date'] ?? null;
-    $remarks = trim($_POST['remarks'] ?? '');
-    $items_json = $_POST['items_json'] ?? '[]';
-    $items = json_decode($items_json,true) ?: [];
-    if($rrsp_no===''){ echo json_encode(['success'=>false,'message'=>'RRSP number required']); exit; }
-    ensure_rrsp_history($conn);
-    if($stmt=$conn->prepare("INSERT INTO rrsp (rrsp_no,date_prepared,entity_name,fund_cluster,returned_by,received_by,returned_date,received_date,remarks) VALUES (?,?,?,?,?,?,?,?,?)")){
-      $stmt->bind_param('sssssssss',$rrsp_no,$date_prepared,$entity,$fund,$returned_by,$received_by,$returned_date,$received_date,$remarks);
-      if(!$stmt->execute()){ echo json_encode(['success'=>false,'message'=>'Failed to save RRSP header']); exit; }
-      $rrsp_id = $stmt->insert_id; $stmt->close();
-      if(!empty($items)){
-        if($ist=$conn->prepare("INSERT INTO rrsp_items (rrsp_id,item_description,quantity,ics_no,end_user,item_remarks,unit_cost,total_amount) VALUES (?,?,?,?,?,?,?,?)")){
-          foreach($items as $it){
-            $desc=trim($it['description']??'');
-            $qty=(int)($it['quantity']??0);
-            $ics=trim($it['ics_no']??'');
-            $end=trim($it['end_user']??'');
-            $iremarks=trim($it['remarks']??'');
-            $uc=(float)($it['unit_cost']??0); $tot=$qty*$uc;
-            $ist->bind_param('isisssdd',$rrsp_id,$desc,$qty,$ics,$end,$iremarks,$uc,$tot);
-            if($ist->execute()){
-              $rrsp_item_id = $ist->insert_id;
-              // Log to rrsp_history
-              $hStmt = $conn->prepare("INSERT INTO rrsp_history (rrsp_id, rrsp_item_id, ics_no, item_description, quantity, unit_cost, total_amount, end_user, item_remarks) VALUES (?,?,?,?,?,?,?,?,?)");
-              if($hStmt){
-                $hStmt->bind_param('iissiddds',$rrsp_id,$rrsp_item_id,$ics,$desc,$qty,$uc,$tot,$end,$iremarks);
-                $hStmt->execute();
-                $hStmt->close();
-              } 
-              // --- ICS deduction and SEMI update logic (match ITR logic) ---
-              if ($ics !== '' && $qty > 0) {
-                // Deduct returned qty from ICS item (lookup by ics_no or stock_number)
-                $icsItemQ = $conn->prepare("SELECT ii.ics_item_id, ii.quantity, ii.stock_number FROM ics_items ii INNER JOIN ics i ON i.ics_id = ii.ics_id WHERE i.ics_no = ? OR ii.stock_number = ? LIMIT 1");
-                $icsItemQ->bind_param('ss', $ics, $ics);
-                $icsItemQ->execute();
-                $icsItemRes = $icsItemQ->get_result();
-                $icsItem = $icsItemRes && $icsItemRes->num_rows > 0 ? $icsItemRes->fetch_assoc() : null;
-                $icsItemQ->close();
-                if ($icsItem) {
-                  $ics_item_id = (int)$icsItem['ics_item_id'];
-                  $ics_qty = (float)$icsItem['quantity'];
-                    $new_qty = max(0, $ics_qty - $qty);
-                  $u = $conn->prepare("UPDATE ics_items SET quantity = ? WHERE ics_item_id = ?");
-                  $u->bind_param('di', $new_qty, $ics_item_id);
-                  $u->execute();
-                  $u->close();
-
-                  // Log to ics_history for ICS export (Returned)
-                  if (function_exists('ensure_ics_history')) { ensure_ics_history($conn); }
-                  $icsHistoryStmt = $conn->prepare("INSERT INTO ics_history (ics_id, ics_item_id, stock_number, description, unit, quantity_before, quantity_after, quantity_change, unit_cost, total_cost_before, total_cost_after, reference_type, reference_id, reference_no, reference_details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                  $ics_id_val = null;
-                  $unit = null;
-                  $desc = $desc ?? ($icsItem['description'] ?? '');
-                  // Fetch ics_id and unit if not present
-                  $icsMetaQ = $conn->prepare("SELECT ics_id, unit FROM ics_items WHERE ics_item_id = ? LIMIT 1");
-                  $icsMetaQ->bind_param('i', $ics_item_id);
-                  $icsMetaQ->execute();
-                  $icsMetaRes = $icsMetaQ->get_result();
-                  if ($icsMetaRes && $icsMetaRes->num_rows > 0) {
-                    $icsMeta = $icsMetaRes->fetch_assoc();
-                    $ics_id_val = (int)$icsMeta['ics_id'];
-                    $unit = $icsMeta['unit'] ?? '';
-                  } 
-                  $icsMetaQ->close();
-                  $quantity_before = $ics_qty;
-                  $quantity_after = $new_qty;
-                  $quantity_change = $quantity_after - $quantity_before;
-                  $unit_cost = $uc;
-                  $total_cost_before = $ics_qty * $uc;
-                  $total_cost_after = $new_qty * $uc;
-                  $reference_type = 'RRSP';
-                  $reference_id = $rrsp_id;
-                  $reference_no = $rrsp_no;
-                  $reference_details = json_encode(['returned_qty'=>$qty,'end_user'=>$end,'remarks'=>$iremarks]);
-                  $descReturned = $desc . ' ($Returned)';
-                  $icsHistoryStmt->bind_param(
-                    'iisssdddddsisss',
-                    $ics_id_val,
-                    $ics_item_id,
-                    $icsItem['stock_number'],
-                    $descReturned,
-                    $unit,
-                    $quantity_before,
-                    $quantity_after,
-                    $quantity_change,
-                    $unit_cost,
-                    $total_cost_before,
-                    $total_cost_after,
-                    $reference_type,
-                    $reference_id,
-                    $reference_no,
-                    $reference_details
-                  );
-                  $icsHistoryStmt->execute();
-                  $icsHistoryStmt->close();
-                  // Add returned qty to semi_expendable_property
-                  $semiQ = $conn->prepare("SELECT id, quantity_returned, quantity_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
-                  $semiQ->bind_param('s', $icsItem['stock_number']);
-                  $semiQ->execute();
-                  $semiRes = $semiQ->get_result();
-                  $semi = $semiRes && $semiRes->num_rows > 0 ? $semiRes->fetch_assoc() : null;
-                  $semiQ->close();
-                  if ($semi) {
-                    $semi_id = (int)$semi['id'];
-                    $new_returned = (int)$semi['quantity_returned'] + $qty; // Increment returned
-                    $new_issued = max(0, (int)$semi['quantity_issued'] - $qty); // Decrement issued, never negative
-                    $u2 = $conn->prepare("UPDATE semi_expendable_property SET quantity_returned = ?, quantity_issued = ? WHERE id = ?");
-                    $u2->bind_param('iii', $new_returned,  $new_issued, $semi_id);
-                    $u2->execute();
-                    $u2->close();
-                    // Log to semi_expendable_history (include all relevant fields)
-                    if (function_exists('ensure_semi_expendable_history')) { ensure_semi_expendable_history($conn); }
-                    $office_officer_returned = $end;
-                    $amount = isset($uc) ? $uc : 0.0;
-                    $amount_total = $qty * $amount;
-                    $h2 = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity_returned, remarks, office_officer_returned, amount, amount_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    $h2->bind_param('ississdd', $semi_id, $date_prepared, $rrsp_no, $qty, $iremarks, $office_officer_returned, $amount, $amount_total);
-                    $h2->execute();
-                    $h2->close();
-                  }
-                }
-              }
-              // --- END ICS/SEMI logic ---
-            }
-          }
-          $ist->close();
-        }
-      }
-      echo json_encode(['success'=>true,'rrsp_id'=>$rrsp_id]); exit;
-    } else { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
-  } catch(Exception $e) {
-    echo json_encode(['success'=>false,'message'=>'Error: '.$e->getMessage()]); exit;
+// Remaining ICS issuances and transferred/reissued quantities are separate return sources.
+function rrspReturnOptions(mysqli $conn): array {
+  $options = [];
+  $issued = $conn->query("SELECT ii.*, i.ics_no, i.date_issued, i.received_by,
+      sp.id AS semi_id, LEAST(ii.quantity, COALESCE(sp.quantity_issued, ii.quantity)) AS available_qty
+      FROM ics_items ii JOIN ics i ON i.ics_id = ii.ics_id
+      LEFT JOIN semi_expendable_property sp ON sp.semi_expendable_property_no = ii.stock_number
+      WHERE ii.quantity > 0 AND (sp.id IS NULL OR sp.quantity_issued > 0)
+      ORDER BY i.date_issued DESC, ii.ics_item_id DESC");
+  foreach ($issued as $row) {
+    $options[] = ['source_type' => 'issued', 'source_id' => (int)$row['ics_item_id'],
+      'stock_number' => $row['stock_number'], 'description' => $row['description'],
+      'ics_no' => $row['ics_no'], 'date' => $row['date_issued'], 'status' => 'Issued',
+      'quantity' => (int)$row['available_qty'], 'unit_cost' => (float)$row['unit_cost'],
+      'end_user' => $row['received_by']];
   }
+  $register = $conn->query("SELECT sp.* FROM semi_expendable_property sp
+      WHERE sp.quantity_reissued > 0 OR (sp.quantity_issued > 0 AND NOT EXISTS
+        (SELECT 1 FROM ics_items ii WHERE ii.stock_number = sp.semi_expendable_property_no AND ii.quantity > 0))
+      ORDER BY sp.item_description");
+  foreach ($register as $row) {
+    foreach (['transferred' => 'quantity_reissued', 'issued-register' => 'quantity_issued'] as $type => $column) {
+      if ((int)$row[$column] <= 0) continue;
+      if ($type === 'issued-register') {
+        $check = $conn->prepare('SELECT 1 FROM ics_items WHERE stock_number = ? AND quantity > 0 LIMIT 1');
+        $check->bind_param('s', $row['semi_expendable_property_no']);
+        $check->execute();
+        $hasIcs = $check->get_result()->num_rows > 0;
+        $check->close();
+        if ($hasIcs) continue;
+      }
+      $options[] = ['source_type' => $type, 'source_id' => (int)$row['id'],
+        'stock_number' => $row['semi_expendable_property_no'], 'description' => $row['item_description'],
+        'ics_no' => $row['semi_expendable_property_no'], 'date' => $row['date'],
+        'status' => $type === 'transferred' ? 'Transferred / Reissued' : 'Issued',
+        'quantity' => (int)$row[$column], 'unit_cost' => (float)$row['amount'],
+        'end_user' => $type === 'transferred' ? $row['office_officer_reissued'] : $row['office_officer_issued']];
+    }
+  }
+  return $options;
+}
+function rrspStatement(mysqli $conn, string $sql, string $types, array $params): mysqli_stmt {
+  $statement = $conn->prepare($sql);
+  if (!$statement) throw new RuntimeException($conn->error);
+  $statement->bind_param($types, ...$params);
+  if (!$statement->execute()) throw new RuntimeException($statement->error);
+  return $statement;
 }
 
-// Build semi-expendable quick list for ICS numbers
-$semi=[]; $q=$conn->query("SELECT semi_expendable_property_no,item_description,amount,office_officer_issued FROM semi_expendable_property ORDER BY item_description");
-if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  if (ob_get_length()) ob_clean();
+  header('Content-Type: application/json');
+  $transactionStarted = false;
+  try {
+    $items = json_decode($_POST['items_json'] ?? '[]', true);
+    if (!is_array($items) || !$items) throw new RuntimeException('Select at least one item to return.');
+    $date_prepared = $_POST['date_prepared'] ?? date('Y-m-d');
+    $rrsp_no = trim($_POST['rrsp_no'] ?? '');
+    if ($rrsp_no === '' || strpos($rrsp_no, date('Y-m', strtotime($date_prepared)) . '-') !== 0) {
+      $rrsp_no = get_next_rrsp_no($conn, $date_prepared);
+    }
+    ensure_rrsp_history($conn);
+    ensure_ics_history($conn);
+    ensure_semi_expendable_history($conn);
+    $options = [];
+    foreach (rrspReturnOptions($conn) as $option) $options[$option['source_type'] . ':' . $option['source_id']] = $option;
+    $conn->begin_transaction();
+    $transactionStarted = true;
+    $header = rrspStatement($conn, 'INSERT INTO rrsp (rrsp_no,date_prepared,entity_name,fund_cluster,returned_by,received_by,returned_date,received_date,remarks) VALUES (?,?,?,?,?,?,?,?,?)', 'sssssssss',
+      [$rrsp_no, $date_prepared, trim($_POST['entity_name'] ?? ''), trim($_POST['fund_cluster'] ?? ''), trim($_POST['returned_by'] ?? ''), trim($_POST['received_by'] ?? ''), $_POST['returned_date'] ?: null, $_POST['received_date'] ?: null, trim($_POST['remarks'] ?? '')]);
+    $rrsp_id = $header->insert_id;
+    $header->close();
+    $seen = [];
+    foreach ($items as $item) {
+      $key = ($item['source_type'] ?? '') . ':' . (int)($item['source_id'] ?? 0);
+      $option = $options[$key] ?? null;
+      $qty = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
+      if (!$option || isset($seen[$key]) || $qty === false || $qty <= 0 || $qty > $option['quantity']) {
+        throw new RuntimeException('Invalid return selection or quantity. Reload the item list and try again.');
+      }
+      $seen[$key] = true;
+      $stock = $option['stock_number'];
+      $semiStatement = rrspStatement($conn, 'SELECT * FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE', 's', [$stock]);
+      $semi = $semiStatement->get_result()->fetch_assoc();
+      $semiStatement->close();
+      $column = $option['source_type'] === 'transferred' ? 'quantity_reissued' : 'quantity_issued';
+      if ($semi && (int)$semi[$column] < $qty) throw new RuntimeException('The remaining issued or transferred quantity has changed. Reload the item list.');
+      $uc = $option['unit_cost'];
+      $tot = $qty * $uc;
+      $desc = $option['description'];
+      $ics = $option['ics_no'];
+      $end = trim($item['end_user'] ?? $option['end_user'] ?? '');
+      $remarks = trim($item['remarks'] ?? '');
+      if ($option['source_type'] === 'issued') {
+        $icsStatement = rrspStatement($conn, 'SELECT * FROM ics_items WHERE ics_item_id = ? FOR UPDATE', 'i', [$option['source_id']]);
+        $icsItem = $icsStatement->get_result()->fetch_assoc();
+        $icsStatement->close();
+        if (!$icsItem || (float)$icsItem['quantity'] < $qty) throw new RuntimeException('The remaining ICS quantity has changed. Reload the item list.');
+        $before = (float)$icsItem['quantity'];
+        $after = $before - $qty;
+        rrspStatement($conn, 'UPDATE ics_items SET quantity = ?, total_cost = ? WHERE ics_item_id = ?', 'ddi', [$after, $after * $uc, $option['source_id']])->close();
+        rrspStatement($conn, 'INSERT INTO ics_history (ics_id,ics_item_id,stock_number,description,unit,quantity_before,quantity_after,quantity_change,unit_cost,total_cost_before,total_cost_after,reference_type,reference_id,reference_no,reference_details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', 'iisssdddddsisss',
+          [(int)$icsItem['ics_id'], $option['source_id'], $stock, $desc . ' ($Returned)', $icsItem['unit'], $before, $after, -$qty, $uc, $before * $uc, $after * $uc, 'RRSP', $rrsp_id, $rrsp_no, json_encode(['returned_qty' => $qty, 'end_user' => $end, 'remarks' => $remarks])])->close();
+      }
+      if ($semi) {
+        // Transferred returns reduce reissued quantity, without deducting the original ICS again.
+        rrspStatement($conn, "UPDATE semi_expendable_property SET $column = $column - ?, quantity_returned = quantity_returned + ?, quantity_balance = quantity_balance + ?, office_officer_returned = ? WHERE id = ?", 'iiisi', [$qty, $qty, $qty, $end, (int)$semi['id']])->close();
+        rrspStatement($conn, 'INSERT INTO semi_expendable_history (semi_id,date,ics_rrsp_no,quantity,quantity_issued,quantity_reissued,quantity_returned,quantity_disposed,quantity_balance,office_officer_issued,office_officer_returned,office_officer_reissued,amount,amount_total,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', 'issiiiiiisssdds',
+          [(int)$semi['id'], $date_prepared, $rrsp_no, (int)$semi['quantity'], (int)$semi['quantity_issued'] - ($column === 'quantity_issued' ? $qty : 0), (int)$semi['quantity_reissued'] - ($column === 'quantity_reissued' ? $qty : 0), (int)$semi['quantity_returned'] + $qty, (int)$semi['quantity_disposed'], (int)$semi['quantity_balance'] + $qty, $semi['office_officer_issued'], $end, $semi['office_officer_reissued'], (float)$semi['amount'], (float)$semi['amount_total'], $remarks])->close();
+      }
+      $line = rrspStatement($conn, 'INSERT INTO rrsp_items (rrsp_id,item_description,quantity,ics_no,end_user,item_remarks,unit_cost,total_amount) VALUES (?,?,?,?,?,?,?,?)', 'isisssdd', [$rrsp_id, $desc, $qty, $ics, $end, $remarks, $uc, $tot]);
+      $lineId = $line->insert_id;
+      $line->close();
+      rrspStatement($conn, 'INSERT INTO rrsp_history (rrsp_id,rrsp_item_id,ics_no,item_description,quantity,unit_cost,total_amount,end_user,item_remarks) VALUES (?,?,?,?,?,?,?,?,?)', 'iissiddss', [$rrsp_id, $lineId, $ics, $desc, $qty, $uc, $tot, $end, $remarks])->close();
+    }
+    $conn->commit();
+    echo json_encode(['success' => true, 'rrsp_id' => $rrsp_id]);
+  } catch (Throwable $error) {
+    if ($transactionStarted) $conn->rollback();
+    echo json_encode(['success' => false, 'message' => 'Error: ' . $error->getMessage()]);
+  }
+  exit;
+}
+$returnOptions = rrspReturnOptions($conn);
+$officer_names = [];
+$officers_result = $conn->query('SELECT DISTINCT officer_name FROM officers WHERE TRIM(officer_name) <> \'\' ORDER BY officer_name');
+if ($officers_result) {
+  while ($officer = $officers_result->fetch_assoc()) $officer_names[] = $officer['officer_name'];
+  $officers_result->close();
+}
+$officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -200,6 +173,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Add RRSP Form</title>
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
 <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
@@ -236,13 +210,22 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
   @media (max-width: 800px) {
-     .form-grid { grid-template-columns: 1fr; } 
+     .form-grid { grid-template-columns: 1fr; }
     }
-  .actions { display:flex; 
-    gap:12px; 
-    align-items:center; 
-    margin-top:20px; 
+  .actions { display:flex;
+    gap:12px;
+    align-items:center;
+    margin-top:20px;
   }
+  /* Use the same selection wrapper and shared table styles as Add PTR. */
+  .rrsp-add-page .items-selection { border: 2px solid #e5e7eb; border-radius: 8px; max-height: 400px; overflow: auto; background: #f9fafb; }
+  .rrsp-add-page #itemsTable { min-width: 700px; margin-top: 0 !important; }
+  .rrsp-add-page #itemsTable .qty-input { width: 60px; text-align: center; padding: 4px !important; border: 1px solid #000 !important; border-radius: 4px; }
+  .rrsp-add-page #itemsTable .enduser-input, .rrsp-add-page #itemsTable .remarks-input { width: 160px; }
+  .rrsp-add-page .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: none; border-radius: 0 0 6px 6px; max-height: 250px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0, 0, 0, .1); }
+  .rrsp-add-page .autocomplete-item { padding: 10px 12px; cursor: pointer; transition: background .2s; }
+  .rrsp-add-page .autocomplete-item:hover { background: #f0f4f8; }
+  .rrsp-add-page .autocomplete-item.selected { background: #3b82f6; color: white; }
 </style>
 
 </head>
@@ -290,18 +273,18 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     <div class="section-card">
       <h3><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
       <div class="search-container">
-        <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items by stock number, description, or item no..." onkeyup="filterItems()">
+        <input type="text" id="itemSearch" class="search-input" placeholder="Search issued or transferred items by property number, description, or holder..." onkeyup="filterItems()">
       </div>
-      <div class="table-frame">
+      <div class="items-selection">
         <div class="table-viewport">
-          <table id="itemsTable" tabindex="-1">
+          <table id="itemsTable" class="table table-bordered" tabindex="-1">
             <thead>
               <tr>
                 <th>Item No.</th>
-                <th>ICS No./Date</th>
+                <th>ICS / Property reference</th>
                 <th>Description</th>
                 <th>Unit Cost</th>
-                <th>Qty on Hand</th>
+                <th>Remaining with holder</th>
                 <th>Return Qty</th>
                 <th>Amount</th>
                 <th>End-user</th>
@@ -309,9 +292,23 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
               </tr>
             </thead>
             <tbody>
-            <?php
-            
+            <?php foreach ($returnOptions as $option):
+              $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+              $search = implode(' ', [$option['stock_number'], $option['ics_no'], $option['description'], $option['status'], $option['end_user']]);
             ?>
+              <tr class="ics-row" data-text="<?= $escape($search) ?>" data-source-type="<?= $escape($option['source_type']) ?>" data-source-id="<?= $option['source_id'] ?>" data-ics-no="<?= $escape($option['ics_no']) ?>" data-unit-cost="<?= $option['unit_cost'] ?>" data-qty-on-hand="<?= $option['quantity'] ?>">
+                <td><?= $escape($option['stock_number']) ?></td>
+                <td class="icsinfo-cell"><?= $escape($option['ics_no']) ?><br><small><?= $escape($option['date']) ?> &middot; <?= $escape($option['status']) ?></small></td>
+                <td class="desc-cell"><?= $escape($option['description']) ?></td>
+                <td>&#8369;<?= number_format($option['unit_cost'], 2) ?></td>
+                <td class="balance-cell"><?= $option['quantity'] ?></td>
+                <td><input class="qty-input" type="number" min="0" max="<?= $option['quantity'] ?>" step="1" value="0" aria-label="Return quantity for <?= $escape($option['description']) ?>"></td>
+                <td class="amount-cell">&#8369;0.00</td>
+                <td><input class="enduser-input" type="text" value="<?= $escape($option['end_user']) ?>" aria-label="End-user for <?= $escape($option['description']) ?>"></td>
+                <td><input class="remarks-input" type="text" aria-label="Remarks for <?= $escape($option['description']) ?>"></td>
+              </tr>
+            <?php endforeach; ?>
+              <tr id="no-items-row"<?= $returnOptions ? ' style="display:none"' : '' ?>><td colspan="9">No issued or transferred items available for return.</td></tr>
             </tbody>
             <tfoot>
               <tr>
@@ -330,7 +327,8 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       <div class="form-grid">
         <div class="form-group">
           <label>Returned By:</label>
-          <input type="text" id="returned_by" />
+          <input type="text" id="returned_by" autocomplete="off" />
+          <div id="returned_by_dropdown" class="autocomplete-dropdown"></div>
         </div>
         <div class="form-group">
           <label>Returned Date:</label>
@@ -340,7 +338,8 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       <div class="form-grid">
         <div class="form-group">
           <label>Received By:</label>
-          <input type="text" id="received_by" />
+          <input type="text" id="received_by" autocomplete="off" />
+          <div id="received_by_dropdown" class="autocomplete-dropdown"></div>
         </div>
         <div class="form-group">
           <label>Received Date:</label>
@@ -354,8 +353,192 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       <button type="button" class="pill-btn pill-view" onclick="window.location.href='rrsp.php'"><i class="fa-solid fa-ban"></i> Cancel</button>
     </div>
   </div>
-</div>  
+</div>
 <script>
+const officerNames = <?= $officer_names_json ?>;
+        function setupAutocomplete(inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+
+            if (!input || !dropdown) return;
+
+            // Show dropdown on focus
+            input.addEventListener('focus', function() {
+                if (this.value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(this.value, dropdown, input);
+                }
+            });
+
+            // Prevent click on input from closing dropdown
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.style.display !== 'block') {
+                    if (this.value.trim() === '') {
+                        showAllSuggestions(dropdown, input);
+                    } else {
+                        filterSuggestions(this.value, dropdown, input);
+                    }
+                }
+            });
+
+            // Filter on input
+            input.addEventListener('input', function() {
+                const value = this.value;
+                if (value.trim() === '') {
+                    showAllSuggestions(dropdown, input);
+                } else {
+                    filterSuggestions(value, dropdown, input);
+                }
+            });
+
+            // Handle keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                if (dropdown.style.display !== 'block') return;
+
+                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
+                if (items.length === 0) return;
+
+                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
+                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = (currentIndex + 1) % items.length;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                        highlightItem(items, currentIndex, dropdown);
+                        break;
+
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedItem) {
+                            const text = selectedItem.textContent || selectedItem.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+
+                    case 'Tab':
+                        const itemToSelect = selectedItem || items[0];
+                        if (itemToSelect) {
+                            const text = itemToSelect.textContent || itemToSelect.innerText;
+                            input.value = text;
+                            dropdown.style.display = 'none';
+                        }
+                        break;
+
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        break;
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Highlight selected item and scroll into view
+        function highlightItem(items, index, dropdown) {
+            items.forEach(item => item.classList.remove('selected'));
+
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+
+                const item = items[index];
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+
+                if (itemRect.bottom > dropdownRect.bottom) {
+                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                } else if (itemRect.top < dropdownRect.top) {
+                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                }
+            }
+        }
+
+        function showAllSuggestions(dropdown, input) {
+            dropdown.innerHTML = '';
+
+            if (officerNames.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            officerNames.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = name;
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function filterSuggestions(value, dropdown, input) {
+            dropdown.innerHTML = '';
+            const searchValue = value.toLowerCase();
+
+            const filtered = officerNames.filter(name =>
+                name.toLowerCase().includes(searchValue)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+
+                const index = name.toLowerCase().indexOf(searchValue);
+                if (index !== -1) {
+                    const before = name.substring(0, index);
+                    const match = name.substring(index, index + searchValue.length);
+                    const after = name.substring(index + searchValue.length);
+                    const highlighted = document.createElement('strong');
+                    highlighted.textContent = match;
+                    item.append(document.createTextNode(before), highlighted, document.createTextNode(after));
+                } else {
+                    item.textContent = name;
+                }
+
+                item.addEventListener('click', function() {
+                    input.value = name;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+ document.addEventListener('DOMContentLoaded', function() {
+   setupAutocomplete('returned_by', 'returned_by_dropdown');
+   setupAutocomplete('received_by', 'received_by_dropdown');
+ });
 // Fetch next RRSP number from server based on selected date
 async function generateRRSPNo(){
   try {
@@ -403,7 +586,7 @@ function attachQtyHandlersRRSP(){
     const onHand=parseFloat(r.getAttribute('data-qty-on-hand')||'0')||0;
     if (!qtyInput) return;
     const recalc=()=>{
-      let v=parseFloat(qtyInput.value||''); if (isNaN(v)||v<0) v=0; const max=parseFloat(qtyInput.getAttribute('max')||'0'); if (max>0 && v>max) v=max;
+      let v=parseFloat(qtyInput.value||''); if (isNaN(v)||v<0) v=0; const max=parseFloat(qtyInput.getAttribute('max')||'0'); if (max>0 && v>max) v=max; v=Math.floor(v); qtyInput.value=String(v);
       if (amtCell) amtCell.textContent = formatMoney(unitCost * v);
       if (balCell) balCell.textContent = String(Math.max(0, onHand - v));
       recomputeGrand();
@@ -424,16 +607,18 @@ function collectItems(){
       const endUser = r.querySelector('.enduser-input')?.value || '';
       const remarks = r.querySelector('.remarks-input')?.value || '';
       const unitCost = parseFloat(r.getAttribute('data-unit-cost')||'0')||0;
-      arr.push({ description: desc, quantity: qty, ics_no: icsNo, end_user: endUser, remarks: remarks, unit_cost: unitCost });
+      arr.push({ source_type: r.getAttribute('data-source-type'), source_id: Number(r.getAttribute('data-source-id')), description: desc, quantity: qty, ics_no: icsNo, end_user: endUser, remarks: remarks, unit_cost: unitCost });
     }
   });
   return arr;
 }
 async function submitRRSP(){
+  if (!collectItems().length) { alert('Select at least one item to return.'); return; }
   const fd=new FormData(); fd.append('rrsp_no', document.getElementById('rrsp_no').value); fd.append('entity_name', document.getElementById('entity_name').value); fd.append('fund_cluster', document.getElementById('fund_cluster').value); fd.append('date_prepared', document.getElementById('date_prepared').value); fd.append('returned_by', document.getElementById('returned_by').value); fd.append('returned_date', document.getElementById('returned_date').value); fd.append('received_by', document.getElementById('received_by').value); fd.append('received_date', document.getElementById('received_date').value); fd.append('remarks', document.getElementById('remarks').value); fd.append('items_json', JSON.stringify(collectItems()));
   try { const res=await fetch('add_rrsp.php',{method:'POST', body:fd}); const j=await res.json(); if(!j.success){ alert(j.message||'Save failed'); return; } window.location.href='rrsp.php'; } catch(e){ alert('Error: '+e.message); }
 }
 // Initialize qty handlers for dynamic totals
 document.addEventListener('DOMContentLoaded', attachQtyHandlersRRSP);
 </script>
-</b
+</body>
+</html>
