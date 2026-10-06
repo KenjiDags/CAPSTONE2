@@ -204,7 +204,7 @@ try {
 
                                     <a href="#"
                                     class="delete-action"
-                                    onclick="event.preventDefault(); document.getElementById('delete-form-<?= (int)$item['id']; ?>').submit();">
+                                    onclick="event.preventDefault(); document.getElementById('delete-form-<?= (int)$item['id']; ?>').requestSubmit();">
                                         <i class="fas fa-trash"></i> Delete
                                     </a>
 
@@ -214,7 +214,7 @@ try {
                             <form id="delete-form-<?= (int)$item['id']; ?>"
                                 method="POST"
                                 style="display: none;"
-                                onsubmit="return confirm('Delete this item permanently?');">
+                                onsubmit="return confirm('Move this item to Archive?');">
                                 <input type="hidden" name="delete_id" value="<?= (int)$item['id']; ?>">
                             </form>
                         </td>

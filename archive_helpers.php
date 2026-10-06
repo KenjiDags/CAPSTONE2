@@ -37,8 +37,8 @@ function archiveSources(): array {
         'PC' => ['item_history_ppe', 'id', 'PPE_no', []],
         'RRSP' => ['rrsp', 'rrsp_id', 'rrsp_no', ['rrsp_items' => 'rrsp_id']],
         'IIRUSP' => ['iirusp', 'iirusp_id', 'iirusp_no', ['iirusp_items' => 'iirusp_id']],
-        'PPE' => ['ppe_property', 'id', 'property_no', []],
-        'Semi-expendable' => ['semi_expendable_property', 'id', 'property_no', []],
+        'PPE' => ['ppe_property', 'id', 'PPE_no', []],
+        'Semi-expendable' => ['semi_expendable_property', 'id', 'semi_expendable_property_no', []],
         'ICT' => ['ict_registry', 'id', 'property_no', []],
     ];
 }

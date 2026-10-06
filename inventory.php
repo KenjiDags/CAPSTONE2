@@ -4,6 +4,22 @@ require 'config.php';
 require 'functions.php';
 require_once 'inventory_count_cache.php';
 invalidateInventoryCountAfterWrite();
+if (empty($_SESSION['inventory_delete_csrf'])) $_SESSION['inventory_delete_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    if (!hash_equals($_SESSION['inventory_delete_csrf'], (string)($_POST['csrf'] ?? ''))) {
+        http_response_code(400);
+        exit('Invalid request. Reload the inventory and try again.');
+    }
+    require_once 'archive_helpers.php';
+    try {
+        archiveRecord($conn, 'Supply', (int)$_POST['delete_id']);
+        header('Location: inventory.php?archived=1');
+        exit();
+    } catch (Throwable $error) {
+        http_response_code(500);
+        exit('Unable to archive item. No records were deleted.');
+    }
+}
 
 
 
@@ -618,6 +634,35 @@ case 'update':
             vertical-align: middle;
         }
 
+        .supply-actions-menu-list form { margin: 0; }
+        .supply-actions-menu-list button.delete-action {
+            display: flex;
+            box-sizing: border-box;
+            width: 100%;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #dc2626;
+            font: inherit;
+            font-size: 12px;
+            text-align: left;
+            cursor: pointer;
+        }
+        .supply-actions-menu-list button.delete-action:hover,
+        .supply-actions-menu-list button.delete-action:focus-visible {
+            background: #f3f4f6;
+        }
+        body.dark-mode .supply-actions-menu-list button.delete-action {
+            color: #fca5a5 !important;
+        }
+        body.dark-mode .supply-actions-menu-list button.delete-action:hover,
+        body.dark-mode .supply-actions-menu-list button.delete-action:focus-visible {
+            background: #334155;
+        }
+
         .item-detail-row td {
             padding: 0 12px 12px;
             background: #f8fafc;
@@ -681,6 +726,9 @@ case 'update':
 
 <div class="container">
     <h2>Office Supplies</h2>
+    <?php if (isset($_GET['archived'])): ?>
+        <div class="alert alert-success" role="status">Item moved to Archive.</div>
+    <?php endif; ?>
 
     <form id="inventory-filters" method="get" class="filters">
         <div class="inventory-controls">
@@ -819,7 +867,7 @@ case 'update':
                                         <i class='fas fa-ellipsis-v'></i>
                                     </button>
 
-                                    <div class='actions-menu-list'>
+                                    <div class='actions-menu-list supply-actions-menu-list'>
                                         <a href='view_item.php?item_id={$row['item_id']}' class='view-action'>
                                             <i class='fas fa-eye'></i> View
                                         </a>
@@ -828,9 +876,11 @@ case 'update':
                                             <i class='fas fa-edit'></i> Edit
                                         </a>
 
-                                        <a href='inventory.php?delete_id={$row['item_id']}' class='delete-action' onclick='return confirm(\"Delete this item permanently?\")'>
-                                            <i class='fas fa-trash'></i> Delete
-                                        </a>
+                                        <form method='post' action='inventory.php' onsubmit='return confirm(\"Move this item to Archive?\")'>
+                                            <input type='hidden' name='delete_id' value='{$row['item_id']}'>
+                                            <input type='hidden' name='csrf' value='{$_SESSION['inventory_delete_csrf']}'>
+                                            <button type='submit' class='delete-action'><i class='fas fa-trash'></i> Delete</button>
+                                        </form>
                                     </div>
                                 </div>
                             </td>

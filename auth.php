@@ -31,13 +31,30 @@ if (!$accessUser || $accessUser['status'] !== 'active') {
     header('Location: index.php');
     exit;
 }
+require_once 'totp.php';
+totpTable($conn);
+$factorStmt = $conn->prepare('SELECT 1 FROM user_totp WHERE user_id = ? AND enabled_at IS NOT NULL');
+$factorStmt->bind_param('i', $_SESSION['user_id']);
+$factorStmt->execute();
+$factorEnabled = $factorStmt->get_result()->num_rows > 0;
+$factorStmt->close();
+if (!$factorEnabled) {
+    session_unset();
+    session_destroy();
+    header('Location: index.php');
+    exit;
+}
 $_SESSION['role'] = $accessUser['role'];
 $_SESSION['username'] = $accessUser['username'];
-if ($accessUser['role'] === 'admin' && !defined('ADMIN_PAGE')) {
+if (!empty($_SESSION['totp_new_recovery']) && !defined('RECOVERY_PAGE')) {
+    header('Location: totp_recovery.php');
+    exit;
+}
+if ($accessUser['role'] === 'admin' && !defined('ADMIN_PAGE') && !defined('ACCOUNT_PAGE')) {
     header('Location: admin.php');
     exit;
 }
-if ($accessUser['role'] !== 'admin' && defined('ADMIN_PAGE')) {
+if ($accessUser['role'] !== 'admin' && defined('ADMIN_PAGE') && !defined('ACCOUNT_PAGE')) {
     header('Location: analytics.php');
     exit;
 }

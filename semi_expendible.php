@@ -567,7 +567,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 
     <script>
         function deleteItem(id, category) {
-            if (confirm('Delete this item permanently?')) {
+            if (confirm('Move this item to Archive?')) {
                 // Redirect with delete_id and category as GET params
                 let url = `semi_expendible.php?delete_id=${encodeURIComponent(id)}&category=${encodeURIComponent(category)}`;
                 window.location.href = url;

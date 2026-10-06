@@ -2,13 +2,15 @@
 session_start();
 
 // The application entry point always starts at the login form.
-if (!empty($_SESSION)) {
+if (!empty($_SESSION) && !isset($_POST['totp_login']) && !isset($_GET['code'])) {
     session_unset();
     session_destroy();
     session_start();
 }
 
 require 'config.php';
+require_once 'totp.php';
+totpTable($conn);
 
 $error = '';
 $cookie_username = '';
@@ -19,7 +21,49 @@ if (!empty($_COOKIE['remember_username'])) {
     $remember_checked = true;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_login'])) {
+    $pending = $_SESSION['totp_pending'] ?? null;
+    $code = trim((string)($_POST['totp_code'] ?? ''));
+    if (!$pending || ($pending['expires'] ?? 0) < time()) {
+        unset($_SESSION['totp_pending']);
+        $error = 'Login expired. Enter your username and password again.';
+    } else {
+        $id = (int)$pending['id'];
+        $stmt = $conn->prepare('SELECT u.username, u.role, u.status, t.secret, t.last_step, t.recovery_hashes FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
+        $stmt->bind_param('i', $id); $stmt->execute(); $account = $stmt->get_result()->fetch_assoc(); $stmt->close();
+        $accepted = false;
+        if ($account && in_array($account['status'], ['approved', 'active'], true)) {
+            $step = totpVerify($account['secret'], $code, $account['last_step'] === null ? null : (int)$account['last_step']);
+            if ($step !== null) {
+                $save = $conn->prepare('UPDATE user_totp SET last_step = ? WHERE user_id = ? AND (last_step IS NULL OR last_step < ?)');
+                $save->bind_param('iii', $step, $id, $step); $save->execute(); $accepted = $save->affected_rows === 1; $save->close();
+            } else {
+                $hashes = json_decode($account['recovery_hashes'] ?? '[]', true) ?: [];
+                foreach ($hashes as $index => $hash) {
+                    if (password_verify(strtoupper($code), $hash)) {
+                        unset($hashes[$index]); $json = json_encode(array_values($hashes));
+                        $save = $conn->prepare('UPDATE user_totp SET recovery_hashes = ? WHERE user_id = ? AND recovery_hashes = ?');
+                        $old = $account['recovery_hashes']; $save->bind_param('sis', $json, $id, $old); $save->execute();
+                        $accepted = $save->affected_rows === 1; $save->close(); break;
+                    }
+                }
+            }
+        }
+        if ($accepted) {
+            if ($account['status'] === 'approved') {
+                $activate = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
+                $activate->bind_param('i', $id); $activate->execute(); $activate->close();
+            }
+            unset($_SESSION['totp_pending']); session_regenerate_id(true);
+            $_SESSION['user_id'] = $id; $_SESSION['username'] = $account['username']; $_SESSION['role'] = $account['role'];
+            $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? ''; $_SESSION['logged_in'] = true;
+            header('Location: ' . ($account['role'] === 'admin' ? 'admin.php' : 'analytics.php')); exit;
+        }
+        $_SESSION['totp_pending']['attempts'] = ($pending['attempts'] ?? 0) + 1;
+        if ($_SESSION['totp_pending']['attempts'] >= 5) unset($_SESSION['totp_pending']);
+        $error = 'Invalid authenticator or recovery code.';
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
@@ -34,34 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
+                $factor = $conn->prepare('SELECT enabled_at FROM user_totp WHERE user_id = ?');
+                $factor->bind_param('i', $user['user_id']); $factor->execute();
+                $factorRow = $factor->get_result()->fetch_assoc(); $factor->close();
+                if ($factorRow && $factorRow['enabled_at']) {
+                    session_regenerate_id(true);
+                    $_SESSION['totp_pending'] = ['id' => (int)$user['user_id'], 'expires' => time() + 300, 'attempts' => 0];
+                    header('Location: index.php?code=1'); exit;
+                }
                 session_regenerate_id(true);
-                $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
-                // Login is session-only; do not persist authentication across visits.
-                $stmtToken = $conn->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
-                $stmtToken->bind_param("i", $user['user_id']);
-                $stmtToken->execute();
-                $stmtToken->close();
-                setcookie('remember_token', '', time() - 3600, "/", "localhost", false, true);
-
-                if ($remember) {
-                    setcookie('remember_username', $username, time() + 30 * 24 * 60 * 60, '/', 'localhost', false, true);
-                } else {
-                    setcookie('remember_username', '', time() - 3600, '/', 'localhost', false, true);
-                }
-
-                if ($user['status'] === 'approved') {
-                    $activate = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
-                    $activate->bind_param('i', $user['user_id']);
-                    $activate->execute();
-                    $activate->close();
-                }
-                $_SESSION['user_id'] = (int)$user['user_id'];
-                $_SESSION['username'] = $username;
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['logged_in'] = true;
-                header('Location: ' . ($user['role'] === 'admin' ? 'admin.php' : 'analytics.php'));
-                exit;
+                $_SESSION['totp_setup_pending'] = ['id' => (int)$user['user_id'], 'expires' => time() + 900, 'attempts' => 0];
+                header('Location: totp_setup.php'); exit;
             } else {
                 $error = 'Invalid credentials or account awaiting administrator approval.';
             }
@@ -236,6 +263,17 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             <div class="success">You have been logged out successfully.</div>
         <?php endif; ?>
 
+        <?php if (!empty($_SESSION['totp_pending']) && ($_SESSION['totp_pending']['expires'] ?? 0) >= time()): ?>
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="totp_login" value="1">
+            <div class="form-group">
+                <label for="totp_code">Authenticator or recovery code</label>
+                <input type="text" name="totp_code" id="totp_code" required autofocus autocomplete="one-time-code">
+            </div>
+            <button type="submit">Verify code</button>
+        </form>
+        <div class="signup-link"><a href="index.php">Start over</a></div>
+        <?php else: ?>
         <form method="post" autocomplete="off">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
@@ -253,6 +291,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             </div>
             <button type="submit">Login</button>
         </form>
+        <?php endif; ?>
 
         <div class="signup-link">
             Don't have an account? <a href="register.php">Request access</a>

@@ -1,6 +1,64 @@
 <?php
+define('ACCOUNT_PAGE', true);
 require 'auth.php';
 require 'config.php';
+require_once 'totp.php';
+totpTable($conn);
+if (empty($_SESSION['totp_csrf'])) $_SESSION['totp_csrf'] = bin2hex(random_bytes(32));
+$totpNotice = '';
+$totpRecovery = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_action'])) {
+    if (!hash_equals($_SESSION['totp_csrf'], (string)($_POST['totp_csrf'] ?? ''))) {
+        http_response_code(400); exit('Invalid request. Reload settings and try again.');
+    }
+    $action = (string)$_POST['totp_action'];
+    $pass = (string)($_POST['totp_password'] ?? '');
+    $check = $conn->prepare('SELECT password FROM users WHERE user_id = ?');
+    $check->bind_param('i', $_SESSION['user_id']); $check->execute();
+    $passwordRow = $check->get_result()->fetch_assoc(); $check->close();
+    if (!$passwordRow || !password_verify($pass, $passwordRow['password'])) {
+        $totpNotice = 'Current password is incorrect.';
+    } elseif ($action === 'start') {
+        $existing = $conn->prepare('SELECT enabled_at FROM user_totp WHERE user_id = ?');
+        $existing->bind_param('i', $_SESSION['user_id']); $existing->execute();
+        $row = $existing->get_result()->fetch_assoc(); $existing->close();
+        if ($row && $row['enabled_at']) $totpNotice = 'Authenticator is already enabled.';
+        else {
+            $secret = totpSecret();
+            $save = $conn->prepare('INSERT INTO user_totp (user_id, secret) VALUES (?, ?) ON DUPLICATE KEY UPDATE secret = VALUES(secret), enabled_at = NULL, last_step = NULL, recovery_hashes = NULL');
+            $save->bind_param('is', $_SESSION['user_id'], $secret); $save->execute(); $save->close();
+            $totpNotice = 'Add the setup key to your authenticator app, then verify a code below.';
+        }
+    } elseif ($action === 'enable') {
+        $get = $conn->prepare('SELECT secret, enabled_at FROM user_totp WHERE user_id = ?');
+        $get->bind_param('i', $_SESSION['user_id']); $get->execute(); $row = $get->get_result()->fetch_assoc(); $get->close();
+        $step = $row && !$row['enabled_at'] ? totpVerify($row['secret'], trim((string)($_POST['totp_code'] ?? ''))) : null;
+        if ($step === null) $totpNotice = 'Invalid code. Check your phone time and try again.';
+        else {
+            for ($i = 0; $i < 8; $i++) $totpRecovery[] = strtoupper(bin2hex(random_bytes(5)));
+            $hashes = json_encode(array_map('password_hash', $totpRecovery, array_fill(0, 8, PASSWORD_DEFAULT)));
+            $save = $conn->prepare('UPDATE user_totp SET enabled_at = NOW(), last_step = ?, recovery_hashes = ? WHERE user_id = ?');
+            $save->bind_param('isi', $step, $hashes, $_SESSION['user_id']); $save->execute(); $save->close();
+            $totpNotice = 'Authenticator enabled. Save these recovery codes now; they will not be shown again.';
+        }
+    } elseif ($action === 'disable') {
+        $get = $conn->prepare('SELECT secret, last_step, recovery_hashes FROM user_totp WHERE user_id = ? AND enabled_at IS NOT NULL');
+        $get->bind_param('i', $_SESSION['user_id']); $get->execute(); $row = $get->get_result()->fetch_assoc(); $get->close();
+        $entered = trim((string)($_POST['totp_code'] ?? ''));
+        $valid = $row && totpVerify($row['secret'], $entered, $row['last_step'] === null ? null : (int)$row['last_step']) !== null;
+        if ($row && !$valid) foreach (json_decode($row['recovery_hashes'] ?? '[]', true) ?: [] as $hash) {
+            if (password_verify(strtoupper($entered), $hash)) { $valid = true; break; }
+        }
+        if (!$valid) $totpNotice = 'A current authenticator or recovery code is required to disable it.';
+        else {
+            $del = $conn->prepare('DELETE FROM user_totp WHERE user_id = ?'); $del->bind_param('i', $_SESSION['user_id']); $del->execute(); $del->close();
+            $totpNotice = 'Authenticator disabled.';
+        }
+    }
+}
+$totpStmt = $conn->prepare('SELECT secret, enabled_at FROM user_totp WHERE user_id = ?');
+$totpStmt->bind_param('i', $_SESSION['user_id']); $totpStmt->execute();
+$totpAccount = $totpStmt->get_result()->fetch_assoc(); $totpStmt->close();
 
 
 $user_id = $_SESSION['user_id'];
@@ -621,6 +679,47 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </section>
             
             
+            <section class="settings-section">
+                <h2><i class="fas fa-shield-alt"></i> Authenticator App</h2>
+                <?php if ($totpNotice): ?><div class="alert <?= $totpRecovery ? 'alert-success' : 'alert-error' ?>" role="status"><?= htmlspecialchars($totpNotice) ?></div><?php endif; ?>
+                <?php if ($totpRecovery): ?>
+                    <p>Save each recovery code somewhere private. Each works once.</p>
+                    <pre><?= htmlspecialchars(implode("\n", $totpRecovery)) ?></pre>
+                <?php endif; ?>
+                <?php if ($totpAccount && $totpAccount['enabled_at']): ?>
+                    <p>Authenticator is enabled for this account.</p>
+                    <form method="post">
+                        <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
+                        <input type="hidden" name="totp_action" value="disable">
+                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
+                        <div class="form-row"><label>Authenticator or recovery code</label><input name="totp_code" required autocomplete="one-time-code"></div>
+                        <button type="submit" class="btn-update">Disable authenticator</button>
+                    </form>
+                <?php else: ?>
+                    <?php if ($totpAccount): ?>
+                        <p>On your phone, open an authenticator app and choose <strong>Add account → Enter setup key</strong>.</p>
+                        <p>Account: <strong>TESDA Inventory (<?= htmlspecialchars($current_username) ?>)</strong></p>
+                        <p>Setup key: <code style="overflow-wrap:anywhere;user-select:all"><?= htmlspecialchars($totpAccount['secret']) ?></code></p>
+                        <p>Choose <strong>Time based</strong>, then enter the six digit code below.</p>
+                        <form method="post">
+                            <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
+                            <input type="hidden" name="totp_action" value="enable">
+                            <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
+                            <div class="form-row"><label>Authenticator code</label><input name="totp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"></div>
+                            <button type="submit" class="btn-update">Verify and enable</button>
+                        </form>
+                    <?php else: ?>
+                        <p>Use a phone authenticator app to add a second step to sign in.</p>
+                    <?php endif; ?>
+                    <form method="post">
+                        <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
+                        <input type="hidden" name="totp_action" value="start">
+                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
+                        <button type="submit" class="btn-update"><?= $totpAccount ? 'Generate a new setup key' : 'Set up authenticator' ?></button>
+                    </form>
+                <?php endif; ?>
+            </section>
+
             <!-- Password Section -->
             <section class="settings-section">
                 <h2>
