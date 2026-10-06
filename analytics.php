@@ -188,16 +188,19 @@ const state = { category: 'office-supplies', items: [], criticalItems: [], unifi
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 let demandForecastChart = null;
 let demandForecastRequest = 0;
-async function loadDemandForecast() {
+async function loadDemandForecast(background = false) {
   const request = ++demandForecastRequest;
   const message = document.getElementById('demandForecastMessage');
   const horizon = document.getElementById('horizonSelect').value;
   const custom = horizon === 'custom';
   document.getElementById('demandCustomRange').hidden = !custom;
-  document.getElementById('demandChartFrame').hidden = true;
-  document.getElementById('demandForecastSummary').hidden = true;
-  document.getElementById('demandForecastMethod').hidden = true;
-  message.hidden = false;
+  const silent = background === true && demandForecastChart !== null;
+  if (!silent) {
+    document.getElementById('demandChartFrame').hidden = true;
+    document.getElementById('demandForecastSummary').hidden = true;
+    document.getElementById('demandForecastMethod').hidden = true;
+    message.hidden = false;
+  }
   const params = new URLSearchParams({ demand_forecast: '1', horizon });
   if (custom) {
     const start = document.getElementById('demandStartMonth');
@@ -296,6 +299,7 @@ async function loadDemandForecast() {
     });
   } catch (error) {
     if (request !== demandForecastRequest) return;
+    if (silent) return;
     message.hidden = false;
     message.textContent = 'Unable to load demand history.';
     document.getElementById('demandChartFrame').hidden = true;
@@ -544,14 +548,22 @@ setInterval(() => {
   }
 }, 1000);
 setInterval(refreshMrp, 60000);
-setInterval(() => {
-  if (!document.hidden && state.category === 'office-supplies') {
-    loadDemandForecast();
+let demandRefreshing = false;
+async function refreshDemandForecast() {
+  if (document.hidden || state.category !== 'office-supplies' || demandRefreshing) return;
+  demandRefreshing = true;
+  try {
+    await loadDemandForecast(true);
+  } finally {
+    demandRefreshing = false;
   }
-}, 600000);
-window.addEventListener('focus', refreshMrp);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshMrp(); });
-window.addEventListener('inventory:updated', refreshMrp);
+}
+setInterval(refreshDemandForecast, 15000);
+window.addEventListener('focus', () => { refreshMrp(); refreshDemandForecast(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { refreshMrp(); refreshDemandForecast(); }
+});
+window.addEventListener('inventory:updated', () => { refreshMrp(); refreshDemandForecast(); });
 </script>
 </body>
 </html>
