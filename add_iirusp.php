@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     ini_set('display_errors', 0); 
 
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     try {
         // Ensure tables exist
         ensure_iirusp_tables($conn);
@@ -56,19 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $item_stmt = $conn->prepare("INSERT INTO iirusp_items (iirusp_id, date_acquired, particulars, semi_expendable_property_no, quantity, unit, unit_cost, total_cost, disposal_sale, disposal_transfer, disposal_destruction, disposal_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         // Prepare Master Update (Deduct Stock)
-        $update_master = $conn->prepare("UPDATE semi_expendable_property SET quantity = GREATEST(0, quantity - ?), quantity_balance = GREATEST(0, quantity_balance - ?), quantity_disposed = quantity_disposed + ? WHERE semi_expendable_property_no = ?");
+        $update_master = $conn->prepare("UPDATE semi_expendable_property SET quantity = quantity - ?, quantity_balance = quantity_balance - ?, quantity_disposed = quantity_disposed + ? WHERE semi_expendable_property_no = ? AND quantity >= ? AND quantity_balance >= ?");
         
         // Prepare History Insert
         $history_stmt = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity_disposed, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
         foreach ($items as $item) {
             $prop_no = $item['property_no'];
-            $qty = (int)$item['quantity'];
+            $qty = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($qty === false) { throw new Exception('Disposal quantities must be positive whole numbers.'); }
             $cost = (float)$item['unit_cost'];
             $total = $qty * $cost;
             
             // 1. Validate: Get current balance and check disposal qty
-            $check_stmt = $conn->prepare("SELECT id, quantity, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+            $check_stmt = $conn->prepare("SELECT id, quantity, quantity_balance, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE");
             $check_stmt->bind_param("s", $prop_no);
             $check_stmt->execute();
             $result = $check_stmt->get_result();
@@ -79,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $row = $result->fetch_assoc();
             $semi_id = $row['id'];
-            $available_qty = (int)$row['quantity'];
+            $available_qty = min((int)$row['quantity'], (int)$row['quantity_balance']);
             $unit_val = isset($item['unit']) && $item['unit'] !== '' ? $item['unit'] : ($row['unit'] ?? '');
             $check_stmt->close();
             
@@ -104,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // 3. Update Master Stock (SAFE USING PREPARED STATEMENT)
-            $update_master->bind_param("iiis", $qty, $qty, $qty, $prop_no);
-            if (!$update_master->execute()) {
+            $update_master->bind_param("iiisii", $qty, $qty, $qty, $prop_no, $qty, $qty);
+            if (!$update_master->execute() || $update_master->affected_rows !== 1) {
                 throw new Exception("Failed to update master: " . $update_master->error);
             }
 

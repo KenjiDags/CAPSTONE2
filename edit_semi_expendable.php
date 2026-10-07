@@ -4,6 +4,19 @@ ob_start();
 require 'auth.php';
 require_once 'config.php';
 require_once 'functions.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    foreach (['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed', 'quantity_balance'] as $field) {
+        if (isset($_POST[$field]) && filter_var($_POST[$field], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+            http_response_code(400);
+            exit('Quantities must be whole numbers of zero or greater. Please go back and correct the form.');
+        }
+    }
+    if ((int)($_POST['quantity_issued_out'] ?? 0) + (int)($_POST['quantity_reissued'] ?? 0) + (int)($_POST['quantity_disposed'] ?? 0) > (int)($_POST['quantity_issued'] ?? 0)) {
+        http_response_code(400);
+        exit('Issued + Re-issued + Disposed cannot exceed Quantity. Please go back and correct the form.');
+    }
+}
+
 try {
     if (function_exists('columnExists') && !columnExists($conn, 'semi_expendable_property', 'unit')) {
         @$conn->query("ALTER TABLE semi_expendable_property ADD COLUMN unit VARCHAR(64) NULL AFTER item_description");

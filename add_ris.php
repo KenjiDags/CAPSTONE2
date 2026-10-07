@@ -10,6 +10,18 @@ ob_start();
 <?php
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    $conn->begin_transaction();
+    try {
+    // Validate every quantity before writing, including otherwise unused rows.
+    foreach (($_POST['issued_quantity'] ?? []) as $quantity) {
+        if ($quantity !== '' && filter_var($quantity, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+            throw new InvalidArgumentException('Issued quantities must be whole numbers of zero or greater.');
+        }
+    }
+    if (empty($_POST['stock_number']) || !is_array($_POST['stock_number']) || !is_array($_POST['issued_quantity'] ?? null)) {
+        throw new InvalidArgumentException('Please reload the RIS form and select items to issue.');
+    }
     
     // Check if we're editing or creating new
     $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
@@ -37,6 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $issued_by_date = $_POST['issued_by_date'] ?? '';
     $received_by_date = $_POST['received_by_date'] ?? '';
 
+    if ($is_editing) {
+        $lock = $conn->prepare('SELECT ris_id FROM ris WHERE ris_id = ? FOR UPDATE');
+        $lock->bind_param('i', $ris_id);
+        $lock->execute();
+        if (!$lock->get_result()->fetch_assoc()) {
+            throw new InvalidArgumentException('The RIS record was not found.');
+        }
+        $lock->close();
+    }
     $previousStockouts = [];
     if ($is_editing) {
         // Editing temporarily restores issued stock. Preserve an uninterrupted
@@ -72,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
-            $old_items[$row['stock_number']] = $row['issued_quantity'];
+            $old_items[$row['stock_number']] = ($old_items[$row['stock_number']] ?? 0) + (int)$row['issued_quantity'];
         }
         $stmt->close();
         
@@ -129,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             SELECT item_id, quantity_on_hand, average_unit_cost
             FROM items
             WHERE stock_number = ?
-            LIMIT 1
+            LIMIT 1 FOR UPDATE
         ");
         $stmt->bind_param("s", $stock_no);
         $stmt->execute();
@@ -176,9 +197,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
 
                 // Deduct from main quantity_on_hand
-                $stmt = $conn->prepare("UPDATE items SET quantity_on_hand = quantity_on_hand - ? WHERE stock_number = ?");
-                $stmt->bind_param("is", $issued_qty, $stock_no);
+                $stmt = $conn->prepare("UPDATE items SET quantity_on_hand = quantity_on_hand - ? WHERE item_id = ? AND quantity_on_hand >= ?");
+                $stmt->bind_param("iii", $issued_qty, $item_id, $issued_qty);
                 $stmt->execute();
+                if ($stmt->affected_rows !== 1) {
+                    throw new InvalidArgumentException("Insufficient stock for {$stock_no}. Please reload the form.");
+                }
                 $stmt->close();
 
                 // Insert a NEGATIVE entry with ZERO cost (doesn't affect arithmetic mean)
@@ -206,6 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $restore->close();
     }
 
+    $conn->commit();
     // Redirect after successful submission
     if ($is_editing) {
         header("Location: view_ris.php?ris_id=" . $ris_id);
@@ -213,6 +238,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: ris.php");
     }
     exit();
+}
+
+    catch (Throwable $error) {
+        $conn->rollback();
+        http_response_code(400);
+        $message = $error instanceof mysqli_sql_exception
+            ? 'Unable to save the RIS. Please reload the form and try again.'
+            : $error->getMessage();
+        echo '<p role="alert">' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
+        echo '<p><a href="ris.php">Return to RIS</a></p>';
+        exit();
+    }
 }
 
 // Check if we're editing an existing RIS

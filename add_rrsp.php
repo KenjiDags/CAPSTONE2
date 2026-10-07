@@ -120,6 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $semiStatement = rrspStatement($conn, 'SELECT * FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE', 's', [$stock]);
       $semi = $semiStatement->get_result()->fetch_assoc();
       $semiStatement->close();
+      if (!$semi) {
+        throw new RuntimeException('The inventory item for this return was not found. No stock was changed.');
+      }
       $column = $option['source_type'] === 'transferred' ? 'quantity_reissued' : 'quantity_issued';
       if ($semi && (int)$semi[$column] < $qty) throw new RuntimeException('The remaining issued or transferred quantity has changed. Reload the item list.');
       $uc = $option['unit_cost'];
@@ -140,8 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           [(int)$icsItem['ics_id'], $option['source_id'], $stock, $desc . ' ($Returned)', $icsItem['unit'], $before, $after, -$qty, $uc, $before * $uc, $after * $uc, 'RRSP', $rrsp_id, $rrsp_no, json_encode(['returned_qty' => $qty, 'end_user' => $end, 'remarks' => $remarks])])->close();
       }
       if ($semi) {
-        // Transferred returns reduce reissued quantity, without deducting the original ICS again.
-        rrspStatement($conn, "UPDATE semi_expendable_property SET $column = $column - ?, quantity_returned = quantity_returned + ?, quantity_balance = quantity_balance + ?, office_officer_returned = ? WHERE id = ?", 'iiisi', [$qty, $qty, $qty, $end, (int)$semi['id']])->close();
+        // Restore each returned unit to available stock exactly once. Returned is a cumulative history count; issued/reissued tracks units still held.
+        rrspStatement($conn, "UPDATE semi_expendable_property SET $column = $column - ?, quantity_returned = COALESCE(quantity_returned, 0) + ?, quantity_balance = COALESCE(quantity_balance, 0) + ?, office_officer_returned = ? WHERE id = ?", 'iiisi', [$qty, $qty, $qty, $end, (int)$semi['id']])->close();
         rrspStatement($conn, 'INSERT INTO semi_expendable_history (semi_id,date,ics_rrsp_no,quantity,quantity_issued,quantity_reissued,quantity_returned,quantity_disposed,quantity_balance,office_officer_issued,office_officer_returned,office_officer_reissued,amount,amount_total,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', 'issiiiiiisssdds',
           [(int)$semi['id'], $date_prepared, $rrsp_no, (int)$semi['quantity'], (int)$semi['quantity_issued'] - ($column === 'quantity_issued' ? $qty : 0), (int)$semi['quantity_reissued'] - ($column === 'quantity_reissued' ? $qty : 0), (int)$semi['quantity_returned'] + $qty, (int)$semi['quantity_disposed'], (int)$semi['quantity_balance'] + $qty, $semi['office_officer_issued'], $end, $semi['office_officer_reissued'], (float)$semi['amount'], (float)$semi['amount_total'], $remarks])->close();
       }

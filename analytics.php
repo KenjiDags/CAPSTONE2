@@ -220,7 +220,7 @@ async function loadDemandForecast(background = false) {
     const data = await response.json();
     if (request !== demandForecastRequest) return;
     if (demandForecastChart) { demandForecastChart.destroy(); demandForecastChart = null; }
-    const available = data.forecast !== null;
+    const available = data.forecast !== null || data.monthlyForecasts.some(value => value !== null);
     document.getElementById('demandChartFrame').hidden = !available;
     document.getElementById('demandForecastSummary').hidden = !available;
     document.getElementById('demandForecastMethod').hidden = !available;
@@ -228,7 +228,7 @@ async function loadDemandForecast(background = false) {
     if (!available) { message.textContent = 'Insufficient historical data to generate a forecast. At least three months of issuance history, including two of the last three complete months, are required.'; return; }
     const number = value => Number(value).toLocaleString();
     document.getElementById('demandAverage').textContent = number(data.average) + ' items';
-    document.getElementById('demandNext').textContent = number(data.forecast) + ' items';
+    document.getElementById('demandNext').textContent = (data.forecast === null ? 'Unavailable' : number(data.forecast) + ' items');
     document.getElementById('demandNextLabel').textContent = 'Forecast for ' + new Date(data.forecastMonth + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     document.getElementById('demandPrevious').textContent = number(data.previous) + ' items';
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';

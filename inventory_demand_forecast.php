@@ -27,7 +27,11 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
 
     $monthly = [];
 
-    for ($date = $start; $date <= $lastMonth; $date = $date->modify('+1 month')) {
+    // Include the preceding three months for predictions at the start of the
+    // selected range, then remove that context from the displayed series.
+    $displayStart = $start->format('Y-m');
+    $calculationStart = $start->modify('-3 months');
+    for ($date = $calculationStart; $date <= $lastMonth; $date = $date->modify('+1 month')) {
         $monthly[$date->format('Y-m')] = 0;
     }
 
@@ -42,7 +46,7 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     if (!$statement) {
         throw new RuntimeException('Demand forecast query failed: ' . $conn->error);
     }
-    $from = $start->format('Y-m-d');
+    $from = $calculationStart->format('Y-m-d');
     $statement->bind_param('ss', $from, $until);
     $statement->execute();
     foreach ($statement->get_result() as $row) {
@@ -128,18 +132,19 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
             ? max(0, (int)round(array_sum($priorRecent) / 3))
             : null;
     }
+    $displayOffset = count(array_filter(array_keys($monthly), static fn($month) => $month < $displayStart));
+    $displayMonths = array_slice(array_keys($monthly), $displayOffset);
+    $values = array_slice($values, $displayOffset);
+    $monthlyForecasts = array_slice($monthlyForecasts, $displayOffset);
     // Previous completed month, used for the trend calculation.
     $previousMonth = $historyValues[count($historyValues) - 1] ?? 0;
 
+    $displayHistory = array_values(array_filter($monthly,
+        static fn($month) => $month >= $displayStart && $month < $currentMonth->format('Y-m'),
+        ARRAY_FILTER_USE_KEY));
     $firstActive = 0;
-    while (
-        $firstActive < count($historyValues) &&
-        $historyValues[$firstActive] === 0
-    ) {
-        $firstActive++;
-    }
-
-    $observed = array_slice($historyValues, $firstActive);
+    while ($firstActive < count($displayHistory) && $displayHistory[$firstActive] === 0) $firstActive++;
+    $observed = array_slice($displayHistory, $firstActive);
 
     $average = $observed
         ? (int)round(array_sum($observed) / count($observed))
@@ -155,7 +160,7 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
             ? 'Increasing'
             : ($change < -5 ? 'Decreasing' : 'Relatively Stable'));
     return [
-        'months' => array_keys($monthly),
+        'months' => $displayMonths,
         'actual' => $values, 'monthlyForecasts' => $monthlyForecasts,
         'forecastMonth' => $forecastDate->format('Y-m'), 'forecast' => $forecast,
         'average' => $average, 'previous' => $previousMonth, 'receiptsPreviousMonth' => $receipts, 'changePercent' => $change,

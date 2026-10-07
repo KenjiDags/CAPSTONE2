@@ -79,6 +79,14 @@ if ($search !== '') {
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     
+    // Reject invalid stock quantities before add/edit can write inventory.
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && array_key_exists('quantity_on_hand', $_POST)) {
+        if (filter_var($_POST['quantity_on_hand'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Quantity on hand must be a whole number of zero or greater.']);
+            exit();
+        }
+    }
     switch ($_GET['action']) {
         case 'check_stock':
             if (isset($_POST['stock_number'])) {

@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         exit;
     });
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     try {
         $items_json = $_POST['items_json'] ?? '[]';
         $items = json_decode($items_json, true);
@@ -58,8 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
         // Insert Items
         $item_stmt = $conn->prepare("INSERT INTO ppe_iirup_items (ppe_iirup_id, date_acquired, quantity, depreciation, impairment_loss, carrying_amount, remarks, sale, transfer, destruction, other, total, appraised_value, or_no, amount, particulars) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $update_stmt = $conn->prepare("UPDATE ppe_property SET quantity = quantity - ? WHERE id = ?");
+        $update_stmt = $conn->prepare("UPDATE ppe_property SET quantity = quantity - ? WHERE id = ? AND quantity >= ?");
         foreach ($items as $item) {
+            if (filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Disposal quantities must be positive whole numbers.');
+            }
             $particulars = $item['particulars'] ?? '';
             $item_stmt->bind_param("isidddsiiiiidsds",
                 $ppe_iirup_id,
@@ -85,9 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update ppe_property to subtract disposed quantity
             $ppe_id = $item['ppe_id'];
             $disposed_qty = $item['quantity'];
-            $update_stmt->bind_param("ii", $disposed_qty, $ppe_id);
-            if (!$update_stmt->execute()) {
-                throw new Exception("Failed to update item quantity: " . $update_stmt->error);
+            $update_stmt->bind_param("iii", $disposed_qty, $ppe_id, $disposed_qty);
+            if (!$update_stmt->execute() || $update_stmt->affected_rows !== 1) {
+                throw new Exception("Cannot dispose more PPE than the available quantity.");
             }
         }
         $item_stmt->close();

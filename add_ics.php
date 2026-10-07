@@ -20,7 +20,13 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Wrap everything in a transaction for consistency
     if (method_exists($conn, 'begin_transaction')) { $conn->begin_transaction(); }
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     try {
+    foreach (($_POST['issued_quantity'] ?? []) as $quantity) {
+        if ($quantity !== '' && filter_var($quantity, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+            throw new Exception('Issued quantities must be whole numbers of zero or greater.');
+        }
+    }
     
     // Check if we're editing or creating new
     $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
@@ -69,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Restore semi-expendable balances from old items
         foreach ($old_items as $stock_no => $old) {
             // stock_no holds semi_expendable_property_no in this ICS context
-            $stmt = $conn->prepare("SELECT id, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, amount FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1");
+            $stmt = $conn->prepare("SELECT id, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, amount FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE");
             $stmt->bind_param("s", $stock_no);
             if (!$stmt->execute()) { throw new Exception('Failed to load semi-expendable for reversal: ' . $stmt->error); }
             $row = $stmt->get_result()->fetch_assoc();
@@ -81,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $issued = max(0, (int)$row['quantity_issued'] - (int)$old['qty']);
                 $reissued = (int)$row['quantity_reissued'];
                 $disposed = (int)$row['quantity_disposed'];
-                $balance = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
+                $balance = max(0, $qty - ($issued + $reissued + $disposed));
                 $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ? WHERE id = ?");
                 $u->bind_param("iii", $issued, $balance, $semi_id);
                 if (!$u->execute()) { $u->close(); throw new Exception('Failed to restore semi-expendable stock: ' . $u->error); }
@@ -127,24 +133,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Only insert if there's an issued quantity
         if ($issued_qty > 0) {
             // Get semi-expendable details by property no (we use stock_no to carry property_no)
-            $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ?");
+            $stmt = $conn->prepare("SELECT id, item_description, remarks, unit, estimated_useful_life, amount, quantity, quantity_issued, quantity_returned, quantity_reissued, quantity_disposed, quantity_balance FROM semi_expendable_property WHERE semi_expendable_property_no = ? FOR UPDATE");
             $stmt->bind_param("s", $stock_no);
             if (!$stmt->execute()) { throw new Exception('Failed to fetch item data: ' . $stmt->error); }
             $result = $stmt->get_result();
             $item_data = $result->fetch_assoc();
             $stmt->close();
 
+            if (!$item_data) { throw new Exception("Item {$stock_no} was not found."); }
             if ($item_data) {
-                // Clamp to available quantity balance
+                // Validate available quantity while holding the item lock
                 $returned = (float)($item_data['quantity_returned'] ?? 0);
                 $available = (float)$item_data['quantity_balance'];
-                // Recompute available using returned
+                // Returns already reduce issued/reissued and restore balance; do not add them again.
                 $qty = (float)$item_data['quantity'];
                 $issued = (float)$item_data['quantity_issued'];
                 $reissued = (float)$item_data['quantity_reissued'];
                 $disposed = (float)$item_data['quantity_disposed'];
-                $available = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
-                if ($issued_qty > $available) { $issued_qty = $available; }
+                $available = max(0, $qty - ($issued + $reissued + $disposed));
+                if ($issued_qty > $available || $issued_qty > (float)$item_data['quantity_balance']) { throw new Exception("Cannot issue {$issued_qty} of {$stock_no}: insufficient stock."); }
                 if ($issued_qty <= 0) { continue; }
                 $unit_cost = (float)$item_data['amount'];
                 $total_cost = $issued_qty * $unit_cost;
@@ -171,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $issued = (int)$item_data['quantity_issued'] + (int)$issued_qty;
                 $reissued = (int)$item_data['quantity_reissued'];
                 $disposed = (int)$item_data['quantity_disposed'];
-                $balance = max(0, $qty - ($issued + $reissued + $disposed) + $returned);
+                $balance = max(0, $qty - ($issued + $reissued + $disposed));
                 // Also reflect ICS reference and receiver in semi-expendable table
                 // Append new ICS number to existing ics_rrsp_no (comma-separated) so multiple ICS references are preserved
                 $u = $conn->prepare("UPDATE semi_expendable_property SET quantity_issued = ?, quantity_balance = ?, ics_rrsp_no = CASE WHEN COALESCE(ics_rrsp_no, '') = '' THEN ? ELSE CONCAT(ics_rrsp_no, ',', ?) END, office_officer_issued = ?, fund_cluster = ? WHERE id = ?");
