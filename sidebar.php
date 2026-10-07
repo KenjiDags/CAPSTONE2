@@ -8,6 +8,7 @@ $sidebarIcon = static function ($name) {
         'folder' => '<path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
         'semi' => '<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h3M7 17h3"/>',
         'equipment' => '<rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+        'archive' => '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4"/>',
         'list' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
         'file' => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
         'chart' => '<path d="M3 3v18h18M8 16v-5M13 16V7M18 16v-8"/>',
@@ -96,7 +97,7 @@ try {
 
                     <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'analytics.php' ? 'page' : '' ?>"><?= $sidebarIcon('chart') ?><span>Analytics</span></a>
 
-                    <a href="archive.php" class="<?= $currentPage == 'archive.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'archive.php' ? 'page' : '' ?>"><?= $sidebarIcon('folder') ?><span>Archive</span></a>
+                    <a href="archive.php" class="<?= $currentPage == 'archive.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'archive.php' ? 'page' : '' ?>"><?= $sidebarIcon('archive') ?><span>Archive</span></a>
 
                     <a href="user_settings.php" class="<?= $currentPage == 'user_settings.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'user_settings.php' ? 'page' : '' ?>">
                         <?= $sidebarIcon('user') ?><span>User Settings</span>
