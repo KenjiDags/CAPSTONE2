@@ -6,6 +6,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $sidebarIcon = static function ($name) {
     $paths = [
         'folder' => '<path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+        'semi' => '<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h3M7 17h3"/>',
+        'equipment' => '<rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
         'list' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
         'file' => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
         'chart' => '<path d="M3 3v18h18M8 16v-5M13 16V7M18 16v-8"/>',
@@ -62,7 +64,7 @@ try {
                     <!-- Semi Expendables Dropdown -->
                     <div class="dropdown">
                         <button type="button" class="dropdown-toggle <?= $expendablesDropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="semi-menu">
-                            <?= $sidebarIcon('folder') ?><span>Semi Expendables</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
+                            <?= $sidebarIcon('semi') ?><span>Semi Expendables</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
                         <div class="dropdown-menu" id="semi-menu"><div class="submenu-content">
                             <a href="semi_expendible.php" class="<?= $currentPage == 'semi_expendible.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'semi_expendible.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Inventory List</span></a>
@@ -80,7 +82,7 @@ try {
                     <!-- PPE Dropdown -->
                     <div class="dropdown">
                         <button type="button" class="dropdown-toggle <?= $ppeDropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="ppe-menu">
-                            <?= $sidebarIcon('folder') ?><span>PPE</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
+                            <?= $sidebarIcon('equipment') ?><span>PPE</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
                         </button>
                         <div class="dropdown-menu" id="ppe-menu"><div class="submenu-content">
                             <a href="PPE.php" class="<?= $currentPage == 'PPE.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Inventory List</span></a>
