@@ -20,7 +20,7 @@ $items_stmt = $conn->prepare("
     SELECT p.* FROM ppe_par_items pi 
     JOIN ppe_property p ON pi.ppe_id = p.id 
     WHERE pi.par_id = ?
-    ORDER BY p.par_no
+    ORDER BY pi.id
 ");
 $items_stmt->bind_param("i", $par_id);
 $items_stmt->execute();

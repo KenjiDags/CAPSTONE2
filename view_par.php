@@ -53,7 +53,7 @@
     $items_query = "SELECT p.* FROM ppe_par_items pi 
                     JOIN ppe_property p ON pi.ppe_id = p.id 
                     WHERE pi.par_id = ? 
-                    ORDER BY p.par_no";
+                    ORDER BY pi.id";
     $items_stmt = $conn->prepare($items_query);
     $items_stmt->bind_param("i", $par_id);
     $items_stmt->execute();
@@ -76,7 +76,7 @@
             <a href="PPE_PAR.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to PAR List
             </a>
-            <a href="PPE_PAR_export.php?id=<?php echo $par_id; ?>" class="btn btn-success">
+            <a href="export_par.php?id=<?php echo $par_id; ?>" class="btn btn-success">
                 <i class="fas fa-file-pdf"></i> Export PAR
             </a>
         </div>
@@ -111,7 +111,7 @@
                             echo '<td>' . htmlspecialchars($item['quantity']) . '</td>';
                             echo '<td>' . htmlspecialchars($item['unit'] ?? 'unit') . '</td>';
                             echo '<td>' . htmlspecialchars($item['item_name'] . ' - ' . $item['item_description']) . '</td>';
-                            echo '<td>' . htmlspecialchars($item['par_no']) . '</td>';
+                            echo '<td>' . htmlspecialchars($par['par_no']) . '</td>';
                             echo '<td>' . ($par['received_by_date'] ? date('m/d/Y', strtotime($par['received_by_date'])) : '') . '</td>';
                             echo '<td>₱ ' . number_format($item['amount'], 2) . '</td>';
                             echo '</tr>';

@@ -14,6 +14,7 @@ require 'config.php';
 require_once 'totp.php';
 totpTable($conn);
 require_once 'trusted_devices.php';
+trustedDeviceTable($conn);
 if (empty($_SESSION['login_csrf'])) $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !hash_equals($_SESSION['login_csrf'], (string)($_POST['csrf'] ?? ''))) {
     http_response_code(400); exit('Invalid request. Reload the login page and try again.');
@@ -99,6 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
+                setcookie('remember_username', $remember ? $user['username'] : '', [
+                    'expires' => $remember ? time() + 30 * 24 * 60 * 60 : time() - 3600,
+                    'path' => '/',
+                    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
                 $factor = $conn->prepare('SELECT enabled_at, secret FROM user_totp WHERE user_id = ?');
                 $factor->bind_param('i', $user['user_id']); $factor->execute();
                 $factorRow = $factor->get_result()->fetch_assoc(); $factor->close();

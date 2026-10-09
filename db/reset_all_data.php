@@ -5,7 +5,31 @@
  * WARNING: This will delete ALL data from the inventory system!
  */
 
-require '../config.php';
+// This maintenance page must only be available to a signed-in administrator.
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || empty($_SESSION['user_id'])) {
+    header('Location: ../index.php');
+    exit;
+}
+define('ADMIN_PAGE', true);
+require_once __DIR__ . '/../auth.php';
+if ($_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    exit('Access denied.');
+}
+
+if (empty($_SESSION['reset_all_data_csrf'])) {
+    $_SESSION['reset_all_data_csrf'] = bin2hex(random_bytes(32));
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
+    (!isset($_POST['csrf']) || !is_string($_POST['csrf']) ||
+     !hash_equals($_SESSION['reset_all_data_csrf'], $_POST['csrf']))) {
+    http_response_code(403);
+    exit('The request could not be verified.');
+}
 
 // Check if user confirms the reset
 $confirmed = isset($_POST['confirm_reset']) && $_POST['confirm_reset'] === 'yes';
@@ -116,6 +140,7 @@ else:
     </div>
 
     <form method="post">
+        <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['reset_all_data_csrf'], ENT_QUOTES, 'UTF-8') ?>">
         <div class="form-group">
             <input type="checkbox" id="confirm" name="confirm_reset" value="yes" required>
             <label for="confirm">I understand this will delete ALL data and cannot be undone</label>

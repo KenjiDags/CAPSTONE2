@@ -279,7 +279,6 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
   sidebar.addEventListener('click', event => {
     event.stopPropagation();
     if (!sidebar.classList.contains('is-open')) {
-      if (event.target.closest('a')) event.preventDefault();
       setOpen(true);
     }
   });
