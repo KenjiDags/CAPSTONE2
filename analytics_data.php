@@ -33,7 +33,7 @@ if (isset($_GET['demand_forecast'])) {
             }
             $end = $last;
         }
-        echo json_encode(inventoryDemandForecast($conn, $historyInterval, $start, $end));
+        echo json_encode(inventoryDemandForecast($conn, $historyInterval, $start, $end, $horizon === 'custom'));
     } catch (Throwable $error) {
         http_response_code(500);
         echo json_encode(['error' => 'Unable to load demand history.']);

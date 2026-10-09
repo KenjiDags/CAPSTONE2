@@ -30,6 +30,41 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inventory Analytics</title>
+  <style>html.analytics-restoring body { visibility: hidden; }</style>
+  <script>
+  const analyticsScrollKey = 'analytics:scroll:' + location.pathname + location.search;
+  const analyticsReload = performance.getEntriesByType('navigation')[0]?.type === 'reload';
+  let analyticsSavedScroll = null;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(analyticsScrollKey));
+    if (analyticsReload && saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) analyticsSavedScroll = saved;
+  } catch (_) {}
+  let analyticsRestorePending = analyticsSavedScroll !== null;
+  if (analyticsRestorePending) {
+    document.documentElement.classList.add('analytics-restoring');
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  }
+  // Always reveal the page if loading stalls or a script fails.
+  const analyticsRestoreTimeout = analyticsRestorePending ? setTimeout(cancelAnalyticsRestore, 8000) : null;
+  function saveAnalyticsScroll() {
+    if (analyticsRestorePending) return;
+    try { sessionStorage.setItem(analyticsScrollKey, JSON.stringify({ x: window.scrollX, y: window.scrollY })); } catch (_) {}
+  }
+  function cancelAnalyticsRestore() {
+    analyticsRestorePending = false;
+    document.documentElement.classList.remove('analytics-restoring');
+    clearTimeout(analyticsRestoreTimeout);
+    if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+  }
+  window.addEventListener('wheel', cancelAnalyticsRestore, { passive: true });
+  window.addEventListener('touchstart', cancelAnalyticsRestore, { passive: true });
+  window.addEventListener('pointerdown', cancelAnalyticsRestore, { passive: true });
+  window.addEventListener('keydown', event => {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) cancelAnalyticsRestore();
+  });
+  window.addEventListener('pagehide', saveAnalyticsScroll);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saveAnalyticsScroll(); });
+  </script>
   <link rel="stylesheet" href="css/analytics.css?v=<?= time() ?>">
   <script src="js/chart.min.js"></script>
   <script src="js/mrp-stock.js?v=<?= time() ?>"></script>
@@ -94,14 +129,14 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </section>
 
   <section id="demandForecastSection" class="demand-forecast-section" aria-labelledby="demandForecastTitle">
-    <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly issued quantity across recorded inventory activity</p></div>
+    <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly actual issuance and SMA forecasts for Office Supplies</p></div>
     <article class="panel">
-      <div class="demand-forecast-toolbar">
-        <div class="scope-control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
+      <div class="filters demand-forecast-toolbar">
+        <div class="control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
         <div id="demandCustomRange" class="demand-custom-range" hidden>
           <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
-          <div class="scope-control"><label for="demandStartMonth">From month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandStartMonth" type="month" required></div>
-          <div class="scope-control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" type="month" required></div>
+          <div class="control"><label for="demandStartMonth">From month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandStartMonth" type="month" required></div>
+          <div class="control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" type="month" required></div>
         </div>
       </div>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and predicted demand"></canvas></div>
@@ -189,6 +224,8 @@ const state = { category: 'office-supplies', items: [], criticalItems: [], unifi
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 let demandForecastChart = null;
 let demandForecastRequest = 0;
+let demandForecastData = null;
+let demandForecastSourceHorizon = '12m';
 async function loadDemandForecast(background = false) {
   const request = ++demandForecastRequest;
   const message = document.getElementById('demandForecastMessage');
@@ -202,7 +239,9 @@ async function loadDemandForecast(background = false) {
     document.getElementById('demandForecastMethod').hidden = true;
     message.hidden = false;
   }
-  const params = new URLSearchParams({ demand_forecast: '1', horizon });
+  // Custom ranges only select points from the last loaded forecast series.
+  if (!custom) demandForecastSourceHorizon = horizon;
+  const params = new URLSearchParams({ demand_forecast: '1', horizon: demandForecastSourceHorizon });
   if (custom) {
     const start = document.getElementById('demandStartMonth');
     const end = document.getElementById('demandEndMonth');
@@ -210,23 +249,43 @@ async function loadDemandForecast(background = false) {
       message.textContent = 'Select a valid range of complete months.';
       return;
     }
-    params.set('start', start.value);
-    params.set('end', end.value);
+
   }
   message.textContent = 'Loading demand history...';
   try {
-    const response = await fetch('analytics_data.php?' + params, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Demand history unavailable');
-    const data = await response.json();
+    if (!custom || !demandForecastData || background === true) {
+      const response = await fetch('analytics_data.php?' + params, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Demand history unavailable');
+      const loaded = await response.json();
+      if (request !== demandForecastRequest) return;
+      demandForecastData = loaded;
+    }
     if (request !== demandForecastRequest) return;
+    let data = demandForecastData;
+    if (custom) {
+      const start = document.getElementById('demandStartMonth').value;
+      const end = document.getElementById('demandEndMonth').value;
+      const indices = data.months.reduce((selected, month, index) => {
+        if (month >= start && month <= end) selected.push(index);
+        return selected;
+      }, []);
+      data = {
+        ...data,
+        months: indices.map(index => data.months[index]),
+        actual: indices.map(index => data.actual[index]),
+        monthlyForecasts: indices.map(index => data.monthlyForecasts[index]),
+        forecast: null,
+      };
+    }
     if (demandForecastChart) { demandForecastChart.destroy(); demandForecastChart = null; }
     const available = data.forecast !== null || data.monthlyForecasts.some(value => value !== null);
     document.getElementById('demandChartFrame').hidden = !available;
-    document.getElementById('demandForecastSummary').hidden = !available;
+    document.getElementById('demandForecastSummary').hidden = custom || !available;
     document.getElementById('demandForecastMethod').hidden = !available;
     message.hidden = available;
-    if (!available) { message.textContent = 'Insufficient historical data to generate a forecast. At least three months of issuance history, including two of the last three complete months, are required.'; return; }
+    if (!available) { message.textContent = custom ? 'No calculated forecasts in the selected range. Choose months within the loaded forecast history.' : 'Insufficient historical data to generate a forecast. Three complete calendar months are required for the SMA forecast.'; return; }
     const number = value => Number(value).toLocaleString();
+    if (!custom) {
     document.getElementById('demandAverage').textContent = number(data.average) + ' items';
     document.getElementById('demandNext').textContent = (data.forecast === null ? 'Unavailable' : number(data.forecast) + ' items');
     document.getElementById('demandNextLabel').textContent = 'Forecast for ' + new Date(data.forecastMonth + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -234,8 +293,17 @@ async function loadDemandForecast(background = false) {
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
-    document.getElementById('demandForecastMethod').textContent = data.method + ' for each month using its preceding three complete months. Months with insufficient history have no prediction. Current-month actual usage is updated from recorded issuances.';
-    const labels = data.months.map(month =>
+    }
+    document.getElementById('demandForecastMethod').textContent = data.method + ' (3 months): forecast = total issued in the preceding three complete months / 3, rounded to whole items. Months with no issuances count as zero. Current-month actual usage is updated from recorded issuances and excluded from the calculation.';
+    const chartMonths = [...data.months];
+    const chartActual = [...data.actual];
+    const chartForecasts = [...data.monthlyForecasts];
+    if (!custom && data.forecast !== null && !chartMonths.includes(data.forecastMonth)) {
+      chartMonths.push(data.forecastMonth);
+      chartActual.push(null);
+      chartForecasts.push(data.forecast);
+    }
+    const labels = chartMonths.map(month =>
       new Date(month + '-01T00:00:00').toLocaleDateString('en-US', {
         month: 'short',
         year: 'numeric'
@@ -274,7 +342,7 @@ async function loadDemandForecast(background = false) {
       type: 'bar', plugins: [forecastBarOffset], data: { labels, datasets: [
         {
           label: 'Actual issued',
-          data: data.actual,
+          data: chartActual,
           backgroundColor: '#4a9ed8',
           borderRadius: 0,
           grouped: false,
@@ -283,8 +351,8 @@ async function loadDemandForecast(background = false) {
           order: 0,
         },
         {
-          label: 'Forecast issued',
-          data: data.monthlyForecasts,
+          label: 'SMA forecast (3 months)',
+          data: chartForecasts,
           backgroundColor: forecastPattern,
           order: 1,
           borderWidth: 0,
@@ -306,7 +374,7 @@ async function loadDemandForecast(background = false) {
     document.getElementById('demandForecastSummary').hidden = true;
   }
 }
-loadDemandForecast();
+const initialDemandForecast = loadDemandForecast();
 function itemName(item) { return item.item_name || item.property_no || 'Unnamed item'; }
 function movement(item) { return Number(item.usage_volume || item.quantity || 0); }
 function shortName(name) { return name.length > 25 ? name.slice(0, 23) + '...' : name; }
@@ -355,7 +423,7 @@ function prepareUnifiedItems(payloads) {
 }
 function loadUnifiedInventoryTable() {
   const categories = ['office-supplies'];
-  Promise.all(categories.map(category => fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => {
+  return Promise.all(categories.map(category => fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => {
     if (!response.ok) throw new Error(`Unable to load ${category} inventory data.`);
     return response.json();
   }))).then(results => prepareUnifiedItems(Object.fromEntries(categories.map((category, index) => [category, results[index]])))).catch(error => console.error('Unified inventory table failed to load:', error));
@@ -427,7 +495,7 @@ function loadCategory(category) {
   document.getElementById('demandForecastSection').hidden = category !== 'office-supplies';
   document.getElementById('inventoryHealthSection').hidden = category !== 'office-supplies';
   if (category === 'office-supplies') renderAllItemsChart();
-  fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => response.json()).then(data => {
+  return fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => response.json()).then(data => {
     if (request !== categoryRequest) return;
     state.items = data.items || data.supply_list || [];
     state.criticalItems = data.critical_depletion || [];
@@ -531,8 +599,18 @@ const demandLastMonth = <?= json_encode((new DateTimeImmutable('first day of las
   input.max = demandLastMonth;
   input.addEventListener('change', loadDemandForecast);
 });
-loadCategory(state.category);
-loadUnifiedInventoryTable();
+const initialCategory = loadCategory(state.category);
+const initialInventory = loadUnifiedInventoryTable();
+const analyticsPageLoaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+Promise.allSettled([initialDemandForecast, initialCategory, initialInventory, analyticsPageLoaded, document.fonts.ready]).then(() => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (analyticsRestorePending) {
+      window.scrollTo({ left: analyticsSavedScroll.x, top: analyticsSavedScroll.y, behavior: 'instant' });
+    }
+    cancelAnalyticsRestore();
+    if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+  }));
+});
 // Recalculate dates while open; fetch current balances every minute and on return.
 let mrpRefreshing = false;
 async function refreshMrp() {

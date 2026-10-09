@@ -1,6 +1,12 @@
 <?php
-// Aggregate recorded issues across inventory categories. Receipts are deliberately excluded.
-function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmutable $rangeStart = null, ?DateTimeImmutable $rangeEnd = null): array {
+// Each complete month has equal weight, including months with zero issuance.
+function inventorySimpleMovingAverage(array $history, int $window = 3): ?int {
+    if ($window < 1) throw new InvalidArgumentException('SMA window must be positive.');
+    if (count($history) < $window) return null;
+    return max(0, (int)round(array_sum(array_slice($history, -$window)) / $window));
+}
+// Forecast office supplies from RIS issuances only. Receipts are excluded.
+function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmutable $rangeStart = null, ?DateTimeImmutable $rangeEnd = null, bool $customRange = false): array {
     $timezone = new DateTimeZone('Asia/Manila');
 
     $currentMonth = new DateTimeImmutable('first day of this month 00:00:00', $timezone);
@@ -54,6 +60,38 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     }
     $statement->close();
 
+    // Exclude only the current incomplete month; historical ranges retain their final month.
+    $values = array_values($monthly);
+    $historyValues = array_values(array_filter(
+        $monthly,
+        static fn($month) => $month < $currentMonth->format('Y-m'),
+        ARRAY_FILTER_USE_KEY
+    ));
+
+
+
+    // Predict each target using only its preceding complete calendar months.
+    $monthlyForecasts = [];
+    foreach (array_keys($monthly) as $index => $month) {
+        $monthlyForecasts[] = $month <= $currentMonth->format('Y-m')
+            ? inventorySimpleMovingAverage(array_slice($values, 0, $index))
+            : null;
+    }
+    $displayOffset = count(array_filter(array_keys($monthly), static fn($month) => $month < $displayStart));
+    $displayMonths = array_slice(array_keys($monthly), $displayOffset);
+    $values = array_slice($values, $displayOffset);
+    $monthlyForecasts = array_slice($monthlyForecasts, $displayOffset);
+    // Custom ranges return only actuals and SMA predictions for selected months.
+    // No next-month projection, replenishment summary, or month-to-month comparisons.
+    if ($customRange) {
+        return [
+            'months' => $displayMonths, 'actual' => $values,
+            'monthlyForecasts' => $monthlyForecasts,
+            'forecastMonth' => null, 'forecast' => null,
+            'method' => 'Simple Moving Average (SMA)', 'window' => 3,
+        ];
+    }
+    $forecast = inventorySimpleMovingAverage($historyValues);
     // Stock additions provide replenishment context only; they never enter demand.
     $receiptSql = "SELECT COALESCE(SUM(quantity_change), 0) AS quantity FROM item_history
         WHERE changed_at >= ? AND changed_at < ? AND quantity_change > 0
@@ -71,71 +109,6 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     $receipts = (int)($receiptStatement->get_result()->fetch_assoc()['quantity'] ?? 0);
     $receiptStatement->close();
 
-    // Semi-expendable history stores cumulative snapshots, sometimes twice for
-    // one action. Count only positive changes in issued and reissued totals.
-    $table = $conn->query("SHOW TABLES LIKE 'semi_expendable_history'");
-    if ($table && $table->num_rows) {
-        $history = $conn->query("SELECT semi_id, created_at, quantity_issued, quantity_reissued
-            FROM semi_expendable_history
-            WHERE created_at < '" . $conn->real_escape_string($until) . "'
-            ORDER BY semi_id, created_at");
-
-        if (!$history) {
-            throw new RuntimeException(
-                'Semi-expendable history query failed: ' . $conn->error
-            );
-        }
-        $previous = [];
-        while ($row = $history->fetch_assoc()) {
-            $id = (int)$row['semi_id'];
-            $issued = max(0, (int)$row['quantity_issued']);
-            $reissued = max(0, (int)$row['quantity_reissued']);
-            $prior = $previous[$id] ?? [0, 0];
-            $change = max(0, $issued - $prior[0]) + max(0, $reissued - $prior[1]);
-            $previous[$id] = [$issued, $reissued];
-            $month = substr((string)$row['created_at'], 0, 7);
-            if (array_key_exists($month, $monthly)) $monthly[$month] += $change;
-        }
-    }
-
-    // Exclude only the current incomplete month; historical ranges retain their final month.
-    $values = array_values($monthly);
-    $historyValues = array_values(array_filter(
-        $monthly,
-        static fn($month) => $month < $currentMonth->format('Y-m'),
-        ARRAY_FILTER_USE_KEY
-    ));
-
-    $activeMonths = count(array_filter(
-        $historyValues,
-        static fn($value) => $value > 0
-    ));
-
-    $forecast = null;
-    $recent = array_slice($historyValues, -3);
-
-    if (
-        $activeMonths >= 3 &&
-        count(array_filter($recent, static fn($value) => $value > 0)) >= 2
-    ) {
-        $forecast = max(0, (int)round(array_sum($recent) / 3));
-    }
-
-    // Predict each displayed month using only issuance recorded before it.
-    $monthlyForecasts = [];
-    foreach ($values as $index => $value) {
-        $priorValues = array_slice($values, 0, $index);
-        $priorRecent = array_slice($priorValues, -3);
-        $priorActive = count(array_filter($priorValues, static fn($quantity) => $quantity > 0));
-        $recentActive = count(array_filter($priorRecent, static fn($quantity) => $quantity > 0));
-        $monthlyForecasts[] = $priorActive >= 3 && count($priorRecent) === 3 && $recentActive >= 2
-            ? max(0, (int)round(array_sum($priorRecent) / 3))
-            : null;
-    }
-    $displayOffset = count(array_filter(array_keys($monthly), static fn($month) => $month < $displayStart));
-    $displayMonths = array_slice(array_keys($monthly), $displayOffset);
-    $values = array_slice($values, $displayOffset);
-    $monthlyForecasts = array_slice($monthlyForecasts, $displayOffset);
     // Previous completed month, used for the trend calculation.
     $previousMonth = $historyValues[count($historyValues) - 1] ?? 0;
 
@@ -164,6 +137,6 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
         'actual' => $values, 'monthlyForecasts' => $monthlyForecasts,
         'forecastMonth' => $forecastDate->format('Y-m'), 'forecast' => $forecast,
         'average' => $average, 'previous' => $previousMonth, 'receiptsPreviousMonth' => $receipts, 'changePercent' => $change,
-        'trend' => $trend, 'method' => 'Three-month moving average'
+        'trend' => $trend, 'method' => 'Simple Moving Average (SMA)', 'window' => 3
     ];
 }
