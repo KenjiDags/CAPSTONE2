@@ -24,9 +24,9 @@ $error = '';
 $cookie_username = '';
 $remember_checked = false;
 
-if (!empty($_COOKIE['remember_username'])) {
+if (isset($_COOKIE['remember_username']) && is_string($_COOKIE['remember_username'])) {
     $cookie_username = $_COOKIE['remember_username'];
-    $remember_checked = true;
+    $remember_checked = $cookie_username !== '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
@@ -88,7 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    $remember = isset($_POST['remember']);
+    $remember_checked = isset($_POST['remember']);
+    $cookie_username = $username;
 
     if ($username && $password) {
         $stmt = $conn->prepare("SELECT user_id, username, password, role, status FROM users WHERE username = ? LIMIT 1");
@@ -100,13 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
-                setcookie('remember_username', $remember ? $user['username'] : '', [
-                    'expires' => $remember ? time() + 30 * 24 * 60 * 60 : time() - 3600,
-                    'path' => '/',
-                    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-                    'httponly' => true,
-                    'samesite' => 'Lax',
-                ]);
+                $_SESSION['remember_username_requested'] = $remember_checked;
                 $factor = $conn->prepare('SELECT enabled_at, secret FROM user_totp WHERE user_id = ?');
                 $factor->bind_param('i', $user['user_id']); $factor->execute();
                 $factorRow = $factor->get_result()->fetch_assoc(); $factor->close();

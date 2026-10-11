@@ -1,52 +1,23 @@
 <?php
 require 'auth.php';
-require 'config.php';
-
-// Get signature names from GET parameters
-$custodian_name = isset($_GET['custodian_name']) ? htmlspecialchars(trim($_GET['custodian_name'])) : '';
-$accounting_staff = isset($_GET['accounting_staff']) ? htmlspecialchars(trim($_GET['accounting_staff'])) : '';
-
-// Get report date from GET parameter (fallback to current date)
-$report_date_raw = isset($_GET['report_date']) ? trim($_GET['report_date']) : date('Y-m-d');
-$report_date_obj = DateTime::createFromFormat('Y-m-d', $report_date_raw);
-if (!$report_date_obj || $report_date_obj->format('Y-m-d') !== $report_date_raw) {
-    $report_date_obj = new DateTime();
+require_once 'rsmi_helpers.php';
+rsmiEnsureTable($conn);
+$id = filter_var($_GET['rsmi_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if (!$id) {
+    header('Location: rsmi.php');
+    exit;
 }
-$report_date_display = $report_date_obj->format('F d, Y');
-
-// Get all RSMI data
-$rsmi_query = "
-    SELECT ris.ris_no, ri.stock_number, i.item_name, i.description, i.unit, ri.issued_quantity, 
-        ri.unit_cost_at_issue AS unit_cost,
-        (ri.issued_quantity * ri.unit_cost_at_issue) AS amount,
-        ris.date_requested, ris.entity_name, ris.fund_cluster, ris.division, 
-        ris.responsibility_center_code, ris.office
-    FROM ris_items ri
-    JOIN ris ON ri.ris_id = ris.ris_id
-    JOIN items i ON ri.stock_number = i.stock_number
-    ORDER BY ris.date_requested DESC
-";
-
-$rsmi_result = $conn->query($rsmi_query);
-
-// Get recapitulation data
-$recap_query = "
-    SELECT ri.stock_number, SUM(ri.issued_quantity) AS total_issued,
-           AVG(ri.unit_cost_at_issue) AS avg_unit_cost,
-           SUM(ri.issued_quantity * ri.unit_cost_at_issue) AS total_cost
-    FROM ris_items ri
-    GROUP BY ri.stock_number
-";
-
-$recap_result = $conn->query($recap_query);
-
-// Get entity information (assuming from the first record)
-$entity_info = null;
-if ($rsmi_result && $rsmi_result->num_rows > 0) {
-    $rsmi_result->data_seek(0);
-    $entity_info = $rsmi_result->fetch_assoc();
-    $rsmi_result->data_seek(0); // Reset pointer
+$report = rsmiLoad($conn, $id);
+if (!$report) {
+    http_response_code(404);
+    exit('RSMI document not found.');
 }
+$rows = $report['rows'];
+$recap = rsmiRecap($rows);
+$entity_info = $rows[0] ?? [];
+$custodian_name = htmlspecialchars($report['custodian_name'], ENT_QUOTES, 'UTF-8');
+$accounting_staff = htmlspecialchars($report['accounting_staff'], ENT_QUOTES, 'UTF-8');
+$report_date_display = date('F d, Y', strtotime($report['report_date']));
 ?>
 
 <!DOCTYPE html>
@@ -419,8 +390,8 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                     <strong>Fund Cluster:</strong> <span class="data-underline"> <?= htmlspecialchars($entity_info['fund_cluster'] ?? '') ?> </span><br>
                 </td>
                 <td class="header-cell" colspan="4" style="padding-bottom: 3px !important; border-right: 2px solid black;">
-                    <strong>Serial No.:</strong> <span class="data-underline"> RSMI-<?= date('Y') ?>-001 </span><br>
-                    <strong>Date:</strong> <span class="data-underline"> <?= date('F d, Y') ?> </span><br>
+                    <strong>Serial No.:</strong> <span class="data-underline"> <?= htmlspecialchars($report['serial_no'], ENT_QUOTES, 'UTF-8') ?> </span><br>
+                    <strong>Date:</strong> <span class="data-underline"> <?= htmlspecialchars($report_date_display, ENT_QUOTES, 'UTF-8') ?> </span><br>
                 </td>
             </tr>
 
@@ -439,10 +410,10 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                 <th style="width: 15%;" class="instructions full-border">Unit Cost</th>
                 <th style="width: 15%;" class="instructions full-border">Amount</th>
             </tr>
-            <?php 
+            <?php
             $row_count = 0;
-            if ($rsmi_result && $rsmi_result->num_rows > 0) {
-                while ($row = $rsmi_result->fetch_assoc()) {
+            if ($rows) {
+                foreach ($rows as $row) {
                     echo '<tr>';
                     echo '<td>' . htmlspecialchars($row['ris_no']) . '</td>';
                     echo '<td>' . htmlspecialchars($row['responsibility_center_code']) . '</td>';
@@ -490,11 +461,11 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                 <th style="border: 2px solid black;">UACS Object Code</th>
             </tr>
 
-                    <?php 
+                    <?php
                         $recap_count = 0;
-                        if ($recap_result && $recap_result->num_rows > 0) {
-                            $recap_result->data_seek(0);
-                            while ($recap_row = $recap_result->fetch_assoc()) {
+                        if ($recap) {
+
+                            foreach ($recap as $recap_row) {
                                 echo '<tr>';
                                 echo '<td>&nbsp;</td>';
                                 echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">' . htmlspecialchars($recap_row['stock_number']) . '</td>';
@@ -508,7 +479,7 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                                 $recap_count++;
                             }
                         }
-                        
+
                         // Fill remaining recap rows (up to 10 rows)
                         for ($i = $recap_count; $i < 10; $i++) {
                             echo '<tr>';
@@ -548,12 +519,12 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
                             <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;"><?= $custodian_name ?></div>
                         <?php endif; ?><div class="signature-line signature-line-custodian"></div>Signature over Printed Name of Supply<br>and/or Property Custodian</td>
                     <td colspan="2" style=" border: none; border-bottom: 2px solid black; vertical-align: top;">
-                        <?php if ($accounting_staff): ?>    
+                        <?php if ($accounting_staff): ?>
                             <div class="signatory-name"><?= $accounting_staff ?></div>
                         <?php endif; ?><div class="signature-line"></div>Signature over Printed Name of<br> Designated Accounting Staff</td>
                     <td style="border: 2px solid black; border-top: none; border-left: none; vertical-align: top;"><div class="signatory-name"><?= htmlspecialchars($report_date_display) ?></div><div class="signature-line"></div>Date</td>
                 </tr>
-                
+
         </table>
 
     <script>
@@ -561,13 +532,13 @@ if ($rsmi_result && $rsmi_result->num_rows > 0) {
             // Hide instructions and buttons before printing
             const instructions = document.querySelector('.export-instructions');
             const buttons = document.querySelector('.button-container');
-            
+
             if (instructions) instructions.style.display = 'none';
             if (buttons) buttons.style.display = 'none';
-            
+
             // Print the page (opens in same tab)
             window.print();
-            
+
             // Restore visibility after printing
             setTimeout(() => {
                 if (instructions) instructions.style.display = 'block';

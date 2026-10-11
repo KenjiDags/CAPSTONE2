@@ -2,6 +2,7 @@
 session_start();
 require 'config.php';
 require_once 'totp.php';
+require_once 'trusted_devices.php';
 totpTable($conn);
 $pending = $_SESSION['totp_setup_pending'] ?? null;
 if (!$pending || ($pending['expires'] ?? 0) < time()) {
@@ -60,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_id'] = $id; $_SESSION['username'] = $user['username']; $_SESSION['role'] = $user['role'];
         $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? ''; $_SESSION['logged_in'] = true;
         $_SESSION['totp_new_recovery'] = $codes;
+        rememberLoginUsername($user['username']);
         header('Location: totp_recovery.php'); exit;
     }
     }

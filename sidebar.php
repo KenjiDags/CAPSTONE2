@@ -40,7 +40,7 @@ try {
         </div>
 
             <?php
-                    $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php']);
+                    $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'add_rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php']);
                     // Semi Expendables dropdown should be open for ICS and its subpages
                     $icsPages = ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php'];
                     $expendablesDropdownActive = in_array($currentPage, array_merge(['semi_expendible.php', 'PC.php', 'PC_semi.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php'], $icsPages));
@@ -56,7 +56,7 @@ try {
                         <div class="dropdown-menu" id="office-menu"><div class="submenu-content">
                             <a href="inventory.php" class="<?= $currentPage == 'inventory.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'inventory.php' ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Supply List</span><span id="office-stock-badge" class="stock-count-badge" hidden role="status" aria-live="polite" aria-atomic="true"></span></a>
                             <a href="ris.php" class="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['ris.php', 'add_ris.php', 'view_ris.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RIS</span></a>
-                            <a href="rsmi.php" class="<?= $currentPage == 'rsmi.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rsmi.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RSMI</span></a>
+                            <a href="rsmi.php" class="<?= in_array($currentPage, ['rsmi.php', 'add_rsmi.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['rsmi.php', 'add_rsmi.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RSMI</span></a>
                             <a href="SC.php" class="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['SC.php', 'view_sc.php']) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>SC</span></a>
                             <a href="rpci.php" class="<?= $currentPage == 'rpci.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'rpci.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCI</span></a>
                         </div></div>

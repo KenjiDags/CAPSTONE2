@@ -88,6 +88,30 @@ try {
     archiveCheck($conn->query('SELECT * FROM ics_items')->num_rows === 1, 'Legacy ICS tables support restoration');
     $engine = $conn->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ics'")->fetch_assoc()['ENGINE'];
     archiveCheck($engine === 'InnoDB', 'Legacy storage upgraded for atomic restore');
+    require_once __DIR__ . '/../rsmi_helpers.php';
+    rsmiEnsureTable($conn);
+    $rsmiRows = [['ris_no' => 'RIS-1', 'stock_number' => 'S-1', 'item_name' => 'Paper',
+        'description' => 'A4', 'unit' => 'ream', 'issued_quantity' => 2, 'unit_cost' => 25, 'amount' => 50]];
+    $rsmiId = rsmiSave($conn, $rsmiRows, '2026-10-11', 'Original Custodian', 'Original Accountant', 7);
+    $originalReport = rsmiLoad($conn, $rsmiId);
+    archiveRecord($conn, 'RSMI', $rsmiId);
+    archiveCheck(rsmiLoad($conn, $rsmiId) === null, 'Deleted RSMI leaves the live list');
+    $rsmiArchive = $conn->query("SELECT * FROM deleted_records WHERE record_type='RSMI'")->fetch_assoc();
+    archiveCheck($rsmiArchive['record_label'] === $originalReport['serial_no'], 'RSMI archive labeled with serial number');
+    $rsmiSnapshot = json_decode($rsmiArchive['snapshot'], true);
+    archiveCheck($rsmiSnapshot['rsmi_reports'][0]['snapshot'] === $originalReport['snapshot'], 'RSMI saved rows preserved in archive');
+    archiveAction($conn, (int)$rsmiArchive['archive_id'], 'restore');
+    archiveCheck(rsmiLoad($conn, $rsmiId) === $originalReport, 'RSMI restore preserves all metadata and document rows');
+    archiveCheck($conn->query("SELECT * FROM deleted_records WHERE record_type='RSMI'")->num_rows === 0, 'Restored RSMI removed from archive');
+    archiveRecord($conn, 'RSMI', $rsmiId);
+    $rsmiArchiveId = (int)$conn->query("SELECT archive_id FROM deleted_records WHERE record_type='RSMI'")->fetch_assoc()['archive_id'];
+    archiveRestoreRows($conn, 'rsmi_reports', $rsmiSnapshot['rsmi_reports']);
+    $conn->query("UPDATE rsmi_reports SET custodian_name='Conflicting Custodian' WHERE rsmi_id=" . $rsmiId);
+    try { archiveAction($conn, $rsmiArchiveId, 'restore'); throw new LogicException('Expected RSMI conflict'); }
+    catch (RuntimeException $expected) { archiveCheck(!($expected instanceof LogicException), 'RSMI restore conflict detected'); }
+    archiveCheck($conn->query("SELECT * FROM deleted_records WHERE archive_id=" . $rsmiArchiveId)->num_rows === 1, 'RSMI conflict retains archived copy');
+    archiveAction($conn, $rsmiArchiveId, 'delete');
+    archiveCheck(rsmiLoad($conn, $rsmiId)['custodian_name'] === 'Conflicting Custodian', 'Permanent archive deletion preserves live RSMI');
     echo "Archive tests passed\n";
 } finally {
     $conn->query("DROP DATABASE `$database`");

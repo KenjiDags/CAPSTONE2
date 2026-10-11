@@ -866,7 +866,7 @@ case 'update':
                                 </div>
                             </td>
                             <td class='cost-cell'>
-                                <div class='main-cost'>₱ " . number_format($display_unit_cost, 2) . "</div>
+                                <div class='main-cost currency'>₱ " . number_format($display_unit_cost, 2) . "</div>
                             </td>
                             <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
                             <td class='actions-cell'>

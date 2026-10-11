@@ -45,6 +45,17 @@ function trustedDeviceCreate(mysqli $conn, int $id, string $fingerprint): bool {
         error_log('Trusted device creation failed: ' . $e->getMessage()); return false;
     }
 }
+function rememberLoginUsername(string $username): void {
+    $remember = !empty($_SESSION['remember_username_requested']);
+    unset($_SESSION['remember_username_requested']);
+    setcookie('remember_username', $remember ? $username : '', [
+        'expires' => $remember ? time() + 30 * 24 * 60 * 60 : time() - 3600,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
 function completeDeviceLogin(mysqli $conn, int $id, array $account): void {
     if ($account['status'] === 'approved') {
         $stmt = $conn->prepare("UPDATE users SET status = 'active' WHERE user_id = ? AND status = 'approved'");
@@ -54,5 +65,6 @@ function completeDeviceLogin(mysqli $conn, int $id, array $account): void {
     session_regenerate_id(true);
     $_SESSION['user_id'] = $id; $_SESSION['username'] = $account['username']; $_SESSION['role'] = $account['role'];
     $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? ''; $_SESSION['logged_in'] = true;
+    rememberLoginUsername($account['username']);
     header('Location: ' . ($account['role'] === 'admin' ? 'admin.php' : 'analytics.php')); exit;
 }
