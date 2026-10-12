@@ -95,6 +95,14 @@ if ($category === 'semi-expendables') {
                item_description,
                office_officer_issued,
                office_officer_reissued,
+               (SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(i.received_by), '') SEPARATOR '; ')
+                FROM ics_items ii JOIN ics i ON i.ics_id = ii.ics_id
+                WHERE ii.stock_number = semi_expendable_property.semi_expendable_property_no AND ii.quantity > 0) AS issued_holders,
+               (SELECT t.to_accountable FROM itr_items ti JOIN itr t ON t.itr_id = ti.itr_id
+                LEFT JOIN ics_items ii ON ii.ics_item_id = ti.ics_item_id
+                WHERE ti.transfer_qty > 0 AND (ti.item_no = semi_expendable_property.semi_expendable_property_no
+                  OR ii.stock_number = semi_expendable_property.semi_expendable_property_no)
+                ORDER BY t.itr_date DESC, t.itr_id DESC, ti.itr_item_id DESC LIMIT 1) AS transfer_holder,
                quantity_issued,
                quantity_reissued,
                quantity_disposed,
@@ -115,13 +123,14 @@ if ($category === 'semi-expendables') {
         $issued = max(0, (int)$row['quantity_issued']);
         $reissued = max(0, (int)$row['quantity_reissued']);
         $holders = [];
-        if ($issued > 0) $holders[] = trim((string)$row['office_officer_issued']) ?: 'Issued holder not recorded';
-        if ($reissued > 0) $holders[] = trim((string)$row['office_officer_reissued']) ?: 'Reissued holder not recorded';
-        $issuanceStatus = $issued > 0 && $reissued > 0 ? 'Issued / Reissued'
-            : ($reissued > 0 ? 'Reissued' : ($issued > 0 ? 'Issued'
-            : ((int)$row['quantity_balance'] > 0 ? 'Not issued'
-            : ((int)$row['quantity_disposed'] > 0 ? 'Disposed / For disposal'
-            : ((int)$row['quantity_returned'] > 0 ? 'Returned' : 'Not issued')))));
+        if ($issued > 0) $holders[] = trim((string)($row['issued_holders'] ?? '')) ?: (trim((string)$row['office_officer_issued']) ?: 'Issued holder not recorded');
+        if ($reissued > 0) $holders[] = trim((string)($row['transfer_holder'] ?? '')) ?: (trim((string)$row['office_officer_reissued']) ?: 'Transferred holder not recorded');
+        $statuses = [];
+        if ($issued > 0) $statuses[] = 'Issued';
+        if ($reissued > 0) $statuses[] = 'Transferred';
+        if ((int)$row['quantity_returned'] > 0) $statuses[] = 'Returned';
+        if (!$statuses) $statuses[] = (int)$row['quantity_disposed'] > 0 && (int)$row['quantity_balance'] <= 0 ? 'Disposed / For disposal' : 'Not issued';
+        $issuanceStatus = implode(' / ', $statuses);
         $currentHolder = $holders ? implode('; ', array_unique($holders))
             : ((int)$row['quantity_disposed'] > 0 && (int)$row['quantity_balance'] <= 0 ? 'No current holder' : 'Stock room / Unassigned');
         $items[] = [
@@ -133,6 +142,7 @@ if ($category === 'semi-expendables') {
             'officer' => $row['office_officer_issued'] ?: 'Unassigned',
             'current_holder' => $currentHolder,
             'issuance_status' => $issuanceStatus,
+            'item_statuses' => $statuses,
             'quantity' => (int)$row['quantity_balance'],
             'capital_value' => (float)$row['amount_total']
         ];
@@ -192,6 +202,12 @@ if ($category === 'semi-expendables') {
     $itemsSql = "
         SELECT id,
                PPE_no AS par_no,
+               (SELECT p.received_by FROM ppe_par_items pi JOIN ppe_par p ON p.par_id = pi.par_id
+                WHERE pi.ppe_id = ppe_property.id ORDER BY p.par_id DESC LIMIT 1) AS issued_holder,
+               (SELECT p.to_officer FROM ppe_ptr_items pi JOIN ppe_ptr p ON p.ptr_id = pi.ptr_id
+                WHERE pi.ppe_id = ppe_property.id ORDER BY p.transfer_date DESC, p.ptr_id DESC LIMIT 1) AS transferred_holder,
+               EXISTS(SELECT 1 FROM ppe_par_items pi WHERE pi.ppe_id = ppe_property.id) AS has_issuance,
+               EXISTS(SELECT 1 FROM ppe_ptr_items pi WHERE pi.ppe_id = ppe_property.id) AS has_transfer,
                item_name,
                item_description,
                custodian,
@@ -209,6 +225,23 @@ if ($category === 'semi-expendables') {
     $res = $conn->query($itemsSql);
     while ($row = $res->fetch_assoc()) {
         $officer = $row['officer_incharge'] ?: $row['custodian'];
+        $storedStatus = strtolower(trim((string)$row['status']));
+        $unserviceable = strtolower(trim((string)$row['condition'])) === 'unserviceable' || $storedStatus === 'unserviceable';
+        $assignment = $storedStatus === 'returned' ? 'Returned'
+            : ($storedStatus === 'disposed' ? 'Disposed'
+            : ($storedStatus === 'not issued' ? 'Not issued'
+            : ($storedStatus === 'transferred' || $row['has_transfer'] ? 'Transferred'
+            : ($storedStatus === 'issued' || $row['has_issuance'] ? 'Issued' : 'Not issued'))));
+        $ppeStatuses = [$assignment];
+        if ($unserviceable) $ppeStatuses[] = 'Unserviceable';
+        $currentHolder = 'Stock room / Unassigned';
+        if ($assignment === 'Transferred') {
+            $currentHolder = trim((string)$row['transferred_holder']) ?: (trim((string)$row['custodian']) ?: 'Transferred holder not recorded');
+        } elseif ($assignment === 'Issued') {
+            $currentHolder = trim((string)$row['issued_holder']) ?: (trim((string)$row['custodian']) ?: 'Issued holder not recorded');
+        } elseif ($assignment === 'Disposed') {
+            $currentHolder = 'No current holder';
+        }
         $items[] = [
             'item_id' => (int)$row['id'],
             'property_no' => $row['par_no'],
@@ -218,7 +251,9 @@ if ($category === 'semi-expendables') {
             'remarks' => $row['remarks'],
             'status' => $row['status'],
             'officer' => $officer ?: 'Unassigned',
-            'current_holder' => strtolower(trim((string)$row['status'])) === 'disposed' ? 'No current holder' : (trim((string)$row['custodian']) ?: (trim((string)$row['officer_incharge']) ?: 'Unassigned')),
+            'current_holder' => $currentHolder,
+            'item_statuses' => array_values(array_unique($ppeStatuses)),
+            'issuance_status' => $assignment,
             'officer_incharge' => trim((string)$row['officer_incharge']),
             'quantity' => (int)$row['quantity'],
             'capital_value' => (float)$row['amount']

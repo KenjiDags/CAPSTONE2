@@ -125,7 +125,7 @@ $groupCondition = $isItems
     ? "record_type IN ('Supply', 'PPE', 'Semi-expendable', 'ICT')"
     : "record_type NOT IN ('Supply', 'PPE', 'Semi-expendable', 'ICT')";
 $itemSearch = $isItems ? ' OR snapshot LIKE ?' : '';
-$stmt = $conn->prepare("SELECT archive_id, record_type, record_label, snapshot, deleted_at, deleted_by
+$stmt = $conn->prepare("SELECT archive_id, record_type, record_label, snapshot, deleted_at
     FROM deleted_records
     WHERE $groupCondition AND (record_label LIKE ? OR record_type LIKE ? $itemSearch)
         AND (? = '' OR record_type = ? OR (? = 'RSMI' AND record_type = 'RIS'))
@@ -357,12 +357,6 @@ $records = $stmt->get_result();
             padding: 12px 0;
         }
 
-        .archive-tabs { display: flex; gap: 8px; margin: 0 20px 20px; border-bottom: 1px solid #cbd5e1; }
-        .archive-tab { padding: 12px 20px; border-bottom: 3px solid transparent; color: #64748b; text-decoration: none; font-weight: 600; }
-        .archive-tab.active { color: #1d4ed8; border-color: #1d4ed8; }
-        .archive-tab:focus-visible { outline: 2px solid #3b82f6; outline-offset: -2px; }
-        body.dark-mode .archive-tab { color: #cbd5e1; }
-        body.dark-mode .archive-tab.active { color: #93c5fd; border-color: #93c5fd; }
         @media (max-width: 800px) {
             .archive-filters .inventory-controls { flex-wrap: wrap; }
             .archive-filters #recordType { padding-right: 44px; min-width: 160px; box-sizing: border-box; }
@@ -380,9 +374,9 @@ $records = $stmt->get_result();
     <main class="container">
 
         <h2>Archive</h2>
-        <nav class="archive-tabs" aria-label="Archive category">
-            <a class="archive-tab <?= !$isItems ? 'active' : '' ?>" href="archive.php?tab=documents"<?= !$isItems ? ' aria-current="page"' : '' ?>>Documents</a>
-            <a class="archive-tab <?= $isItems ? 'active' : '' ?>" href="archive.php?tab=items"<?= $isItems ? ' aria-current="page"' : '' ?>>Items</a>
+        <nav class="category-tabs" aria-label="Archive category">
+            <a class="category-tab <?= !$isItems ? 'active' : '' ?>" href="archive.php?tab=documents"<?= !$isItems ? ' aria-current="page"' : '' ?>>Documents</a>
+            <a class="category-tab <?= $isItems ? 'active' : '' ?>" href="archive.php?tab=items"<?= $isItems ? ' aria-current="page"' : '' ?>>Items</a>
         </nav>
 
         <?php if ($notice): ?>
@@ -620,7 +614,6 @@ $records = $stmt->get_result();
                             <th><?= $isItems ? 'Property / Stock number' : 'Record' ?></th>
                             <?php if ($isItems): ?><th>Item</th><?php endif; ?>
                             <th>Deleted at</th>
-                            <th>Deleted by (user ID)</th>
                             <th>Action</th>
                         </tr>
 
@@ -632,7 +625,7 @@ $records = $stmt->get_result();
                         <?php if (!$records->num_rows): ?>
 
                             <tr>
-                                <td colspan="<?= $isItems ? 6 : 5 ?>">
+                                <td colspan="<?= $isItems ? 5 : 4 ?>">
                                     <?= $isItems ? 'No archived items found.' : 'No archived documents found.' ?>
                                 </td>
                             </tr>
@@ -664,13 +657,6 @@ $records = $stmt->get_result();
                                 <td>
                                     <?= archiveEscape(
                                         $record['deleted_at']
-                                    ) ?>
-                                </td>
-
-
-                                <td>
-                                    <?= archiveEscape(
-                                        $record['deleted_by']
                                     ) ?>
                                 </td>
 

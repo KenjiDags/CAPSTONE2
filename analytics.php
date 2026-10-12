@@ -449,7 +449,7 @@ function renderCategoryRegister() {
       const name = `<strong>${escapeTableText(itemName(item))}</strong>` + (item.description ? `<div>${escapeTableText(item.description)}</div>` : '');
       const ppeStatus = String(item.condition || '').trim().toLowerCase() === 'unserviceable' && String(item.status || '').trim().toLowerCase() === 'active' ? 'Unserviceable' : item.status;
       const unserviceableQty = Number(item.unserviceable_quantity || 0);
-      let semiStatus = categoryStatusText(item.issuance_status);
+      let semiStatus = (item.item_statuses || [item.issuance_status]).map(categoryStatusText).join('<br>');
       if (isSemi && unserviceableQty > 0) {
         const unserviceableStatus = categoryStatusText(`Unserviceable (${unserviceableQty.toLocaleString()} item${unserviceableQty === 1 ? '' : 's'})`);
         semiStatus = item.issuance_status === 'Disposed / For disposal' || item.issuance_status === 'Unserviceable'
@@ -457,7 +457,7 @@ function renderCategoryRegister() {
       }
       const cells = isSemi
         ? [escapeTableText(item.property_no || 'N/A'), name, semiStatus, escapeTableText(item.current_holder || 'Not recorded'), Number(item.quantity || 0).toLocaleString()]
-        : [escapeTableText(item.property_no || 'N/A'), name, categoryStatusText(ppeStatus), categoryStatusText(item.condition), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned')];
+        : [escapeTableText(item.property_no || 'N/A'), name, (item.item_statuses || [ppeStatus]).map(categoryStatusText).join('<br>'), categoryStatusText(item.condition), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned')];
       return '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
     }).join('')
     : `<tr><td colspan="${columns.length}" class="empty-state">No ${isSemi ? 'semi-expendable' : 'PPE'} items recorded.</td></tr>`;

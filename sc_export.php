@@ -212,7 +212,7 @@ $ris = ['entity_name' => 'TESDA'];
       <div>3. Save.</div>
     </div>
     <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
-    <a class="back-link" href="view_sc.php?item_id=<?php echo $item_id; ?>">← Back to Item No. <?php echo htmlspecialchars($items['item_id']); ?></a>
+    <a class="back-link" href="#" onclick="window.history.back(); return false;">← Back</a>
     <hr style="margin:14px 0;">
   </div>
 

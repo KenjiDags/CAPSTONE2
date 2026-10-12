@@ -118,8 +118,8 @@
         <h2>Viewing Stock Card - Item No. <?php echo htmlspecialchars($items['item_id']); ?></h2>
 
         <div class="actions" style="margin-bottom:20px;">
-			<a href="SC.php" class="btn btn-secondary">
-				<i class="fas fa-arrow-left"></i> Back to SC List
+			<a href="#" class="btn btn-secondary" onclick="window.history.back(); return false;">
+				<i class="fas fa-arrow-left"></i> Back
 			</a>
 			<a href="sc_export.php?item_id=<?php echo $item_id; ?>" class="btn btn-success">
 				<i class="fas fa-file-pdf"></i> Export PDF

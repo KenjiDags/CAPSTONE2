@@ -1,6 +1,32 @@
 <?php 
     require 'auth.php';
     require 'config.php';
+    require_once 'archive_helpers.php';
+    if (empty($_SESSION['archive_csrf'])) $_SESSION['archive_csrf'] = bin2hex(random_bytes(32));
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_sc_id'])) {
+        if (!hash_equals($_SESSION['archive_csrf'], (string)($_POST['csrf'] ?? ''))) {
+            http_response_code(403);
+            exit('Invalid request. Reload the page and try again.');
+        }
+        $id = filter_var($_POST['delete_sc_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        try {
+            if (!$id) throw new InvalidArgumentException('Invalid stock card.');
+            archiveRecord($conn, 'SC', $id, false);
+            $_SESSION['sc_notice'] = 'Stock card history moved to Archives. You can restore it there. The supply item and quantity are preserved.';
+        } catch (Throwable $error) {
+            error_log('SC archive failed: ' . $error->getMessage());
+            $_SESSION['sc_notice'] = 'Unable to archive the stock card. Please reload and try again.';
+        }
+        header('Location: SC.php?' . http_build_query([
+            'search' => (string)($_POST['search'] ?? ''),
+            'sort' => (string)($_POST['sort'] ?? 'stock_number'),
+        ]));
+        exit;
+    }
+    $notice = $_SESSION['sc_notice'] ?? null;
+    unset($_SESSION['sc_notice']);
+    $csrf = htmlspecialchars($_SESSION['archive_csrf'], ENT_QUOTES, 'UTF-8');
 
 // SORT LOGIC
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'stock_number';
@@ -66,6 +92,9 @@ if ($search !== '') {
 
 <div class="container">
     <h2>Stock Card (SC)</h2>
+    <?php if ($notice !== null): ?>
+        <p role="status"><?= htmlspecialchars($notice, ENT_QUOTES, 'UTF-8') ?></p>
+    <?php endif; ?>
 
     <form id="sc-filters" method="get" class="filters">
 
@@ -129,11 +158,13 @@ if ($search !== '') {
         <tbody>
             <?php 
                 $sql = "SELECT * FROM items $whereClause $order_clause";
-                $result = $conn->query($sql);            
+                $result = $conn->query($sql);
+                $deleteSearch = htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
+                $deleteSort = htmlspecialchars($sort_by, ENT_QUOTES, 'UTF-8');
                 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<tr>
+                        echo "<tr class='sc-item-row'>
                             <td><strong>{$row['stock_number']}</strong></td>
                             <td>{$row['iar']}</td>
                             <td>{$row['item_name']}</td>
@@ -156,6 +187,13 @@ if ($search !== '') {
                                         <a href='sc_export.php?item_id={$row['item_id']}' class='export-action'>
                                             <i class='fas fa-download'></i> Export
                                         </a>
+                                        <form method='post' action='SC.php' onsubmit='return confirm(&quot;Delete this stock card history and move it to Archives? The supply item and quantity will be preserved.&quot;)'>
+                                            <input type='hidden' name='delete_sc_id' value='{$row['item_id']}'>
+                                            <input type='hidden' name='csrf' value='{$csrf}'>
+                                            <input type='hidden' name='search' value='{$deleteSearch}'>
+                                            <input type='hidden' name='sort' value='{$deleteSort}'>
+                                            <button type='submit' class='delete-action'><i class='fas fa-trash'></i> Delete</button>
+                                        </form>
                                     </div>
                                 </div>
                             </td>
@@ -163,7 +201,7 @@ if ($search !== '') {
                         </tr>";
                 }
             } else {
-                echo '<tr><td colspan="5">
+                echo '<tr><td colspan="8">
                         <i class="fas fa-inbox"></i> Item not found.
                       </td></tr>';
             }
@@ -176,7 +214,7 @@ if ($search !== '') {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#scTable tbody tr[data-view-url]');
+    const rows = document.querySelectorAll('#scTable tbody tr.sc-item-row');
 
     function filterRows() {
         if (!searchInput) {

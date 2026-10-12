@@ -575,39 +575,6 @@ case 'update':
             color: #3b82f6;
         }
 
-        .category-tabs {
-            display: flex !important;
-            gap: 10px !important;
-            margin-bottom: 20px !important;
-            border-bottom: 1px solid #e5e7eb !important;
-            flex-wrap: wrap !important;
-        }
-
-        .category-tab {
-            padding: 12px 20px !important;
-            text-decoration: none !important;
-            color: #6b7280 !important;
-            border: none !important;
-            border-bottom: 3px solid transparent !important;
-            background: transparent !important;
-            transition: all 0.3s !important;
-            font-weight: 500 !important;
-            font-size: 14px !important;
-            margin-bottom: -2px !important;
-            cursor: pointer;
-        }
-
-        .category-tab:hover {
-            color: #3b82f6 !important;
-            border-bottom-color: #93c5fd !important;
-        }
-
-        .category-tab.active {
-            color: #3b82f6 !important;
-            border-bottom-color: #3b82f6 !important;
-            font-weight: 600 !important;
-        }
-
         .inventory-clickable-row {
             cursor: pointer;
         }

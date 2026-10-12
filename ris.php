@@ -171,6 +171,33 @@ switch ($sort_by) {
         body.dark-mode .actions-menu-list a:hover {
             background: #334155;
         }
+        #risTable .ris-month-row th {
+            padding: 16px 12px;
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .ris-month-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .ris-month-divider::before,
+        .ris-month-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #cbd5e1;
+        }
+        body.dark-mode #risTable .ris-month-row th {
+            background: #1e293b;
+            color: #cbd5e1;
+        }
+        body.dark-mode .ris-month-divider::before,
+        body.dark-mode .ris-month-divider::after {
+            background: #475569;
+        }
     </style>
 </head>
 <body>
@@ -210,9 +237,18 @@ switch ($sort_by) {
             </thead>
             <tbody>
             <?php 
-            $result = $conn->query("SELECT * FROM ris $order_clause");
+            $monthDirection = $sort_by === 'date_oldest' ? 'ASC' : 'DESC';
+            $groupOrder = str_replace('ORDER BY ', "ORDER BY added_month IS NULL ASC, added_month $monthDirection, ", $order_clause);
+            $result = $conn->query("SELECT ris.*, DATE_FORMAT(created_at, '%Y-%m') AS added_month FROM ris $groupOrder");
             if ($result && $result->num_rows > 0) {
+                $previousMonth = null;
                 while ($row = $result->fetch_assoc()) {
+                    $month = $row['added_month'] ?? 'unknown';
+                    if ($month !== $previousMonth) {
+                        $label = $month === 'unknown' ? 'Date unknown' : date('F, Y', strtotime($month . '-01'));
+                        echo '<tr class="ris-month-row"><th colspan="5" scope="rowgroup"><div class="ris-month-divider"><span>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span></div></th></tr>';
+                        $previousMonth = $month;
+                    }
                     echo '<tr>';
                     echo '<td><strong>' . htmlspecialchars($row['ris_no']) . '</strong></td>';
                     echo '<td>' . date('M d, Y', strtotime($row['date_requested'])) . '</td>';

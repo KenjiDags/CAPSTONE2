@@ -35,14 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
   exit;
 }
 
-// Remaining ICS issuances and transferred/reissued quantities are separate return sources.
+// Only outstanding ICS issuances and transferred/reissued quantities are returnable.
 function rrspReturnOptions(mysqli $conn): array {
   $options = [];
   $issued = $conn->query("SELECT ii.*, i.ics_no, i.date_issued, i.received_by,
       sp.id AS semi_id, LEAST(ii.quantity, COALESCE(sp.quantity_issued, ii.quantity)) AS available_qty
       FROM ics_items ii JOIN ics i ON i.ics_id = ii.ics_id
-      LEFT JOIN semi_expendable_property sp ON sp.semi_expendable_property_no = ii.stock_number
-      WHERE ii.quantity > 0 AND (sp.id IS NULL OR sp.quantity_issued > 0)
+      JOIN semi_expendable_property sp ON sp.semi_expendable_property_no = ii.stock_number
+      WHERE ii.quantity > 0 AND sp.quantity_issued > 0
       ORDER BY i.date_issued DESC, ii.ics_item_id DESC");
   foreach ($issued as $row) {
     $options[] = ['source_type' => 'issued', 'source_id' => (int)$row['ics_item_id'],
@@ -51,28 +51,27 @@ function rrspReturnOptions(mysqli $conn): array {
       'quantity' => (int)$row['available_qty'], 'unit_cost' => (float)$row['unit_cost'],
       'end_user' => $row['received_by']];
   }
-  $register = $conn->query("SELECT sp.* FROM semi_expendable_property sp
-      WHERE sp.quantity_reissued > 0 OR (sp.quantity_issued > 0 AND NOT EXISTS
-        (SELECT 1 FROM ics_items ii WHERE ii.stock_number = sp.semi_expendable_property_no AND ii.quantity > 0))
+  $register = $conn->query("SELECT sp.*, t.itr_no AS transfer_no,
+      t.itr_date AS transfer_date, t.to_accountable AS transfer_holder
+      FROM semi_expendable_property sp
+      JOIN itr t ON t.itr_id = (
+        SELECT ti.itr_id FROM itr_items ti
+        JOIN itr document ON document.itr_id = ti.itr_id
+        LEFT JOIN ics_items source ON source.ics_item_id = ti.ics_item_id
+        WHERE ti.transfer_qty > 0
+          AND (ti.item_no = sp.semi_expendable_property_no
+            OR source.stock_number = sp.semi_expendable_property_no)
+        ORDER BY document.itr_date DESC, ti.itr_id DESC, ti.itr_item_id DESC LIMIT 1
+      )
+      WHERE sp.quantity_reissued > 0
       ORDER BY sp.item_description");
   foreach ($register as $row) {
-    foreach (['transferred' => 'quantity_reissued', 'issued-register' => 'quantity_issued'] as $type => $column) {
-      if ((int)$row[$column] <= 0) continue;
-      if ($type === 'issued-register') {
-        $check = $conn->prepare('SELECT 1 FROM ics_items WHERE stock_number = ? AND quantity > 0 LIMIT 1');
-        $check->bind_param('s', $row['semi_expendable_property_no']);
-        $check->execute();
-        $hasIcs = $check->get_result()->num_rows > 0;
-        $check->close();
-        if ($hasIcs) continue;
-      }
-      $options[] = ['source_type' => $type, 'source_id' => (int)$row['id'],
-        'stock_number' => $row['semi_expendable_property_no'], 'description' => $row['item_description'],
-        'ics_no' => $row['semi_expendable_property_no'], 'date' => $row['date'],
-        'status' => $type === 'transferred' ? 'Transferred / Reissued' : 'Issued',
-        'quantity' => (int)$row[$column], 'unit_cost' => (float)$row['amount'],
-        'end_user' => $type === 'transferred' ? $row['office_officer_reissued'] : $row['office_officer_issued']];
-    }
+    $options[] = ['source_type' => 'transferred', 'source_id' => (int)$row['id'],
+      'stock_number' => $row['semi_expendable_property_no'], 'description' => $row['item_description'],
+      'ics_no' => $row['transfer_no'], 'date' => $row['transfer_date'],
+      'status' => 'Transferred / Reissued',
+      'quantity' => (int)$row['quantity_reissued'], 'unit_cost' => (float)$row['amount'],
+      'end_user' => $row['transfer_holder']];
   }
   return $options;
 }
@@ -299,7 +298,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
               $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
               $search = implode(' ', [$option['stock_number'], $option['ics_no'], $option['description'], $option['status'], $option['end_user']]);
             ?>
-              <tr class="ics-row" data-text="<?= $escape($search) ?>" data-source-type="<?= $escape($option['source_type']) ?>" data-source-id="<?= $option['source_id'] ?>" data-ics-no="<?= $escape($option['ics_no']) ?>" data-unit-cost="<?= $option['unit_cost'] ?>" data-qty-on-hand="<?= $option['quantity'] ?>">
+              <tr class="ics-row" data-text="<?= $escape($search) ?>" data-issued-to="<?= $escape($option['end_user']) ?>" data-source-type="<?= $escape($option['source_type']) ?>" data-source-id="<?= $option['source_id'] ?>" data-ics-no="<?= $escape($option['ics_no']) ?>" data-unit-cost="<?= $option['unit_cost'] ?>" data-qty-on-hand="<?= $option['quantity'] ?>">
                 <td><?= $escape($option['stock_number']) ?></td>
                 <td class="icsinfo-cell"><?= $escape($option['ics_no']) ?><br><small><?= $escape($option['date']) ?> &middot; <?= $escape($option['status']) ?></small></td>
                 <td class="desc-cell"><?= $escape($option['description']) ?></td>
@@ -311,7 +310,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                 <td><input class="remarks-input" type="text" aria-label="Remarks for <?= $escape($option['description']) ?>"></td>
               </tr>
             <?php endforeach; ?>
-              <tr id="no-items-row"<?= $returnOptions ? ' style="display:none"' : '' ?>><td colspan="9">No issued or transferred items available for return.</td></tr>
+              <tr id="no-items-row"<?= $returnOptions ? ' style="display:none"' : '' ?>><td colspan="9">No ICS-issued or transferred items available for return.</td></tr>
             </tbody>
             <tfoot>
               <tr>
@@ -573,6 +572,15 @@ function filterItems(){
   const none=document.getElementById('no-items-row'); if (none) none.style.display = (visible===0) ? 'table-row' : 'none';
 }
 function formatMoney(v){ return '₱'+Number(v||0).toFixed(2); }
+function autofillReturnedBy(){
+  const holders = new Set();
+  document.querySelectorAll('#itemsTable tbody tr.ics-row').forEach(row => {
+    const quantity = parseInt(row.querySelector('.qty-input')?.value || '0', 10) || 0;
+    const holder = (row.dataset.issuedTo || '').trim();
+    if (quantity > 0 && holder) holders.add(holder);
+  });
+  document.getElementById('returned_by').value = Array.from(holders).join(', ');
+}
 function attachQtyHandlersRRSP(){
   const recomputeGrand=()=>{
     let sum=0;
@@ -594,7 +602,7 @@ function attachQtyHandlersRRSP(){
       if (balCell) balCell.textContent = String(Math.max(0, onHand - v));
       recomputeGrand();
     };
-    qtyInput.addEventListener('input', recalc);
+    qtyInput.addEventListener('input', () => { recalc(); autofillReturnedBy(); });
     qtyInput.addEventListener('blur', recalc);
     recalc();
   });
