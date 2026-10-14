@@ -149,7 +149,6 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
         <div><span>Projected change</span><strong id="demandChange"></strong></div>
         <div><span>Demand trend</span><strong id="demandTrend"></strong></div>
       </div>
-      <p class="panel-caption demand-method" id="demandForecastMethod" hidden></p>
     </article>
   </section>
 
@@ -236,7 +235,6 @@ async function loadDemandForecast(background = false) {
   if (!silent) {
     document.getElementById('demandChartFrame').hidden = true;
     document.getElementById('demandForecastSummary').hidden = true;
-    document.getElementById('demandForecastMethod').hidden = true;
     message.hidden = false;
   }
   // Custom ranges only select points from the last loaded forecast series.
@@ -281,7 +279,6 @@ async function loadDemandForecast(background = false) {
     const available = data.forecast !== null || data.monthlyForecasts.some(value => value !== null);
     document.getElementById('demandChartFrame').hidden = !available;
     document.getElementById('demandForecastSummary').hidden = custom || !available;
-    document.getElementById('demandForecastMethod').hidden = !available;
     message.hidden = available;
     if (!available) { message.textContent = custom ? 'No calculated forecasts in the selected range. Choose months within the loaded forecast history.' : 'Insufficient historical data to generate a forecast. Three complete calendar months are required for the SMA forecast.'; return; }
     const number = value => Number(value).toLocaleString();
@@ -294,7 +291,6 @@ async function loadDemandForecast(background = false) {
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
     }
-    document.getElementById('demandForecastMethod').textContent = data.method + ' (3 months): forecast = total issued in the preceding three complete months / 3, rounded to whole items. Months with no issuances count as zero. Current-month actual usage is updated from recorded issuances and excluded from the calculation.';
     const chartMonths = [...data.months];
     const chartActual = [...data.actual];
     const chartForecasts = [...data.monthlyForecasts];

@@ -5,7 +5,8 @@ function inventorySimpleMovingAverage(array $history, int $window = 3): ?int {
     if (count($history) < $window) return null;
     return max(0, (int)round(array_sum(array_slice($history, -$window)) / $window));
 }
-// Forecast office supplies from RIS issuances only. Receipts are excluded.
+
+
 function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmutable $rangeStart = null, ?DateTimeImmutable $rangeEnd = null, bool $customRange = false): array {
     $timezone = new DateTimeZone('Asia/Manila');
 
@@ -34,15 +35,12 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     $monthly = [];
 
     // Include the preceding three months for predictions at the start of the
-    // selected range, then remove that context from the displayed series.
     $displayStart = $start->format('Y-m');
     $calculationStart = $start->modify('-3 months');
     for ($date = $calculationStart; $date <= $lastMonth; $date = $date->modify('+1 month')) {
         $monthly[$date->format('Y-m')] = 0;
     }
 
-    // RIS is the authoritative issuance document for office supplies. Its linked
-    // item_history rows describe the same event and must not be summed again.
     $sql = "SELECT DATE_FORMAT(r.date_requested, '%Y-%m') AS month, SUM(ri.issued_quantity) AS quantity
             FROM ris_items ri JOIN ris r ON r.ris_id = ri.ris_id
             WHERE r.date_requested >= ? AND r.date_requested < ? AND ri.issued_quantity > 0
@@ -60,7 +58,7 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     }
     $statement->close();
 
-    // Exclude only the current incomplete month; historical ranges retain their final month.
+    // Exclude the current incomplete month
     $values = array_values($monthly);
     $historyValues = array_values(array_filter(
         $monthly,
@@ -70,7 +68,7 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
 
 
 
-    // Predict each target using only its preceding complete calendar months.
+    // Predict each target using complete calendar months.
     $monthlyForecasts = [];
     foreach (array_keys($monthly) as $index => $month) {
         $monthlyForecasts[] = $month <= $currentMonth->format('Y-m')
@@ -82,7 +80,6 @@ function inventoryDemandForecast(mysqli $conn, int $months = 12, ?DateTimeImmuta
     $values = array_slice($values, $displayOffset);
     $monthlyForecasts = array_slice($monthlyForecasts, $displayOffset);
     // Custom ranges return only actuals and SMA predictions for selected months.
-    // No next-month projection, replenishment summary, or month-to-month comparisons.
     if ($customRange) {
         return [
             'months' => $displayMonths, 'actual' => $values,

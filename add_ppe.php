@@ -281,8 +281,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" id="unit" name="unit" value="unit">
                 </div>
                 <div class="form-group">
-                    <label for="officer_incharge">Officer In-charge <span class="required">*</span></label>
-                    <input type="text" id="officer_incharge" name="officer_incharge" required>
+                    <label for="officer_incharge">Officer In-charge</label>
+                    <input type="text" id="officer_incharge" name="officer_incharge">
                 </div>
             </div>
 

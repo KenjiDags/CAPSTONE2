@@ -33,8 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "UPDATE users SET status = 'disabled' WHERE user_id = ?";
             } elseif ($action === 'enable' && $target['status'] === 'disabled') {
                 $sql = "UPDATE users SET status = 'active' WHERE user_id = ?";
-            } elseif ($action === 'promote' && $target['role'] === 'user' && $target['status'] === 'active') {
-                $sql = "UPDATE users SET role = 'admin' WHERE user_id = ?";
             } elseif ($action === 'demote' && $target['role'] === 'admin' && $target['status'] === 'active') {
                 $sql = "UPDATE users SET role = 'user' WHERE user_id = ?";
             } elseif ($action === 'remove' && $target['status'] !== 'removed') {
@@ -201,7 +199,9 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
 </header>
 <div class="admin-content">
   <h1><?= $view === 'overview' ? 'Administration overview' : ($view === 'accounts' ? 'Manage accounts' : 'Recover accounts') ?></h1>
+  <?php if ($view !== 'accounts'): ?>
   <p class="intro"><?= $view === 'recovery' ? 'Restore an account removed after this feature was added. Earlier permanent deletions require a database backup.' : 'Review registration requests and control who can use the inventory system. Confirm each applicant against institutional records before approving.' ?></p>
+  <?php endif; ?>
   <?php if ($message): ?><div class="notice" role="status"><?= htmlspecialchars($message) ?></div><?php endif; ?>
   <?php if ($error): ?><div class="notice error" role="alert"><?= htmlspecialchars($error) ?></div><?php endif; ?>
   <?php if ($view === 'overview'): ?>
@@ -243,7 +243,9 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
             <?php elseif (in_array($account['status'], ['active', 'approved'], true)): ?>
               <?php admin_action((int)$account['user_id'], 'disable', 'Disable', $_SESSION['admin_csrf'], $view, 'danger'); ?>
               <?php if ($account['status'] === 'active'): ?>
-                <?php admin_action((int)$account['user_id'], $account['role'] === 'admin' ? 'demote' : 'promote', $account['role'] === 'admin' ? 'Make user' : 'Make admin', $_SESSION['admin_csrf'], $view); ?>
+                <?php if ($account['role'] === 'admin'): ?>
+                  <?php admin_action((int)$account['user_id'], 'demote', 'Make user', $_SESSION['admin_csrf'], $view); ?>
+                <?php endif; ?>
               <?php endif; ?>
             <?php elseif ($account['status'] === 'disabled'): ?>
               <?php admin_action((int)$account['user_id'], 'enable', 'Enable', $_SESSION['admin_csrf'], $view); ?>
