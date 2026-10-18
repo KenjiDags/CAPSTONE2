@@ -12,7 +12,7 @@ if (!$pending || ($pending['expires'] ?? 0) < time()) {
 $id = (int)$pending['id'];
 $stmt = $conn->prepare('SELECT username, role, status FROM users WHERE user_id = ?');
 $stmt->bind_param('i', $id); $stmt->execute(); $user = $stmt->get_result()->fetch_assoc(); $stmt->close();
-if (!$user || !in_array($user['status'], ['approved', 'active'], true)) {
+if (!$user || $user['role'] !== 'admin' || !in_array($user['status'], ['approved', 'active'], true)) {
     unset($_SESSION['totp_setup_pending']); header('Location: index.php'); exit;
 }
 $stmt = $conn->prepare('SELECT secret, enabled_at FROM user_totp WHERE user_id = ?');

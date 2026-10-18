@@ -2,6 +2,7 @@
 define('ACCOUNT_PAGE', true);
 define('RECOVERY_PAGE', true);
 require 'auth.php';
+if ($_SESSION['role'] !== 'admin') { header('Location: analytics.php'); exit; }
 $codes = $_SESSION['totp_new_recovery'] ?? null;
 if (!$codes) { header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin.php' : 'analytics.php')); exit; }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

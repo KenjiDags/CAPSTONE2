@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
         $id = (int)$pending['id'];
         $stmt = $conn->prepare('SELECT u.username, u.password, u.role, u.status, t.secret FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
         $stmt->bind_param('i', $id); $stmt->execute(); $account = $stmt->get_result()->fetch_assoc(); $stmt->close();
-        if (!$account || !in_array($account['status'], ['approved', 'active'], true) || !hash_equals($pending['fingerprint'], trustedDeviceFingerprint($account['password'], $account['secret']))) {
+        if (!$account || $account['role'] !== 'admin' || !in_array($account['status'], ['approved', 'active'], true) || !hash_equals($pending['fingerprint'], trustedDeviceFingerprint($account['password'], $account['secret']))) {
             unset($_SESSION['trust_pending']);
             $error = 'Your account changed. Enter your username and password again.';
         } elseif (isset($_POST['trust_device']) && !trustedDeviceCreate($conn, $id, $pending['fingerprint'])) {
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
         $stmt = $conn->prepare('SELECT u.username, u.password, u.role, u.status, t.secret, t.last_step, t.recovery_hashes FROM users u JOIN user_totp t ON t.user_id = u.user_id WHERE u.user_id = ? AND t.enabled_at IS NOT NULL');
         $stmt->bind_param('i', $id); $stmt->execute(); $account = $stmt->get_result()->fetch_assoc(); $stmt->close();
         $accepted = false;
-        if ($account && in_array($account['status'], ['approved', 'active'], true)) {
+        if ($account && $account['role'] === 'admin' && in_array($account['status'], ['approved', 'active'], true)) {
             $step = totpVerify($account['secret'], $code, $account['last_step'] === null ? null : (int)$account['last_step']);
             if ($step !== null) {
                 $save = $conn->prepare('UPDATE user_totp SET last_step = ? WHERE user_id = ? AND (last_step IS NULL OR last_step < ?)');
@@ -102,6 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
 
             if (password_verify($password, $user['password']) && in_array($user['status'], ['approved', 'active'], true)) {
                 $_SESSION['remember_username_requested'] = $remember_checked;
+                if ($user['role'] !== 'admin') {
+                    completeDeviceLogin($conn, (int)$user['user_id'], $user);
+                }
                 $factor = $conn->prepare('SELECT enabled_at, secret FROM user_totp WHERE user_id = ?');
                 $factor->bind_param('i', $user['user_id']); $factor->execute();
                 $factorRow = $factor->get_result()->fetch_assoc(); $factor->close();

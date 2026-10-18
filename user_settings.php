@@ -2,6 +2,10 @@
 define('ACCOUNT_PAGE', true);
 require 'auth.php';
 require 'config.php';
+if ($_SESSION['role'] !== 'admin' && isset($_POST['totp_action'])) {
+    http_response_code(403); exit('Authenticator settings are only available to administrators.');
+}
+if ($_SESSION['role'] === 'admin') {
 require_once 'totp.php';
 totpTable($conn);
 if (empty($_SESSION['totp_csrf'])) $_SESSION['totp_csrf'] = bin2hex(random_bytes(32));
@@ -59,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_action'])) {
 $totpStmt = $conn->prepare('SELECT secret, enabled_at FROM user_totp WHERE user_id = ?');
 $totpStmt->bind_param('i', $_SESSION['user_id']); $totpStmt->execute();
 $totpAccount = $totpStmt->get_result()->fetch_assoc(); $totpStmt->close();
+}
 
 
 $user_id = $_SESSION['user_id'];
@@ -679,6 +684,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </section>
             
             
+            <?php if ($_SESSION['role'] === 'admin'): ?>
             <section class="settings-section">
                 <h2><i class="fas fa-shield-alt"></i> Authenticator App</h2>
                 <?php if ($totpNotice): ?><div class="alert <?= $totpRecovery ? 'alert-success' : 'alert-error' ?>" role="status"><?= htmlspecialchars($totpNotice) ?></div><?php endif; ?>
@@ -719,6 +725,8 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </form>
                 <?php endif; ?>
             </section>
+
+            <?php endif; ?>
 
             <!-- Password Section -->
             <section class="settings-section">

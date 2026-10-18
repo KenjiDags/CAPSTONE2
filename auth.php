@@ -31,22 +31,26 @@ if (!$accessUser || $accessUser['status'] !== 'active') {
     header('Location: index.php');
     exit;
 }
-require_once 'totp.php';
-totpTable($conn);
-$factorStmt = $conn->prepare('SELECT 1 FROM user_totp WHERE user_id = ? AND enabled_at IS NOT NULL');
-$factorStmt->bind_param('i', $_SESSION['user_id']);
-$factorStmt->execute();
-$factorEnabled = $factorStmt->get_result()->num_rows > 0;
-$factorStmt->close();
-if (!$factorEnabled) {
-    session_unset();
-    session_destroy();
-    header('Location: index.php');
-    exit;
+if ($accessUser['role'] === 'admin') {
+    require_once 'totp.php';
+    totpTable($conn);
+    $factorStmt = $conn->prepare('SELECT 1 FROM user_totp WHERE user_id = ? AND enabled_at IS NOT NULL');
+    $factorStmt->bind_param('i', $_SESSION['user_id']);
+    $factorStmt->execute();
+    $factorEnabled = $factorStmt->get_result()->num_rows > 0;
+    $factorStmt->close();
+    if (!$factorEnabled) {
+        session_unset();
+        session_destroy();
+        header('Location: index.php');
+        exit;
+    }
+} else {
+    unset($_SESSION['totp_pending'], $_SESSION['totp_setup_pending'], $_SESSION['totp_setup_csrf'], $_SESSION['totp_new_recovery'], $_SESSION['trust_pending']);
 }
 $_SESSION['role'] = $accessUser['role'];
 $_SESSION['username'] = $accessUser['username'];
-if (!empty($_SESSION['totp_new_recovery']) && !defined('RECOVERY_PAGE')) {
+if ($accessUser['role'] === 'admin' && !empty($_SESSION['totp_new_recovery']) && !defined('RECOVERY_PAGE')) {
     header('Location: totp_recovery.php');
     exit;
 }
