@@ -2728,3 +2728,8 @@ body.add-page.dark-mode #grand_total_display {
             border-bottom-color: #3b82f6 !important;
             font-weight: 600 !important;
         }
+
+/* Shared heading icons on document detail pages. */
+.detail-view-page .container h2 > i {
+    color: #3b82f6;
+}

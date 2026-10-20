@@ -88,7 +88,7 @@ try {
     archiveCheck($conn->query('SELECT * FROM ics_items')->num_rows === 1, 'Legacy ICS tables support restoration');
     $engine = $conn->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='ics'")->fetch_assoc()['ENGINE'];
     archiveCheck($engine === 'InnoDB', 'Legacy storage upgraded for atomic restore');
-    require_once __DIR__ . '/../rsmi_helpers.php';
+    require_once __DIR__ . '/../office_supplies/rsmi_helpers.php';
     rsmiEnsureTable($conn);
     $rsmiRows = [['ris_no' => 'RIS-1', 'stock_number' => 'S-1', 'item_name' => 'Paper',
         'description' => 'A4', 'unit' => 'ream', 'issued_quantity' => 2, 'unit_cost' => 25, 'amount' => 50]];

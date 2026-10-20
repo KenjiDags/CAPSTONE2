@@ -109,7 +109,7 @@ $confirmed = isset($_POST['confirm_reset']) && $_POST['confirm_reset'] === 'yes'
             <h2>✅ Database Reset Successful!</h2>
             <p>All inventory data has been cleared. The database is now ready for fresh data entry.</p>
             <p>All tables have been reset with AUTO_INCREMENT starting at 1.</p>
-            <a href="../inventory.php" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px;">Return to Inventory</a>
+            <a href="../office_supplies/inventory.php" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px;">Return to Inventory</a>
         </div>
         <?php
     } catch (Exception $e) {
@@ -148,7 +148,7 @@ else:
         
         <div class="form-group">
             <button type="submit" class="btn-reset">🗑️ Reset Database</button>
-            <a href="../inventory.php" class="btn-cancel" style="text-decoration: none; display: inline-block;">Cancel</a>
+            <a href="../office_supplies/inventory.php" class="btn-cancel" style="text-decoration: none; display: inline-block;">Cancel</a>
         </div>
     </form>
 <?php endif; ?>

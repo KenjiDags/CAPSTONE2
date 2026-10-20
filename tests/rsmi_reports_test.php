@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../rsmi_helpers.php';
+require_once __DIR__ . '/../office_supplies/rsmi_helpers.php';
 function checkRsmi(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 }
@@ -55,7 +55,8 @@ if (in_array('--database', $argv, true)) {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SESSION = ['user_id' => 1, 'rsmi_csrf' => str_repeat('a', 64)];
         $source = file_get_contents(__DIR__ . '/../' . $file);
-        $source = str_replace(["require 'auth.php';", "rsmiEnsureTable(\$conn);", "<?php include 'sidebar.php'; ?>"], '', $source);
+        $source = str_replace(["require 'auth.php';", "require dirname(__DIR__) . '/auth.php';", "<?php include dirname(__DIR__) . '/sidebar.php'; ?>", "rsmiEnsureTable(\$conn);", "<?php include 'sidebar.php'; ?>"], '', $source);
+        $source = str_replace('__DIR__', var_export(__DIR__ . '/../office_supplies', true), $source);
         ob_start();
         try {
             eval('?>' . $source);
@@ -64,19 +65,19 @@ if (in_array('--database', $argv, true)) {
             ob_end_clean();
         }
     }
-    $export = renderRsmiTemplate('rsmi_export.php', $conn, ['rsmi_id' => $id]);
+    $export = renderRsmiTemplate('office_supplies/rsmi_export.php', $conn, ['rsmi_id' => $id]);
     checkRsmi(str_contains($export, 'RSMI-2026-0001') && str_contains($export, 'October 11, 2026'), 'Export does not use saved metadata.');
     checkRsmi(str_contains($export, '&lt;sample&gt;') && str_contains($export, '&lt;Custodian&gt;'), 'Export must escape saved fields.');
     checkRsmi(str_contains($export, 'Paper &amp; pens') && !str_contains($export, 'Changed source item'), 'Export is reading changed data.');
     checkRsmi(str_contains($export, '<td>016</td>'), 'Export truncated reports exceeding fifteen entries.');
-    $listing = renderRsmiTemplate('rsmi.php', $conn);
+    $listing = renderRsmiTemplate('office_supplies/rsmi.php', $conn);
     checkRsmi(str_contains($listing, 'RSMI-2026-0001') && str_contains($listing, 'RSMI-2026-0002'), 'Saved reports missing from list.');
     checkRsmi(str_contains($listing, 'add_rsmi.php') && str_contains($listing, 'rsmi_export.php?rsmi_id=1'), 'List links missing.');
-    $filtered = renderRsmiTemplate('rsmi.php', $conn, ['search' => 'Second Custodian', 'sort' => 'amount_highest']);
+    $filtered = renderRsmiTemplate('office_supplies/rsmi.php', $conn, ['search' => 'Second Custodian', 'sort' => 'amount_highest']);
     checkRsmi(!str_contains($filtered, 'RSMI-2026-0001') && str_contains($filtered, 'RSMI-2026-0002'), 'Search filtering failed.');
-    $empty = renderRsmiTemplate('rsmi.php', $conn, ['search' => 'no matching fixture', 'sort' => 'invalid sort']);
+    $empty = renderRsmiTemplate('office_supplies/rsmi.php', $conn, ['search' => 'no matching fixture', 'sort' => 'invalid sort']);
     checkRsmi(str_contains($empty, 'No matching RSMI documents found.'), 'Empty search state missing.');
-    $add = renderRsmiTemplate('add_rsmi.php', $conn);
+    $add = renderRsmiTemplate('office_supplies/add_rsmi.php', $conn);
     checkRsmi(str_contains($add, 'method="post" id="signatureForm"') && str_contains($add, 'form="signatureForm"'), 'Save form is not connected.');
     checkRsmi(str_contains($add, 'name="csrf"') && !str_contains($add, 'exportBtn'), 'Creation must save with CSRF rather than exporting.');
     echo "RSMI creation, listing/search, and saved export template checks passed.\n";

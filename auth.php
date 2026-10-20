@@ -15,7 +15,7 @@ if (
     session_destroy();
     
     // Redirect to login page
-    header('Location: index.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'index.php');
     exit;
 }
 
@@ -28,7 +28,7 @@ $accessStmt->close();
 if (!$accessUser || $accessUser['status'] !== 'active') {
     session_unset();
     session_destroy();
-    header('Location: index.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'index.php');
     exit;
 }
 if ($accessUser['role'] === 'admin') {
@@ -42,7 +42,7 @@ if ($accessUser['role'] === 'admin') {
     if (!$factorEnabled) {
         session_unset();
         session_destroy();
-        header('Location: index.php');
+        header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'index.php');
         exit;
     }
 } else {
@@ -51,15 +51,15 @@ if ($accessUser['role'] === 'admin') {
 $_SESSION['role'] = $accessUser['role'];
 $_SESSION['username'] = $accessUser['username'];
 if ($accessUser['role'] === 'admin' && !empty($_SESSION['totp_new_recovery']) && !defined('RECOVERY_PAGE')) {
-    header('Location: totp_recovery.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'totp_recovery.php');
     exit;
 }
 if ($accessUser['role'] === 'admin' && !defined('ADMIN_PAGE') && !defined('ACCOUNT_PAGE')) {
-    header('Location: admin.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'admin.php');
     exit;
 }
 if ($accessUser['role'] !== 'admin' && defined('ADMIN_PAGE') && !defined('ACCOUNT_PAGE')) {
-    header('Location: analytics.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'analytics.php');
     exit;
 }
 
@@ -70,6 +70,6 @@ if (
 ) {
     session_unset();
     session_destroy();
-    header('Location: index.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'index.php');
     exit;
 }

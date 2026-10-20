@@ -1,0 +1,1204 @@
+<?php
+require_once __DIR__ . '/bootstrap.php';
+require dirname(__DIR__) . '/auth.php';
+require dirname(__DIR__) . '/config.php';
+require dirname(__DIR__) . '/functions.php';
+require_once dirname(__DIR__) . '/inventory_count_cache.php';
+invalidateInventoryCountAfterWrite();
+if (empty($_SESSION['inventory_delete_csrf'])) $_SESSION['inventory_delete_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    if (!hash_equals($_SESSION['inventory_delete_csrf'], (string)($_POST['csrf'] ?? ''))) {
+        http_response_code(400);
+        exit('Invalid request. Reload the inventory and try again.');
+    }
+    require_once dirname(__DIR__) . '/archive_helpers.php';
+    try {
+        archiveRecord($conn, 'Supply', (int)$_POST['delete_id']);
+        header('Location: inventory.php?archived=1');
+        exit();
+    } catch (Throwable $error) {
+        http_response_code(500);
+        exit('Unable to archive item. No records were deleted.');
+    }
+}
+
+
+
+if (isset($_GET['fix_null_item_history'])) {
+    $update_sql = "UPDATE item_history SET reorder_point = 0 WHERE reorder_point IS NULL";
+    if ($conn->query($update_sql)) {
+        echo "<div style='color:green;font-weight:bold;'>All item_history records with null reorder_point have been updated to 0.</div>";
+    } else {
+        echo "<div style='color:red;font-weight:bold;'>Error updating item_history records: {$conn->error}</div>";
+    }
+}
+// Utility: Update all old items with null reorder_point to 0
+if (isset($_GET['fix_null_reorder_point'])) {
+    $update_sql = "UPDATE items SET reorder_point = 0 WHERE reorder_point IS NULL";
+    if ($conn->query($update_sql)) {
+        echo "<div style='color:green;font-weight:bold;'>All items with null reorder_point have been updated to 0.</div>";
+    } else {
+        echo "<div style='color:red;font-weight:bold;'>Error updating items: {$conn->error}</div>";
+    }
+}
+
+// SORT LOGIC
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'stock_number';
+$order_clause = '';
+
+switch ($sort_by) {
+    case 'item_name':
+        $order_clause = "ORDER BY i.item_name ASC";
+        break;
+    case 'quantity_low':
+        $order_clause = "ORDER BY i.quantity_on_hand ASC";
+        break;
+    case 'quantity_high':
+        $order_clause = "ORDER BY i.quantity_on_hand DESC";
+        break;
+    case 'cost_low':
+        $order_clause = "ORDER BY i.unit_cost ASC";
+        break;
+    case 'cost_high':
+        $order_clause = "ORDER BY i.unit_cost DESC";
+        break;
+    case 'stock_number':
+    default:
+        $order_clause = "ORDER BY i.stock_number ASC";
+        break;
+}
+
+// SEARCH FILTER
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$whereClause = '';
+if ($search !== '') {
+    $esc = $conn->real_escape_string($search);
+    $whereClause = " WHERE (i.stock_number LIKE '%$esc%' OR i.item_name LIKE '%$esc%' OR i.description LIKE '%$esc%' OR i.unit LIKE '%$esc%')";
+}
+
+// Handle AJAX requests
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    // Reject invalid stock quantities before add/edit can write inventory.
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && array_key_exists('quantity_on_hand', $_POST)) {
+        if (filter_var($_POST['quantity_on_hand'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Quantity on hand must be a whole number of zero or greater.']);
+            exit();
+        }
+    }
+    switch ($_GET['action']) {
+        case 'check_stock':
+            if (isset($_POST['stock_number'])) {
+                $stock_number = $_POST['stock_number'];
+                $stmt = $conn->prepare("SELECT * FROM items WHERE stock_number = ? LIMIT 1");
+                $stmt->bind_param("s", $stock_number);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    echo json_encode([
+                        'exists' => true,
+                        'item' => [
+                            'item_name' => $row['item_name'],
+                            'description' => $row['description'],
+                            'unit' => $row['unit'],
+                            'reorder_point' => $row['reorder_point'],
+                            'unit_cost' => $row['unit_cost'],
+                            'iar' => $row['iar'],
+                            'estimated_life' => $row['estimated_life'] ?? ''
+                        ]
+                    ]);
+
+                } else {
+                    echo json_encode(['exists' => false]);
+                }
+                $stmt->close();
+            }
+            break;
+            
+        case 'delete':
+            if (isset($_POST['id'])) {
+                $id = intval($_POST['id']);
+                require_once dirname(__DIR__) . '/archive_helpers.php';
+                try {
+                    archiveRecord($conn, 'Supply', $id);
+                    echo json_encode(['success' => true, 'message' => 'Item moved to Archive']);
+                } catch (Throwable $error) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Unable to archive item. No records were deleted.']);
+                }
+            }
+            break;
+            
+        case 'add':
+            if (isset($_POST['stock_number'])) {
+                
+                $stock_number = $_POST['stock_number'];
+                $item_name = $_POST['item_name'];
+                $description = $_POST['description'];
+                $unit = $_POST['unit'];
+                $reorder_point = intval($_POST['reorder_point']);
+                $unit_cost = floatval($_POST['unit_cost']);
+                $quantity_on_hand = intval($_POST['quantity_on_hand']);
+                $iar = $_POST['iar'];
+                $estimated_life = trim((string)($_POST['estimated_life'] ?? ''));
+                if (strlen($estimated_life) > 100) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'No. of days to consume must be 100 characters or fewer.']);
+                    exit();
+                }
+                $estimated_life = $estimated_life === '' ? null : $estimated_life;
+                
+                // Check if stock number already exists
+                $check_stmt = $conn->prepare("SELECT item_id FROM items WHERE stock_number = ?");
+                $check_stmt->bind_param("s", $stock_number);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                
+                if ($check_result->num_rows > 0) {
+                    // Add new inventory entry for existing item
+                    $existing_item = $check_result->fetch_assoc();
+                    $entry_stmt = $conn->prepare("INSERT INTO inventory_entries (item_id, quantity, unit_cost) VALUES (?, ?, ?)");
+                    $entry_stmt->bind_param("iid", $existing_item['item_id'], $quantity_on_hand, $unit_cost);
+                    
+                    // Check if this is the first entry for this item
+                    $count_stmt = $conn->prepare("SELECT COUNT(*) as entry_count FROM inventory_entries WHERE item_id = ?");
+                    $count_stmt->bind_param("i", $existing_item['item_id']);
+                    $count_stmt->execute();
+                    $count_result = $count_stmt->get_result();
+                    $count_row = $count_result->fetch_assoc();
+
+                    $count_stmt->close();
+                    if ($entry_stmt->execute()) {
+                        // Update the main item's quantity_on_hand by adding the new entry quantity
+                        $update_qty_stmt = $conn->prepare("UPDATE items SET quantity_on_hand = quantity_on_hand + ? WHERE item_id = ?");
+                        $update_qty_stmt->bind_param("ii", $quantity_on_hand, $existing_item['item_id']);
+                        $update_qty_stmt->execute();
+                        $update_qty_stmt->close();
+
+                        updateAverageCost($conn, $existing_item['item_id']);
+                        //Log History
+                        logItemHistory($conn, $existing_item['item_id'], $quantity_on_hand, 'entry');
+
+
+                        echo json_encode([
+                            'success' => true, 
+                            'message' => 'New inventory entry added',
+                            'updated' => true,
+                            'item_id' => $existing_item['item_id'],
+                            'has_multiple_entries' => true  
+                        ]);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Error adding inventory entry']);
+                    }
+                    $entry_stmt->close();
+                } else {
+                    // Insert new item
+                $stmt = $conn->prepare("
+                    INSERT INTO items (stock_number, item_name, description, iar, unit, reorder_point, unit_cost, quantity_on_hand, initial_quantity, estimated_life)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param("sssssidiis", $stock_number, $item_name, $description, $iar, $unit, $reorder_point, $unit_cost, $quantity_on_hand, $quantity_on_hand, $estimated_life);
+                    
+                    if ($stmt->execute()) {
+                        $new_id = $conn->insert_id;
+
+                        updateAverageCost($conn, $new_id);
+
+                        // record history
+                        logItemHistory($conn, $new_id, $quantity_on_hand, 'add');
+
+                        echo json_encode([
+                            'success' => true, 
+                            'message' => 'Item added successfully',
+                            'item' => [
+                            'item_id' => $new_id,
+                            'stock_number' => $stock_number,
+                            'item_name' => $item_name,
+                            'description' => $description,
+                            'unit' => $unit,
+                            'reorder_point' => $reorder_point,
+                            'unit_cost' => $unit_cost,
+                            'quantity_on_hand' => $quantity_on_hand,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'has_multiple_entries' => false  
+                        ]
+                        ]);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Error adding item']);
+                    }
+                    $stmt->close();
+                }
+                $check_stmt->close();
+            }
+            break;
+
+case 'update':
+    if (isset($_POST['item_id'])) {
+        $id = intval($_POST['item_id']);
+        
+        // Get current item data to compare changes
+        $current_stmt = $conn->prepare("
+            SELECT 
+                stock_number,
+                item_name,
+                description,
+                iar,
+                unit,
+                reorder_point,
+                unit_cost, 
+                quantity_on_hand, 
+                initial_quantity,
+                calculated_unit_cost,
+                calculated_quantity,
+                estimated_life,
+                (SELECT COUNT(*) FROM inventory_entries WHERE item_id = ?) as entry_count
+            FROM items WHERE item_id = ?
+        ");
+        $current_stmt->bind_param("ii", $id, $id);
+        $current_stmt->execute();
+        $current_result = $current_stmt->get_result();
+        $current_data = $current_result->fetch_assoc();
+        $current_stmt->close();
+
+        if (!$current_data) {
+            echo json_encode(['success' => false, 'message' => 'Item not found']);
+            break;
+        }
+        
+        $has_multiple_entries = ($current_data['initial_quantity'] > 0 && $current_data['entry_count'] > 0);
+        
+        // Check if this is a selective update
+        $is_selective_update = isset($_POST['selective_update']) && $_POST['selective_update'] === 'true';
+        
+        // Define allowed fields and their types
+        $allowed_fields = [
+            'stock_number' => 'string',
+            'item_name' => 'string', 
+            'description' => 'string',
+            'iar' => 'string',
+            'estimated_life' => 'string',
+            'unit' => 'string',
+            'reorder_point' => 'int',
+            'unit_cost' => 'float',
+            'quantity_on_hand' => 'int'
+        ];
+        
+        // Critical fields that affect inventory entries
+        $critical_fields = ['unit_cost', 'quantity_on_hand'];
+        
+        // Collect changed fields and their values
+        $fields_to_update = [];
+        $values_to_bind = [];
+        $param_types = '';
+        $critical_fields_changed = false;
+        $updated_field_names = [];
+        
+        foreach ($allowed_fields as $field => $type) {
+            if (isset($_POST[$field])) {
+                $new_value = $_POST[$field];
+                if ($field === 'estimated_life' && (!is_string($new_value) || strlen(trim($new_value)) > 100)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'No. of days to consume must be 100 characters or fewer.']);
+                    exit();
+                }
+                
+                // Type conversion
+                switch ($type) {
+                    case 'int':
+                        $new_value = intval($new_value);
+                        $current_value = intval($current_data[$field]);
+                        break;
+                    case 'float':
+                        $new_value = floatval($new_value);
+                        $current_value = floatval($current_data[$field]);
+                        break;
+                    default: // string
+                        $new_value = trim($new_value);
+                        $current_value = trim((string)($current_data[$field] ?? ''));
+                        break;
+                }
+                
+                // Check if value actually changed
+                $value_changed = false;
+                if ($type === 'float') {
+                    $value_changed = abs($new_value - $current_value) > 0.001;
+                } else {
+                    $value_changed = $new_value !== $current_value;
+                }
+                
+                if ($value_changed || !$is_selective_update) {
+                    $fields_to_update[] = "$field = ?";
+                    $values_to_bind[] = $new_value;
+                    $param_types .= ($type === 'string') ? 's' : (($type === 'int') ? 'i' : 'd');
+                    $updated_field_names[] = ucwords(str_replace('_', ' ', $field));
+                    
+                    if (in_array($field, $critical_fields)) {
+                        $critical_fields_changed = true;
+                    }
+                }
+            }
+        }
+        
+        // If no fields to update
+        if (empty($fields_to_update)) {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'No changes detected',
+                'updated_fields' => []
+            ]);
+            break;
+        }
+        
+        // Determine update strategy based on whether critical fields changed
+        if ($has_multiple_entries && $critical_fields_changed) {
+            // Critical fields changed - clear entries and reset to new base values
+            $delete_entries_stmt = $conn->prepare("DELETE FROM inventory_entries WHERE item_id = ?");
+            $delete_entries_stmt->bind_param("i", $id);
+            $delete_entries_stmt->execute();
+            $delete_entries_stmt->close();
+            
+            // Add fields to clear calculated values if critical fields changed
+            $fields_to_update[] = "calculated_unit_cost = NULL";
+            $fields_to_update[] = "calculated_quantity = NULL"; 
+            $fields_to_update[] = "average_unit_cost = NULL";
+            
+            // Update initial_quantity to match quantity_on_hand if quantity changed
+            if ($critical_fields_changed) {
+                $new_qty = isset($_POST['quantity_on_hand']) ? intval($_POST['quantity_on_hand']) : $current_data['quantity_on_hand'];
+                $fields_to_update[] = "initial_quantity = ?";
+                $values_to_bind[] = $new_qty;
+                $param_types .= 'i';
+            }
+
+            
+            $message = 'Updated: ' . implode(', ', $updated_field_names) . ' (all entries cleared due to critical changes)';
+            $change_type = 'entries_cleared_and_updated';
+            $final_has_multiple = false;
+            
+        } else if ($has_multiple_entries && !$critical_fields_changed) {
+            // Only non-critical fields changed - preserve entries and calculated values
+            // Remove critical fields from update if they somehow got included
+            $non_critical_updates = [];
+            $non_critical_values = [];
+            $non_critical_types = '';
+            $non_critical_names = [];
+            
+            for ($i = 0; $i < count($fields_to_update); $i++) {
+                $field_name = explode(' = ', $fields_to_update[$i])[0];
+                if (!in_array($field_name, $critical_fields)) {
+                    $non_critical_updates[] = $fields_to_update[$i];
+                    if (isset($values_to_bind[$i])) {
+                        $non_critical_values[] = $values_to_bind[$i];
+                        $non_critical_types .= substr($param_types, $i, 1);
+                        $non_critical_names[] = $updated_field_names[$i];
+                    }
+                }
+            }
+            
+            $fields_to_update = $non_critical_updates;
+            $values_to_bind = $non_critical_values;
+            $param_types = $non_critical_types;
+            $updated_field_names = $non_critical_names;
+            
+            $message = empty($updated_field_names) ? 
+                'No non-critical fields to update (entries preserved)' : 
+                'Updated: ' . implode(', ', $updated_field_names) . ' (entries preserved)';
+            $change_type = 'update_non_critical';
+            $final_has_multiple = true;
+            
+        } else {
+    // No multiple entries - regular selective update
+    $message = 'Updated: ' . implode(', ', $updated_field_names);
+    $change_type = 'selective_update';
+    $final_has_multiple = false;
+
+    // If quantity changed, also update initial_quantity to match
+    if (in_array('quantity_on_hand', array_keys($_POST))) {
+        $fields_to_update[] = "initial_quantity = ?";
+        $values_to_bind[] = intval($_POST['quantity_on_hand']);
+        $param_types .= 'i';
+
+        // Optional: add to updated field names list
+        $updated_field_names[] = "Initial Quantity";
+    }
+}
+
+        
+        // Execute the update if there are fields to update
+        if (!empty($fields_to_update)) {
+            $sql = "UPDATE items SET " . implode(', ', $fields_to_update) . " WHERE item_id = ?";
+            $values_to_bind[] = $id;
+            $param_types .= 'i';
+            
+            $stmt = $conn->prepare($sql);
+            if (!empty($values_to_bind)) {
+                $stmt->bind_param($param_types, ...$values_to_bind);
+            }
+            
+            if ($stmt->execute()) {
+                // Log history
+                // Get quantity change (if provided), else null
+                    $qty_change = isset($_POST['quantity_on_hand']) 
+                        ? intval($_POST['quantity_on_hand']) 
+                        : null;
+
+                    // Log history with correct item ID
+                    logItemHistory($conn, $id, $qty_change, 'update');
+
+                // Get updated item data for response
+                $updated_stmt = $conn->prepare("SELECT * FROM items WHERE item_id = ?");
+                $updated_stmt->bind_param("i", $id);
+                $updated_stmt->execute();
+                $updated_result = $updated_stmt->get_result();
+                $updated_item = $updated_result->fetch_assoc();
+                $updated_stmt->close();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => $message,
+                    'updated_fields' => $updated_field_names,
+                    'item' => [
+                        'item_id' => $id,
+                        'stock_number' => $updated_item['stock_number'],
+                        'item_name' => $updated_item['item_name'],
+                        'description' => $updated_item['description'],
+                        'unit' => $updated_item['unit'],
+                        'reorder_point' => $updated_item['reorder_point'],
+                        'unit_cost' => $updated_item['unit_cost'],
+                        'quantity_on_hand' => $updated_item['quantity_on_hand'],
+                        'has_multiple_entries' => $final_has_multiple
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Error updating item: ' . $stmt->error
+                ]);
+            }
+            $stmt->close();
+        } else {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'No changes to apply',
+                'updated_fields' => []
+            ]);
+        }
+    }
+    break;
+    
+    case 'clear_entries':
+    if (isset($_POST['item_id'])) {
+        $item_id = intval($_POST['item_id']);
+
+        // Fetch calculated values to preserve
+        $fetch_stmt = $conn->prepare("SELECT calculated_quantity, calculated_unit_cost FROM items WHERE item_id = ?");
+        $fetch_stmt->bind_param("i", $item_id);
+        $fetch_stmt->execute();
+        $fetch_result = $fetch_stmt->get_result();
+        $item_data = $fetch_result->fetch_assoc();
+        $fetch_stmt->close();
+
+        $new_qty = $item_data['calculated_quantity'] ?? 0;
+        $new_cost = $item_data['calculated_unit_cost'] ?? 0;
+
+        // Delete all inventory entries
+        $delete_stmt = $conn->prepare("DELETE FROM inventory_entries WHERE item_id = ?");
+        $delete_stmt->bind_param("i", $item_id);
+
+        if ($delete_stmt->execute()) {
+            // Reset base using calculated values
+            $update_stmt = $conn->prepare("
+                UPDATE items SET 
+                    quantity_on_hand = ?, 
+                    unit_cost = ?, 
+                    initial_quantity = ?, 
+                    calculated_quantity = NULL, 
+                    calculated_unit_cost = NULL, 
+                    average_unit_cost = NULL 
+                WHERE item_id = ?
+            ");
+            $update_stmt->bind_param("idii", $new_qty, $new_cost, $new_qty, $item_id);
+
+            if ($update_stmt->execute()) {
+                logItemHistory($conn, $item_id, null, 'cleared');
+                echo json_encode(['success' => true, 'message' => 'Entries cleared. Current totals saved as base.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error updating base values.']);
+            }
+
+            $update_stmt->close();
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error clearing entries.']);
+        }
+
+        $delete_stmt->close();
+    }
+    break;
+    case 'check_entries':
+    if (isset($_POST['item_id'])) {
+        $item_id = intval($_POST['item_id']);
+        
+        $stmt = $conn->prepare("
+            SELECT 
+                (SELECT COUNT(*) FROM inventory_entries WHERE item_id = ?) as entry_count,
+                initial_quantity
+            FROM items WHERE item_id = ?
+        ");
+        $stmt->bind_param("ii", $item_id, $item_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_assoc();
+        $stmt->close();
+        
+        $hasMultipleEntries = ($data['initial_quantity'] > 0 && $data['entry_count'] > 0);
+        
+        echo json_encode([
+            'hasMultipleEntries' => $hasMultipleEntries,
+            'entryCount' => $data['entry_count']
+        ]);
+    }
+    break;
+
+        }
+    
+        
+    $conn->close();
+    exit();
+
+    
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESDA Inventory Management System</title>
+    <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Page-Specific Icon */
+        .container h2::before {
+            content: "\f0f7";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #3b82f6;
+        }
+
+        .inventory-clickable-row {
+            cursor: pointer;
+        }
+
+        .inventory-clickable-row:hover {
+            background: #f8fafc;
+        }
+
+        .inventory-clickable-row.is-expanded {
+            background: #f8fafc;
+        }
+
+        #inventoryTable {
+            border-collapse: collapse;
+            box-shadow: none;
+        }
+
+
+        #inventoryTable td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        #inventoryTable tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        #inventoryTable .actions-cell {
+            display: table-cell;
+            width: 64px;
+            vertical-align: middle;
+        }
+
+        .supply-actions-menu-list form { margin: 0; }
+        .supply-actions-menu-list button.delete-action {
+            display: flex;
+            box-sizing: border-box;
+            width: 100%;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #dc2626;
+            font: inherit;
+            font-size: 12px;
+            text-align: left;
+            cursor: pointer;
+        }
+        .supply-actions-menu-list button.delete-action:hover,
+        .supply-actions-menu-list button.delete-action:focus-visible {
+            background: #f3f4f6;
+        }
+        body.dark-mode .supply-actions-menu-list button.delete-action {
+            color: #fca5a5 !important;
+        }
+        body.dark-mode .supply-actions-menu-list button.delete-action:hover,
+        body.dark-mode .supply-actions-menu-list button.delete-action:focus-visible {
+            background: #334155;
+        }
+
+        .item-detail-row td {
+            padding: 0 12px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .item-detail-content {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px 24px;
+            padding: 14px 16px;
+            border-left: 2px solid #2563eb;
+            background: #fff;
+            font-family: inherit;
+        }
+
+        .item-detail-field span {
+            display: block;
+            margin-bottom: 3px;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            font-family: inherit;
+        }
+
+        .item-detail-field strong {
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+
+        @media (max-width: 700px) {
+            .item-detail-content {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            #inventoryTable th,
+            #inventoryTable td {
+                padding: 9px 8px;
+            }
+
+            #inventoryTable th:first-child,
+            #inventoryTable td:first-child {
+                display: none;
+            }
+
+            .item-detail-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<?php include dirname(__DIR__) . '/sidebar.php'; ?>
+
+<div class="container">
+    <h2>Office Supplies</h2>
+    <?php if (isset($_GET['archived'])): ?>
+        <div class="alert alert-success" role="status">Item moved to Archive.</div>
+    <?php endif; ?>
+
+    <form id="inventory-filters" method="get" class="filters">
+        <div class="inventory-controls">
+
+            <!-- Sort By -->
+            <div class="control-sort">
+                <label for="sortBy"><i class="fas fa-sort"></i> Sort By:</label>
+
+                <select id="sortBy" name="sort">
+                    <option value="stock_number" <?= ($sort_by == 'stock_number') ? 'selected' : '' ?>>Stock Number (A-Z)</option>
+                    <option value="item_name" <?= ($sort_by == 'item_name') ? 'selected' : '' ?>>Item Name (A-Z)</option>
+                    <option value="quantity_low" <?= ($sort_by == 'quantity_low') ? 'selected' : '' ?>>Quantity (Low to High)</option>
+                    <option value="quantity_high" <?= ($sort_by == 'quantity_high') ? 'selected' : '' ?>>Quantity (High to Low)</option>
+                    <option value="cost_low" <?= ($sort_by == 'cost_low') ? 'selected' : '' ?>>Unit Cost (Low to High)</option>
+                    <option value="cost_high" <?= ($sort_by == 'cost_high') ? 'selected' : '' ?>>Unit Cost (High to Low)</option>
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="control-search">
+                <label for="searchInput">
+                    <i class="fas fa-search"></i> Search:
+                </label>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    name="search"
+                    value="<?= htmlspecialchars($search) ?>"
+                    placeholder="Search by stock number, item name, description, or unit..."
+                >
+            </div>
+
+            <!-- Actions -->
+            <div class="control-actions">
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="window.location.href='office_supplies/add_o.f_item.php'"
+                >
+                    <i class="fas fa-plus"></i> Add New Item
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="window.location.href='office_supplies/add_multiple_items.php'"
+                >
+                    <i class="fas fa-box"></i> Restock Items
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+    <div class="category-tabs" id="inventoryTabs" role="tablist" aria-label="Inventory Categories">
+        <button type="button" class="category-tab active" data-category="office-supplies" role="tab" aria-selected="true">Office Supplies</button>
+        <button type="button" class="category-tab" data-category="office-equipment" role="tab" aria-selected="false">Office Equipment</button>
+        <button type="button" class="category-tab" data-category="cleaning-supplies" role="tab" aria-selected="false">Cleaning Supplies</button>
+        <button type="button" class="category-tab" data-category="electronics" role="tab" aria-selected="false">Electronics</button>
+        <button type="button" class="category-tab" data-category="miscelaneous" role="tab" aria-selected="false">Miscelaneous</button>
+    </div>
+
+    <div class="table-container">
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-barcode"></i> Stock Number</th>
+                    <th><i class="fas fa-tag"></i> Item</th>
+                    <th><i class="fas fa-cubes"></i> Quantity</th>
+                    <th><i class="fas fa-dollar-sign"></i> Avg. Unit Cost</th>
+                    <th><i class="fas fa-calculator"></i> Total Cost</th>
+                    <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="category-empty-row" style="display:none;">
+                    <td colspan="6" style="text-align: center; color: #666; font-style: italic;">
+                        <i class='fas fa-filter'></i> No items found for this category.
+                    </td>
+                </tr>
+                <?php
+                $sql = "SELECT i.*, 
+                    (COALESCE(i.calculated_quantity, i.quantity_on_hand) * CASE 
+                        WHEN i.calculated_unit_cost IS NOT NULL THEN i.calculated_unit_cost
+                        WHEN (i.initial_quantity > 0 AND (SELECT COUNT(*) FROM inventory_entries ie WHERE ie.item_id = i.item_id) > 0)
+                        THEN ((i.initial_quantity * i.unit_cost) + COALESCE((SELECT SUM(ie.quantity * ie.unit_cost) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0)) / (i.initial_quantity + COALESCE((SELECT SUM(ie.quantity) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0))
+                        ELSE i.unit_cost 
+                    END) as total_cost,
+                    (SELECT COUNT(*) FROM inventory_entries ie WHERE ie.item_id = i.item_id) as entry_count,
+                    CASE 
+                        WHEN i.calculated_unit_cost IS NOT NULL THEN i.calculated_unit_cost
+                        WHEN (i.initial_quantity > 0 AND (SELECT COUNT(*) FROM inventory_entries ie WHERE ie.item_id = i.item_id) > 0)
+                        THEN ((i.initial_quantity * i.unit_cost) + COALESCE((SELECT SUM(ie.quantity * ie.unit_cost) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0)) / (i.initial_quantity + COALESCE((SELECT SUM(ie.quantity) FROM inventory_entries ie WHERE ie.item_id = i.item_id), 0))
+                        ELSE i.unit_cost 
+                    END as calculated_average_cost,
+                    CASE 
+                        WHEN (i.initial_quantity > 0 AND (SELECT COUNT(*) FROM inventory_entries ie WHERE ie.item_id = i.item_id) > 0)
+                        THEN 1
+                        ELSE 0 
+                    END as has_multiple_entries,
+                    COALESCE(i.calculated_quantity, i.quantity_on_hand) as display_quantity
+                    FROM items i 
+                    $whereClause
+                    $order_clause";
+                $result = $conn->query($sql);
+
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        $total_cost = $row["total_cost"];
+                        $status_class = $row["quantity_on_hand"] <= $row["reorder_point"] ? 'status-low' : 'status-normal';
+                        $display_unit_cost = isset($row['calculated_unit_cost']) && $row['calculated_unit_cost'] !== null ? $row['calculated_unit_cost'] : ($row['has_multiple_entries'] ? $row['calculated_average_cost'] : $row['unit_cost']);
+                        $description = htmlspecialchars($row['description'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $unit = htmlspecialchars($row['unit'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $last_updated = date('M d, Y H:i', strtotime($row['created_at'] ?? 'now'));
+                        $item_name = htmlspecialchars($row['item_name'] ?? '', ENT_QUOTES, 'UTF-8');
+                        $stock_number = htmlspecialchars($row['stock_number'] ?? '', ENT_QUOTES, 'UTF-8');
+                        
+                        echo "<tr data-id='{$row['item_id']}' data-description='{$description}' data-unit='{$unit}' data-last-updated='{$last_updated}' class='inventory-clickable-row' aria-expanded='false'>
+                            <td><strong>{$stock_number}</strong></td>
+                            <td>{$item_name}</td>
+                            <td class='quantity-cell'>
+                                <div class='main-quantity'>
+                                    <span class='" . ($row['display_quantity'] <= $row['reorder_point'] ? 'status-low' : 'status-normal') . "'>
+                                        " . $row['display_quantity'] . "
+                                    </span>
+                                </div>
+                            </td>
+                            <td class='cost-cell'>
+                                <div class='main-cost currency'>₱ " . number_format($display_unit_cost, 2) . "</div>
+                            </td>
+                            <td class='currency'>₱ " . number_format($total_cost, 2) . "</td>
+                            <td class='actions-cell'>
+                                <div class='actions-menu'>
+                                    <button type='button' class='actions-menu-toggle' aria-label='Open actions' aria-expanded='false'>
+                                        <i class='fas fa-ellipsis-v'></i>
+                                    </button>
+
+                                    <div class='actions-menu-list supply-actions-menu-list'>
+                                        <a href='office_supplies/view_item.php?item_id={$row['item_id']}' class='view-action'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+
+                                        <a href='office_supplies/edit_item_OFS.php?item_id={$row['item_id']}' class='edit-action'>
+                                            <i class='fas fa-edit'></i> Edit
+                                        </a>
+
+                                        <form method='post' action='office_supplies/inventory.php' onsubmit='return confirm(\"Move this item to Archive?\")'>
+                                            <input type='hidden' name='delete_id' value='{$row['item_id']}'>
+                                            <input type='hidden' name='csrf' value='{$_SESSION['inventory_delete_csrf']}'>
+                                            <button type='submit' class='delete-action'><i class='fas fa-trash'></i> Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>";
+                    }
+                            
+                } else {
+                    echo "<tr><td colspan='6' style='text-align: center; color: #666; font-style: italic;'>
+                            <i class='fas fa-inbox'></i> No inventory data found.
+                          </td></tr>";
+                }
+
+                $conn->close();
+                ?>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Add Item Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddModal()">&times;</span>
+        <h3><i class="fas fa-plus-circle"></i> Add New Item</h3>
+        <form id="addForm">
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
+            <label for="add_stock_number">Stock Number <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" name="stock_number" id="add_stock_number" placeholder="Enter stock number" required>
+            <div id="stock_status" class="stock-status"></div>
+
+            <label for="add_iar">I.A.R <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" name="iar" id="add_iar" placeholder="Enter I.A.R" required readonly>
+
+            <label for="add_item_name">Item Name <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" name="item_name" id="add_item_name" placeholder="Name" required readonly>
+
+            <label for="add_description">Description <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" name="description" id="add_description" placeholder="Description" required readonly>
+
+            <label for="add_unit">Unit (pcs, box, etc.) <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" name="unit" id="add_unit" placeholder="Unit (pcs, box, etc.)" required readonly>
+
+            <label for="add_reorder_point">Reorder Point <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="number" name="reorder_point" id="add_reorder_point" placeholder="Reorder Point" required min="0" readonly>
+
+            <label for="add_unit_cost">Unit Cost (₱) <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="number" step="0.01" name="unit_cost" id="add_unit_cost" placeholder="Unit Cost (₱)" required min="0" readonly>
+
+            <label for="add_quantity_on_hand">Quantity on Hand <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="number" name="quantity_on_hand" id="add_quantity_on_hand" placeholder="Quantity on Hand" required min="0">
+            
+            <button type="submit" class="save-btn">
+                <i class="fas fa-save"></i> Save Item
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sort-select');
+    const tableBody = document.querySelector('#inventoryTable tbody');
+    let activeCategory = 'office-supplies';
+
+    // Expand/collapse item details when clicking a table row
+    tableBody.addEventListener('click', function(event) {
+        const row = event.target.closest('.inventory-clickable-row');
+
+        if (!row) return;
+
+        // Don't expand the row when clicking the actions menu/button
+        if (event.target.closest('.actions-menu')) {
+            return;
+        }
+
+        toggleExpandedRow(row);
+    });
+
+    function closeExpandedRow() {
+        const detailRow = tableBody.querySelector('.item-detail-row');
+        const expandedRow = tableBody.querySelector('.inventory-clickable-row.is-expanded');
+        if (detailRow) {
+            detailRow.remove();
+        }
+        if (expandedRow) {
+            expandedRow.classList.remove('is-expanded');
+            expandedRow.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>'"]/g, function(character) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[character];
+        });
+    }
+
+    function toggleExpandedRow(row) {
+        const existingDetailRow = row.nextElementSibling;
+        if (existingDetailRow && existingDetailRow.classList.contains('item-detail-row')) {
+            closeExpandedRow();
+            return;
+        }
+
+        closeExpandedRow();
+        row.classList.add('is-expanded');
+        row.setAttribute('aria-expanded', 'true');
+        const detailRow = document.createElement('tr');
+        detailRow.className = 'item-detail-row';
+        detailRow.innerHTML = `<td colspan="6">
+            <div class="item-detail-content">
+                <div class="item-detail-field"><span>Description</span><strong>${escapeHtml(row.dataset.description)}</strong></div>
+                <div class="item-detail-field"><span>Unit</span><strong>${escapeHtml(row.dataset.unit)}</strong></div>
+                <div class="item-detail-field"><span>Last Updated</span><strong>${escapeHtml(row.dataset.lastUpdated)}</strong></div>
+            </div>
+        </td>`;
+        row.after(detailRow);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        });
+    }
+
+    const tabs = document.querySelectorAll('.category-tab');
+    const emptyRow = document.getElementById('category-empty-row');
+    const activeTabStorageKey = 'inventoryActiveTab';
+
+    const categoryMap = {
+        'office-supplies': ['fastener', 'paper', 'bond', 'notebook', 'pad', 'ream', 'envelope', 'pen', 'ballpen', 'gel pen', 'marker', 'highlighter', 'ink', 'folder', 'file', 'filing', 'index tab', 'document holder', 'staples', 'paper clip', 'clip', 'binder clip', 'tape', 'glue', 'adhesive', 'paste', 'pin', 'note', 'book'],
+        'office-equipment': ['ruler', 'chair', 'table', 'desk', 'cabinet', 'printer', 'scanner', 'projector', 'laminator', 'shredder', 'furniture', 'cutter', 'stapler', 'staplers'],
+        'cleaning-supplies': ['conditioner', 'dishwashing', 'detergent', 'soap', 'bleach', 'mop', 'broom', 'brush', 'disinfectant', 'cleaner', 'trash bag', 'garbage', 'alcohol', 'tissue', 'towel', 'rags', 'sponge'],
+        'electronics': ['laptop', 'computer', 'monitor', 'keyboard', 'mouse', 'ups', 'router','calculator', 'switch', 'tablet', 'phone', 'speaker', 'camera', 'headset', 'microphone', 'usb', 'cable', 'charger', 'adapter', 'electronic', 'battery', 'led', 'bulb'],
+        'miscelaneous': ['misc', 'miscellaneous', 'assorted', 'other', 'general', 'various', 'accessory', 'supply']
+    };
+
+    const categoryExclusions = {
+        'office-equipment': ['pen', 'ballpen', 'paper', 'notebook', 'folder', 'ink', 'marker', 'highlighter']
+    };
+
+    const primaryCategories = ['office-supplies', 'office-equipment', 'cleaning-supplies', 'electronics'];
+
+    function parseNumber(value) {
+        const numericValue = parseFloat((value || '').replace(/[^0-9.-]/g, ''));
+        return Number.isNaN(numericValue) ? 0 : numericValue;
+    }
+
+    function compareRows(a, b, sortBy) {
+        const aStock = a.children[0] ? a.children[0].textContent.trim().toLowerCase() : '';
+        const bStock = b.children[0] ? b.children[0].textContent.trim().toLowerCase() : '';
+        const aItem = a.children[1] ? a.children[1].textContent.trim().toLowerCase() : '';
+        const bItem = b.children[1] ? b.children[1].textContent.trim().toLowerCase() : '';
+        const aQty = parseNumber(a.children[2] ? a.children[2].textContent : '0');
+        const bQty = parseNumber(b.children[2] ? b.children[2].textContent : '0');
+        const aCost = parseNumber(a.children[3] ? a.children[3].textContent : '0');
+        const bCost = parseNumber(b.children[3] ? b.children[3].textContent : '0');
+
+        switch (sortBy) {
+            case 'item_name':
+                return aItem.localeCompare(bItem);
+            case 'quantity_low':
+                return aQty - bQty;
+            case 'quantity_high':
+                return bQty - aQty;
+            case 'cost_low':
+                return aCost - bCost;
+            case 'cost_high':
+                return bCost - aCost;
+            case 'stock_number':
+            default:
+                return aStock.localeCompare(bStock, undefined, { numeric: true, sensitivity: 'base' });
+        }
+    }
+
+    function matchesCategory(rowText, category) {
+        if (rowText.includes('cutter paper')) {
+            return category === 'office-equipment';
+        }
+
+        if (rowText.includes('kitchen towel')) {
+            return category === 'cleaning-supplies';
+        }
+
+        if (rowText.includes('tape dispenser')) {
+            return category === 'office-equipment';
+        }
+
+        const keywords = categoryMap[category] || [];
+        let isMatch = keywords.some(function(keyword) {
+            return rowText.includes(keyword);
+        });
+
+        const exclusions = categoryExclusions[category] || [];
+        if (isMatch && exclusions.some(function(term) { return rowText.includes(term); })) {
+            isMatch = false;
+        }
+
+        if (category === 'office-supplies' && (rowText.includes('tissue paper') || rowText.includes('scouring pad') || rowText.includes('stapler'))) {
+            isMatch = false;
+        }
+
+        return isMatch;
+    }
+
+    function filterByCategory(category) {
+        closeExpandedRow();
+        activeCategory = category;
+        const sortBy = sortSelect ? sortSelect.value : 'stock_number';
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        let visibleCount = 0;
+        const tableRows = Array.from(tableBody.querySelectorAll('tr[data-id]'));
+
+        const sortedRows = Array.from(tableRows).sort(function(a, b) {
+            return compareRows(a, b, sortBy);
+        });
+
+        sortedRows.forEach(function(row) {
+            tableBody.appendChild(row);
+        });
+
+        sortedRows.forEach(function(row) {
+            const stockCell = row.children[0] ? row.children[0].textContent.toLowerCase() : '';
+            const itemCell = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+            const descriptionCell = (row.dataset.description || '').toLowerCase();
+            const unitCell = (row.dataset.unit || '').toLowerCase();
+            const rowText = itemCell + ' ' + descriptionCell;
+            let isMatch = false;
+
+            if (category === 'miscelaneous') {
+                isMatch = !primaryCategories.some(function(primaryCategory) {
+                    return matchesCategory(rowText, primaryCategory);
+                });
+            } else {
+                isMatch = matchesCategory(rowText, category);
+            }
+
+            const matchesSearch = searchTerm === '' ||
+                stockCell.includes(searchTerm) ||
+                itemCell.includes(searchTerm) ||
+                descriptionCell.includes(searchTerm) ||
+                unitCell.includes(searchTerm);
+
+            const isVisible = isMatch && matchesSearch;
+
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) {
+                visibleCount++;
+            }
+        });
+
+        if (emptyRow) {
+            emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(otherTab) {
+                otherTab.classList.remove('active');
+                otherTab.setAttribute('aria-selected', 'false');
+            });
+
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            localStorage.setItem(activeTabStorageKey, tab.dataset.category);
+            filterByCategory(tab.dataset.category);
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterByCategory(activeCategory);
+        });
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            filterByCategory(activeCategory);
+        });
+    }
+
+    // Restore previously selected tab, fallback to office supplies
+    const savedCategory = localStorage.getItem(activeTabStorageKey);
+    const initialTab = Array.from(tabs).find(function(tab) {
+        return tab.dataset.category === savedCategory;
+    }) || Array.from(tabs).find(function(tab) {
+        return tab.dataset.category === 'office-supplies';
+    });
+
+    if (initialTab) {
+        tabs.forEach(function(otherTab) {
+            otherTab.classList.remove('active');
+            otherTab.setAttribute('aria-selected', 'false');
+        });
+
+        initialTab.classList.add('active');
+        initialTab.setAttribute('aria-selected', 'true');
+        activeCategory = initialTab.dataset.category;
+        filterByCategory(initialTab.dataset.category);
+    }
+
+    function positionActionsMenu(menu, menuList) {
+        const toggleRect = menu.querySelector('.actions-menu-toggle').getBoundingClientRect();
+
+        menuList.style.right = 'auto';
+        menuList.style.left = `${Math.max(4, toggleRect.right - 118)}px`;
+        menuList.style.top = `${toggleRect.bottom + 4}px`;
+
+        const listRect = menuList.getBoundingClientRect();
+        if (listRect.bottom > window.innerHeight - 4) {
+            menuList.style.top = `${Math.max(4, toggleRect.top - listRect.height - 4)}px`;
+        }
+    }
+
+});
+</script>
+
+<script src="office_supplies/js/inventory_script.js?v=<?= time() ?>"></script>
+<script src="js/actions_menu.js"></script>
+
+</body>
+</html>

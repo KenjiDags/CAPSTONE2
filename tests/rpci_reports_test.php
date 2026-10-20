@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../rpci_helpers.php';
+require_once __DIR__ . '/../office_supplies/rpci_helpers.php';
 function checkRpci(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 }

@@ -1,0 +1,233 @@
+<?php
+require_once __DIR__ . '/bootstrap.php';
+ob_start();
+require dirname(__DIR__) . '/auth.php';
+require dirname(__DIR__) . '/config.php';
+require dirname(__DIR__) . '/functions.php';
+
+// Handle deletion (POST or GET to mirror ICS UX)
+if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) || isset($_GET['delete_iirusp_id'])) {
+    $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_iirusp_id'];
+    if ($delete_id > 0) {
+    require_once dirname(__DIR__) . '/archive_helpers.php';
+    archiveRecord($conn, 'IIRUSP', $delete_id);
+    }
+    if (ob_get_level() > 0) { ob_end_clean(); }
+    $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort']) . '&deleted=1') : '?deleted=1';
+    header('Location: iirusp.php' . $sortParam);
+    exit;
+}
+
+// SEARCH FILTER
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Sorting (follow ICS-style options)
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'date_newest';
+switch ($sort_by) {
+    case 'iirusp_no':
+        $order_clause = "ORDER BY iirusp_no ASC"; break;
+    case 'date_oldest':
+        $order_clause = "ORDER BY as_at ASC, iirusp_id ASC"; break;
+    case 'amount_highest':
+        $order_clause = "ORDER BY total_amount DESC"; break;
+    case 'amount_lowest':
+        $order_clause = "ORDER BY total_amount ASC"; break;
+    case 'date_newest':
+    default:
+        $order_clause = "ORDER BY as_at DESC, iirusp_id DESC"; break;
+}
+
+// Get statistics
+$stats_query = "SELECT 
+    COUNT(*) as total_records,
+    COUNT(DISTINCT entity_name) as total_entities,
+    (SELECT SUM(total_cost) FROM iirusp_items) as total_value,
+    (SELECT SUM(carrying_amount) FROM iirusp_items) as total_carrying_amount
+    FROM iirusp";
+$stats_result = $conn->query($stats_query);
+$stats = $stats_result->fetch_assoc();
+
+// Fetch IIRUSP records with computed total
+$whereClause = '';
+if ($search !== '') {
+    $esc = $conn->real_escape_string($search);
+    $whereClause = " WHERE (i.iirusp_no LIKE '%$esc%' OR i.entity_name LIKE '%$esc%' OR i.fund_cluster LIKE '%$esc%')";
+}
+$query = "SELECT i.*, 
+          (SELECT SUM(total_cost) FROM iirusp_items WHERE iirusp_id=i.iirusp_id) as total_amount,
+          (SELECT COUNT(*) FROM iirusp_items WHERE iirusp_id=i.iirusp_id) as item_count
+          FROM iirusp i $whereClause $order_clause";
+$result = $conn->query($query);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIRUSP - Inventory Inspection Report</title>
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+  .container h2::before {
+    content: "\f0ae";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 12px;
+    color: #3b82f6;
+  }
+
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.18); text-decoration: none; opacity: 0.95; }
+    .pill-add { background: linear-gradient(135deg, #67a8ff 0%, #3b82f6 100%); }
+    .pill-btn .fas, .pill-btn .fa-solid { font-size: 0.95em; }
+</style>
+</head>
+<body class="iirusp-page">
+<?php include dirname(__DIR__) . '/sidebar.php'; ?>
+<div class="container">
+    <h2>Inventory and Inspection Report of Unserviceable Semi-Expendable Property (IIRUSP)</h2>
+
+  <form id="iirusp-filters" method="get" class="filters">
+      <div class="inventory-controls">
+
+          <div class="control-sort">
+              <label for="sort-select">
+                  <i class="fas fa-sort"></i> Sort By:
+              </label>
+
+              <select id="sort-select" name="sort" onchange="this.form.submit()">
+                  <option value="date_newest" <?= ($sort_by === 'date_newest') ? 'selected' : '' ?>>
+                      Date (Newest First)
+                  </option>
+
+                  <option value="date_oldest" <?= ($sort_by === 'date_oldest') ? 'selected' : '' ?>>
+                      Date (Oldest First)
+                  </option>
+
+                  <option value="iirusp_no" <?= ($sort_by === 'iirusp_no') ? 'selected' : '' ?>>
+                      IIRUSP No. (A-Z)
+                  </option>
+
+                  <option value="amount_highest" <?= ($sort_by === 'amount_highest') ? 'selected' : '' ?>>
+                      Total Amount (Highest)
+                  </option>
+
+                  <option value="amount_lowest" <?= ($sort_by === 'amount_lowest') ? 'selected' : '' ?>>
+                      Total Amount (Lowest)
+                  </option>
+              </select>
+          </div>
+
+          <div class="control-search">
+              <label for="searchInput">
+                  <i class="fas fa-search"></i> Search:
+              </label>
+
+              <input
+                  type="text"
+                  id="searchInput"
+                  name="search"
+                  value="<?= htmlspecialchars($search) ?>"
+                  placeholder="Search IIRUSP no., entity name, or fund cluster..."
+              >
+          </div>
+
+          <div class="control-actions">
+              <a href="Semi_Expendables/add_iirusp.php" class="pill-btn pill-add">
+                  <i class="fas fa-plus"></i> Add IIRUSP
+              </a>
+          </div>
+
+      </div>
+  </form>
+
+    <div class="table-container">
+      <table>
+              <thead>
+                  <tr>
+                  <th><i class="fas fa-hashtag"></i> IIRUSP No.</th>
+                  <th><i class="fas fa-calendar"></i> As At</th>
+                  <th><i class="fas fa-building"></i> Entity Name</th>
+                  <th><i class="fas fa-building"></i> Fund Cluster</th>
+                  <th><i class="fas fa-dollar-sign"></i> Total Amount</th>
+                  <th><i class="fas fa-cogs"></i> Actions</th>
+                  </tr>
+              </thead>
+              <tbody>
+              <?php if ($result && $result->num_rows > 0): ?>
+                  <?php while ($row = $result->fetch_assoc()): ?>
+                  <tr>
+                          <td><strong><?= htmlspecialchars($row['iirusp_no']) ?></strong></td>
+                          <td><?= date('M d, Y', strtotime($row['as_at'])) ?></td>
+                          <td><?= htmlspecialchars($row['entity_name']) ?></td>
+                          <td><?= htmlspecialchars($row['fund_cluster']) ?></td>
+                          <td class="currency">₱ <?= number_format($row['total_amount'] ?? 0, 2) ?></td>
+                          <td class="actions-cell">
+                              <div class="actions-menu">
+
+                                  <button type="button"
+                                          class="actions-menu-toggle"
+                                          aria-label="Open actions"
+                                          aria-expanded="false">
+                                      <i class="fas fa-ellipsis-v"></i>
+                                  </button>
+
+                                  <div class="actions-menu-list">
+
+                                      <a href="Semi_Expendables/view_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="view-action">
+                                          <i class="fas fa-eye"></i> View
+                                      </a>
+
+                                      <a href="Semi_Expendables/edit_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="edit-action">
+                                          <i class="fas fa-edit"></i> Edit
+                                      </a>
+
+                                      <a href="Semi_Expendables/export_iirusp.php?iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="export-action">
+                                          <i class="fas fa-download"></i> Export
+                                      </a>
+
+                                      <a href="Semi_Expendables/iirusp.php?delete_iirusp_id=<?= (int)$row['iirusp_id'] ?>"
+                                        class="delete-action"
+                                        onclick="return confirm('Are you sure you want to delete this IIRUSP?')">
+                                          <i class="fas fa-trash"></i> Delete
+                                      </a>
+
+                                  </div>
+                              </div>
+                          </td>
+                      </tr>
+                  <?php endwhile; ?>
+              <?php else: ?>
+                  <tr>
+                      <td colspan="6">
+                          <i class="fas fa-inbox"></i> No IIRUSP records found.
+                      </td>
+                  </tr>
+              <?php endif; ?>
+              </tbody>
+      </table>
+    </div>
+</div>
+
+<script src="js/actions_menu.js"></script>
+
+</body>
+</html>
