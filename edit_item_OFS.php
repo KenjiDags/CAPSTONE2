@@ -151,6 +151,12 @@ function edit_ofs_value($value): string
                     <input type="number" name="quantity_on_hand" id="quantity_on_hand" min="0" value="<?= (int) $item['quantity_on_hand'] ?>" required>
                 </div>
             </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="estimated_life">No. of days to consume</label>
+                    <input type="text" name="estimated_life" id="estimated_life" maxlength="100" placeholder="Enter no. of days to consume" value="<?= edit_ofs_value($item['estimated_life'] ?? '') ?>">
+                </div>
+            </div>
             <div class="actions-row">
                 <button type="submit" class="pill-btn pill-add"><i class="fas fa-save"></i> Update Item</button>
                 <a href="inventory.php" class="pill-btn pill-view" style="text-decoration: none;"><i class="fas fa-ban"></i> Cancel</a>
@@ -165,6 +171,7 @@ const itemId = form.elements.item_id.value;
 const original = {
     stock_number: <?= json_encode((string) $item['stock_number']) ?>,
     iar: <?= json_encode((string) ($item['iar'] ?? '')) ?>,
+    estimated_life: <?= json_encode((string) ($item['estimated_life'] ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
     item_name: <?= json_encode((string) $item['item_name']) ?>,
     description: <?= json_encode((string) $item['description']) ?>,
     unit: <?= json_encode((string) ($item['unit'] ?? '')) ?>,

@@ -276,6 +276,11 @@ CREATE TABLE IF NOT EXISTS `items` (
   `iar` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`item_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=223 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE `items`
+  ADD COLUMN `estimated_life` VARCHAR(100) DEFAULT NULL;
+
+-- To remove this column if needed:
+-- ALTER TABLE `items` DROP COLUMN `estimated_life`;
 
 --
 -- Dumping data for table `items`
@@ -1271,3 +1276,18 @@ CREATE Table if NOT exists `officers` (
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- Saved RPCI documents preserve the report metadata and inventory snapshot.
+CREATE TABLE IF NOT EXISTS `rpci_reports` (
+  `rpci_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `report_date` DATE NOT NULL,
+  `entity_name` VARCHAR(255) NOT NULL,
+  `accountable_officer` VARCHAR(255) NOT NULL,
+  `item_count` INT UNSIGNED NOT NULL,
+  `snapshot` LONGTEXT NOT NULL,
+  `created_by` INT NOT NULL,
+  `save_token` CHAR(64) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `rpci_save_token` (`save_token`),
+  KEY `rpci_date` (`report_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

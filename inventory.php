@@ -106,7 +106,8 @@ if (isset($_GET['action'])) {
                             'unit' => $row['unit'],
                             'reorder_point' => $row['reorder_point'],
                             'unit_cost' => $row['unit_cost'],
-                            'iar' => $row['iar']
+                            'iar' => $row['iar'],
+                            'estimated_life' => $row['estimated_life'] ?? ''
                         ]
                     ]);
 
@@ -142,6 +143,13 @@ if (isset($_GET['action'])) {
                 $unit_cost = floatval($_POST['unit_cost']);
                 $quantity_on_hand = intval($_POST['quantity_on_hand']);
                 $iar = $_POST['iar'];
+                $estimated_life = trim((string)($_POST['estimated_life'] ?? ''));
+                if (strlen($estimated_life) > 100) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'No. of days to consume must be 100 characters or fewer.']);
+                    exit();
+                }
+                $estimated_life = $estimated_life === '' ? null : $estimated_life;
                 
                 // Check if stock number already exists
                 $check_stmt = $conn->prepare("SELECT item_id FROM items WHERE stock_number = ?");
@@ -189,10 +197,10 @@ if (isset($_GET['action'])) {
                 } else {
                     // Insert new item
                 $stmt = $conn->prepare("
-                    INSERT INTO items (stock_number, item_name, description, iar, unit, reorder_point, unit_cost, quantity_on_hand, initial_quantity)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO items (stock_number, item_name, description, iar, unit, reorder_point, unit_cost, quantity_on_hand, initial_quantity, estimated_life)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->bind_param("sssssiidi", $stock_number, $item_name, $description, $iar, $unit, $reorder_point, $unit_cost, $quantity_on_hand, $quantity_on_hand);
+                $stmt->bind_param("sssssidiis", $stock_number, $item_name, $description, $iar, $unit, $reorder_point, $unit_cost, $quantity_on_hand, $quantity_on_hand, $estimated_life);
                     
                     if ($stmt->execute()) {
                         $new_id = $conn->insert_id;
@@ -245,6 +253,7 @@ case 'update':
                 initial_quantity,
                 calculated_unit_cost,
                 calculated_quantity,
+                estimated_life,
                 (SELECT COUNT(*) FROM inventory_entries WHERE item_id = ?) as entry_count
             FROM items WHERE item_id = ?
         ");
@@ -270,6 +279,7 @@ case 'update':
             'item_name' => 'string', 
             'description' => 'string',
             'iar' => 'string',
+            'estimated_life' => 'string',
             'unit' => 'string',
             'reorder_point' => 'int',
             'unit_cost' => 'float',
@@ -289,6 +299,11 @@ case 'update':
         foreach ($allowed_fields as $field => $type) {
             if (isset($_POST[$field])) {
                 $new_value = $_POST[$field];
+                if ($field === 'estimated_life' && (!is_string($new_value) || strlen(trim($new_value)) > 100)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'No. of days to consume must be 100 characters or fewer.']);
+                    exit();
+                }
                 
                 // Type conversion
                 switch ($type) {
@@ -302,7 +317,7 @@ case 'update':
                         break;
                     default: // string
                         $new_value = trim($new_value);
-                        $current_value = trim($current_data[$field]);
+                        $current_value = trim((string)($current_data[$field] ?? ''));
                         break;
                 }
                 

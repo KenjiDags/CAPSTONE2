@@ -111,6 +111,16 @@ require 'functions.php';
     body.dark-mode .form-container header p {
         color: #cbd5e1 !important;
     }
+    #addForm .form-group input,
+    #addForm .form-group input:focus {
+        background-color: #f5f5f5 !important;
+        color: #333;
+    }
+    body.dark-mode #addForm .form-group input,
+    body.dark-mode #addForm .form-group input:focus {
+        background-color: #0f172a !important;
+        color: #e2e8f0;
+    }
 </style>
 </head>
 <body class="add-page">
@@ -173,6 +183,13 @@ require 'functions.php';
                 </div>
             </div>
 
+            <div class="form-row">
+            <div class="form-group">
+                <label for="estimated_life">No. of days to consume</label>
+                <input type="text" name="estimated_life" id="estimated_life" maxlength="100" placeholder="Enter no. of days to consume" readonly>
+            </div>
+            </div>
+
             <div class="actions-row">
                 <button type="submit" class="pill-btn pill-add"><i class="fas fa-save"></i> Save Item</button>
                 <a href="inventory.php" class="pill-btn pill-view" style="text-decoration: none;"><i class="fas fa-ban"></i> Cancel</a>
@@ -196,6 +213,7 @@ const fields = {
     reorder_point: document.getElementById('reorder_point'),
     unit_cost: document.getElementById('unit_cost'),
     iar: document.getElementById('iar'),
+    estimated_life: document.getElementById('estimated_life'),
     quantity_on_hand: document.getElementById('quantity_on_hand')
 };
 
@@ -220,6 +238,7 @@ function clearAddForm() {
     fields.reorder_point.value = '';
     fields.unit_cost.value = '';
     fields.iar.value = '';
+    fields.estimated_life.value = '';
     fields.quantity_on_hand.value = '';
 
     fields.item_name.readOnly = true;
@@ -228,6 +247,7 @@ function clearAddForm() {
     fields.reorder_point.readOnly = true;
     fields.unit_cost.readOnly = true;
     fields.iar.readOnly = true;
+    fields.estimated_life.readOnly = true;
 }
 
 function enableForNewItem() {
@@ -238,6 +258,7 @@ function enableForNewItem() {
     fields.reorder_point.readOnly = false;
     fields.unit_cost.readOnly = false;
     fields.iar.readOnly = false;
+    fields.estimated_life.readOnly = false;
 
     fields.item_name.value = '';
     fields.description.value = '';
@@ -245,6 +266,7 @@ function enableForNewItem() {
     fields.reorder_point.value = '';
     fields.unit_cost.value = '';
     fields.iar.value = '';
+    fields.estimated_life.value = '';
     fields.quantity_on_hand.value = '';
 }
 
@@ -273,6 +295,7 @@ function checkStockNumber(stockNumber) {
             fields.reorder_point.value = data.item.reorder_point || 0;
             fields.unit_cost.value = data.item.unit_cost || 0;
             fields.iar.value = data.item.iar || '';
+            fields.estimated_life.value = data.item.estimated_life || '';
 
             fields.item_name.readOnly = true;
             fields.description.readOnly = true;
@@ -280,6 +303,7 @@ function checkStockNumber(stockNumber) {
             fields.reorder_point.readOnly = true;
             fields.unit_cost.readOnly = false;
             fields.iar.readOnly = true;
+    fields.estimated_life.readOnly = true;
 
             fields.quantity_on_hand.value = '';
             fields.quantity_on_hand.focus();

@@ -301,14 +301,14 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
         }
 
         .main-table .ris-header-row > th:first-child,
-        .main-table .ris-header-row ~ tr > td:first-child,
-        .main-table .ris-header-row ~ tr > th:first-child {
+        .main-table tbody > tr > td:first-child,
+        .main-table tbody > tr > th:first-child {
             border-left: 2px solid black;
         }
 
         .main-table .ris-header-row > th:last-child,
-        .main-table .ris-header-row ~ tr > td:last-child,
-        .main-table .ris-header-row ~ tr > th:last-child {
+        .main-table tbody > tr > td:last-child,
+        .main-table tbody > tr > th:last-child {
             border-right: 2px solid black;
         }
 
@@ -327,7 +327,8 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
             .form-container {
                 max-width: none;
                 margin: 0;
-                page-break-inside: avoid;
+                page-break-inside: auto;
+                break-inside: auto;
                 border: none !important;
             }
 
@@ -347,6 +348,33 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
                 margin: 0.5in;
                 size: A4;
             }
+        }
+        .main-table .repeating-agency-cell {
+            padding: 0;
+            border: none;
+            font-size: 12px;
+        }
+
+        @media print {
+            html, body, .form-container, .main-table {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            .main-table { break-inside: auto; page-break-inside: auto; }
+            .main-table thead { display: table-header-group; }
+            .main-table tbody { display: table-row-group; }
+            .main-table tfoot { display: table-footer-group; }
+            .main-table tr { break-inside: avoid; page-break-inside: avoid; }
+            .main-table thead { break-inside: avoid; page-break-inside: avoid; }
+        }
+        .main-table .page-bottom-border td {
+            padding: 0;
+            height: 0;
+            min-height: 0;
+            line-height: 0;
+            font-size: 0;
+            border-top: 2px solid black;
         }
     </style>
 </head>
@@ -371,16 +399,21 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
 
     <!-- RSMI Form -->
     <div class="form-container">
-        <div class="appendix-label">Appendix 64</div>
-        <div class="agency-header">
-            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
-            <div class="agency-text">
-                <div>Republic of the Philippines</div>
-                <div><strong>TECHNICAL EDUCATION & SKILLS DEVELOPMENT AUTHORITY</strong></div>
-                <div>Cordillera Administrative Region</div>
-            </div>
-        </div>
         <table class="main-table" style="width: 100%;">
+            <thead>
+                <tr>
+                    <td colspan="8" class="repeating-agency-cell">
+                        <div class="agency-header">
+                            <div class="appendix-label">Appendix 64</div>
+                            <img src="images/TESDA-Logo-export.png" alt="TESDA Logo">
+                            <div class="agency-text">
+                                <div>Republic of the Philippines</div>
+                                <div><strong>TECHNICAL EDUCATION & SKILLS DEVELOPMENT AUTHORITY</strong></div>
+                                <div>Cordillera Administrative Region</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             <tr>
                 <td class="title-cell" colspan="8">REPORT OF SUPPLIES AND MATERIALS ISSUED (RSMI)</td>
             </tr>
@@ -410,6 +443,8 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
                 <th style="width: 15%;" class="instructions full-border">Unit Cost</th>
                 <th style="width: 15%;" class="instructions full-border">Amount</th>
             </tr>
+            </thead>
+            <tbody>
             <?php
             $row_count = 0;
             if ($rows) {
@@ -525,7 +560,12 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
                     <td style="border: 2px solid black; border-top: none; border-left: none; vertical-align: top;"><div class="signatory-name"><?= htmlspecialchars($report_date_display) ?></div><div class="signature-line"></div>Date</td>
                 </tr>
 
+            </tbody>
+            <tfoot>
+                <tr class="page-bottom-border"><td colspan="8"></td></tr>
+            </tfoot>
         </table>
+    </div>
 
     <script>
         function printForm() {

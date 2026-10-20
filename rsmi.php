@@ -75,8 +75,19 @@ $stmt->close();
         </div>
     </form>
     <div class="table-container">
-        <table>
-            <thead><tr><th>RSMI No.</th><th>Report Date</th><th>Custodian</th><th>Accounting Staff</th><th>Entries</th><th>Quantity Issued</th><th>Total Amount</th><th>Actions</th></tr></thead>
+        <table id="rsmiTable">
+            <thead>
+                <tr>
+                    <th scope="col"><i class="fas fa-hashtag" aria-hidden="true"></i> RSMI No.</th>
+                    <th scope="col"><i class="fas fa-calendar" aria-hidden="true"></i> Report Date</th>
+                    <th scope="col"><i class="fas fa-user" aria-hidden="true"></i> Custodian</th>
+                    <th scope="col"><i class="fas fa-user-tie" aria-hidden="true"></i> Accounting Staff</th>
+                    <th scope="col"><i class="fas fa-list" aria-hidden="true"></i> Entries</th>
+                    <th scope="col"><i class="fas fa-boxes" aria-hidden="true"></i> Quantity Issued</th>
+                    <th scope="col"><i class="fas fa-coins" aria-hidden="true"></i> Total Amount</th>
+                    <th scope="col"><i class="fas fa-cogs" aria-hidden="true"></i> Actions</th>
+                </tr>
+            </thead>
             <tbody>
             <?php foreach ($reports as $report): ?>
                 <tr>
@@ -86,7 +97,7 @@ $stmt->close();
                     <td><?= rsmiH($report['accounting_staff']) ?></td>
                     <td><?= (int)$report['item_count'] ?></td>
                     <td><?= rsmiH((float)$report['total_issued']) ?></td>
-                    <td><span class="currency">PHP <?= number_format((float)$report['total_amount'], 2) ?></span></td>
+                    <td><span class="currency">&#8369; <?= number_format((float)$report['total_amount'], 2) ?></span></td>
                     <td class="actions-cell">
                         <div class="actions-menu">
                             <button type="button" class="actions-menu-toggle" aria-label="Open actions for <?= rsmiH($report['serial_no']) ?>" aria-expanded="false">

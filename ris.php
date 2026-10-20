@@ -237,14 +237,17 @@ switch ($sort_by) {
             </thead>
             <tbody>
             <?php 
+            $showMonthSeparators = $sort_by !== 'ris_no';
             $monthDirection = $sort_by === 'date_oldest' ? 'ASC' : 'DESC';
             $groupOrder = str_replace('ORDER BY ', "ORDER BY added_month IS NULL ASC, added_month $monthDirection, ", $order_clause);
-            $result = $conn->query("SELECT ris.*, DATE_FORMAT(created_at, '%Y-%m') AS added_month FROM ris $groupOrder");
+            if (!$showMonthSeparators) $groupOrder = $order_clause;
+            $groupDate = in_array($sort_by, ['date_oldest', 'ris_no'], true) ? 'created_at' : 'date_requested';
+            $result = $conn->query("SELECT ris.*, DATE_FORMAT($groupDate, '%Y-%m') AS added_month FROM ris $groupOrder");
             if ($result && $result->num_rows > 0) {
                 $previousMonth = null;
                 while ($row = $result->fetch_assoc()) {
                     $month = $row['added_month'] ?? 'unknown';
-                    if ($month !== $previousMonth) {
+                    if ($showMonthSeparators && $month !== $previousMonth) {
                         $label = $month === 'unknown' ? 'Date unknown' : date('F, Y', strtotime($month . '-01'));
                         echo '<tr class="ris-month-row"><th colspan="5" scope="rowgroup"><div class="ris-month-divider"><span>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span></div></th></tr>';
                         $previousMonth = $month;

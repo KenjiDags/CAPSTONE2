@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_action'])) {
         if ($row && !$valid) foreach (json_decode($row['recovery_hashes'] ?? '[]', true) ?: [] as $hash) {
             if (password_verify(strtoupper($entered), $hash)) { $valid = true; break; }
         }
-        if (!$valid) $totpNotice = 'A current authenticator or recovery code is required to disable it.';
+        if (!$valid) $totpNotice = 'A current authenticator or recovery code is to disable it.';
         else {
             $del = $conn->prepare('DELETE FROM user_totp WHERE user_id = ?'); $del->bind_param('i', $_SESSION['user_id']); $del->execute(); $del->close();
             $totpNotice = 'Authenticator disabled.';
@@ -634,9 +634,8 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     User Information
                 </h2>
                     <form method="POST" id="inlineNameForm" autocomplete="off">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name: <span class="required-indicator" aria-hidden="true">*</span></label>
+                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
                             <input 
                                 type="text" 
                                 id="inline_full_name" 
@@ -644,16 +643,14 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 value="<?= htmlspecialchars($current_full_name) ?>"
                                 onfocus="this.select()"
                                 onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
-                                required 
                             >
                         </div>
                         <input type="hidden" name="update_full_name" value="1">
                     </form>
 
                     <form method="POST" id="inlineUserPositionForm" autocomplete="off">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position: <span class="required-indicator" aria-hidden="true">*</span></label>
+                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position:</label>
                             <input 
                                 type="text" 
                                 id="inline_user_position" 
@@ -661,16 +658,14 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 value="<?= htmlspecialchars($current_user_position) ?>"
                                 onfocus="this.select()"
                                 onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
-                                required 
                             >
                         </div>
                         <input type="hidden" name="update_user_position" value="1">
                     </form>
 
                     <form method="POST">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                         <div class="form-row">
-                            <label for="inline_username"><i class="fas fa-user"></i> Username: <span class="required-indicator" aria-hidden="true">*</span></label>
+                            <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
                             <input 
                                 type="text" 
                                 id="inline_username" 
@@ -678,7 +673,6 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 value="<?= htmlspecialchars($current_username) ?>"
                                 onfocus="this.select()"
                                 onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
-                                required 
                             >
                         </div>
                 </section>
@@ -697,8 +691,8 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     <form method="post">
                         <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
                         <input type="hidden" name="totp_action" value="disable">
-                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
-                        <div class="form-row"><label>Authenticator or recovery code</label><input name="totp_code" required autocomplete="one-time-code"></div>
+                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" autocomplete="current-password"></div>
+                        <div class="form-row"><label>Authenticator or recovery code</label><input name="totp_code" autocomplete="one-time-code"></div>
                         <button type="submit" class="btn-update">Disable authenticator</button>
                     </form>
                 <?php else: ?>
@@ -710,8 +704,8 @@ if ($officers_result && $officers_result->num_rows > 0) {
                         <form method="post">
                             <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
                             <input type="hidden" name="totp_action" value="enable">
-                            <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
-                            <div class="form-row"><label>Authenticator code</label><input name="totp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"></div>
+                            <div class="form-row"><label>Current password</label><input type="password" name="totp_password" autocomplete="current-password"></div>
+                            <div class="form-row"><label>Authenticator code</label><input name="totp_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
                             <button type="submit" class="btn-update">Verify and enable</button>
                         </form>
                     <?php else: ?>
@@ -720,7 +714,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     <form method="post">
                         <input type="hidden" name="totp_csrf" value="<?= htmlspecialchars($_SESSION['totp_csrf']) ?>">
                         <input type="hidden" name="totp_action" value="start">
-                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" required autocomplete="current-password"></div>
+                        <div class="form-row"><label>Current password</label><input type="password" name="totp_password" autocomplete="current-password"></div>
                         <button type="submit" class="btn-update"><?= $totpAccount ? 'Generate a new setup key' : 'Set up authenticator' ?></button>
                     </form>
                 <?php endif; ?>
@@ -736,15 +730,13 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </h2>
                 
                 <form method="POST">
-                    <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <div class="form-row">
-                        <label for="current_password">Current Password <span class="required-indicator" aria-hidden="true">*</span></label>
+                        <label for="current_password">Current Password</label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
                                 id="current_password" 
                                 name="current_password" 
-                                required
                                 autocomplete="current-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('current_password')">
@@ -754,13 +746,12 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="new_password">New Password <span class="required-indicator" aria-hidden="true">*</span></label>
+                        <label for="new_password">New Password</label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
                                 id="new_password" 
                                 name="new_password" 
-                                required
                                 autocomplete="new-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
@@ -771,13 +762,12 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="confirm_password">Confirm New Password <span class="required-indicator" aria-hidden="true">*</span></label>
+                        <label for="confirm_password">Confirm New Password</label>
                         <div class="password-toggle-wrapper">
                             <input 
                                 type="password" 
                                 id="confirm_password" 
                                 name="confirm_password" 
-                                required
                                 autocomplete="new-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
@@ -802,26 +792,23 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 
                 <!-- Add Officer Form -->
                 <form method="POST" style="margin-bottom: 30px;">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div class="form-row" style="margin-bottom: 0;">
-                            <label for="officer_name">Officer Name <span class="required-indicator" aria-hidden="true">*</span></label>
+                            <label for="officer_name">Officer Name</label>
                             <input 
                                 type="text" 
                                 id="officer_name" 
                                 name="officer_name" 
                                 placeholder="Enter officer name"
-                                required
                             >
                         </div>
                         <div class="form-row" style="margin-bottom: 0;">
-                            <label for="officer_position">Officer Position <span class="required-indicator" aria-hidden="true">*</span></label>
+                            <label for="officer_position">Officer Position</label>
                             <input 
                                 type="text" 
                                 id="officer_position" 
                                 name="officer_position" 
                                 placeholder="Enter position/title"
-                                required
                             >
                         </div>
                     </div>
@@ -844,10 +831,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 <thead>
                                     <tr style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);">
                                         <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-user"></i> Name <span class="required-indicator" aria-hidden="true">*</span>
+                                            <i class="fas fa-user"></i> Name
                                         </th>
                                         <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-briefcase"></i> Position <span class="required-indicator" aria-hidden="true">*</span>
+                                            <i class="fas fa-briefcase"></i> Position
                                         </th>
                                         <th style="padding: 12px; text-align: center; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb; width: 100px;">
                                             <i class="fas fa-cog"></i> Actions
@@ -861,10 +848,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                                 <form method="POST" id="editOfficerFieldsForm<?= $officer['officer_id'] ?>" style="display:contents;">
                                                     <td style="padding: 12px; font-size: 14px; width: 190px;">
                                                         <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                        <input type="text" name="new_officer_name" value="<?= htmlspecialchars($officer['officer_name']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" autofocus onkeydown="if(event.key==='Enter'){this.form.submit();return false;}" required>
+                                                        <input type="text" name="new_officer_name" value="<?= htmlspecialchars($officer['officer_name']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" autofocus onkeydown="if(event.key==='Enter'){this.form.submit();return false;}">
                                                     </td>
                                                     <td style="padding: 10px; font-size: 14px; width: 140px;">
-                                                        <input type="text" name="new_officer_position" value="<?= htmlspecialchars($officer['officer_position']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" onkeydown="if(event.key==='Enter'){this.form.submit();return false;}" required>
+                                                        <input type="text" name="new_officer_position" value="<?= htmlspecialchars($officer['officer_position']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" onkeydown="if(event.key==='Enter'){this.form.submit();return false;}">
                                                         <input type="hidden" name="edit_officer_fields" value="1">
                                                     </td>
                                                     <td style="padding: 10px; text-align: center;" width="150px">

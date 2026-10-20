@@ -252,6 +252,10 @@ $item_result = $conn->query($item_query);
             vertical-align: middle;
         }
         
+        .items-table td {
+            font-weight: 600;
+        }
+
         .items-table th {
             font-weight: bold;
         }
@@ -378,6 +382,17 @@ $item_result = $conn->query($item_query);
         </div>
 
         <table class="items-table">
+            <colgroup>
+                <col style="width:12%">
+                <col style="width:28%">
+                <col style="width:8%">
+                <col style="width:8%">
+                <col style="width:10%">
+                <col style="width:5%">
+                <col style="width:5%">
+                <col style="width:9%">
+                <col style="width:15%">
+            </colgroup>
             <thead>
                 <tr>
                     <th colspan="9" class="table-main-title">REQUISITION AND ISSUE SLIP</th>
@@ -389,11 +404,11 @@ $item_result = $conn->query($item_query);
                 </tr>
                 <tr>
                     <td colspan="5" class="label">Division: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['division']); ?></span></td>
-                    <td colspan="5" class="label">Responsibility Center Code: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></span></td>
+                    <td colspan="4" class="label">Responsibility Center Code: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['responsibility_center_code']); ?></span></td>
                 </tr>
                 <tr>
                     <td colspan="5" class="label">Office: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['office']); ?></span></td>
-                    <td colspan="5" class="label">RIS No: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['ris_no']); ?></span></td>
+                    <td colspan="4" class="label">RIS No: <span class="header-fixed-underline"><?php echo htmlspecialchars($ris['ris_no']); ?></span></td>
                 </tr>
 
                 <tr>

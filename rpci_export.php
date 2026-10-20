@@ -1,29 +1,16 @@
 <?php
 require 'auth.php';
 require 'config.php';
-
-// Fetch inventory items from database
-$inventory_items = [];
-$sql = "SELECT item_name, description, stock_number, unit, unit_cost FROM items ORDER BY item_name";
-$result = $conn->query($sql);
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $inventory_items[] = $row;
-    }
-} else {
-    error_log("Database error: " . $conn->error);
+require_once 'rpci_helpers.php';
+rpciEnsureTable($conn);
+$id = filter_var($_GET['rpci_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if (!$id) { header('Location: rpci.php'); exit; }
+$report = rpciLoad($conn, $id);
+if (!$report) { http_response_code(404); exit('RPCI document not found.'); }
+$inventory_items = $report['data']['rows'];
+foreach (['report_date', 'fund_cluster', 'accountable_officer', 'official_designation', 'entity_name', 'assumption_date', 'signature_name_1', 'signature_name_2', 'signature_name_3'] as $field) {
+    ${$field} = rpciH($report['data']['metadata'][$field] ?? '');
 }
-
-$report_date = htmlspecialchars($_GET['report_date'] ?? date('Y-m-d'));
-$fund_cluster = htmlspecialchars($_GET['fund_cluster'] ?? '');
-$accountable_officer = htmlspecialchars($_GET['accountable_officer'] ?? '');
-$official_designation = htmlspecialchars($_GET['official_designation'] ?? '');
-$entity_name = htmlspecialchars($_GET['entity_name'] ?? '');
-$assumption_date = htmlspecialchars($_GET['assumption_date'] ?? '');
-$signature_name_1 = htmlspecialchars($_GET['signature_name_1'] ?? '');
-$signature_name_2 = htmlspecialchars($_GET['signature_name_2'] ?? '');
-$signature_name_3 = htmlspecialchars($_GET['signature_name_3'] ?? '');
-
 $rows_per_page = 17;
 $item_pages = array_chunk($inventory_items, $rows_per_page);
 if (empty($item_pages)) {
@@ -411,7 +398,7 @@ if (empty($item_pages)) {
             <p><strong>Best viewed in:</strong> Chrome or Edge for consistent PDF output.</p>
         </div>
         <button class="btn btn-print" onclick="window.print()">🖨️ Print/Save as PDF</button>
-        <a href="rpci.php" class="btn btn-back" style="margin-left:8px;">← Back to Form</a>
+        <a href="rpci.php" class="btn btn-back" style="margin-left:8px;">← Back to Saved Documents</a>
         <hr style="margin: 20px 0;">
     </div>
 
@@ -495,11 +482,11 @@ if (empty($item_pages)) {
                             echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
                             echo '<td>' . htmlspecialchars($item['unit'] ?? '') . '</td>';
                             echo '<td>' . htmlspecialchars($item['unit_cost'] ?? '') . '</td>';
-                            echo '<td>&nbsp;</td>';
-                            echo '<td>&nbsp;</td>';
-                            echo '<td>&nbsp;</td>';
-                            echo '<td>&nbsp;</td>';
-                            echo '<td>&nbsp;</td>';
+                            echo '<td>' . rpciH($item['balance_per_card'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['on_hand_per_count'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['shortage_quantity'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['shortage_value'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['remarks'] ?? '') . '</td>';
                             echo '</tr>';
                         }
                     }
@@ -612,11 +599,11 @@ if (empty($item_pages)) {
                             echo '<td>' . htmlspecialchars($item['stock_number'] ?? '') . '</td>';
                             echo '<td>' . htmlspecialchars($item['unit'] ?? '') . '</td>';
                             echo '<td>' . htmlspecialchars($item['unit_cost'] ?? '') . '</td>';
-                            echo '<td>&nbsp;</td>'; // balance per card
-                            echo '<td>&nbsp;</td>'; // on hand
-                            echo '<td>&nbsp;</td>'; // shortage qty
-                            echo '<td>&nbsp;</td>'; // shortage value
-                            echo '<td>&nbsp;</td>'; // remarks
+                            echo '<td>' . rpciH($item['balance_per_card'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['on_hand_per_count'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['shortage_quantity'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['shortage_value'] ?? '') . '</td>';
+                            echo '<td>' . rpciH($item['remarks'] ?? '') . '</td>';
                             echo '</tr>';
                             $row_count++;
                         }

@@ -118,7 +118,7 @@ if ($detail) {
     $tab = in_array($detail['record_type'], $itemTypes, true) ? 'items' : 'documents';
 }
 $isItems = $tab === 'items';
-$recordTypes = $isItems ? $itemTypes : ['SC', 'RIS', 'RSMI', 'ICS', 'ITR', 'PTR', 'PAR', 'PC', 'IIRUP', 'RRSP', 'IIRUSP'];
+$recordTypes = $isItems ? $itemTypes : ['SC', 'RIS', 'RSMI', 'RPCI', 'ICS', 'ITR', 'PTR', 'PAR', 'PC', 'IIRUP', 'RRSP', 'IIRUSP'];
 if (!in_array($type, $recordTypes, true)) $type = '';
 $like = '%' . $search . '%';
 $groupCondition = $isItems

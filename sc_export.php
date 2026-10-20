@@ -23,7 +23,7 @@ $items = $item_result->fetch_assoc();
 $item_stmt->close();
 
 $history_stmt = $conn->prepare("
-  SELECT ih.*, r.ris_no AS ris_no
+  SELECT ih.*, r.ris_no AS ris_no, r.office AS ris_office
   FROM item_history ih
   LEFT JOIN ris r ON ih.ris_id = r.ris_id
   WHERE ih.item_id = ?
@@ -275,9 +275,9 @@ $ris = ['entity_name' => 'TESDA'];
             $reference = !empty($h['ris_no']) ? htmlspecialchars($h['ris_no']) : htmlspecialchars($items['iar']);
             $receipt_qty = $h['quantity_change'] > 0 ? htmlspecialchars($h['quantity_change']) : '';
             $issue_qty = $h['quantity_change'] < 0 ? abs(htmlspecialchars($h['quantity_change'])) : '';
-            $office = ''; // fill if you have office info
+            $office = htmlspecialchars((string)($h['ris_office'] ?? ''), ENT_QUOTES, 'UTF-8');
             $balance = htmlspecialchars($h['quantity_on_hand']);
-            $days = '--'; // placeholder
+            $days = htmlspecialchars((string)($items['estimated_life'] ?? ''), ENT_QUOTES, 'UTF-8');
         ?>
             <tr>
               <td><?php echo $date; ?></td>
