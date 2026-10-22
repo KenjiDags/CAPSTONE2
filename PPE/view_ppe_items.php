@@ -59,7 +59,7 @@ function date_or_na($value)
     <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="detail-view-page">
+<body class="detail-view-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

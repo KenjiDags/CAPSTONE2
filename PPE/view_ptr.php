@@ -28,7 +28,7 @@ function ptrViewH($value): string { return htmlspecialchars((string)($value ?? '
     <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="detail-view-page">
+<body class="detail-view-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2><i class="fas fa-exchange-alt" aria-hidden="true"></i> Viewing PTR No. <?= ptrViewH($ptr['ptr_no']) ?></h2>

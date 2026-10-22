@@ -303,11 +303,11 @@ $dataRows = count($items);
                 <th colspan="9" style="text-align: right; border: none;"><strong>Fund Cluster:</strong> <?= htmlspecialchars($iirup['fund_cluster'] ?? '101') ?></th>
             </tr>
             <tr>
-                <th colspan="3" style="font-style: italic; border: none;">___________________________<br>(Name of Accountable Officer)</th>
+                <th colspan="3" style="font-style: italic; border: none;"><span style="display:inline-block; min-width:160px; border-bottom:1px solid #000;"><?= htmlspecialchars($iirup['accountable_officer_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>&nbsp;</span><br>(Name of Accountable Officer)</th>
                 <th style="border: none;"></th>
-                <th colspan="3" style="font-style: italic; border: none;">___________________________<br>(Designation)</th>
+                <th colspan="3" style="font-style: italic; border: none;"><span style="display:inline-block; min-width:160px; border-bottom:1px solid #000;"><?= htmlspecialchars($iirup['accountable_officer_designation'] ?? '', ENT_QUOTES, 'UTF-8') ?>&nbsp;</span><br>(Designation)</th>
                 <th colspan="2" style="border: none;"></th>
-                <th colspan="3" style="font-style: italic; border: none;">___________________________<br>(Station)</th>
+                <th colspan="3" style="font-style: italic; border: none;"><span style="display:inline-block; min-width:160px; border-bottom:1px solid #000;"><?= htmlspecialchars($iirup['accountable_officer_station'] ?? '', ENT_QUOTES, 'UTF-8') ?>&nbsp;</span><br>(Station)</th>
             </tr>
                 <col style="width: 5.5%;">
                 <col style="width: 5.5%;">
@@ -383,7 +383,12 @@ $dataRows = count($items);
                 echo "<tr>";
                 echo "<td>" . htmlspecialchars(date('m/d/Y', strtotime($item['date_acquired'] ?? 'now'))) . "</td>";
                 echo "<td style='text-align:left;'>" . htmlspecialchars($item['particulars'] ?? 'N/A') . "</td>";
-                echo "<td>" . htmlspecialchars($item['PPE_no'] ?? 'N/A') . "</td>";
+                // Legacy single-item reports saved the PPE number only in the header.
+                $ppeNo = trim((string)($item['PPE_no'] ?? ''));
+                if ($ppeNo === '' && $dataRows === 1) {
+                    $ppeNo = trim((string)($iirup['PPE_no'] ?? ''));
+                }
+                echo "<td>" . htmlspecialchars($ppeNo !== '' ? $ppeNo : 'N/A', ENT_QUOTES, 'UTF-8') . "</td>";
                 echo "<td>" . htmlspecialchars($item['quantity'] ?? 0) . "</td>";
                 echo "<td style='text-align:right;'>₱" . number_format(($item['amount'] ?? 0) / ($item['quantity'] ?? 1), 2) . "</td>";
                 echo "<td style='text-align:right;'>₱" . number_format($totalCost, 2) . "</td>";
@@ -394,11 +399,11 @@ $dataRows = count($items);
                 echo "<td>" . htmlspecialchars($item['sale'] ?? 0) . "</td>";
                 echo "<td>" . htmlspecialchars($item['transfer'] ?? 0) . "</td>";
                 echo "<td>" . htmlspecialchars($item['destruction'] ?? 0) . "</td>";
-                echo "<td>" . htmlspecialchars($item['other'] ?? 0) . "</td>";
+                echo "<td>" . htmlspecialchars($item['other'] ?? 0) . (!empty($item['other_specification']) ? '<br>' . htmlspecialchars($item['other_specification'], ENT_QUOTES, 'UTF-8') : '') . "</td>";
                 echo "<td>" . htmlspecialchars($item['total'] ?? 0) . "</td>";
                 echo "<td style='text-align:right;'>₱" . number_format($item['appraised_value'] ?? 0, 2) . "</td>";
                 echo "<td>" . htmlspecialchars($item['or_no'] ?? '') . "</td>";
-                echo "<td style='text-align:right;'>₱" . number_format($item['amount'] ?? 0, 2) . "</td>";
+                echo "<td style='text-align:right;'>₱" . number_format($item['sale_amount'] ?? $item['amount'] ?? 0, 2) . "</td>";
                 echo "</tr>";
             }
         }

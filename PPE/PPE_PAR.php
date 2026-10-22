@@ -115,7 +115,7 @@ if ($search !== '') {
     
     </style>
 </head>
-<body class="par-page">
+<body class="par-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>Property Acknowledgement Receipt (PAR)</h2>

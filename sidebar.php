@@ -45,12 +45,14 @@ try {
                     $dropdownActive = in_array($currentPage, ['inventory.php', 'ris.php', 'add_ris.php', 'view_ris.php', 'rsmi.php', 'add_rsmi.php', 'SC.php', 'view_sc.php', 'rpci.php', 'add_rpci.php']);
                     // Semi Expendables dropdown should be open for ICS and its subpages
                     $icsPages = ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php'];
-                    $expendablesDropdownActive = in_array($currentPage, array_merge(['semi_expendible.php', 'PC.php', 'PC_semi.php', 'itr.php', 'rspi.php', 'regspi.php', 'ict_registry.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php'], $icsPages));
-                    $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'view_ppe_items.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php', 'PPE_iirup.php']);
+                    $expendablesDropdownActive = in_array($currentPage, array_merge(['semi_expendible.php', 'PC.php', 'PC_semi.php', 'itr.php', 'rspi.php', 'regspi.php', 'rpcsp.php', 'rrsp.php', 'iirusp.php'], $icsPages));
+                    $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'view_ppe_items.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php', 'PPE_iirup.php']);
 
                 ?>
 
                 <nav id="sidebar-navigation" aria-label="Main navigation">
+                    <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'analytics.php' ? 'page' : '' ?>"><?= $sidebarIcon('chart') ?><span>Analytics</span></a>
+
                     <div class="dropdown">
                         <button type="button" class="dropdown-toggle <?= $dropdownActive ? 'active' : '' ?>" aria-expanded="false" aria-controls="office-menu">
                             <?= $sidebarIcon('folder') ?><span>Office Supplies</span><span id="office-stock-warning" class="stock-count-badge stock-warning-badge" hidden aria-label="Office supplies out of stock">!</span><span class="nav-chevron"><?= $sidebarIcon('chevron') ?></span>
@@ -92,12 +94,11 @@ try {
                             <a href="PPE/PPE_PC.php" class="<?= $ppePcActive ? 'active' : '' ?>" aria-current="<?= $ppePcActive ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PC</span></a>
                             <a href="PPE/PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PTR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PTR</span></a>
                             <a href="PPE/PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PAR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PAR</span></a>
-                            <a href="PPE/RPCPPE.php" class="<?= $currentPage == 'RPCPPE.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'RPCPPE.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCPPE</span></a>
+                            <a href="PPE/RPCPPE.php" class="<?= in_array($currentPage, ['RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php'], true) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php'], true) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCPPE</span></a>
                             <a href="PPE/PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_iirup.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>IIRUP</span></a>
                         </div></div>
                     </div>
 
-                    <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'analytics.php' ? 'page' : '' ?>"><?= $sidebarIcon('chart') ?><span>Analytics</span></a>
 
                     <a href="archive.php" class="<?= $currentPage == 'archive.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'archive.php' ? 'page' : '' ?>"><?= $sidebarIcon('archive') ?><span>Archive</span></a>
 

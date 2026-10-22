@@ -198,7 +198,7 @@ if ($search !== '') {
     
     </style>
 </head>
-<body class="ptr-page">
+<body class="ptr-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>Property Transfer Report (PTR)</h2>

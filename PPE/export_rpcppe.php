@@ -3,8 +3,17 @@ require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
 require dirname(__DIR__) . '/config.php';
 
-// Accept submitted form values and retain support for existing export links.
+require_once __DIR__ . '/rpcppe_helpers.php';
 $export_data = $_POST + $_GET;
+if (isset($_GET['id'])) {
+    $id = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+    $saved = $id && $id > 0 ? rpcppeLoadReport($conn, $id) : null;
+    if (!$saved) { http_response_code(404); exit('RPCPPE report not found.'); }
+    $export_data = $saved;
+    $items = $saved['items'];
+} else {
+    $items = rpcppeBuildItems($conn, $export_data);
+}
 $report_date = $export_data['report_date'] ?? date('Y-m-d');
 $fund_cluster = $export_data['fund_cluster'] ?? '101';
 $accountable_officer = $export_data['accountable_officer'] ?? '';
@@ -14,37 +23,6 @@ $assumption_date = $export_data['assumption_date'] ?? '';
 $certified_by = $export_data['certified_by'] ?? '';
 $approved_by = $export_data['approved_by'] ?? '';
 $verified_by = $export_data['verified_by'] ?? '';
-
-// Keep untouched cells blank while preserving entered zero and signed differences.
-function rpcppe_count_value($data, $field, $id) {
-    $values = $data[$field] ?? [];
-    $value = is_array($values) ? ($values[$id] ?? '') : '';
-    return is_scalar($value) && is_numeric($value) ? (string)$value : '';
-}
-// Fetch PPE items with physical count data if available
-$items = [];
-$sql = "SELECT p.id, p.item_name, p.item_description, p.PPE_no, p.unit, p.amount, p.quantity 
-        FROM ppe_property p 
-        ORDER BY p.PPE_no";
-        
-$result = $conn->query($sql);
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $items[] = [
-            'article' => 'PPE',
-            'item_name' => $row['item_name'],
-            'item_description' => $row['item_description'] ?? '',
-            'property_number' => $row['PPE_no'],
-            'unit' => $row['unit'],
-            'unit_value' => $row['amount'],
-            'qty_property_card' => $row['quantity'],
-            'qty_physical_count' => rpcppe_count_value($export_data, 'on_hand_count', $row['id']),
-            'shortage_qty' => rpcppe_count_value($export_data, 'shortage_qty', $row['id']),
-            'shortage_value' => rpcppe_count_value($export_data, 'shortage_value', $row['id']),
-            'remarks' => isset($export_data['remarks'][$row['id']]) && is_scalar($export_data['remarks'][$row['id']]) ? (string)$export_data['remarks'][$row['id']] : ''
-        ];
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">

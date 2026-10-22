@@ -67,7 +67,7 @@ function date_or_na($value)
     <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="detail-view-page">
+<body class="detail-view-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">
@@ -83,12 +83,15 @@ function date_or_na($value)
     <div class="ris-details">
             <p><strong>Date Reported:</strong> <span><?= date_or_na($iirup['date_reported'] ?? null) ?></span></p>
             <p><strong>Entity Name:</strong> <span><?= h($iirup['entity_name'] ?? 'TESDA Regional Office') ?></span></p>
+            <p><strong>Accountable Officer:</strong> <span><?= h($iirup['accountable_officer_name'] ?? '') ?></span></p>
+            <p><strong>Accountable Officer Designation:</strong> <span><?= h($iirup['accountable_officer_designation'] ?? '') ?></span></p>
+            <p><strong>Accountable Officer Station:</strong> <span><?= h($iirup['accountable_officer_station'] ?? '') ?></span></p>
             <p><strong>PPE No.:</strong> <span><?= h($iirup['PPE_no'] ?? '') ?></span></p>
             <p><strong>Particulars:</strong> <span><?= h($iirup['particulars'] ?? '') ?></span></p>
             <p><strong>Quantity:</strong> <span><?= h($iirup['quantity'] ?? 0) ?></span></p>
-            <p><strong>Carrying Amount:</strong> <span><?= money($iirup['carrying_amount'] ?? 0) ?></span></p>
-            <p><strong>Total Cost:</strong> <span><?= money($iirup['total_cost'] ?? 0) ?></span></p>
-            <p><strong>Amount:</strong> <span><?= money($iirup['amount'] ?? 0) ?></span></p>
+            <p><strong>Carrying Amount:</strong> <span class="currency"><?= money($iirup['carrying_amount'] ?? 0) ?></span></p>
+            <p><strong>Total Cost:</strong> <span class="currency"><?= money($iirup['total_cost'] ?? 0) ?></span></p>
+            <p><strong>Amount:</strong> <span class="currency"><?= money($iirup['amount'] ?? 0) ?></span></p>
             <p><strong>Remarks:</strong> <span><?= h($iirup['remarks'] ?? 'N/A') ?></span></p>
     </div>
 
@@ -140,11 +143,11 @@ function date_or_na($value)
                                 <td><?= h($item['sale'] ?? 0) ?></td>
                                 <td><?= h($item['transfer'] ?? 0) ?></td>
                                 <td><?= h($item['destruction'] ?? 0) ?></td>
-                                <td><?= h($item['other'] ?? 0) ?></td>
+                                <td><?= h($item['other'] ?? 0) ?><?php if (!empty($item['other_specification'])): ?><br><?= h($item['other_specification']) ?><?php endif; ?></td>
                                 <td><?= h($item['total'] ?? 0) ?></td>
                                 <td class="currency"><?= money($item['appraised_value'] ?? 0) ?></td>
                                 <td><?= h($item['or_no'] ?? '') ?></td>
-                                <td class="currency"><?= money($item['amount'] ?? 0) ?></td>
+                                <td class="currency"><?= money($item['sale_amount'] ?? $item['amount'] ?? 0) ?></td>
                                 <td><?= h($item['remarks'] ?? '') ?></td>
                             </tr>
                         <?php endforeach; ?>

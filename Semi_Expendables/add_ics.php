@@ -483,20 +483,20 @@ function generateICSNumberSimple($conn) {
 <div class="add-ris-page content">
     <div class="form-container">
         <header class="page-header">
-            <h1>
+            <h1 class="form-page-title">
                 <i class="fas fa-file-invoice"></i>
                 <?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?>
             </h1>
-            <p><?php echo $is_editing ? 'Update inventory custody slip details' : 'Create a new inventory custody slip'; ?></p>
+            <p class="form-page-subtitle"><?php echo $is_editing ? 'Update inventory custody slip details' : 'Create a new inventory custody slip'; ?></p>
         </header>
-        <form method="post" action="">
+        <form method="post" action="" class="inventory-item-form">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <?php if ($is_editing): ?>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
                 <input type="hidden" name="is_editing" value="1">
             <?php endif; ?>
             <div class="section-card">
-                <h3><i class="fas fa-info-circle"></i> ICS Details</h3>
+                <h3 class="form-section-heading"><i class="fas fa-info-circle"></i> ICS Details</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Entity Name: <span class="required">*</span></label>
@@ -519,9 +519,9 @@ function generateICSNumberSimple($conn) {
                 </div>
             </div>
             <div class="section-card">
-                <h3><i class="fas fa-box"></i> ICS Items</h3>
+                <h3 class="form-section-heading"><i class="fas fa-box"></i> ICS Items</h3>
                 <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-                    <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
+                    <label for="filter_category" style="font-weight:600;">Category:</label>
                     <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
                         <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
                         <?php foreach ($category_options as $cat): ?>
@@ -532,10 +532,10 @@ function generateICSNumberSimple($conn) {
                         <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()" style="width:320px; max-width:100%;">
                     </div>
                 </div>
-                <div id="clamp-notice" style="display:none; margin:0 0 10px; padding:8px 10px; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:4px;"></div>
+                <div id="clamp-notice" class="form-notice-warning" role="status" style="display:none;"></div>
                 <div class="table-frame">
                     <div class="table-viewport">
-                        <table id="itemsTable" tabindex="-1">
+                        <table id="itemsTable" class="bordered-cell-inputs" tabindex="-1">
                             <thead>
                                 <tr>
                                     <th>Item No.</th>
@@ -598,7 +598,7 @@ function generateICSNumberSimple($conn) {
             </div>
 
             <div class="section-card">
-                <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
+                <h3 class="form-section-heading"><i class="fas fa-pen-nib"></i>Signatories</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Received By: <span class="required-indicator" aria-hidden="true">*</span></label>
@@ -763,7 +763,7 @@ function generateICSNumberSimple($conn) {
             dropdown.innerHTML = '';
             
             if (officerNames.length === 0) {
-                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
+                dropdown.innerHTML = '<div class="autocomplete-item form-muted-text" style="cursor: default;">No officers available</div>';
                 dropdown.style.display = 'block';
                 return;
             }
@@ -794,7 +794,7 @@ function generateICSNumberSimple($conn) {
             );
 
             if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
+                dropdown.innerHTML = '<div class="autocomplete-item form-muted-text" style="cursor: default;">No matches found</div>';
                 dropdown.style.display = 'block';
                 return;
             }

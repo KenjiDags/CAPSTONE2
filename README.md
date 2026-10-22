@@ -43,9 +43,9 @@ start tracking when that installation runs the migration, so counters may differ
 between separate databases.
 
 For future database changes, commit the migration and document its command here.
-Do not reimport `tesda_inventory.sql` to update an existing database: it contains
-DROP TABLE statements and can replace local records. Back up existing databases
-before schema changes.
+`SQL/tesda_inventory.sql` defines the schema; existing tables are not upgraded by
+reimporting it. `SQL/items.sql` contains the seed INSERT statements and should only
+be imported once into a new database. Back up existing databases before schema changes.
 
 The user access migration adds account roles, approval status, work email, and
 recoverable account removal.
@@ -72,8 +72,9 @@ the generated `vendor/` directory. Reload the page with Ctrl+F5 after updating.
 
 1. Clone the project into XAMPP's `htdocs` folder.
 2. Start Apache and MySQL/MariaDB.
-3. Import `SQL/tesda_inventory.sql` only into a new, disposable local database,
-   then import `SQL/create_admin.sql` to create the user profile schema and default
+3. Import `SQL/tesda_inventory.sql` into a new local database. Import
+   `SQL/items.sql` if you want the included seed data, then import
+   `SQL/create_admin.sql` to create the user profile schema and default
    administrator account. The latter script resets the default admin password when
    rerun; use it for initial setup.
 4. Check the database connection in `config.php`. This file is currently tracked;

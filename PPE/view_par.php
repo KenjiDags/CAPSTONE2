@@ -24,7 +24,7 @@ require_once __DIR__ . '/bootstrap.php';
         }
     </style>
 </head>
-<body class="detail-view-page">
+<body class="detail-view-page ppe-page">
     <?php include dirname(__DIR__) . '/sidebar.php'; ?>
     <?php require dirname(__DIR__) . '/config.php'; ?>
 
@@ -115,7 +115,7 @@ require_once __DIR__ . '/bootstrap.php';
                             echo '<td>' . htmlspecialchars($item['item_name'] . ' - ' . $item['item_description']) . '</td>';
                             echo '<td>' . htmlspecialchars($par['par_no']) . '</td>';
                             echo '<td>' . ($par['received_by_date'] ? date('m/d/Y', strtotime($par['received_by_date'])) : '') . '</td>';
-                            echo '<td>₱ ' . number_format($item['amount'], 2) . '</td>';
+                            echo '<td class="currency">₱ ' . number_format($item['amount'], 2) . '</td>';
                             echo '</tr>';
                         }
                     } else {
@@ -129,7 +129,7 @@ require_once __DIR__ . '/bootstrap.php';
                 <tfoot>
                     <tr>
                         <td colspan="5" style="text-align: right; font-weight: bold;">Total Amount:</td>
-                        <td style="font-weight: bold;">₱ <?php echo number_format($total_amount, 2); ?></td>
+                        <td class="currency" style="font-weight: bold;">₱ <?php echo number_format($total_amount, 2); ?></td>
                     </tr>
                 </tfoot>
             </table>

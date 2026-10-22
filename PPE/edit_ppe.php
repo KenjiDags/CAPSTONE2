@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 </style>
 </head>
-<body>
+<body class="ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <div class="form-container">

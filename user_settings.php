@@ -304,6 +304,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_officer'])) {
     exit;
 }
 
+// Outline icons shared by the account settings controls.
+$settingsIconPaths = [
+    'user-cog' => '<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a7 7 0 0 1 12-5M18 13v2m0 6v2m-5-5h2m6 0h2m-8.5-3.5 1.4 1.4m4.2 4.2 1.4 1.4m-7 0 1.4-1.4m4.2-4.2 1.4-1.4"/><circle cx="18" cy="18" r="3"/>',
+    'user-circle' => '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="9" r="3"/><path d="M5 19a7 7 0 0 1 14 0"/>',
+    'user' => '<circle cx="12" cy="7" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>',
+    'user-friends' => '<circle cx="8" cy="7" r="3"/><path d="M2 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m1 5a5 5 0 0 1 5 5v1"/>',
+    'id-card' => '<rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16a3 3 0 0 1 6 0m3-7h5m-5 4h5"/>',
+    'briefcase' => '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V3h8v4M2 12a24 24 0 0 0 20 0m-10 0v4"/>',
+    'shield-alt' => '<path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6Z"/><path d="m8 12 3 3 5-6"/>',
+    'lock' => '<rect x="4" y="10" width="16" height="12" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v3"/>',
+    'key' => '<circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-3-3 3-3m-6 0 3-3"/>',
+    'plus' => '<path d="M12 5v14M5 12h14"/>',
+    'pen' => '<path d="m16 3 5 5M3 21l5-1L21 7a2 2 0 0 0-5-5L3 15Z"/>',
+    'trash-alt' => '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
+    'check' => '<path d="m5 12 4 4L19 6"/>',
+    'times' => '<path d="m6 6 12 12M6 18 18 6"/>',
+    'check-circle' => '<circle cx="12" cy="12" r="10"/><path d="m7 12 3 3 7-7"/>',
+    'exclamation-circle' => '<circle cx="12" cy="12" r="10"/><path d="M12 7v6m0 4h.01"/>',
+    'moon' => '<path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/>',
+    'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+    'eye' => '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+    'eye-slash' => '<path d="m3 3 18 18M10.5 5.1 12 5c6 0 10 7 10 7a19 19 0 0 1-3 3.8M6.5 6.5A20 20 0 0 0 2 12s4 7 10 7a12 12 0 0 0 5.5-1.5M10 10a3 3 0 0 0 4 4"/>',
+];
+$settingsOutlineIcon = static function ($name) {
+    return '<i class="settings-outline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><use href="#settings-icon-' . $name . '"></use></svg></i>';
+};
 // Fetch all officers
 $officers = [];
 $officers_result = $conn->query("SELECT * FROM officers ORDER BY officer_name ASC");
@@ -331,6 +357,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
         }
         
         .settings-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 8px 16px;
             margin-bottom: 40px;
             padding-bottom: 20px;
             border-bottom: 3px solid #3b82f6;
@@ -350,6 +380,8 @@ if ($officers_result && $officers_result->num_rows > 0) {
         }
         
         .settings-header p {
+            grid-column: 1 / -1;
+            grid-row: 2;
             margin: 0;
             color: #64748b;
             font-size: 15px;
@@ -364,18 +396,30 @@ if ($officers_result && $officers_result->num_rows > 0) {
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
-        .settings-section h2 {
+        .settings-container .settings-section h2 {
             color: #1e293b;
-            font-size: 20px;
+            font-size: 25px;
             margin: 0 0 20px 0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
-        .settings-section h2 i {
+        .settings-container .settings-subsection-title {
+            color: #1e293b;
+            font-size: 25px;
+            margin: 0 0 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .settings-subsection-title i { font-size: 25px; color: #3b82f6; }
+        body.dark-mode .settings-section .settings-subsection-title,
+        body.dark-mode .settings-section .help-text { color: #cbd5e1; }
+        .settings-container .settings-section h2 i {
             color: #3b82f6;
-            font-size: 18px;
+            font-size: 25px;
         }
         
         .alert {
@@ -531,8 +575,12 @@ if ($officers_result && $officers_result->num_rows > 0) {
             background-color: #f9fafb;
         }
 
-        .theme-toggle {
-            margin-top: 16px;
+        .settings-header .theme-toggle {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: end;
+            margin-top: 0;
+            width: auto;
             background: #1e293b;
         }
 
@@ -596,45 +644,48 @@ if ($officers_result && $officers_result->num_rows > 0) {
     </style>
 </head>
 <body>
+<svg class="settings-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0">
+    <defs><?php foreach ($settingsIconPaths as $name => $paths): ?><symbol id="settings-icon-<?= $name ?>" viewBox="0 0 24 24"><?= $paths ?></symbol><?php endforeach; ?></defs>
+</svg>
     <?php include 'sidebar.php'; ?>
     
     <div class="content">
         <div class="settings-container">
             <header class="settings-header">
                 <h1>
-                    <i class="fas fa-user-cog"></i>
+                    <?= $settingsOutlineIcon('user-cog') ?>
                     User Settings
                 </h1>
                 <p>Manage your account information and security settings</p>
                 <button type="button" id="themeToggle" class="btn-update theme-toggle" aria-pressed="false">
-                    <i class="fas fa-moon"></i>
+                    <?= $settingsOutlineIcon('moon') ?>
                     <span>Dark Mode</span>
                 </button>
             </header>
             
             <?php if ($success_message): ?>
                 <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
+                    <?= $settingsOutlineIcon('check-circle') ?>
                     <?= htmlspecialchars($success_message) ?>
                 </div>
             <?php endif; ?>
             
             <?php if ($error_message): ?>
                 <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i>
+                    <?= $settingsOutlineIcon('exclamation-circle') ?>
                     <?= htmlspecialchars($error_message) ?>
                 </div>
             <?php endif; ?>
             
             <!-- User Info -->
-            <section class="settings-section">
+            <section class="settings-section settings-card">
                 <h2>
-                    <i class="fas fa-user-circle"></i>
+                    <?= $settingsOutlineIcon('user-circle') ?>
                     User Information
                 </h2>
                     <form method="POST" id="inlineNameForm" autocomplete="off">
                         <div class="form-row">
-                            <label for="inline_full_name"><i class="fas fa-id-card"></i> Full Name:</label>
+                            <label for="inline_full_name"><?= $settingsOutlineIcon('id-card') ?> Full Name:</label>
                             <input 
                                 type="text" 
                                 id="inline_full_name" 
@@ -647,9 +698,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                         <input type="hidden" name="update_full_name" value="1">
                     </form>
 
+                    <div class="settings-inline-fields">
                     <form method="POST" id="inlineUserPositionForm" autocomplete="off">
                         <div class="form-row">
-                            <label for="inline_user_position"><i class="fas fa-briefcase"></i> User Position:</label>
+                            <label for="inline_user_position"><?= $settingsOutlineIcon('briefcase') ?> User Position:</label>
                             <input 
                                 type="text" 
                                 id="inline_user_position" 
@@ -665,7 +717,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
 
                     <form method="POST">
                         <div class="form-row">
-                            <label for="inline_username"><i class="fas fa-user"></i> Username:</label>
+                            <label for="inline_username"><?= $settingsOutlineIcon('user') ?> Username:</label>
                             <input 
                                 type="text" 
                                 id="inline_username" 
@@ -675,12 +727,15 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
                             >
                         </div>
+                        <input type="hidden" name="update_username" value="1">
+                    </form>
+                    </div>
                 </section>
             
             
             <?php if ($_SESSION['role'] === 'admin'): ?>
             <section class="settings-section">
-                <h2><i class="fas fa-shield-alt"></i> Authenticator App</h2>
+                <h2><?= $settingsOutlineIcon('shield-alt') ?> Authenticator App</h2>
                 <?php if ($totpNotice): ?><div class="alert <?= $totpRecovery ? 'alert-success' : 'alert-error' ?>" role="status"><?= htmlspecialchars($totpNotice) ?></div><?php endif; ?>
                 <?php if ($totpRecovery): ?>
                     <p>Save each recovery code somewhere private. Each works once.</p>
@@ -723,9 +778,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
             <?php endif; ?>
 
             <!-- Password Section -->
-            <section class="settings-section">
+            <section class="settings-section settings-card">
                 <h2>
-                    <i class="fas fa-lock"></i>
+                    <?= $settingsOutlineIcon('lock') ?>
                     Change Password
                 </h2>
                 
@@ -740,7 +795,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 autocomplete="current-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('current_password')">
-                                <i class="fas fa-eye"></i>
+                                <?= $settingsOutlineIcon('eye') ?>
                             </button>
                         </div>
                     </div>
@@ -755,7 +810,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 autocomplete="new-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
-                                <i class="fas fa-eye"></i>
+                                <?= $settingsOutlineIcon('eye') ?>
                             </button>
                         </div>
                         <p class="help-text">Password must be at least 6 characters long</p>
@@ -771,159 +826,83 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 autocomplete="new-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
-                                <i class="fas fa-eye"></i>
+                                <?= $settingsOutlineIcon('eye') ?>
                             </button>
                         </div>
                     </div>
                     
                     <button type="submit" name="update_password" class="btn-update">
-                        <i class="fas fa-key"></i>
+                        <?= $settingsOutlineIcon('key') ?>
                         Update Password
                     </button>
                 </form>
             </section>
             
             <!-- Officers Management Section -->
-            <section class="settings-section">
-                <h2>
-                    <i class="fas fa-user-tie"></i>
-                    Manage Officers
-                </h2>
-                
-                <!-- Add Officer Form -->
-                <form method="POST" style="margin-bottom: 30px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div class="form-row" style="margin-bottom: 0;">
+            <section class="settings-section settings-card officers-manager">
+                <div class="officers-manager-header">
+                    <h2><?= $settingsOutlineIcon('user-friends') ?> Manage Officers</h2>
+                    <span class="officer-count"><?= count($officers) ?> <?= count($officers) === 1 ? 'Officer' : 'Officers' ?></span>
+                </div>
+                <form method="POST" class="officer-add-form">
+                    <div class="officer-fields">
+                        <div class="form-row">
                             <label for="officer_name">Officer Name</label>
-                            <input 
-                                type="text" 
-                                id="officer_name" 
-                                name="officer_name" 
-                                placeholder="Enter officer name"
-                            >
+                            <input type="text" id="officer_name" name="officer_name" placeholder="Enter officer name" required>
                         </div>
-                        <div class="form-row" style="margin-bottom: 0;">
-                            <label for="officer_position">Officer Position</label>
-                            <input 
-                                type="text" 
-                                id="officer_position" 
-                                name="officer_position" 
-                                placeholder="Enter position/title"
-                            >
+                        <div class="form-row">
+                            <label for="officer_position">Position</label>
+                            <input type="text" id="officer_position" name="officer_position" placeholder="Enter position" required>
                         </div>
                     </div>
-                    
-                    <button type="submit" name="add_officer" class="btn-update">
-                        <i class="fas fa-plus"></i>
-                        Add Officer
-                    </button>
+                    <button type="submit" name="add_officer" class="officer-add-button"><?= $settingsOutlineIcon('plus') ?> Add Officer</button>
                 </form>
-                
-                <!-- Officers List -->
-                <div style="border-top: 2px solid #e5e7eb; padding-top: 20px;">
-                    <h3 style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0; font-weight: 600;">
-                        <i class="fas fa-list"></i> Officers List
-                    </h3>
-                    
-                    <?php if (count($officers) > 0): ?>
-                        <div class="officers-table" style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; background: white;">
-                                <thead>
-                                    <tr style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);">
-                                        <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-user"></i> Name
-                                        </th>
-                                        <th style="padding: 12px; text-align: left; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">
-                                            <i class="fas fa-briefcase"></i> Position
-                                        </th>
-                                        <th style="padding: 12px; text-align: center; color: white; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb; width: 100px;">
-                                            <i class="fas fa-cog"></i> Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($officers as $index => $officer): ?>
-                                        <tr class="<?= $index >= 4 ? 'officer-row-hidden' : '' ?>" style="border-bottom: 1px solid #e5e7eb; transition: background-color 0.2s ease; <?= $index >= 4 ? 'display: none;' : '' ?>">
-                                            <?php if (isset($_POST['edit_officer']) && $_POST['officer_id'] == $officer['officer_id']): ?>
-                                                <form method="POST" id="editOfficerFieldsForm<?= $officer['officer_id'] ?>" style="display:contents;">
-                                                    <td style="padding: 12px; font-size: 14px; width: 190px;">
-                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                        <input type="text" name="new_officer_name" value="<?= htmlspecialchars($officer['officer_name']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" autofocus onkeydown="if(event.key==='Enter'){this.form.submit();return false;}">
-                                                    </td>
-                                                    <td style="padding: 10px; font-size: 14px; width: 140px;">
-                                                        <input type="text" name="new_officer_position" value="<?= htmlspecialchars($officer['officer_position']) ?>" style="font-size: 14px; padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; width: 90%;" onkeydown="if(event.key==='Enter'){this.form.submit();return false;}">
-                                                        <input type="hidden" name="edit_officer_fields" value="1">
-                                                    </td>
-                                                    <td style="padding: 10px; text-align: center;" width="150px">
-                                                        <form method="POST" style="display: inline; margin-left: 6px;">
-                                                            <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                            <button 
-                                                                type="submit" 
-                                                                name="edit_officer" 
-                                                                style="background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
-                                                                onmouseover="this.style.background='linear-gradient(135deg, #f59e42 0%, #d97706 100%)'"
-                                                                onmouseout="this.style.background='linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)'"
-                                                            >
-                                                                <i class="fas fa-edit"></i> Edit
-                                                            </button>
-                                                        </form>
-                                                    </td>
-                                                </form>
-                                            <?php else: ?>
-                                                <td style="padding: 12px; font-size: 14px; width: 190px;">
-                                                    <?= htmlspecialchars($officer['officer_name']) ?>
-                                                </td>
-                                                <td style="padding: 10px; font-size: 14px; width: 140px;">
-                                                    <?= htmlspecialchars($officer['officer_position']) ?>
-                                                </td>
-                                                <td style="padding: 10px; text-align: center;" width="150px">
-                                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this officer?');">
-                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                        <button 
-                                                            type="submit" 
-                                                            name="delete_officer" 
-                                                            style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
-                                                            onmouseover="this.style.background='linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'"
-                                                            onmouseout="this.style.background='linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'"
-                                                        >
-                                                            <i class="fas fa-trash"></i> Delete
-                                                        </button>
-                                                    </form>
-                                                    <form method="POST" style="display: inline; margin-left: 6px;">
-                                                        <input type="hidden" name="officer_id" value="<?= $officer['officer_id'] ?>">
-                                                        <button 
-                                                            type="submit" 
-                                                            name="edit_officer" 
-                                                            style="background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;"
-                                                            onmouseover="this.style.background='linear-gradient(135deg, #f59e42 0%, #d97706 100%)'"
-                                                            onmouseout="this.style.background='linear-gradient(135deg, #fbbf24 0%, #f59e42 100%)'"
-                                                        >
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            <?php endif; ?>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                            <?php if (count($officers) > 4): ?>
-                                <button 
-                                    id="toggleOfficersBtn"
-                                    onclick="toggleOfficers()"
-                                    style="width: 100%; padding: 10px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 10px; transition: all 0.3s ease;"
-                                    onmouseover="this.style.background='linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'"
-                                    onmouseout="this.style.background='linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'"
-                                >
-                                    <i class="fas fa-chevron-down"></i> Show More (<?= count($officers) - 4 ?> hidden)
-                                </button>
-                            <?php endif; ?>
-                        </div>
+                <div class="officer-register">
+                    <div class="officer-register-header">
+                        <h3>Registered Officers</h3>
+                        <span><?= count($officers) ?> <?= count($officers) === 1 ? 'record' : 'records' ?></span>
+                    </div>
+                    <?php if ($officers): ?>
+                    <div class="officer-table-scroll">
+                        <table class="registered-officers">
+                            <thead><tr><th>Name</th><th>Position</th><th>Actions</th></tr></thead>
+                            <tbody>
+                            <?php foreach ($officers as $officer): $officerId = (int)$officer['officer_id']; ?>
+                                <tr>
+                                <?php if (isset($_POST['edit_officer']) && (int)($_POST['officer_id'] ?? 0) === $officerId): ?>
+                                    <td>
+                                        <form method="POST" id="officerEdit<?= $officerId ?>">
+                                            <input type="hidden" name="officer_id" value="<?= $officerId ?>">
+                                            <input type="hidden" name="edit_officer_fields" value="1">
+                                            <input type="text" name="new_officer_name" value="<?= htmlspecialchars($officer['officer_name'], ENT_QUOTES, 'UTF-8') ?>" aria-label="Officer name" required autofocus>
+                                        </form>
+                                    </td>
+                                    <td><input type="text" form="officerEdit<?= $officerId ?>" name="new_officer_position" value="<?= htmlspecialchars($officer['officer_position'], ENT_QUOTES, 'UTF-8') ?>" aria-label="Officer position" required></td>
+                                    <td><div class="officer-row-actions">
+                                        <button type="submit" form="officerEdit<?= $officerId ?>" class="officer-icon-button officer-edit" aria-label="Save officer" title="Save officer"><?= $settingsOutlineIcon('check') ?></button>
+                                        <a href="user_settings.php" class="officer-icon-button officer-delete" aria-label="Cancel edit" title="Cancel edit"><?= $settingsOutlineIcon('times') ?></a>
+                                    </div></td>
+                                <?php else: ?>
+                                    <td><?= htmlspecialchars($officer['officer_name']) ?></td>
+                                    <td><?= htmlspecialchars($officer['officer_position']) ?></td>
+                                    <td><div class="officer-row-actions">
+                                        <form method="POST">
+                                            <input type="hidden" name="officer_id" value="<?= $officerId ?>">
+                                            <button type="submit" name="edit_officer" class="officer-icon-button officer-edit" aria-label="Edit <?= htmlspecialchars($officer['officer_name'], ENT_QUOTES, 'UTF-8') ?>" title="Edit officer"><?= $settingsOutlineIcon('pen') ?></button>
+                                        </form>
+                                        <form method="POST" onsubmit="return confirm('Are you sure you want to delete this officer?');">
+                                            <input type="hidden" name="officer_id" value="<?= $officerId ?>">
+                                            <button type="submit" name="delete_officer" class="officer-icon-button officer-delete" aria-label="Delete <?= htmlspecialchars($officer['officer_name'], ENT_QUOTES, 'UTF-8') ?>" title="Delete officer"><?= $settingsOutlineIcon('trash-alt') ?></button>
+                                        </form>
+                                    </div></td>
+                                <?php endif; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                     <?php else: ?>
-                        <div style="text-align: center; padding: 40px; color: #64748b; font-style: italic;">
-                            <i class="fas fa-info-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                            No officers added yet. Add your first officer above.
-                        </div>
+                        <p class="help-text">No officers added yet. Add your first officer above.</p>
                     <?php endif; ?>
                 </div>
             </section>
@@ -959,12 +938,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
             
             if (field.type === 'password') {
                 field.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                icon.querySelector('use').setAttribute('href', '#settings-icon-eye-slash');
             } else {
                 field.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                icon.querySelector('use').setAttribute('href', '#settings-icon-eye');
             }
         }
 
@@ -975,7 +952,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
             const label = button.querySelector('span');
 
             button.setAttribute('aria-pressed', darkModeEnabled ? 'true' : 'false');
-            icon.className = darkModeEnabled ? 'fas fa-sun' : 'fas fa-moon';
+            icon.querySelector('use').setAttribute('href', darkModeEnabled ? '#settings-icon-sun' : '#settings-icon-moon');
             label.textContent = darkModeEnabled ? 'Light Mode' : 'Dark Mode';
         }
 

@@ -91,7 +91,7 @@ try {
 
     </style>
 </head>
-<body>
+<body class="ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>PPE Inventory List</h2>
@@ -139,7 +139,7 @@ try {
     <?php endif; ?>
 
     <div class="table-container">    
-        <table>
+        <table class="ppe-inventory-table">
             <thead>
                 <tr>
                     <th><i class="fas fa-hashtag"></i> PPE No.</th>
@@ -147,17 +147,15 @@ try {
                     <th><i class="fas fa-align-left"></i> Description</th>
                     <th><i class="fas fa-list-ol"></i> Quantity</th>
 
-                    <th><i class="fas fa-calendar"></i> Date Acquired</th>
                     <th><i class="fas fa-user-tie"></i> Officer in charge</th>
                     <th><i class="fas fa-info-circle"></i> Status</th>
-                    <th><i class="fas fa-check-circle"></i> Condition</th>
                     <th><i class="fas fa-dollar-sign"></i> Amount</th>
                     <th><i class="fas fa-cogs"></i> Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($items)): ?>
-                    <tr><td colspan="10">
+                    <tr><td colspan="8">
                         <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
                         <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
                     </td></tr>
@@ -166,13 +164,11 @@ try {
                     <tr>
                         <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
                         <td><?= htmlspecialchars($item['item_name']); ?></td>
-                        <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
+                        <td class="ppe-description"><?= htmlspecialchars($item['item_description']); ?></td>
                         <td><?= number_format($item['quantity']); ?></td>
 
-                        <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A'); ?></td>
                         <td><?= htmlspecialchars($item['custodian']); ?></td>
                         <td><span class="inventory-status" data-status="<?= htmlspecialchars(strtolower(trim($item['status'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($item['status'] ?? ''); ?></span></td>
-                        <td><?= htmlspecialchars($item['condition']); ?></td>
                         <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                         <td class="actions-cell">
                             <div class="actions-menu">

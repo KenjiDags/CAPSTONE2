@@ -99,7 +99,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		.amount-col { white-space: nowrap; min-width: 100px; }
 	</style>
 </head>
-<body>
+<body class="ppe-page">
 	<?php include dirname(__DIR__) . '/sidebar.php'; ?>
 	<div class="container">
 		<h2>Property Card (PPE)</h2>

@@ -106,7 +106,7 @@ if (isset($_GET['delete_id'])) {
       </div>
     <?php endif; ?>
 
-  <form id="pc-semi-filters" method="get" class="filters">
+  <form id="pc-semi-filters" method="get" action="Semi_Expendables/PC_semi.php" class="filters">
 
       <?php
           $category = isset($_GET['category']) ? $_GET['category'] : '';

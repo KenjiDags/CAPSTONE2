@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
 }
 
 // Fetch all PPE items for selection
-$ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, id ASC");
+$ppe_items = $conn->query("SELECT * FROM ppe_property WHERE NULLIF(TRIM(officer_incharge), '') IS NOT NULL AND quantity > 0 ORDER BY property_no ASC, id ASC");
 
 ?>
 
@@ -428,7 +428,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
     }
 </style>
 </head>
-<body class="add-page">
+<body class="add-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="content">
     <div class="form-container inventory-item-form no-number-spinners">
@@ -486,7 +486,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                 </div>
                 <div class="form-group">
                     <label>Transfer Type</label>
-                    <div class="radio-group">
+                    <div class="radio-group transfer-mode-options">
                         <div class="radio-option">
                             <input type="radio" id="transfer_donation" name="transfer_type" value="Donation" checked>
                             <label for="transfer_donation">Donation</label>
@@ -531,7 +531,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $ppe_items->data_seek(0); while ($item = $ppe_items->fetch_assoc()): ?>
+                                <?php if ($ppe_items->num_rows > 0): while ($item = $ppe_items->fetch_assoc()): ?>
                                 <tr>
                                     <td style="text-align:center;">
                                         <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" data-officer="<?= htmlspecialchars($item['officer_incharge']) ?>">
@@ -548,6 +548,9 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>
+                                <?php else: ?>
+                                <tr><td colspan="6">No assigned PPE items are available for transfer.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>

@@ -74,7 +74,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
 
 <main class="analytics-shell">
   <header class="analytics-header">
-    <div><div class="eyebrow">TESDA Inventory / Intelligence</div><h1>Inventory Analytics</h1></div>
+    <div><div class="eyebrow">TESDA Inventory</div><h1>Inventory Analytics</h1></div>
   </header>
 
   <section class="office-overview" aria-label="Office Supplies overview">
@@ -114,7 +114,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="mrpSection" class="mrp-section">
     <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
-      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><span aria-hidden="true">&#128269;</span><input id="mrpSearchInput" type="search" aria-label="Search stock items" placeholder="Search by Stock number, item name, or description..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
+      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="mrpSearchInput" type="search" aria-label="Search stock items by stock number, item name, or description" placeholder="Search stock items..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
       <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><button type="button" data-mrp-status="empty"><i class="empty"></i>Empty</button><a id="criticalChartAction" class="critical-chart-action" href="office_supplies/add_multiple_items.php" hidden>Open Restock Inventory</a></div>
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">

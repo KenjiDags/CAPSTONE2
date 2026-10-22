@@ -115,7 +115,7 @@ $result = $conn->query($query);
     .clickable-row:hover { background: #f8fafc; }
 </style>
 </head>
-<body class="ppe-iirup-page">
+<body class="ppe-iirup-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>Inventory and Inspection Report of Unserviceable PPE (IIRUP)</h2>

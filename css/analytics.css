@@ -98,6 +98,13 @@ body { background: #f4f6f8; color: #263238; }
 .mrp-search { display: flex; align-items: center; gap: 7px; width: 285px; padding: 0 10px; border: 1px solid #cfd9dc; border-radius: 4px; background: #fff; color: #718086; }
 .mrp-search input { width: 100%; min-width: 0; padding: 9px 0; border: 0; outline: 0; background: transparent; color: #263238; font: inherit; font-size: 12px; }
 .mrp-search:focus-within { border-color: #4b7e87; box-shadow: 0 0 0 2px rgba(75, 126, 135, .12); }
+#mrpSection .mrp-search { width: 300px; height: 38px; max-width: 100%; min-width: 0; box-sizing: border-box; gap: 8px; padding: 0 12px; border: 2px solid #e5e7eb; border-radius: 0; transition: border-color .3s ease, box-shadow .3s ease; }
+#mrpSection .mrp-filter-select { height: 38px; box-sizing: border-box; }
+#mrpSection .mrp-search:hover { border-color: #cbd5e1; }
+#mrpSection .mrp-search:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .1); }
+#mrpSection .mrp-search input { height: 100%; box-sizing: border-box; padding: 0; font-size: 14px; }
+#mrpSection .mrp-search svg { flex: 0 0 16px; width: 16px; height: 16px; }
+@media (max-width: 950px) { #mrpSection .mrp-search { width: 100%; } }
 .search-empty-state { border-color: #cfd9dc; background: #f8faf9; color: #66747a; }
 .mrp-status-legend button { padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #66747a; cursor: pointer; font: inherit; }
 .mrp-status-legend button:hover, .mrp-status-legend button.active { border-color: #cfd9dc; background: #f3f6f5; color: #263238; }
@@ -327,10 +334,10 @@ body.dark-mode .analytics-shell :is(.analytics-header h1, .office-status-panel h
     color: #f1f5f9;
 }
 body.dark-mode .analytics-shell :is(.header-note, .office-status-panel p, .office-status-legend, .section-heading p, .panel-caption, .scope-control label, .empty-state, .legend, .stock-legend, .detail-code, .mrp-details dt, .diagnostic-row span, .tier-label, .required-fields-note, .mrp-item-description) {
-    color: #cbd5e1;
+    color: #e2e8f0;
 }
 body.dark-mode .analytics-shell .eyebrow { color: #fdba74; }
-body.dark-mode .analytics-shell .scope-tab { color: #cbd5e1; }
+body.dark-mode .analytics-shell .scope-tab { color: #e2e8f0; }
 body.dark-mode .analytics-shell .scope-tab:hover { background: #334155; color: #fff; }
 body.dark-mode .analytics-shell .scope-tab.active { background: #3b2c28; color: #fdba74; border-color: #fb923c; }
 body.dark-mode .analytics-shell :is(.mrp-search, .mrp-filter-select, .scope-control select, .item-select, .inventory-filter) {
@@ -339,27 +346,27 @@ body.dark-mode .analytics-shell :is(.mrp-search, .mrp-filter-select, .scope-cont
     color: #e2e8f0;
 }
 body.dark-mode .analytics-shell .mrp-search input { background: transparent; color: #e2e8f0; }
-body.dark-mode .analytics-shell input::placeholder { color: #94a3b8; }
+body.dark-mode .analytics-shell input::placeholder { color: #cbd5e1; opacity: 1; }
 body.dark-mode .analytics-shell :is(.mrp-search:focus-within, .mrp-filter-select:focus-visible) { border-color: #93c5fd; }
 body.dark-mode .analytics-shell :is(.inventory-filter:hover, .inventory-filter.active, .mrp-status-legend button:hover, .mrp-status-legend button.active) {
     background: #334155;
     border-color: #64748b;
     color: #fff;
 }
-body.dark-mode .analytics-shell :is(.mrp-status-legend, .mrp-status-legend button) { color: #cbd5e1; }
+body.dark-mode .analytics-shell :is(.mrp-status-legend, .mrp-status-legend button) { color: #e2e8f0; }
 body.dark-mode .analytics-shell .mrp-status-legend button[data-mrp-status="low"].active { background: #422f13; border-color: #a16207; color: #fde68a; }
 body.dark-mode .analytics-shell :is(.mrp-details, .critical-details, .demand-summary > div) { background: #273449; border-color: var(--analytics-border); }
 body.dark-mode .analytics-shell :is(.mrp-details dd, .demand-summary strong) { color: #e2e8f0; }
 body.dark-mode .analytics-shell :is(.mrp-details dl div, .critical-stockouts, .diagnostic-row, .category-list-row) { border-color: var(--analytics-border); }
-body.dark-mode .analytics-shell .category-list-row { color: #cbd5e1; }
+body.dark-mode .analytics-shell .category-list-row { color: #e2e8f0; }
 body.dark-mode .analytics-shell :is(.category-list-row strong, .critical-text, .inventory-duration) { color: #fca5a5; }
 body.dark-mode .analytics-shell :is(.mrp-empty-state, .risk-banner) { background: #382326; border-color: #b45353; color: #fecaca; }
-body.dark-mode .analytics-shell .search-empty-state { background: #273449; border-color: var(--analytics-border); color: #cbd5e1; }
+body.dark-mode .analytics-shell .search-empty-state { background: #273449; border-color: var(--analytics-border); color: #e2e8f0; }
 body.dark-mode .analytics-shell .tier-track { background: #334155; }
 body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) { background: var(--analytics-panel); color: #e2e8f0; }
 body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) :is(th, td) { border-color: var(--analytics-border); }
 body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) thead th { background: #273449 !important; color: #e2e8f0 !important; }
-body.dark-mode .analytics-shell :is(.inventory-health-table td small, .inventory-section-row th span, .inventory-active) { color: #cbd5e1; }
+body.dark-mode .analytics-shell :is(.inventory-health-table td small, .inventory-section-row th span, .inventory-active) { color: #e2e8f0; }
 body.dark-mode .analytics-shell .inventory-section-row.safe th,
 body.dark-mode .analytics-shell .inventory-status.safe { background: #173b2c; color: #86efac; }
 body.dark-mode .analytics-shell .inventory-section-row.low th,

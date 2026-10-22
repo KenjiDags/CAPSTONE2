@@ -379,7 +379,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         <!-- Category Tabs -->
         <div class="category-tabs">
             <?php foreach ($valid_categories as $cat): ?>
-                <a href="?category=<?php echo urlencode($cat); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" 
+                <a href="Semi_Expendables/semi_expendible.php?category=<?php echo urlencode($cat); ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>"
                    class="category-tab <?php echo $cat === $category ? 'active' : ''; ?>">
                     <?php echo htmlspecialchars($cat); ?>
                 </a>
@@ -387,7 +387,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
         </div>
 
         <!-- Sort, Search and Add Container -->
-        <form method="GET" class="filters">
+        <form method="GET" action="Semi_Expendables/semi_expendible.php" class="filters">
             <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
 
             <div class="inventory-controls">
@@ -432,7 +432,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                     >
 
                     <?php if (!empty($search)): ?>
-                        <a href="?category=<?php echo urlencode($category); ?>" class="btn btn-secondary">
+                        <a href="Semi_Expendables/semi_expendible.php?category=<?php echo urlencode($category); ?>" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Clear
                         </a>
                     <?php endif; ?>

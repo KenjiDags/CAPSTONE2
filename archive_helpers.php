@@ -28,6 +28,7 @@ function archiveSources(): array {
     return [
         'RSMI' => ['rsmi_reports', 'rsmi_id', 'serial_no', []],
         'RPCI' => ['rpci_reports', 'rpci_id', 'rpci_id', []],
+        'RPCPPE' => ['rpcppe', 'rpcppe_id', 'rpcppe_id', ['rpcppe_items' => 'rpcppe_id']],
         'RIS' => ['ris', 'ris_id', 'ris_no', ['ris_items' => 'ris_id', 'item_history' => 'ris_id']],
         'SC' => ['items', 'item_id', 'stock_number', ['item_history' => 'item_id']],
         'Supply' => ['items', 'item_id', 'stock_number', ['item_history' => 'item_id', 'inventory_entries' => 'item_id']],
@@ -41,7 +42,6 @@ function archiveSources(): array {
         'IIRUSP' => ['iirusp', 'iirusp_id', 'iirusp_no', ['iirusp_items' => 'iirusp_id']],
         'PPE' => ['ppe_property', 'id', 'PPE_no', []],
         'Semi-expendable' => ['semi_expendable_property', 'id', 'semi_expendable_property_no', []],
-        'ICT' => ['ict_registry', 'id', 'property_no', []],
     ];
 }
 

@@ -315,7 +315,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
     }
 </style>
 </head>
-<body>
+<body class="ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <div class="form-container inventory-item-form no-number-spinners">
@@ -449,7 +449,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                                 <strong><?= htmlspecialchars($item['par_no']) ?></strong> - 
                                 <?= htmlspecialchars($item['item_name']) ?> - 
                                 <?= htmlspecialchars($item['item_description']) ?> 
-                                (₱<?= number_format($item['amount'], 2) ?>)
+                                <span class="currency">(₱<?= number_format($item['amount'], 2) ?>)</span>
                             </label>
                         </div>
                     <?php endwhile; ?>
