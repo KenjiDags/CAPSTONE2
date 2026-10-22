@@ -152,6 +152,18 @@ $items = $conn->query("SELECT i.*,
         body.dark-mode tbody tr:hover {
             background-color: #334155;
         }
+        #restockTable input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+        #restockTable input[type="number"]::-webkit-inner-spin-button,
+        #restockTable input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        body.dark-mode #restockTable input[type="number"] {
+            color-scheme: dark;
+        }
         body.dark-mode input[type="number"],
         body.dark-mode #restockSearch,
         body.dark-mode .filter-dropdown {

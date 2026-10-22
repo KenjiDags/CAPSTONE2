@@ -431,10 +431,10 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
 <body class="add-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="content">
-    <div class="form-container">
+    <div class="form-container inventory-item-form no-number-spinners">
         <header class="page-header">
-            <h1><i class="fas fa-exchange-alt"></i> Add Property Transfer Report (PTR)</h1>
-            <p>Create a new property transfer record</p>
+            <h1 class="form-page-title"><i class="fas fa-exchange-alt"></i> Add Property Transfer Report (PTR)</h1>
+            <p class="form-page-subtitle">Create a new property transfer record</p>
         </header>
 
         <?php if ($error): ?>
@@ -452,20 +452,20 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
         <form method="POST">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="section-card">
-                <h3><i class="fas fa-info-circle"></i> PTR Details </h3>
+                <h3 class="form-section-heading"><i class="fas fa-info-circle"></i> PTR Details </h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="ptr_no">PTR No <span class="required">*</span></label>
+                        <label for="ptr_no">PTR No <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="ptr_no" name="ptr_no" value="<?php echo isset($ptr_no) ? htmlspecialchars($ptr_no) : ''; ?>" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="transfer_date">Transfer Date <span class="required">*</span></label>
+                        <label for="transfer_date">Transfer Date <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="date" id="transfer_date" name="transfer_date" value="<?= date('Y-m-d') ?>" required>
                     </div>
                 </div>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="entity_name">Entity Name <span class="required">*</span></label>
+                        <label for="entity_name">Entity Name <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" required>
                     </div>
                     <div class="form-group">
@@ -475,11 +475,11 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                 </div>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
+                        <label for="from_officer">From Accountable Officer <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="from_officer" name="from_officer" required readonly style="background:#f3f4f6;cursor:not-allowed;">
                     </div>
                     <div class="form-group" style="position: relative;">
-                        <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
+                        <label for="to_officer">To Accountable Officer <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" id="to_officer" name="to_officer" value="<?php echo isset($to_officer) ? htmlspecialchars($to_officer) : ''; ?>" autocomplete="off" required>
                         <div id="to_officer_dropdown" class="autocomplete-dropdown"></div>
                     </div>
@@ -515,7 +515,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
             </div>
 
             <div class="section-card">
-                <h3><i class="fas fa-boxes"></i> Available Items</h3>
+                <h3 class="form-section-heading"><i class="fas fa-boxes"></i> Available Items</h3>
                 <div class="form-group">
                     <label>Select PPE Items to Transfer <span class="required"></span></label>
                     <div class="items-selection" style="overflow-x:auto;">
@@ -555,7 +555,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
             </div> 
 
             <div class="section-card">
-                <h3><i class="fas fa-pen-nib"></i> Signature Details</h3>
+                <h3 class="form-section-heading"><i class="fas fa-pen-nib"></i> Signature Details</h3>
                 <div class="form-row" style="row-gap: 0px !important;">
                     <div class="form-group" style="display: flex; gap: 16px; align-items: flex-end;">
                         <div>

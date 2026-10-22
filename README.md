@@ -72,14 +72,17 @@ the generated `vendor/` directory. Reload the page with Ctrl+F5 after updating.
 
 1. Clone the project into XAMPP's `htdocs` folder.
 2. Start Apache and MySQL/MariaDB.
-3. Import `tesda_inventory.sql` only into a new, disposable local database.
+3. Import `SQL/tesda_inventory.sql` only into a new, disposable local database,
+   then import `SQL/create_admin.sql` to create the user profile schema and default
+   administrator account. The latter script resets the default admin password when
+   rerun; use it for initial setup.
 4. Check the database connection in `config.php`. This file is currently tracked;
    do not commit private database credentials.
 5. Run the migration commands above.
 6. Run `composer install` for the dependencies in `composer.json`.
 7. Open `http://localhost/CAPSTONE2/` (adjust the folder name if needed).
-8. Register the first account, then use `db/promote_admin.php <username>` from
-   the command line to make it the initial administrator.
+8. Sign in with the default administrator from `SQL/create_admin.sql` and change
+   its password. New registrations include a User Position and require approval.
 
 ## Diagnose missing changes
 

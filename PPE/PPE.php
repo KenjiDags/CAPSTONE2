@@ -89,17 +89,6 @@ try {
             color: #3b82f6;
         }
 
-        /* Status and Condition Badges */
-        table tbody td:nth-child(7),
-        table tbody td:nth-child(8) {
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        /* Condition column colors */
-        table tbody td:nth-child(8) {
-            color: #0891b2;
-        }
     </style>
 </head>
 <body>
@@ -157,7 +146,7 @@ try {
                     <th><i class="fas fa-box"></i> Item Name</th>
                     <th><i class="fas fa-align-left"></i> Description</th>
                     <th><i class="fas fa-list-ol"></i> Quantity</th>
-                    <th><i class="fas fa-ruler"></i> Unit</th>
+
                     <th><i class="fas fa-calendar"></i> Date Acquired</th>
                     <th><i class="fas fa-user-tie"></i> Officer in charge</th>
                     <th><i class="fas fa-info-circle"></i> Status</th>
@@ -168,7 +157,7 @@ try {
             </thead>
             <tbody>
                 <?php if (empty($items)): ?>
-                    <tr><td colspan="11">
+                    <tr><td colspan="10">
                         <div style="font-weight: 600; margin-bottom: 8px;">No PPE Items Found</div>
                         <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
                     </td></tr>
@@ -179,10 +168,10 @@ try {
                         <td><?= htmlspecialchars($item['item_name']); ?></td>
                         <td title="<?= htmlspecialchars($item['item_description']); ?>"><?= htmlspecialchars(strlen($item['item_description'])>50?substr($item['item_description'],0,50).'...':$item['item_description']); ?></td>
                         <td><?= number_format($item['quantity']); ?></td>
-                        <td><?= htmlspecialchars($item['unit']); ?></td>
+
                         <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A'); ?></td>
                         <td><?= htmlspecialchars($item['custodian']); ?></td>
-                        <td><?= htmlspecialchars($item['status']); ?></td>
+                        <td><span class="inventory-status" data-status="<?= htmlspecialchars(strtolower(trim($item['status'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($item['status'] ?? ''); ?></span></td>
                         <td><?= htmlspecialchars($item['condition']); ?></td>
                         <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                         <td class="actions-cell">

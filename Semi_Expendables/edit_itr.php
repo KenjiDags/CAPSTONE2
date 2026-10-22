@@ -66,12 +66,8 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .form-grid .form-group { display:flex; flex-direction:column; }
     @media (max-width: 800px) { .form-grid { grid-template-columns:1fr; } }
-    .table-frame { border:1px solid #e5e7eb; border-top:0; border-radius:0 0 8px 8px; overflow:hidden; }
+    .table-frame { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
     .table-viewport { max-height:420px; overflow-y:auto; overflow-x:auto; scrollbar-gutter:stable; background: var(--white); }
-    #itemsTable { overflow:visible !important; width:100%; border-collapse:collapse; background:transparent !important; border-radius:0 !important; margin-top:0 !important; }
-    #itemsTable thead th { position:sticky; top:0; z-index:3; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important; color:#fff; }
-    .table-frame, .table-viewport, #itemsTable { border-top-left-radius:0 !important; border-top-right-radius:0 !important; }
-    #itemsTable td, #itemsTable th { border:1px solid #e5e7eb; padding:6px 8px; }
     .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
     .field-error { color:#b91c1c; font-size:0.85rem; margin-top:6px; }
     .has-error input, .has-error textarea, .has-error select { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
@@ -79,13 +75,13 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
 </head>
 <body>
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
-  <div class="container">
+  <div class="container inventory-item-form no-number-spinners">
     <h2>Edit Inventory Transfer Report (ITR)</h2>
 
     <input type="hidden" id="itr_id" value="<?= (int)$itr_id ?>" />
 
     <div class="section-card">
-      <h3>ITR Details</h3>
+      <h3 class="form-section-heading">ITR Details</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Entity Name:</label>
@@ -116,7 +112,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
             <span>-</span>
             <input type="text" id="itr_year" value="<?= htmlspecialchars($yy) ?>" style="max-width:90px;" />
           </div>
-          <small style="display:block;color:#6b7280;margin-top:6px;">Preview: <code id="itr_no_preview"></code></small>
+          <small class="form-page-subtitle" style="display:block;margin-top:6px;">Preview: <code id="itr_no_preview"></code></small>
           <input type="hidden" id="itr_no" value="<?= htmlspecialchars($itr['itr_no']) ?>" />
         </div>
         <div class="form-group">
@@ -140,13 +136,13 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     </div>
 
     <div class="section-card">
-      <h3>Items in this ITR</h3>
+      <h3 class="form-section-heading">Items in this ITR</h3>
       <div class="search-container" style="margin-bottom:10px;">
         <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()">
       </div>
       <div class="table-frame">
         <div class="table-viewport">
-          <table id="itemsTable">
+          <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table">
             <thead>
               <tr>
                 <th>Date Acquired</th>
@@ -257,7 +253,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     </div>
 
     <div class="section-card">
-      <h3>Signatories</h3>
+      <h3 class="form-section-heading">Signatories</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Approved by (Agency/Entity Head):</label>

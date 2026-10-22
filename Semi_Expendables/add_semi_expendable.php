@@ -552,7 +552,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                            placeholder="101">
                 </div>
 
-                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns, Issued & Reissued (Optional)</h3>
+                <h3 class="form-section-heading">Returns, Issued & Reissued (Optional)</h3>
                 
                 <div class="form-row">
                     <div class="form-group">

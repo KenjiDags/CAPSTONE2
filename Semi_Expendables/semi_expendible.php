@@ -484,12 +484,12 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>ICS/RRSP No.</th>
+
                         <th>Property No.</th>
                         <th>Item Description</th>
                         <th>Quantity</th>
                         <th>Office/Officer</th>
-                        <th>Balance</th>
+                        <th>Status</th>
                         <th>Amount</th>
                         <th>Actions</th>
                     </tr>
@@ -497,7 +497,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                 <tbody>
                     <?php if (empty($items)): ?>
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 40px;">
+                            <td colspan="8" style="text-align: center; padding: 40px;">
                                 <?php if (!empty($search)): ?>
                                     <p>No items found matching your search criteria.</p>
                                     <a href="Semi_Expendables/add_semi_expendable.php?category=<?php echo urlencode($category); ?>" class="btn btn-success">
@@ -515,7 +515,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                         <?php foreach ($items as $item): ?>
                             <tr>
                                 <td><?php echo date('M j, Y', strtotime($item['date'])); ?></td>
-                                <td><?php echo htmlspecialchars($item['ics_rrsp_no']); ?></td>
+
                                 <td><?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></td>
                                 <td title="<?php echo htmlspecialchars($item['item_description']); ?>">
                                     <?php echo htmlspecialchars(strlen($item['item_description']) > 50 ? 
@@ -539,7 +539,20 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                     }
                                 ?>
                                 <td title="<?php echo htmlspecialchars($list_label); ?>"><?php echo htmlspecialchars($list_officer); ?></td>
-                                <td><?php echo number_format($item['quantity_balance']); ?></td>
+                                <?php
+                                    if ((int)($item['quantity_disposed'] ?? 0) > 0) {
+                                        $item_status = 'Disposed';
+                                    } elseif ((int)($item['quantity_returned'] ?? 0) > 0) {
+                                        $item_status = 'Returned';
+                                    } elseif ((int)($item['quantity_reissued'] ?? 0) > 0) {
+                                        $item_status = 'Re-issued';
+                                    } elseif ((int)($item['quantity_issued'] ?? 0) > 0) {
+                                        $item_status = 'Issued';
+                                    } else {
+                                        $item_status = 'Available';
+                                    }
+                                ?>
+                                <td><span class="inventory-status" data-status="<?php echo htmlspecialchars(strtolower($item_status), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($item_status); ?></span></td>
                                 <td class="currency">₱<?php echo number_format($item['amount_total'], 2); ?></td>
                                 <td class="actions-cell">
                                     <div class="actions-menu">

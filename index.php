@@ -319,14 +319,13 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         <?php else: ?>
         <form method="post" autocomplete="off">
             <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES) ?>">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-group">
-                <label for="username">Username <span class="required-indicator" aria-hidden="true">*</span></label>
+                <label for="username">Username</label>
                 <input type="text" name="username" id="username" required autofocus
                        value="<?= htmlspecialchars($cookie_username) ?>">
             </div>
             <div class="form-group">
-                <label for="password">Password <span class="required-indicator" aria-hidden="true">*</span></label>
+                <label for="password">Password</label>
                 <input type="password" name="password" id="password" required>
             </div>
             <div class="form-group remember-group">

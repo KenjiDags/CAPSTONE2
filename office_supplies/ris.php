@@ -173,6 +173,10 @@ switch ($sort_by) {
         body.dark-mode .actions-menu-list a:hover {
             background: #334155;
         }
+        #risTable .ris-month-row,
+        #risTable .ris-month-row th {
+            border-bottom: hidden !important;
+        }
         #risTable .ris-month-row th {
             padding: 16px 12px;
             background: #f1f5f9;
@@ -192,13 +196,13 @@ switch ($sort_by) {
             height: 1px;
             background: #cbd5e1;
         }
-        body.dark-mode #risTable .ris-month-row th {
-            background: #1e293b;
-            color: #cbd5e1;
-        }
         body.dark-mode .ris-month-divider::before,
         body.dark-mode .ris-month-divider::after {
             background: #475569;
+        }
+        body.dark-mode #risTable .ris-month-row th {
+            background: #1e293b;
+            color: #cbd5e1;
         }
     </style>
 </head>

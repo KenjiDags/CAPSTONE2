@@ -5,13 +5,16 @@ $error = '';
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim($_POST['full_name'] ?? '');
+    $user_position = trim($_POST['user_position'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm = trim($_POST['confirm_password'] ?? '');
 
-    if ($full_name && $email && $username && $password && $confirm) {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if ($full_name && $user_position && $email && $username && $password && $confirm) {
+        if (strlen($user_position) > 255) {
+            $error = 'User position must be 255 characters or fewer.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Enter a valid work email address.';
         } elseif ($password !== $confirm) {
             $error = 'Passwords do not match.';
@@ -25,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Username or email already registered.';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = $conn->prepare("INSERT INTO users (full_name, email, username, password, role, status) VALUES (?, ?, ?, ?, 'user', 'pending')");
-                $insert->bind_param("ssss", $full_name, $email, $username, $hash);
+                $insert = $conn->prepare("INSERT INTO users (full_name, user_position, email, username, password, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'pending')");
+                $insert->bind_param("sssss", $full_name, $user_position, $email, $username, $hash);
                 if ($insert->execute()) {
                     header('Location: index.php?registered=1');
                     exit;
@@ -190,6 +193,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="full_name">Full Name <span class="required-indicator" aria-hidden="true">*</span></label>
                 <input type="text" name="full_name" id="full_name" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="user_position">User Position <span class="required-indicator" aria-hidden="true">*</span></label>
+                <input type="text" name="user_position" id="user_position" maxlength="255" required value="<?= htmlspecialchars($user_position ?? '', ENT_QUOTES, 'UTF-8') ?>">
             </div>
             <div class="form-group">
                 <label for="email">Work Email <span class="required-indicator" aria-hidden="true">*</span></label>

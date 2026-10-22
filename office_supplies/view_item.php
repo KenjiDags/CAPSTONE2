@@ -173,7 +173,7 @@ $conn->close();
         }
     </style>
 </head>
-<body>
+<body class="item-detail-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

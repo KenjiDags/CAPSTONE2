@@ -65,6 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 15px 20px 0px 20px;
         }
 
+        .rsmi-back-actions {
+            background: transparent;
+            margin-bottom: 16px;
+        }
+
         .export-section {
             margin-bottom: 20px;
         }
@@ -104,8 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container">
         <h2>Add RSMI Document</h2>
-        <div class="view-actions"><a href="office_supplies/rsmi.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to RSMI</a></div>
-        <p>This report includes all currently issued supplies. Save it to keep a copy in the system.</p>
+        <div class="rsmi-back-actions"><a href="office_supplies/rsmi.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to RSMI</a></div>
         <?php if ($error): ?><div class="alert alert-error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
 
         <div class="table-container rsmi-table-viewport" tabindex="0" role="region" aria-label="RSMI entries, scroll to view rows">

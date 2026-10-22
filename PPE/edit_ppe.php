@@ -177,8 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <div class="form-container">
         <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
-            <h1 style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px;"><i class="fas fa-edit" style="color: #3b82f6;"></i>Edit PPE Item</h1>
-            <p style="color: #64748b; margin: 0;">Update PPE item details</p>
+            <h1 class="form-page-title" style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px;"><i class="fas fa-edit" style="color: #3b82f6;"></i>Edit PPE Item</h1>
+            <p class="form-page-subtitle" style="margin: 0;">Update PPE item details</p>
         </header>
 
         <?php if ($error): ?>
@@ -193,31 +193,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" class="inventory-item-form no-number-spinners">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="item_name">Item Name <span class="required">*</span></label>
+                    <label for="item_name">Item Name <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="item_name" name="item_name" value="<?= htmlspecialchars($item['item_name']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="PPE_no">PPE No. <span class="required">*</span></label>
+                    <label for="PPE_no">PPE No. <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="PPE_no" name="PPE_no" value="<?= htmlspecialchars($item['PPE_no']) ?>" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="item_description">Description <span class="required">*</span></label>
+                <label for="item_description">Description <span class="required-indicator" aria-hidden="true">*</span></label>
                 <textarea id="item_description" name="item_description" required><?= htmlspecialchars($item['item_description']) ?></textarea>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="amount">Amount <span class="required">*</span></label>
+                    <label for="amount">Amount <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" id="amount" name="amount" step="0.01" value="<?= htmlspecialchars($item['amount']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="quantity">Quantity <span class="required">*</span></label>
+                    <label for="quantity">Quantity <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" id="quantity" name="quantity" min="0" step="1" value="<?= htmlspecialchars($item['quantity']) ?>" required>
                 </div>
             </div>
@@ -228,18 +228,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" id="unit" name="unit" value="<?= htmlspecialchars($item['unit']) ?>">
                 </div>
                 <div class="form-group">
-                    <label for="officer_incharge">Officer In-charge <span class="required">*</span></label>
-                    <input type="text" id="officer_incharge" name="officer_incharge" value="<?= htmlspecialchars($item['officer_incharge']) ?>" required>
+                    <label for="officer_incharge">Officer In-charge (Optional)</label>
+                    <input type="text" id="officer_incharge" name="officer_incharge" value="<?= htmlspecialchars($item['officer_incharge']) ?>">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="custodian">Custodian <span class="required">*</span></label>
+                    <label for="custodian">Custodian <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="custodian" name="custodian" value="<?= htmlspecialchars($item['custodian']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="entity_name">Entity Name <span class="required">*</span></label>
+                    <label for="entity_name">Entity Name <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($item['entity_name']) ?>" required>
                 </div>
             </div>

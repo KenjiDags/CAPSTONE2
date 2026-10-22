@@ -388,11 +388,11 @@ if (!$item && empty($error)) {
     <div class="container">
         <div class="form-container">
             <header style="margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
-                <h1 style="color: #1e293b; display: flex; align-items: center; gap: 12px; margin: 0 0 8px 0;">
+                <h1 class="form-page-title" style=" display: flex; align-items: center; gap: 12px; margin: 0 0 8px 0;">
                     <i class="fas fa-edit" style="color: #3b82f6;"></i>
                     Edit Semi-Expendable Property
                 </h1>
-                <p style="color: #64748b; margin: 0;">Update item details in the registry</p>
+                <p class="form-page-subtitle" style="margin: 0;">Update item details in the registry</p>
             </header>
 
             <?php if ($error): ?>
@@ -421,7 +421,7 @@ if (!$item && empty($error)) {
                                     $orig_qty_disposed = (int)($item['quantity_disposed'] ?? 0);
                                     $orig_qty_balance = isset($item['quantity_balance']) ? (int)$item['quantity_balance'] : max(0, $orig_qty_base - ($orig_qty_reissued + $orig_qty_disposed));
                 ?>
-                <form method="POST">
+                <form method="POST" class="inventory-item-form">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                     <input type="hidden" name="return" value="<?php echo htmlspecialchars($_GET['return'] ?? ''); ?>">
                     <div class="form-row">
@@ -490,7 +490,7 @@ if (!$item && empty($error)) {
                         </div>
                     </div>
 
-                    <h3 style="margin-top: 30px; margin-bottom: 20px; color: #374151;">Returns, Issued & Reissued (Optional)</h3>
+                    <h3 class="form-section-heading">Returns, Issued & Reissued (Optional)</h3>
 
                     <div class="form-row">
                         <div class="form-group">

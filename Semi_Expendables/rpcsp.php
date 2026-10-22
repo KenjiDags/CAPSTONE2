@@ -140,7 +140,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
 </head>
 <body class="rpci-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
-    <div class="container">
+    <div class="container inventory-item-form">
         <div class="rpci-form">
             <div class="rpci-header">
                 <h2>Report on the Physical Count of Semi-Expendable Property</h2>

@@ -116,40 +116,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
 <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-    .section-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .form-group label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 5px; color: #555; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .table-frame { border: 1px solid #ccc; max-height: 400px; overflow: hidden; border-radius: 4px; }
-    .table-viewport { overflow-y: auto; max-height: 400px; }
-    #itemsTable { font-size: 12px; margin-top: 0 !important; }
-    #itemsTable thead tr { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #0056b3 0%, #004494 100%); color: white; }
-    #itemsTable th { padding: 10px; text-align: left; font-weight: normal; }
-    #itemsTable td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    #itemsTable tr:hover { background-color: #f0f7ff; }
-    .search-input { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
-    .search-input:focus { border-color: #0056b3; outline: none; }
-    .prop-cell { font-weight: bold; color: #0056b3; }
-    .holder-cell { font-style: italic; color: #666; }
-    .button-group { text-align: right; margin-top: 20px; }
-    .button-group button { padding: 12px 25px; margin-left: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    .btn-submit { background: #28a745; color: white; }
-    .btn-submit:hover { background: #218838; }
-    .form-container h2::before { content: "\f1f8"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #3b82f6; margin-right: 12px; }
-    .section-card h3 { border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
-</style>
 </head>
 <body class="add-page iirup-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
-<div class="content">
-    <div class="form-container">
+<div class="container">
+    <div class="form-container inventory-item-form no-number-spinners">
         <header class="page-header">
-            <h1> <i class="fas fa-file-invoice"></i>Add PPE IIRUP (Inventory & Inspection Report - Unserviceable PPE)</h1>
-            <p>Create a new Inventory & Inspection Report</p>
+            <h1 class="form-page-title"> <i class="fas fa-file-invoice"></i>Add PPE IIRUP (Inventory & Inspection Report - Unserviceable PPE)</h1>
+            <p class="form-page-subtitle">Create a new Inventory & Inspection Report</p>
         </header>
         <div class="section-card">
-            <h3> <i class="fas fa-info-circle"></i>PPE IIRUP Details</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-info-circle"></i>PPE IIRUP Details</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Date Reported:</label>
@@ -165,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="form-group">
                     <label>Quantity:</label>
-                    <input type="number" id="quantity" min="0" value="0">
+                    <output id="selected-item-quantity" aria-live="polite">0</output><input type="hidden" id="quantity" value="0">
                 </div>
 
                 <div class="form-group">
@@ -178,23 +155,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="form-group">
                     <label>Carrying Amount:</label>
-                    <input type="number" id="carrying_amount" min="0" step="0.01" value="0">
+                    <input type="number" class="theme-text-input" id="carrying_amount" min="0" step="0.01" value="0">
                 </div>
                 <div class="form-group">
                     <label>Remarks:</label>
                     <input type="text" id="remarks" placeholder="Remarks">
-                </div>
-                <div class="form-group">
-                    <label>Sale:</label>
-                    <input type="number" id="sale" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Transfer:</label>
-                    <input type="number" id="transfer" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Destruction:</label>
-                    <input type="number" id="destruction" min="0" value="0">
                 </div>
                 <div class="form-group">
                     <label>Other:</label>
@@ -214,18 +179,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="form-group">
                     <label>Amount:</label>
-                    <input type="number" id="amount" min="0" step="0.01" value="0">
+                    <input type="number" class="theme-text-input" id="amount" min="0" step="0.01" value="0">
                 </div>
             </div>
         </div>
         <div class="section-card">
-            <h3> <i class="fas fa-list"></i>Unserviceable PPE Items (Search & Select)</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-list"></i>Unserviceable PPE Items (Search & Select)</h3>
             <div style="margin-bottom: 10px;">
                 <input type="text" id="itemSearch" class="search-input" placeholder="Search Property No, Item Description, or Holder Name..." onkeyup="filterTable()">
             </div>
             <div class="table-frame">
                 <div class="table-viewport">
-                    <table id="itemsTable">
+                    <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table">
                         <thead>
                             <tr>
                                 <th style="width: 40px;"></th>
@@ -288,10 +253,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="section-card">
-            <h3> <i class="fas fa-pen-fancy"></i>Signatories</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-pen-fancy"></i>Signatories</h3>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
                 <div>
-                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Requested By</h4>
+                    <h4 class="form-section-heading" style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold;">Requested By</h4>
                     <div class="form-group">
                         <label>Name:</label>
                         <input type="text" id="requested_by_name" placeholder="Name">
@@ -306,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div>
-                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Approved By</h4>
+                    <h4 class="form-section-heading" style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold;">Approved By</h4>
                     <div class="form-group">
                         <label>Name:</label>
                         <input type="text" id="approved_by_name" placeholder="Name">
@@ -317,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div>
-                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Inspection Officer</h4>
+                    <h4 class="form-section-heading" style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold;">Inspection Officer</h4>
                     <div class="form-group">
                         <label>Name:</label>
                         <input type="text" id="inspection_officer_name" placeholder="Name">
@@ -329,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             <div>
-                <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #0056b3;">Witness</h4>
+                <h4 class="form-section-heading" style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold;">Witness</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="form-group">
                         <label>Name:</label>
@@ -398,9 +363,6 @@ function submitIIRUP() {
     fd.append('impairment_loss', document.getElementById('impairment_loss').value);
     fd.append('carrying_amount', document.getElementById('carrying_amount').value);
     fd.append('remarks', document.getElementById('remarks').value);
-    fd.append('sale', document.getElementById('sale').value);
-    fd.append('transfer', document.getElementById('transfer').value);
-    fd.append('destruction', document.getElementById('destruction').value);
     fd.append('other', document.getElementById('other').value);
     fd.append('total', document.getElementById('total').value);
     fd.append('appraised_value', document.getElementById('appraised_value').value);
@@ -450,6 +412,7 @@ function fillInputsFromRow(checkbox) {
     document.getElementById('PPE_no').value = row.querySelector('.prop-cell').textContent.trim();
     document.getElementById('property_no').value = row.dataset.propertyNo;
     document.getElementById('quantity').value = row.cells[5].textContent.trim();
+    document.getElementById('selected-item-quantity').textContent = document.getElementById('quantity').value;
     // No unit cost input to fill anymore
     document.getElementById('remarks').value = row.querySelector('.remarks-input').value.trim();
 }

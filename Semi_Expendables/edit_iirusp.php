@@ -197,48 +197,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Edit IIRUSP Form</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
+<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-    .section-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .section-card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #0056b3; display: inline-block; padding-bottom: 5px; margin-bottom: 15px; }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .form-group label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 5px; color: #555; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    
-    .table-frame { border: 1px solid #ccc; max-height: 400px; overflow: hidden; border-radius: 4px; }
-    .table-viewport { overflow-y: auto; max-height: 400px; }
-    
-    #itemsTable { width: 100%; border-collapse: collapse; font-size: 12px; }
-    #itemsTable thead tr { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #0056b3 0%, #004494 100%); color: white; }
-    #itemsTable th { padding: 10px; text-align: left; font-weight: normal; }
-    #itemsTable td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    #itemsTable tr:hover { background-color: #f0f7ff; }
-
-    .search-input { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
-    .search-input:focus { border-color: #0056b3; outline: none; }
-    
-    .cost-cell { font-family: 'Century Gothic', Century Gothic, sans-serif; font-weight: bold; color: #444; }
-    .prop-cell { font-weight: bold; color: #0056b3; }
-    .holder-cell { font-style: italic; color: #666; }
-    
-    .button-group { text-align: right; margin-top: 20px; }
-    .button-group button { padding: 12px 25px; margin-left: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    .btn-submit { background: #28a745; color: white; }
-    .btn-submit:hover { background: #218838; }
-    .btn-back { background: #6c757d; color: white; }
-    .btn-back:hover { background: #5a6268; }
-</style>
 </head>
 <body class="iirusp-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
-<div class="content">
+<div class="container inventory-item-form no-number-spinners">
     <h2>Edit IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h2>
 
     <!-- HEADER FORM -->
     <div class="section-card">
-        <h3>IIRUSP Details</h3>
+        <h3 class="form-section-heading">IIRUSP Details</h3>
         <div class="form-grid">
             <div class="form-group">
                 <label>IIRUSP No.:</label>
@@ -258,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <hr style="margin:20px 0; border:0; border-top:1px solid;">
         
         <div class="form-grid">
             <div class="form-group">
@@ -305,32 +275,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- ITEMS SECTION -->
     <div class="section-card">
-        <h3>Current Disposed Items</h3>
+        <h3 class="form-section-heading">Current Disposed Items</h3>
         <?php if (count($items) > 0): ?>
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+        <table>
             <thead>
-                <tr style="background: #f0f0f0; border-bottom: 2px solid #ddd;">
-                    <th style="padding: 10px; text-align: left;">Date Acquired</th>
-                    <th style="padding: 10px; text-align: left;">Property No.</th>
-                    <th style="padding: 10px; text-align: left;">Particulars</th>
-                    <th style="padding: 10px; text-align: right;">Quantity</th>
-                    <th style="padding: 10px; text-align: left;">Unit</th>
-                    <th style="padding: 10px; text-align: right;">Unit Cost</th>
-                    <th style="padding: 10px; text-align: right;">Total Cost</th>
-                    <th style="padding: 10px; text-align: left;">Remarks</th>
+                <tr>
+                    <th style="text-align: left;">Date Acquired</th>
+                    <th style="text-align: left;">Property No.</th>
+                    <th style="text-align: left;">Particulars</th>
+                    <th style="text-align: right;">Quantity</th>
+                    <th style="text-align: left;">Unit</th>
+                    <th style="text-align: right;">Unit Cost</th>
+                    <th style="text-align: right;">Total Cost</th>
+                    <th style="text-align: left;">Remarks</th>
                 </tr>
             </thead>
             <tbody>
             <?php foreach ($items as $item): ?>
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 10px;"><?php echo $item['date_acquired'] ? date('m/d/Y', strtotime($item['date_acquired'])) : '-'; ?></td>
-                    <td style="padding: 10px;"><?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></td>
-                    <td style="padding: 10px;"><?php echo htmlspecialchars($item['particulars'] ?? ''); ?></td>
-                    <td style="padding: 10px; text-align: right;"><?php echo $item['quantity']; ?></td>
-                    <td style="padding: 10px;"><?php echo htmlspecialchars($item['unit'] ?? ''); ?></td>
-                    <td style="padding: 10px; text-align: right;">₱<?php echo number_format($item['unit_cost'], 2); ?></td>
-                    <td style="padding: 10px; text-align: right;">₱<?php echo number_format($item['total_cost'], 2); ?></td>
-                    <td style="padding: 10px;"><?php echo htmlspecialchars($item['remarks'] ?? ''); ?></td>
+                <tr>
+                    <td><?php echo $item['date_acquired'] ? date('m/d/Y', strtotime($item['date_acquired'])) : '-'; ?></td>
+                    <td><?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></td>
+                    <td><?php echo htmlspecialchars($item['particulars'] ?? ''); ?></td>
+                    <td style="text-align: right;"><?php echo $item['quantity']; ?></td>
+                    <td><?php echo htmlspecialchars($item['unit'] ?? ''); ?></td>
+                    <td style="text-align: right;">₱<?php echo number_format($item['unit_cost'], 2); ?></td>
+                    <td style="text-align: right;">₱<?php echo number_format($item['total_cost'], 2); ?></td>
+                    <td><?php echo htmlspecialchars($item['remarks'] ?? ''); ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -341,8 +311,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="button-group">
-        <a href="Semi_Expendables/view_iirusp.php?iirusp_id=<?php echo $iirusp_id; ?>" class="btn-back" style="display: inline-block; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Back to View</a>
-        <button class="btn-submit" onclick="submitForm()">Update IIRUSP</button>
+        <a href="Semi_Expendables/view_iirusp.php?iirusp_id=<?php echo $iirusp_id; ?>" class="btn btn-secondary">Back to View</a>
+        <button class="btn btn-success" onclick="submitForm()">Update IIRUSP</button>
     </div>
 </div>
 

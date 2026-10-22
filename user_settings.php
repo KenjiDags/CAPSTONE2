@@ -74,11 +74,8 @@ $stmt = $conn->prepare("
     SELECT 
         u.user_full_name,
         u.username,
-        o.officer_position
+        u.user_position
     FROM users u
-    LEFT JOIN officers o 
-        ON TRIM(LOWER(u.user_full_name)) COLLATE utf8mb4_unicode_ci
-        = TRIM(LOWER(o.officer_name)) COLLATE utf8mb4_unicode_ci
     WHERE u.user_id = ?
     LIMIT 1
 ");
@@ -96,7 +93,7 @@ if ($result && $result->num_rows > 0) {
 
     $current_full_name = $user_data['user_full_name'] ?? '';
     $current_username = $user_data['username'] ?? $current_username;
-    $current_user_position = $user_data['officer_position'] ?? '';
+    $current_user_position = $user_data['user_position'] ?? '';
 }
 
 $stmt->close();
@@ -105,6 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user_position'
     $new_user_position = trim($_POST['new_user_position'] ?? '');
     if (empty($new_user_position)) {
         $_SESSION['error_message'] = 'User position cannot be empty.';
+    } elseif (strlen($new_user_position) > 255) {
+        $_SESSION['error_message'] = 'User position must be 255 characters or fewer.';
     } else {
         // Update user_position
         $update = $conn->prepare("UPDATE users SET user_position = ? WHERE user_id = ?");
@@ -655,9 +654,10 @@ if ($officers_result && $officers_result->num_rows > 0) {
                                 type="text" 
                                 id="inline_user_position" 
                                 name="new_user_position" 
-                                value="<?= htmlspecialchars($current_user_position) ?>"
+                                value="<?= htmlspecialchars($current_user_position, ENT_QUOTES, 'UTF-8') ?>"
+                                maxlength="255" required
                                 onfocus="this.select()"
-                                onkeydown="if(event.key==='Enter'){this.form.submit();return false;}"
+
                             >
                         </div>
                         <input type="hidden" name="update_user_position" value="1">

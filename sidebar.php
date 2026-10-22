@@ -114,7 +114,12 @@ try {
                     </div>
 
         </aside>
+        <button type="button" class="sidebar-edge-toggle" aria-label="Open sidebar" aria-expanded="false" aria-controls="sidebar-navigation">
+            <?= $sidebarIcon('chevron') ?>
+        </button>
 
     <script src="js/password.js?v=<?= time() ?>"></script>
+    <script src="js/input-navigation.js?v=<?= time() ?>" defer></script>
+    <script src="js/dropdown-behavior.js?v=<?= time() ?>" defer></script>
     <script src="js/sidebar_script.js?v=<?= time() ?>"></script>
     <script src="js/inventory-badge.js?v=<?= time() ?>" defer></script>

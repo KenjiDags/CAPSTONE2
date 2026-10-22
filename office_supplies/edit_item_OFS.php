@@ -110,46 +110,46 @@ function edit_ofs_value($value): string
             </div>
         <?php endif; ?>
 
-        <form id="editForm" autocomplete="off">
+        <form id="editForm" class="inventory-item-form no-number-spinners" autocomplete="off">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <input type="hidden" name="item_id" value="<?= (int) $item['item_id'] ?>">
             <div class="form-row">
                 <div class="form-group">
-                    <label for="stock_number">Stock Number <span class="required">*</span></label>
+                    <label for="stock_number">Stock Number <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" name="stock_number" id="stock_number" value="<?= edit_ofs_value($item['stock_number']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="iar">I.A.R <span class="required">*</span></label>
+                    <label for="iar">I.A.R <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" name="iar" id="iar" value="<?= edit_ofs_value($item['iar']) ?>" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="item_name">Item Name <span class="required">*</span></label>
+                    <label for="item_name">Item Name <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" name="item_name" id="item_name" value="<?= edit_ofs_value($item['item_name']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="description">Description <span class="required">*</span></label>
+                    <label for="description">Description <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" name="description" id="description" value="<?= edit_ofs_value($item['description']) ?>" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="unit">Unit <span class="required">*</span></label>
+                    <label for="unit">Unit <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" name="unit" id="unit" value="<?= edit_ofs_value($item['unit']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="reorder_point">Reorder Point <span class="required">*</span></label>
+                    <label for="reorder_point">Reorder Point <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" name="reorder_point" id="reorder_point" min="0" value="<?= (int) $item['reorder_point'] ?>" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="unit_cost">Unit Cost (PHP) <span class="required">*</span></label>
+                    <label for="unit_cost">Unit Cost (PHP) <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" step="0.01" name="unit_cost" id="unit_cost" min="0" value="<?= edit_ofs_value(number_format((float) $item['unit_cost'], 2, '.', '')) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="quantity_on_hand">Quantity on Hand <span class="required">*</span></label>
+                    <label for="quantity_on_hand">Quantity on Hand <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" name="quantity_on_hand" id="quantity_on_hand" min="0" value="<?= (int) $item['quantity_on_hand'] ?>" required>
                 </div>
             </div>

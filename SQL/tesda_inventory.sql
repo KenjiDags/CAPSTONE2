@@ -1114,40 +1114,8 @@ CREATE TABLE IF NOT EXISTS `stock_card` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `user_id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(250) NOT NULL,
-  PRIMARY KEY (`user_id`),
-  UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER Table users
-Add Column user_full_name varchar(255) NULL;
-
---
--- Dumping data for table `users`
---
-
-ALTER TABLE users 
-ADD remember_token VARCHAR(255) NULL;
-
-ALTER TABLE users
-ADD full_name VARCHAR(255) NULL;
-
-ALTER TABLE users
-ADD user_position VARCHAR(255) NULL;
-
-ALTER TABLE users ADD role VARCHAR(16) NOT NULL DEFAULT 'user';
-ALTER TABLE users ADD status VARCHAR(16) NOT NULL DEFAULT 'active';
-ALTER TABLE users ADD removed_at DATETIME NULL;
-ALTER TABLE users ADD removed_from_status VARCHAR(16) NULL;
-ALTER TABLE users ADD email VARCHAR(255) NULL;
-ALTER TABLE users ADD UNIQUE KEY unique_user_email (email);
+-- User accounts and profile fields are maintained in SQL/create_admin.sql.
+-- Import that script after this file when setting up a new database.
 -- --------------------------------------------------------
 
 --

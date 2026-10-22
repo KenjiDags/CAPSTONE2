@@ -137,6 +137,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require dirname(__DIR__) . '/config.php';
 require dirname(__DIR__) . '/functions.php';
 ensure_iirusp_tables($conn);
+$officer_names = [];
+$officer_positions = [];
+$officer_result = $conn->query('SELECT DISTINCT officer_name, officer_position FROM officers WHERE LENGTH(TRIM(officer_name)) > 0 ORDER BY officer_name');
+if ($officer_result) {
+    while ($officer = $officer_result->fetch_assoc()) {
+        $officer_names[] = $officer['officer_name'];
+        $officer_positions[$officer['officer_name']] = $officer['officer_position'] ?? '';
+    }
+    $officer_names = array_values(array_unique($officer_names));
+    $officer_result->free();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -148,62 +159,20 @@ ensure_iirusp_tables($conn);
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
 <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" /> 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-    .section-card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .form-group label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 5px; color: #555; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    
-    .table-frame { border: 1px solid #ccc; max-height: 400px; overflow: hidden; border-radius: 4px; }
-    .table-viewport { overflow-y: auto; max-height: 400px; }
-    
-    #itemsTable { 
-        font-size: 12px;
-        margin-top: 0 !important;
-     }
-    #itemsTable thead tr { position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, #0056b3 0%, #004494 100%); color: white; }
-    #itemsTable th { padding: 10px; text-align: left; font-weight: normal; }
-    #itemsTable td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    #itemsTable tr:hover { background-color: #f0f7ff; }
-
-    .search-input { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
-    .search-input:focus { border-color: #0056b3; outline: none; }
-    
-    .cost-cell { font-family: 'Century Gothic', Century Gothic, sans-serif; font-weight: bold; color: #444; }
-    .prop-cell { font-weight: bold; color: #0056b3; }
-    .holder-cell { font-style: italic; color: #666; }
-    
-    .button-group { text-align: right; margin-top: 20px; }
-    .button-group button { padding: 12px 25px; margin-left: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    .btn-submit { background: #28a745; color: white; }
-    .btn-submit:hover { background: #218838; }
-    .form-container h2::before {
-        content: "\f1f8";
-        font-family: "Font Awesome 6 Free";
-        font-weight: 900;
-        color: #3b82f6;
-        margin-right: 12px;
-    }
-    .section-card h3 {
-        border-bottom: 2px solid #3b82f6;
-        padding-bottom: 8px;
-    }
-</style>
 </head>
 <body class="add-page iirusp-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
-<div class="content">
-    <div class="form-container">
+<div class="container">
+    <div class="form-container inventory-item-form no-number-spinners">
         <header class="page-header">
-            <h1> <i class="fas fa-file-invoice"></i>Add IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h1>
-            <p>Create a new Inventory & Inspection Report</p>
+            <h1 class="form-page-title"> <i class="fas fa-file-invoice"></i>Add IIRUSP (Inventory & Inspection Report - Unserviceable Semi-Expendable Properties)</h1>
+            <p class="form-page-subtitle">Create a new Inventory & Inspection Report</p>
         </header>   
 
         <!-- HEADER FORM -->
         <div class="section-card">
-            <h3> <i class="fas fa-info-circle"></i>IIRUSP Details</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-info-circle"></i>IIRUSP Details</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label>IIRUSP No.:</label>
@@ -223,7 +192,7 @@ ensure_iirusp_tables($conn);
                 </div>
             </div>
             
-            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <hr style="margin:20px 0; border:0; border-top:1px solid;">
             
             <div class="form-grid">
                 <div class="form-group">
@@ -243,7 +212,7 @@ ensure_iirusp_tables($conn);
 
         <!-- GRID STYLE UI FOR SELECTING ITEMS -->
         <div class="section-card">
-            <h3> <i class="fas fa-list"></i>Unserviceable Items (Search & Select)</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-list"></i>Unserviceable Items (Search & Select)</h3>
 
             <!-- Search Bar -->
             <div style="margin-bottom: 10px;">
@@ -254,7 +223,7 @@ ensure_iirusp_tables($conn);
 
             <div class="table-frame">
                 <div class="table-viewport">
-                    <table id="itemsTable">
+                    <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table">
                         <thead>
                             <tr>
                                 <th style="min-width:90px;">Date Acq.</th>
@@ -281,7 +250,7 @@ ensure_iirusp_tables($conn);
             <td><?= htmlspecialchars($row['date']) ?></td>
             <td class="prop-cell"><?= htmlspecialchars($row['semi_expendable_property_no']) ?></td>
             <td class="desc-cell"><?= htmlspecialchars($row['item_description']) ?></td>
-            <td class="holder-cell" style="font-weight:bold; color:#0056b3;">Inventory</td>
+            <td class="holder-cell" style="font-weight:bold;">Inventory</td>
             <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
                 <?= (int)$row['quantity'] ?>
             </td>
@@ -321,11 +290,11 @@ ensure_iirusp_tables($conn);
 
         <!-- FOOTER SIGNATORIES -->
         <div class="section-card">
-            <h3> <i class="fas fa-pen-nib"></i>Signatories</h3>
+            <h3 class="form-section-heading"> <i class="fas fa-pen-nib"></i>Signatories</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Requested By:</label>
-                    <input type="text" id="requested_by">
+                    <div class="officer-name-field"><input type="text" id="requested_by" data-designation-target="requested_by_designation" data-officer-autocomplete autocomplete="off"><div id="requested_by_dropdown" class="autocomplete-dropdown"></div></div>
                 </div>
                 <div class="form-group">
                     <label>Requested By Designation:</label>
@@ -333,7 +302,7 @@ ensure_iirusp_tables($conn);
                 </div>
                 <div class="form-group">
                     <label>Approved By:</label>
-                    <input type="text" id="approved_by">
+                    <div class="officer-name-field"><input type="text" id="approved_by" data-officer-autocomplete autocomplete="off"><div id="approved_by_dropdown" class="autocomplete-dropdown"></div></div>
                 </div>
                 <div class="form-group">
                     <label>Approved By Designation:</label>
@@ -341,11 +310,11 @@ ensure_iirusp_tables($conn);
                 </div>
                 <div class="form-group">
                     <label>Inspection Officer:</label>
-                    <input type="text" id="inspection_officer">
+                    <div class="officer-name-field"><input type="text" id="inspection_officer" data-officer-autocomplete autocomplete="off"><div id="inspection_officer_dropdown" class="autocomplete-dropdown"></div></div>
                 </div>
                 <div class="form-group">
                     <label>Witness:</label>
-                    <input type="text" id="witness">
+                    <div class="officer-name-field"><input type="text" id="witness" data-officer-autocomplete autocomplete="off"><div id="witness_dropdown" class="autocomplete-dropdown"></div></div>
                 </div>
             </div>
         </div>
@@ -452,5 +421,8 @@ ensure_iirusp_tables($conn);
         }
     }
 </script>
+<script type="application/json" id="officerNameOptions"><?= json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<script type="application/json" id="officerPositionOptions"><?= json_encode((object)$officer_positions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<script src="js/officer-autocomplete.js?v=<?= time() ?>" defer></script>
 </body>
 </html>

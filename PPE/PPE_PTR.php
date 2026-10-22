@@ -196,17 +196,6 @@ if ($search !== '') {
         max-width: 65vw; 
     }
     
-    /* Date Column Styling */
-    table td:nth-child(2) {
-        color: #64748b;
-        font-size: 13px;
-    }
-    
-    /* Transfer Type Badge */
-    table td:nth-child(5) {
-        font-size: 13px;
-        font-weight: 500;
-    }
     </style>
 </head>
 <body class="ptr-page">
@@ -275,7 +264,7 @@ if ($search !== '') {
                         echo '<td>' . date('M d, Y', strtotime($row['transfer_date'])) . '</td>';
                         echo '<td>' . htmlspecialchars($row['from_officer']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['to_officer']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['transfer_type']) . '</td>';
+                        echo '<td><span class="transfer-type" data-transfer-type="' . htmlspecialchars(strtolower(trim($row['transfer_type'] ?? '')), ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($row['transfer_type'] ?? '') . '</span></td>';
                         echo '<td class="currency">₱' . number_format($row['total_amount'], 2) . '</td>';
                         echo '<td class="actions-cell">
                             <div class="actions-menu">

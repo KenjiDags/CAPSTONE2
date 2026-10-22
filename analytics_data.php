@@ -189,13 +189,14 @@ if ($category === 'semi-expendables') {
         ];
     }
     $response['items'] = $items;
-    $summaryResult = $conn->query("SELECT COALESCE(SUM(quantity + quantity_disposed), 0) AS total_items, COALESCE(SUM(quantity - quantity_issued - quantity_reissued), 0) AS not_issued, COALESCE(SUM(quantity_issued + quantity_reissued), 0) AS currently_issued, COALESCE(SUM(quantity_disposed), 0) AS disposed FROM semi_expendable_property");
+    $summaryResult = $conn->query("SELECT COALESCE(SUM(quantity + quantity_disposed), 0) AS total_items, COALESCE(SUM(quantity - quantity_issued - quantity_reissued), 0) AS not_issued, COALESCE(SUM(quantity_issued + quantity_reissued), 0) AS currently_issued, COALESCE(SUM(quantity_disposed), 0) AS disposed, COALESCE(SUM(amount_total), 0) AS total_value FROM semi_expendable_property");
     $summary = $summaryResult->fetch_assoc();
     $response['summary'] = [
         'total' => max(0, (int)($summary['total_items'] ?? 0)),
         'not_issued' => max(0, (int)($summary['not_issued'] ?? 0)),
         'currently_issued' => max(0, (int)($summary['currently_issued'] ?? 0)),
-        'disposed' => max(0, (int)($summary['disposed'] ?? 0))
+        'disposed' => max(0, (int)($summary['disposed'] ?? 0)),
+        'total_value' => (float)($summary['total_value'] ?? 0)
     ];
     
 } elseif ($category === 'ppe') {
@@ -260,12 +261,13 @@ if ($category === 'semi-expendables') {
         ];
     }
     $response['items'] = $items;
-    $summaryResult = $conn->query("SELECT COUNT(*) AS total, SUM(LOWER(`condition`) IN ('good', 'fair', 'serviceable')) AS serviceable, SUM(LOWER(`condition`) NOT IN ('good', 'fair', 'serviceable')) AS unserviceable FROM ppe_property");
+    $summaryResult = $conn->query("SELECT COUNT(*) AS total, SUM(LOWER(`condition`) IN ('good', 'fair', 'serviceable')) AS serviceable, SUM(LOWER(`condition`) NOT IN ('good', 'fair', 'serviceable')) AS unserviceable, COALESCE(SUM(amount), 0) AS total_value FROM ppe_property");
     $summary = $summaryResult->fetch_assoc();
     $response['summary'] = [
         'total' => (int)($summary['total'] ?? 0),
         'serviceable' => (int)($summary['serviceable'] ?? 0),
-        'unserviceable' => (int)($summary['unserviceable'] ?? 0)
+        'unserviceable' => (int)($summary['unserviceable'] ?? 0),
+        'total_value' => (float)($summary['total_value'] ?? 0)
     ];
     
 } else {

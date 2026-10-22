@@ -84,12 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     @media (max-width: 800px) { .form-grid { grid-template-columns:1fr; } }
 
     /* Items table frame and viewport (match Add ICS look, no top white gap) */
-    .table-frame { border:1px solid #e5e7eb; border-top:0; border-radius:0 0 8px 8px; overflow:hidden; }
+    .table-frame { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
   .table-viewport { max-height:420px; overflow-y:auto; overflow-x:auto; scrollbar-gutter:stable; background: var(--white); }
-  #itemsTable { overflow:visible !important; width:100%; border-collapse:collapse; background:transparent !important; border-radius:0 !important; margin-top:0 !important; }
-  #itemsTable thead th { position:sticky; top:0; z-index:3; background: var(--blue-gradient); color:#fff; }
-    .table-frame, .table-viewport, #itemsTable { border-top-left-radius:0 !important; border-top-right-radius:0 !important; }
-    #itemsTable td, #itemsTable th { border:1px solid #e5e7eb; padding:6px 8px; }
 
     .actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
 
@@ -143,13 +139,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
   <div class="add-ics-page content">
     <div class="form-container">
       <header class="page-header">
-        <h1><i class="fas fa-file-invoice"></i> Add Inventory Transfer Report (ITR)</h1>
-        <p>Create a new inventory transfer report</p>
+        <h1 class="form-page-title"><i class="fas fa-file-invoice"></i> Add Inventory Transfer Report (ITR)</h1>
+        <p class="form-page-subtitle">Create a new inventory transfer report</p>
       </header>
-      <form method="post" action="">
+      <form method="post" action="" class="inventory-item-form no-number-spinners">
         <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
         <div class="section-card">
-          <h3><i class="fas fa-info-circle"></i> ITR Details</h3>
+          <h3 class="form-section-heading"><i class="fas fa-info-circle"></i> ITR Details</h3>
           <div class="form-grid">
             <div class="form-group">
               <label>Entity Name:</label>
@@ -176,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
             <div class="form-group">
               <label>ITR No.: <span class="required-indicator" aria-hidden="true">*</span></label>
               <input type="text" id="itr_no" required>
-              <small style="color:#6b7280;">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
+              <small class="form-page-subtitle">Format: Year-Month-Serial (e.g., 2025-11-0001)</small>
             </div>
             <div class="form-group">
               <label>Date:</label>
@@ -197,9 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
           </div>
         </div>
         <div class="section-card">
-          <h3><i class="fas fa-box"></i> Items (from ICS)</h3>
+          <h3 class="form-section-heading"><i class="fas fa-box"></i> Items (from ICS)</h3>
           <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-            <label for="filter_category" style="font-weight:600; color:#0038a8;">Category:</label>
+            <label for="filter_category" style="font-weight:600;">Category:</label>
             <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff;">
               <option value="All">All</option>
               <!-- Dynamically populate categories if needed -->
@@ -210,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
           </div>
           <div class="table-frame">
             <div class="table-viewport">
-              <table id="itemsTable">
+              <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table">
                 <thead>
                   <tr>
                     <th>Date Acquired</th>
@@ -283,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 
     <!-- Signatories (Approved / Released / Received) to match Annex A.5 -->
     <div class="section-card">
-      <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
+      <h3 class="form-section-heading"><i class="fas fa-pen-nib"></i>Signatories</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Approved by (Agency/Entity Head):</label>

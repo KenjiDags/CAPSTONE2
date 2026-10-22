@@ -326,11 +326,11 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
         }
     </style>
 </head>
-<body>
+<body class="inventory-report-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">
-    <div class="rpcppe-form">
+    <div class="rpcppe-form inventory-report-form inventory-item-form">
             <div class="rpcppe-header">
                 <h2>Report on the Physical Count of Property, Plant and Equipment</h2>
                 

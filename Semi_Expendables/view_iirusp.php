@@ -56,7 +56,7 @@ table tbody td[colspan]::before {
 }
 </style>
 </head>
-<body class="iirusp-page">
+<body class="iirusp-page detail-view-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

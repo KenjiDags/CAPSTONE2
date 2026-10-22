@@ -207,39 +207,18 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
   <title>Edit RRSP</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
   <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
-  <style>
-    .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
-    .section-card h3 { margin-top:0; margin-bottom:12px; }
-    .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
-    .form-grid .form-group { display:flex; flex-direction:column; }
-    @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
-    /* Frame: remove top border, flatten top corners (avoid white arc) */
-    .table-frame { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
-    /* Viewport: gradient behind sticky header */
-    .table-viewport { max-height: 420px; overflow-y: auto; overflow-x: auto; scrollbar-gutter: stable; background: var(--white); }
-    /* Prevent sticky header clipping */
-    #itemsTable { overflow: visible !important; width: 100%; border-collapse: collapse; background: transparent !important; border-radius: 0 !important; margin-top: 0 !important; }
-    /* Sticky header inside viewport */
-    #itemsTable thead th { position: sticky; top: 0; z-index: 3; background: var(--blue-gradient); color: #fff; }
-    /* Flatten top radius across elements */
-    .table-frame, .table-viewport, #itemsTable { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
-    /* Spacing improvements */
-    #itemsTable th, #itemsTable td { padding: 10px 12px; vertical-align: middle; }
-    #itemsTable thead th { height: 44px; }
-    .search-container { margin: 8px 0 12px !important; }
-    .form-grid .form-group input, .form-grid .form-group select, .form-grid .form-group textarea { padding: 8px 10px; }
-  </style>
 </head>
 <body>
-  <div class="edit-ics-page content edit-ris-page">
+  <?php include dirname(__DIR__) . '/sidebar.php'; ?>
+  <div class="container">
     <h2>Edit RRSP Form</h2>
 
-    <form method="post" action="">
+    <form method="post" action="" class="inventory-item-form no-number-spinners">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <input type="hidden" name="rrsp_id" value="<?php echo $rrsp_id; ?>">
       
       <div class="section-card">
-        <h3>RRSP Details</h3>
+        <h3 class="form-section-heading">RRSP Details</h3>
         <div class="form-grid">
           <div class="form-group">
             <label>Entity Name: <span class="required-indicator" aria-hidden="true">*</span></label>
@@ -263,7 +242,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       </div>
 
       <div class="section-card">
-        <h3>RRSP Items</h3>
+        <h3 class="form-section-heading">RRSP Items</h3>
         
         <div class="search-container">
           <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()">
@@ -271,16 +250,16 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
         
         <div class="table-frame">
           <div class="table-viewport">
-            <table id="itemsTable" tabindex="-1">
+            <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table" tabindex="-1">
               <thead>
                 <tr>
-                  <th>Description <span class="required-indicator" aria-hidden="true">*</span></th>
+                  <th>Description</th>
                   <th>Qty on Hand</th>
-                  <th>Return Qty <span class="required-indicator" aria-hidden="true">*</span></th>
-                  <th>ICS No. <span class="required-indicator" aria-hidden="true">*</span></th>
+                  <th>Return Qty</th>
+                  <th>ICS No.</th>
                   <th>End-user</th>
                   <th>Remarks</th>
-                  <th>Unit Cost <span class="required-indicator" aria-hidden="true">*</span></th>
+                  <th>Unit Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -303,10 +282,10 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
                 $tot = $return_qty * (float)$it['unit_cost'];
               ?>
                 <tr>
-                  <td><input type="text" name="item_description[]" value="<?= htmlspecialchars($it['item_description']) ?>" style="width:180px;" required /></td>
-                  <td><input type="number" value="<?= $display_qty_on_hand ?>" readonly style="width:80px; background:#f5f5f5;" tabindex="-1" class="qty-on-hand" /></td>
+                  <td><?= htmlspecialchars($it['item_description']) ?><input type="hidden" name="item_description[]" value="<?= htmlspecialchars($it['item_description']) ?>" /></td>
+                  <td><?= $display_qty_on_hand ?><input type="hidden" value="<?= $display_qty_on_hand ?>" class="qty-on-hand" /></td>
                   <td><input type="number" name="quantity[]" class="qty-input" value="<?= $return_qty ?>" min="0" max="<?= $display_qty_on_hand ?>" style="width:80px;" required /></td>
-                  <td><input type="text" name="ics_no[]" value="<?= htmlspecialchars($it['ics_no']) ?>" style="width:120px;" required /></td>
+                  <td><?= htmlspecialchars($it['ics_no']) ?><input type="hidden" name="ics_no[]" value="<?= htmlspecialchars($it['ics_no']) ?>" /></td>
                   <td><input type="text" name="end_user[]" value="<?= htmlspecialchars($it['end_user'] ?? '') ?>" style="width:120px;" /></td>
                   <td><input type="text" name="item_remarks[]" value="<?= htmlspecialchars($it['item_remarks']) ?>" style="width:120px;" /></td>
                   <td><input type="number" name="unit_cost[]" class="uc-input" value="<?= htmlspecialchars($it['unit_cost']) ?>" min="0" step="0.01" style="width:100px;" required /></td>
@@ -319,7 +298,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       </div>
 
       <div class="section-card">
-        <h3>Signatories</h3>
+        <h3 class="form-section-heading">Signatories</h3>
         <div class="form-grid">
           <div class="form-group">
             <label>Returned By: <span class="required-indicator" aria-hidden="true">*</span></label>

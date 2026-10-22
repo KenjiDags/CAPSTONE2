@@ -266,6 +266,10 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             position: relative;
         }
         
+        body.dark-mode .signature-box h4 {
+            color: #ffffff !important;
+        }
+
         .signature-box h4 {
             color: #334155;
             margin-bottom: 10px;
@@ -325,6 +329,15 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             font: inherit;
             background: #f5f5f5;
             color: #1e293b;
+        }
+        .rpci-table input.rpci-row-input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+        .rpci-table input.rpci-row-input::-webkit-inner-spin-button,
+        .rpci-table input.rpci-row-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         body.dark-mode .rpci-table .rpci-row-input {
             background: #0f172a;
@@ -498,6 +511,33 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
     
     <script>
         const officerNames = <?php echo $officer_names_json; ?>;
+        // Navigate editable cells with the arrow keys without changing values.
+        document.getElementById('rpci-table').addEventListener('keydown', event => {
+            const input = event.target.closest('.rpci-row-input');
+            if (!input || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
+                || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+            event.preventDefault();
+            const row = input.closest('tr');
+            let nextInput;
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                const fields = Array.from(row.querySelectorAll('.rpci-row-input'));
+                const index = fields.indexOf(input);
+                nextInput = fields[index + (event.key === 'ArrowRight' ? 1 : -1)];
+            } else {
+                const rows = thisTableRows();
+                const index = rows.indexOf(row);
+                const nextRow = rows[index + (event.key === 'ArrowDown' ? 1 : -1)];
+                nextInput = nextRow?.querySelector(`[data-field="${input.dataset.field}"]`);
+            }
+            if (nextInput) {
+                nextInput.focus({ preventScroll: true });
+                nextInput.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }
+        });
+        function thisTableRows() {
+            return Array.from(document.querySelectorAll('#rpci-table tbody tr'))
+                .filter(row => row.getClientRects().length > 0);
+        }
 
         function setupAutocomplete(inputId, dropdownId) {
             const input = document.getElementById(inputId);

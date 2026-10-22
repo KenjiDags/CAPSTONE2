@@ -186,7 +186,7 @@ $total_amount = 0.0;
     }
   </style>
 </head>
-<body>
+<body class="detail-view-page">
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
   <div class="container">
     <h2>Viewing ITR No. <?php echo htmlspecialchars($itr['itr_no']); ?></h2>

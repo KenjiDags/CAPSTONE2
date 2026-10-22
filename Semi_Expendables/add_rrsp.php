@@ -224,7 +224,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
   /* Use the same selection wrapper and shared table styles as Add PTR. */
   .rrsp-add-page .items-selection { border: 2px solid #e5e7eb; border-radius: 8px; max-height: 400px; overflow: auto; background: #f9fafb; }
   .rrsp-add-page #itemsTable { min-width: 700px; margin-top: 0 !important; }
-  .rrsp-add-page #itemsTable .qty-input { width: 60px; text-align: center; padding: 4px !important; border: 1px solid #000 !important; border-radius: 4px; }
+  .rrsp-add-page #itemsTable .qty-input { width: 60px; text-align: center; padding: 4px !important; border: 1px solid #cbd5e1; border-radius: 4px; }
   .rrsp-add-page #itemsTable .enduser-input, .rrsp-add-page #itemsTable .remarks-input { width: 160px; }
   .rrsp-add-page .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: none; border-radius: 0 0 6px 6px; max-height: 250px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0, 0, 0, .1); }
   .rrsp-add-page .autocomplete-item { padding: 10px 12px; cursor: pointer; transition: background .2s; }
@@ -237,14 +237,14 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="content">
-  <div class="form-container rrsp-add-page">
+  <div class="form-container rrsp-add-page inventory-item-form no-number-spinners">
       <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <header class="page-header">
-        <h1><i class="fa-solid fa-file-invoice"></i>Add RRSP Form</h1>
+        <h1 class="form-page-title"><i class="fa-solid fa-file-invoice"></i>Add RRSP Form</h1>
     </header>
 
     <div class="section-card">
-      <h3><i class="fa-solid fa-info-circle"></i> RRSP Details</h3>
+      <h3 class="form-section-heading"><i class="fa-solid fa-info-circle"></i> RRSP Details</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Entity Name:</label>
@@ -275,7 +275,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
     </div>
 
     <div class="section-card">
-      <h3><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
+      <h3 class="form-section-heading"><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
       <div class="search-container">
         <input type="text" id="itemSearch" class="search-input" placeholder="Search issued or transferred items by property number, description, or holder..." onkeyup="filterItems()">
       </div>
@@ -327,7 +327,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
     </div>
 
     <div class="section-card">
-      <h3><i class="fa-solid fa-pen-nib"></i> Signatories</h3>
+      <h3 class="form-section-heading"><i class="fa-solid fa-pen-nib"></i> Signatories</h3>
       <div class="form-grid">
         <div class="form-group">
           <label>Returned By:</label>

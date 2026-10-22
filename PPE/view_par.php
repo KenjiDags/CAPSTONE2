@@ -24,7 +24,7 @@ require_once __DIR__ . '/bootstrap.php';
         }
     </style>
 </head>
-<body>
+<body class="detail-view-page">
     <?php include dirname(__DIR__) . '/sidebar.php'; ?>
     <?php require dirname(__DIR__) . '/config.php'; ?>
 

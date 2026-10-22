@@ -293,3 +293,80 @@ body.dark-mode .category-register-panel .panel-caption, body.dark-mode .category
 body.dark-mode .category-status-red { color: #f87171; }
 body.dark-mode .category-status-green { color: #4ade80; }
 body.dark-mode .category-status-blue { color: #60a5fa; }
+/* Shared PPE and semi-expendable analytics summary colors. */
+.category-summary-cards.semi-summary {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.colored-summary .category-summary-card { border: 0; box-shadow: 0 4px 12px rgba(15, 23, 42, .12); }
+.colored-summary .category-summary-card strong { color: #fff; font-size: clamp(20px, 1.6vw, 26px); overflow-wrap: anywhere; }
+.colored-summary .category-summary-card span { color: #fff; }
+.colored-summary .category-summary-card.total { background: linear-gradient(135deg, #2563eb, #1e40af); }
+.colored-summary .category-summary-card.issued { background: linear-gradient(135deg, #15803d, #166534); }
+.colored-summary .category-summary-card.active { background: linear-gradient(135deg, #a16207, #854d0e); }
+.colored-summary .category-summary-card.disposed { background: linear-gradient(135deg, #dc2626, #991b1b); }
+.colored-summary .category-summary-card.value { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+@media (max-width: 1200px) {
+    .category-summary-cards.semi-summary { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+@media (max-width: 600px) {
+    .category-summary-cards.semi-summary { grid-template-columns: 1fr; }
+}
+/* Analytics surfaces and controls in dark mode. */
+body.dark-mode .analytics-shell {
+    --analytics-panel: #1e293b;
+    --analytics-inset: #0f172a;
+    --analytics-border: #475569;
+    color: #e2e8f0;
+    color-scheme: dark;
+}
+body.dark-mode .analytics-shell :is(.panel, .office-status-panel, .scope-bar, .mrp-critical-item) {
+    background: var(--analytics-panel);
+    border-color: var(--analytics-border);
+}
+body.dark-mode .analytics-shell :is(.analytics-header h1, .office-status-panel h2, .section-heading h2, .panel h3, .mrp-details h3, .diagnostic-row strong, .tier-value) {
+    color: #f1f5f9;
+}
+body.dark-mode .analytics-shell :is(.header-note, .office-status-panel p, .office-status-legend, .section-heading p, .panel-caption, .scope-control label, .empty-state, .legend, .stock-legend, .detail-code, .mrp-details dt, .diagnostic-row span, .tier-label, .required-fields-note, .mrp-item-description) {
+    color: #cbd5e1;
+}
+body.dark-mode .analytics-shell .eyebrow { color: #fdba74; }
+body.dark-mode .analytics-shell .scope-tab { color: #cbd5e1; }
+body.dark-mode .analytics-shell .scope-tab:hover { background: #334155; color: #fff; }
+body.dark-mode .analytics-shell .scope-tab.active { background: #3b2c28; color: #fdba74; border-color: #fb923c; }
+body.dark-mode .analytics-shell :is(.mrp-search, .mrp-filter-select, .scope-control select, .item-select, .inventory-filter) {
+    background: var(--analytics-inset);
+    border-color: var(--analytics-border);
+    color: #e2e8f0;
+}
+body.dark-mode .analytics-shell .mrp-search input { background: transparent; color: #e2e8f0; }
+body.dark-mode .analytics-shell input::placeholder { color: #94a3b8; }
+body.dark-mode .analytics-shell :is(.mrp-search:focus-within, .mrp-filter-select:focus-visible) { border-color: #93c5fd; }
+body.dark-mode .analytics-shell :is(.inventory-filter:hover, .inventory-filter.active, .mrp-status-legend button:hover, .mrp-status-legend button.active) {
+    background: #334155;
+    border-color: #64748b;
+    color: #fff;
+}
+body.dark-mode .analytics-shell :is(.mrp-status-legend, .mrp-status-legend button) { color: #cbd5e1; }
+body.dark-mode .analytics-shell .mrp-status-legend button[data-mrp-status="low"].active { background: #422f13; border-color: #a16207; color: #fde68a; }
+body.dark-mode .analytics-shell :is(.mrp-details, .critical-details, .demand-summary > div) { background: #273449; border-color: var(--analytics-border); }
+body.dark-mode .analytics-shell :is(.mrp-details dd, .demand-summary strong) { color: #e2e8f0; }
+body.dark-mode .analytics-shell :is(.mrp-details dl div, .critical-stockouts, .diagnostic-row, .category-list-row) { border-color: var(--analytics-border); }
+body.dark-mode .analytics-shell .category-list-row { color: #cbd5e1; }
+body.dark-mode .analytics-shell :is(.category-list-row strong, .critical-text, .inventory-duration) { color: #fca5a5; }
+body.dark-mode .analytics-shell :is(.mrp-empty-state, .risk-banner) { background: #382326; border-color: #b45353; color: #fecaca; }
+body.dark-mode .analytics-shell .search-empty-state { background: #273449; border-color: var(--analytics-border); color: #cbd5e1; }
+body.dark-mode .analytics-shell .tier-track { background: #334155; }
+body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) { background: var(--analytics-panel); color: #e2e8f0; }
+body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) :is(th, td) { border-color: var(--analytics-border); }
+body.dark-mode .analytics-shell :is(.inventory-health-table, .ppe-action-table, .analytics-table, .aging-table) thead th { background: #273449 !important; color: #e2e8f0 !important; }
+body.dark-mode .analytics-shell :is(.inventory-health-table td small, .inventory-section-row th span, .inventory-active) { color: #cbd5e1; }
+body.dark-mode .analytics-shell .inventory-section-row.safe th,
+body.dark-mode .analytics-shell .inventory-status.safe { background: #173b2c; color: #86efac; }
+body.dark-mode .analytics-shell .inventory-section-row.low th,
+body.dark-mode .analytics-shell .inventory-status.low { background: #422f13; color: #fde68a; }
+body.dark-mode .analytics-shell .inventory-section-row.critical th,
+body.dark-mode .analytics-shell .inventory-status.critical { background: #442428; color: #fca5a5; }
+body.dark-mode .analytics-shell .inventory-section-row.empty th,
+body.dark-mode .analytics-shell .inventory-status.empty { background: #334155; color: #e2e8f0; }
+body.dark-mode .analytics-shell .action-pill { background: #442428; color: #fca5a5; }
+body.dark-mode .analytics-shell .action-pill.repair { background: #422f13; color: #fde68a; }

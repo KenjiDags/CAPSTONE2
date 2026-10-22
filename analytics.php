@@ -467,7 +467,13 @@ function renderCategoryInsights(summary) {
   document.getElementById('categoryInsightsTitle').textContent = isSemi ? 'Semi-Expendables analytics' : 'PPE analytics';
   document.getElementById('categoryInsightsSubtitle').textContent = 'Item status and current assignments';
   const summaryCards = document.getElementById('categorySummaryCards');
+  summaryCards.classList.toggle('semi-summary', isSemi);
+  summaryCards.classList.add('colored-summary');
   summaryCards.innerHTML = isSemi ? `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.not_issued || 0).toLocaleString()}</strong><span>Not issued</span></article><article class="category-summary-card active"><strong>${Number(summary.currently_issued || 0).toLocaleString()}</strong><span>Currently issued</span></article><article class="category-summary-card disposed"><strong>${Number(summary.disposed || 0).toLocaleString()}</strong><span>Disposed / For disposal</span></article>` : `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.serviceable || 0).toLocaleString()}</strong><span>Serviceable Items</span></article><article class="category-summary-card disposed"><strong>${Number(summary.unserviceable || 0).toLocaleString()}</strong><span>Unserviceable Items</span></article>`;
+  if (isSemi || isPpe) {
+    const totalValue = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(summary.total_value || 0));
+    summaryCards.insertAdjacentHTML('beforeend', `<article class="category-summary-card value"><strong>${totalValue}</strong><span>Total Value</span></article>`);
+  }
   renderCategoryRegister();
 }
 let categoryRequest = 0;

@@ -318,10 +318,10 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
 <body>
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
-    <div class="form-container">
+    <div class="form-container inventory-item-form no-number-spinners">
         <header class="page-header">
-            <h1><i class="fas fa-edit"></i> Edit Property Transfer Report (PTR)</h1>
-            <p>Update property transfer record</p>
+            <h1 class="form-page-title"><i class="fas fa-edit"></i> Edit Property Transfer Report (PTR)</h1>
+            <p class="form-page-subtitle">Update property transfer record</p>
         </header>
 
         <?php if ($error): ?>
@@ -340,18 +340,18 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="ptr_no">PTR No <span class="required">*</span></label>
+                    <label for="ptr_no">PTR No <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="ptr_no" name="ptr_no" value="<?= htmlspecialchars($ptr['ptr_no']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="transfer_date">Transfer Date <span class="required">*</span></label>
+                    <label for="transfer_date">Transfer Date <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="date" id="transfer_date" name="transfer_date" value="<?= htmlspecialchars($ptr['transfer_date']) ?>" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="entity_name">Entity Name <span class="required">*</span></label>
+                    <label for="entity_name">Entity Name <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="entity_name" name="entity_name" value="<?= htmlspecialchars($ptr['entity_name']) ?>" required>
                 </div>
                 <div class="form-group">
@@ -362,11 +362,11 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="from_officer">From Accountable Officer <span class="required">*</span></label>
+                    <label for="from_officer">From Accountable Officer <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="from_officer" name="from_officer" value="<?= htmlspecialchars($ptr['from_officer']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="to_officer">To Accountable Officer <span class="required">*</span></label>
+                    <label for="to_officer">To Accountable Officer <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="to_officer" name="to_officer" value="<?= htmlspecialchars($ptr['to_officer']) ?>" required>
                 </div>
             </div>
@@ -386,7 +386,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                 <textarea id="reason" name="reason"><?= htmlspecialchars($ptr['reason']) ?></textarea>
             </div>
 
-            <h3 style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-pen-nib"></i> Signature Details</h3>
+            <h3 class="form-section-heading" style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-pen-nib"></i> Signature Details</h3>
             
             <div class="form-row">
                 <div class="form-group">
@@ -421,7 +421,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                 </div>
             </div>
 
-            <h4 style="margin-top: 20px; margin-bottom: 15px;"><i class="fas fa-calendar-alt"></i> Signature Dates</h4>
+            <h4 class="form-section-heading" style="margin-top: 20px; margin-bottom: 15px;"><i class="fas fa-calendar-alt"></i> Signature Dates</h4>
 
             <div class="form-row">
                 <div class="form-group">
@@ -440,7 +440,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
             </div>
 
             <div class="form-group">
-                <label>Select PPE Items to Transfer <span class="required">*</span></label>
+                <label>Select PPE Items to Transfer <span class="required-indicator" aria-hidden="true">*</span></label>
                 <div class="items-selection">
                     <?php while ($item = $ppe_items->fetch_assoc()): ?>
                         <div class="item-checkbox">

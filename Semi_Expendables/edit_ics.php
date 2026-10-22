@@ -307,17 +307,17 @@ try {
     <div class="content">
         <div class="form-container">
             <header class="page-header">
-                <h1><i class="fas fa-pen"></i>Edit ICS Form</h1>
-                <p>Editing ICS details and items</p>
+                <h1 class="form-page-title"><i class="fas fa-pen"></i>Edit ICS Form</h1>
+                <p class="form-page-subtitle">Editing ICS details and items</p>
             </header>
 
-            <form method="post" action="">
+            <form method="post" action="" class="inventory-item-form no-number-spinners">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
                 <input type="hidden" name="is_editing" value="1">
                 
                 <div class="section-card">
-                    <h3><i class="fas fa-info-circle"></i>ICS Details</h3>
+                    <h3 class="form-section-heading"><i class="fas fa-info-circle"></i>ICS Details</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Entity Name: <span class="required-indicator" aria-hidden="true">*</span></label>
@@ -341,9 +341,9 @@ try {
                 </div>
 
                 <div class="section-card">
-                    <h3><i class="fas fa-box"></i>ICS Items</h3>
+                    <h3 class="form-section-heading"><i class="fas fa-box"></i>ICS Items</h3>
                     <div style="display:flex; gap:16px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-                        <label for="filter_category" style="font-weight:600; color:#0038a8; margin-bottom:0;">Category:</label>
+                        <label for="filter_category" style="font-weight:600; margin-bottom:0;">Category:</label>
                         <select id="filter_category" name="filter_category" style="padding:8px 12px; border:2px solid #e8f0fe; border-radius:8px; background:#f8fbff; min-width:120px;">
                             <option value="All" <?php echo ($selected_category==='All')?'selected':''; ?>>All</option>
                             <?php foreach ($category_options as $cat): ?>
@@ -359,7 +359,7 @@ try {
 
                     <div class="table-frame">
                         <div class="table-viewport">
-                            <table id="itemsTable" tabindex="-1">
+                            <table id="itemsTable" class="bordered-cell-inputs" tabindex="-1">
                                 <thead>
                                     <tr>
                                         <th>Item No.</th>
@@ -418,7 +418,7 @@ try {
                 </div>
 
                 <div class="section-card">
-                    <h3><i class="fas fa-pen-nib"></i>Signatories</h3>
+                    <h3 class="form-section-heading"><i class="fas fa-pen-nib"></i>Signatories</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Received By: <span class="required-indicator" aria-hidden="true">*</span></label>

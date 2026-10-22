@@ -2733,3 +2733,251 @@ body.add-page.dark-mode #grand_total_display {
 .detail-view-page .container h2 > i {
     color: #3b82f6;
 }
+
+/* Shared inventory status text for PPE and semi-expendable lists. */
+.inventory-status {
+    font-weight: 600;
+    color: #475569;
+}
+.inventory-status[data-status="active"],
+.inventory-status[data-status="available"] { color: #047857; }
+.inventory-status[data-status="issued"] { color: #1d4ed8; }
+.inventory-status[data-status="transferred"],
+.inventory-status[data-status="re-issued"] { color: #7e22ce; }
+.inventory-status[data-status="returned"] { color: #0e7490; }
+.inventory-status[data-status="for repair"] { color: #92400e; }
+.inventory-status[data-status="unserviceable"] { color: #c2410c; }
+.inventory-status[data-status="disposed"] { color: #b91c1c; }
+
+body.dark-mode .inventory-status { color: #cbd5e1; }
+body.dark-mode .inventory-status[data-status="active"],
+body.dark-mode .inventory-status[data-status="available"] { color: #6ee7b7; }
+body.dark-mode .inventory-status[data-status="issued"] { color: #93c5fd; }
+body.dark-mode .inventory-status[data-status="transferred"],
+body.dark-mode .inventory-status[data-status="re-issued"] { color: #d8b4fe; }
+body.dark-mode .inventory-status[data-status="returned"] { color: #67e8f9; }
+body.dark-mode .inventory-status[data-status="for repair"] { color: #fcd34d; }
+body.dark-mode .inventory-status[data-status="unserviceable"] { color: #fdba74; }
+body.dark-mode .inventory-status[data-status="disposed"] { color: #fca5a5; }
+/* Transfer type text in the PPE transfer report list. */
+.transfer-type {
+    font-weight: 600;
+    color: #475569;
+}
+.transfer-type[data-transfer-type="donation"] { color: #047857; }
+.transfer-type[data-transfer-type="relocation"] { color: #1d4ed8; }
+.transfer-type[data-transfer-type="reassignment"] { color: #7e22ce; }
+.transfer-type[data-transfer-type="others"],
+.transfer-type[data-transfer-type^="others:"] { color: #92400e; }
+
+body.dark-mode .transfer-type { color: #cbd5e1; }
+body.dark-mode .transfer-type[data-transfer-type="donation"] { color: #6ee7b7; }
+body.dark-mode .transfer-type[data-transfer-type="relocation"] { color: #93c5fd; }
+body.dark-mode .transfer-type[data-transfer-type="reassignment"] { color: #d8b4fe; }
+body.dark-mode .transfer-type[data-transfer-type="others"],
+body.dark-mode .transfer-type[data-transfer-type^="others:"] { color: #fcd34d; }
+/* Reusable item form labels and optional spinner-free numeric fields. */
+body.dark-mode .inventory-item-form .form-group label {
+    color: #fff;
+}
+.no-number-spinners input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.no-number-spinners input[type="number"]::-webkit-inner-spin-button,
+.no-number-spinners input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Office supply item detail cards and history tables. */
+body.dark-mode.item-detail-page .view-card {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+}
+body.dark-mode.item-detail-page .view-card h3,
+body.dark-mode.item-detail-page .item-grid .value { color: #f1f5f9; }
+body.dark-mode.item-detail-page .item-grid .label,
+body.dark-mode.item-detail-page .mini-note { color: #cbd5e1; }
+body.dark-mode.item-detail-page .item-grid .field { border-color: #475569; }
+body.dark-mode.item-detail-page .view-actions { background: transparent !important; }
+body.dark-mode.item-detail-page .compact-table { background: #1e293b !important; }
+body.dark-mode.item-detail-page .compact-table :is(th, td),
+body.dark-mode.item-detail-page .compact-table tbody tr { border-color: #475569; }
+body.dark-mode.item-detail-page .table-wrap { scrollbar-color: #64748b #1e293b; }
+/* Shared subsection headings for inventory forms. */
+.form-section-heading {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    color: #374151;
+}
+body.dark-mode .form-section-heading { color: #f1f5f9; }
+/* Shared page titles for inventory add/edit forms. */
+.form-page-title { color: #1e293b; }
+.form-page-subtitle { color: #64748b; }
+body.dark-mode .form-page-title { color: #f1f5f9; }
+body.dark-mode .form-page-subtitle { color: #cbd5e1; }
+/* Native calendar controls follow the inventory form's dark theme. */
+body.dark-mode .inventory-item-form input:is([type="date"], [type="datetime-local"], [type="month"], [type="time"], [type="week"]) {
+    color-scheme: dark;
+}
+/* Reusable inventory document forms, including ICS details and signatories. */
+body.dark-mode .inventory-item-form label { color: #f1f5f9; }
+body.dark-mode .inventory-item-form .section-card {
+    background: #1e293b;
+    border-color: #475569;
+}
+body.dark-mode .inventory-item-form :is(input, select, textarea) {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #e2e8f0;
+    color-scheme: dark;
+}
+body.dark-mode .inventory-item-form :is(input, textarea)::placeholder { color: #94a3b8; }
+body.dark-mode .inventory-item-form .table-frame { border-color: #475569; }
+body.dark-mode .inventory-item-form .table-viewport {
+    background: #1e293b;
+    scrollbar-color: #64748b #1e293b;
+}
+/* Consistent borders on all sides of editable document table inputs. */
+.bordered-cell-inputs td input {
+    border: 2px solid #94a3b8;
+    border-radius: 0;
+}
+.bordered-cell-inputs td input:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 1px;
+}
+/* Shared dark surfaces for document detail and signatory sections. */
+body.dark-mode.detail-view-page :is(.view-actions, .view-details) {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .2) !important;
+}
+body.dark-mode.detail-view-page .view-details p {
+    color: #e2e8f0 !important;
+}
+body.dark-mode.detail-view-page .view-details p strong,
+body.dark-mode.detail-view-page .container h3 { color: #f1f5f9 !important; }
+body.dark-mode.detail-view-page table tfoot td {
+    background: #273449;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+body.dark-mode.detail-view-page table tfoot strong { color: #f1f5f9; }
+/* Document form table borders, totals, and validation in dark mode. */
+body.dark-mode .inventory-item-form .table-viewport table :is(th, td) { border-color: #475569; }
+body.dark-mode .inventory-item-form .table-viewport table tfoot td {
+    background: #273449;
+    color: #f1f5f9;
+}
+body.dark-mode .inventory-item-form .field-error { color: #fca5a5; }
+body.dark-mode .inventory-item-form .has-error :is(input, select, textarea) { border-color: #ef4444 !important; }
+/* Retain sticky document headers while using the shared table appearance. */
+.scrollable-document-table { overflow: visible !important; }
+.scrollable-document-table thead th { position: sticky; top: 0; z-index: 3; }
+/* Inventory form autocomplete menus share the dark input palette. */
+body.dark-mode .inventory-item-form .autocomplete-dropdown { background: #0f172a; color: #e2e8f0; }
+body.dark-mode .inventory-item-form .autocomplete-item { border-color: #475569; }
+body.dark-mode .inventory-item-form .autocomplete-item:hover { background: #334155; }
+body.dark-mode .inventory-item-form .autocomplete-item.selected { background: #2563eb; color: #fff; }
+/* Shared physical-count report labels and signatory panels. */
+body.dark-mode .inventory-item-form :is(.table-controls label, .field-group label, .rpci-meta-row label, .signature-box h4) {
+    color: #f1f5f9 !important;
+}
+body.dark-mode .inventory-item-form .signature-box {
+    background: #1e293b;
+    border-color: #475569;
+}
+body.dark-mode .inventory-item-form .signature-text { color: #cbd5e1; }
+/* Scrollable item selectors share the document form dark surface. */
+body.dark-mode .inventory-item-form .items-selection {
+    background: #1e293b;
+    border-color: #475569;
+    scrollbar-color: #64748b #1e293b;
+}
+/* Readable report detail text and signatories in dark mode. */
+body.dark-mode.detail-view-page .ris-details {
+    background: #1e293b;
+    border-color: #475569;
+}
+body.dark-mode.detail-view-page .ris-details :is(p, span) {
+    color: #e2e8f0;
+    border-color: #475569;
+}
+body.dark-mode.detail-view-page .ris-details :is(h4, strong) { color: #f1f5f9; }
+body.dark-mode.detail-view-page .table-container { scrollbar-color: #64748b #1e293b; }
+/* Shared layout for inventory document edit forms. */
+.inventory-item-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.inventory-item-form .form-grid .form-group { display: flex; flex-direction: column; }
+.inventory-item-form .form-grid .form-group :is(input, select, textarea) { padding: 8px 10px; }
+.inventory-item-form .table-frame { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+.inventory-item-form .table-viewport {
+    max-height: 420px;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    background: #fff;
+}
+.inventory-item-form .search-container { margin: 8px 0 12px; }
+@media (max-width: 800px) {
+    .inventory-item-form .form-grid { grid-template-columns: 1fr; }
+}
+/* Shared information cards for document detail pages. */
+body.dark-mode.detail-view-page .view-card {
+    background: #1e293b;
+    border-color: #475569;
+}
+body.dark-mode.detail-view-page .info-item label { color: #cbd5e1; }
+body.dark-mode.detail-view-page .info-item div { color: #f1f5f9; }
+body.dark-mode.detail-view-page .signature-line { border-color: #94a3b8; }
+/* Inventory form section dividers follow the active theme. */
+.inventory-item-form hr { border-color: #e2e8f0; }
+body.dark-mode .inventory-item-form hr { border-color: #475569; }
+/* Consistent field sizing across shared inventory edit forms. */
+.inventory-item-form .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.inventory-item-form .form-group :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+/* Inventory identifiers remain readable in dark document forms. */
+body.dark-mode .inventory-item-form :is(.prop-cell, .holder-cell) { color: #cbd5e1; }
+/* Reusable officer-name suggestions for inventory signatories. */
+.officer-name-field { position: relative; min-width: 0; }
+.officer-name-field .autocomplete-dropdown { width: 100%; max-width: none; }
+/* Shared selectable items and transfer-type options in dark forms. */
+body.dark-mode .inventory-item-form :is(.item-checkbox, .radio-option) {
+    background: #0f172a;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+body.dark-mode .inventory-item-form :is(.item-checkbox:hover, .radio-option:hover) { background: #334155; }
+body.dark-mode .inventory-item-form .item-info strong { color: #f1f5f9; }
+body.dark-mode .inventory-item-form .radio-option input[type="radio"]:checked + label { color: #93c5fd; }
+body.dark-mode .inventory-item-form .button-group { border-color: #475569; }
+/* Shared physical-count report surface and metadata. */
+body.dark-mode .inventory-report-form {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+body.dark-mode .inventory-report-form :is(.rpcppe-header h2, .rpcppe-meta-row label) { color: #f1f5f9; }
+body.dark-mode .inventory-report-form .form-subtitle { color: #cbd5e1; }
+/* Report controls and signatories can sit outside the report header wrapper. */
+body.dark-mode.inventory-report-page .table-controls label,
+body.dark-mode.inventory-report-page .signature-box h4 {
+    color: #fff !important;
+}
+/* Opt out of currency highlighting when standard input text is preferred. */
+body.add-page .inventory-item-form input.theme-text-input { color: #000 !important; }
+body.add-page.dark-mode .inventory-item-form input.theme-text-input { color: #fff !important; }

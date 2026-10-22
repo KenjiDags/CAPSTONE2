@@ -36,7 +36,7 @@ function h($value) {
   }
 </style>
 </head>
-<body>
+<body class="detail-view-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

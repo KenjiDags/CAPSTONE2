@@ -138,7 +138,7 @@ require dirname(__DIR__) . '/functions.php';
 
         <div id="formAlert" class="alert"></div>
 
-        <form id="addForm" autocomplete="off">
+        <form id="addForm" autocomplete="off" data-arrow-navigation="grid">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <div class="form-row">
                 <div class="form-group">
