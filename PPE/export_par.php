@@ -225,6 +225,8 @@ td.desc {
     border-right: 2px solid #000;
 }
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Property Acknowledgment Receipt Preview" data-preview-code="PAR" data-preview-back="PPE/PPE_PAR.php" data-preview-width="900"></script>
 </head>
 
 <body>

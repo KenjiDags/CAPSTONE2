@@ -2981,8 +2981,8 @@ body.dark-mode.inventory-report-page .signature-box h4 {
     color: #fff !important;
 }
 /* Opt out of currency highlighting when standard input text is preferred. */
-body.add-page .inventory-item-form input.theme-text-input { color: #000 !important; }
-body.add-page.dark-mode .inventory-item-form input.theme-text-input { color: #fff !important; }
+body.add-page input.theme-text-input { color: #000 !important; }
+body.add-page.dark-mode input.theme-text-input { color: #fff !important; }
 /* Compact side-by-side profile fields in User Settings. */
 .settings-inline-fields {
     display: grid;
@@ -3161,3 +3161,98 @@ body.dark-mode .compact-search-field > i { color: #cbd5e1; }
 /* Saved-report list controls use the shared inventory toolbar. */
 .report-list-filters { margin-bottom: 16px; }
 .report-list-filters .inventory-controls { flex-wrap: wrap; }
+
+/* Compact registry previews reuse the shared document form table and theme. */
+.inventory-item-form table.compact-document-table {
+    display: table;
+    width: 100%;
+    min-width: 1450px;
+    margin: 0;
+    table-layout: auto;
+}
+.inventory-item-form table.compact-document-table thead th {
+    width: auto;
+    padding: 6px 7px !important;
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0;
+    white-space: normal;
+}
+.inventory-item-form table.compact-document-table tbody td {
+    padding: 6px 7px;
+    font-size: 12px;
+    line-height: 1.35;
+}
+.inventory-item-form table.compact-document-table tbody td:nth-child(4) {
+    min-width: 170px;
+    max-width: 220px;
+}
+.inventory-item-form table.compact-document-table tbody td:first-child,
+.inventory-item-form table.compact-document-table tbody td:nth-child(14) {
+    white-space: nowrap;
+}
+
+/* Match PPE blue label and heading icons across inventory forms and detail pages. */
+:is(.content, .container, .form-container) :is(label, h1, h2, h3, h4) > :is(i, svg) {
+    color: #3b82f6 !important;
+}
+
+/* Search icons remain visible and aligned in both form and report toolbars. */
+.compact-search-field > .search-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-left: 32px !important;
+}
+
+/* Physical-count fields fit their report cells in shared add and view forms. */
+.inventory-item-form .rpci-table .count-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 70px;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Original three-panel RPCSP signatory layout. */
+.inventory-item-form .rpcsp-signatures {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* Align count tools with the compact search input. */
+.inventory-item-form .count-search-toolbar .compact-search-field { margin-bottom: 0; }
+.inventory-item-form .count-search-toolbar #match-balance {
+    height: 34px;
+    box-sizing: border-box;
+    padding: 0 12px !important;
+    border-radius: 6px !important;
+    margin: 0 !important;
+}
+
+/* Immediate, keyboard-accessible descriptions for toolbar buttons. */
+.button-tooltip { position: relative; display: inline-flex; }
+.button-tooltip .button-tooltip-text {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    z-index: 100;
+    width: 260px;
+    max-width: 75vw;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: left;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+.button-tooltip:hover .button-tooltip-text,
+.button-tooltip:focus-within .button-tooltip-text { visibility: visible; opacity: 1; }

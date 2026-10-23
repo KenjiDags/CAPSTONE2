@@ -1,102 +1,60 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
-require dirname(__DIR__) . '/config.php';
-require_once dirname(__DIR__) . '/functions.php';
-
-// Get category filter (from POST or GET); treat "All" as none
-$selected_category = isset($_POST['category']) ? trim($_POST['category']) : (isset($_GET['category']) ? trim($_GET['category']) : '');
-if ($selected_category === 'All') { $selected_category = ''; }
-
-// Build ICS-only dataset (mirrors regspi.php)
-$rows = [];
-$sql = "
-    SELECT
-        i.date_issued AS date,
-        i.ics_no AS ics_rrsp_no,
-        ii.stock_number AS property_no,
-        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
-        COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
-        ii.quantity AS issued_qty,
-        i.received_by AS issued_office,
-        0 AS returned_qty,
-        '' AS returned_office,
-        0 AS reissued_qty,
-        '' AS reissued_office,
-        0 AS disposed_qty1,
-        0 AS disposed_qty2,
-        COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-        '' AS remarks,
-        0 AS row_type
-    FROM ics i
-    INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
-    LEFT JOIN semi_expendable_property sep 
-        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
-    WHERE ii.quantity > 0
-
-    UNION ALL
-
-    SELECT
-        r.date_prepared AS date,
-        r.rrsp_no AS ics_rrsp_no,
-        rii.ics_no AS property_no,
-        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, rii.item_description) AS item_description,
-        COALESCE(sep.estimated_useful_life, '') AS useful_life,
-        0 AS issued_qty,
-        '' AS issued_office,
-        rii.quantity AS returned_qty,
-        r.returned_by AS returned_office,
-        0 AS reissued_qty,
-        '' AS reissued_office,
-        0 AS disposed_qty1,
-        0 AS disposed_qty2,
-        COALESCE(sep.amount, rii.unit_cost) * rii.quantity AS amount_total,
-        r.remarks AS remarks,
-        1 AS row_type
-    FROM rrsp r
-    INNER JOIN rrsp_items rii ON rii.rrsp_id = r.rrsp_id
-    LEFT JOIN semi_expendable_property sep 
-        ON sep.semi_expendable_property_no = rii.ics_no COLLATE utf8mb4_general_ci
-    WHERE rii.quantity > 0
-";
-
-$binds = [];
-$types = '';
-if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-    $sql .= " AND sep.category = ?";
-    $binds[] = $selected_category;
-    $types .= 's';
-}
-$sql .= " ORDER BY STR_TO_DATE(date, '%Y-%m-%d') ASC, row_type ASC, ics_rrsp_no ASC";
-
-if (!empty($binds)) {
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param($types, ...$binds);
-        if ($stmt->execute()) {
-            $res = $stmt->get_result();
-            while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-            $res->close();
-        }
-        $stmt->close();
-    }
-} else {
-    if ($res = $conn->query($sql)) {
-        while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-        $res->close();
-    }
+// Page-local RegSPI functions; saving reports does not change inventory.
+function regspiH($value): string {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-$categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
+function regspiSchema(): string {
+    return "CREATE TABLE IF NOT EXISTS regspi_reports (
+        regspi_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        report_date DATE NOT NULL,
+        entity_name VARCHAR(255) NOT NULL,
+        fund_cluster VARCHAR(255) NOT NULL,
+        category VARCHAR(255) NOT NULL,
+        item_count INT UNSIGNED NOT NULL,
+        snapshot LONGTEXT NOT NULL,
+        created_by INT NOT NULL,
+        save_token CHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY regspi_save_token (save_token),
+        KEY regspi_report_date (report_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+}
+
+function regspiEnsureTable(mysqli $conn): void {
+    $conn->query(regspiSchema());
+}
+
+function regspiLoad(mysqli $conn, int $id): ?array {
+    $stmt = $conn->prepare('SELECT * FROM regspi_reports WHERE regspi_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $report = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$report) return null;
+    $report['data'] = json_decode($report['snapshot'], true, 512, JSON_THROW_ON_ERROR);
+    return $report;
+}
+
+regspiEnsureTable($conn);
+$id = filter_var($_GET['regspi_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if (!$id) { header('Location: regspi.php'); exit; }
+$report = regspiLoad($conn, $id);
+if (!$report) { http_response_code(404); exit('RegSPI document not found.'); }
+$rows = $report['data']['rows'];
+$metadata = $report['data']['metadata'];
+$categoryLabel = $metadata['category'] ?: 'All';
+function h($value) { return regspiH($value); }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registry of Semi-Expendable Property Issued - Export</title>
+    <title>REGSPI-<?= str_pad((string)$id, 4, '0', STR_PAD_LEFT) ?> - Export</title>
     <style>
         /* Force print orientation to landscape */
         @page {
@@ -371,6 +329,8 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
         
     </style>
 <?php /* keep head clean */ ?>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Registry of Property Issued Preview" data-preview-code="REGSPI" data-preview-back="Semi_Expendables/regspi.php" data-preview-width="1450"></script>
 </head>
 <body>
     <div class="no-print">
@@ -390,6 +350,7 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
     </div>
 
     <div class="form-container">
+        <p>REGSPI-<?= str_pad((string)$id, 4, '0', STR_PAD_LEFT) ?> &nbsp; Report Date: <?= h($metadata['report_date']) ?></p>
         <div class="annex-reference" style="text-align: right; font-style: italic; font-size: 11px;">Annex A.4</div>
 
         <div class="agency-header">
@@ -407,12 +368,12 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                     <th colspan="15">REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED</th>
                 </tr>
                 <tr class="meta-row">
-                    <td colspan="10">Entity Name: <span contenteditable="true">TESDA-CAR</span></td>
-                    <td colspan="5" class="meta-right">Fund Cluster: <span contenteditable="true" style="min-width: 100px;">101</span></td>
+                    <td colspan="10">Entity Name: <span ><?= h($metadata['entity_name']) ?></span></td>
+                    <td colspan="5" class="meta-right">Fund Cluster: <span  style="min-width: 100px;"><?= h($metadata['fund_cluster']) ?></span></td>
                 </tr>
                 <tr class="meta-row">
-                    <td colspan="10">Semi-expendable Property: <span contenteditable="true"><?php echo h($categoryLabel); ?></span></td>
-                    <td colspan="5" class="meta-right">Sheet No.: <span contenteditable="true" class="sheet-number" id="sheetNumber" style="min-width: 100px;">1</span></td>
+                    <td colspan="10">Semi-expendable Property: <span ><?php echo h($categoryLabel); ?></span></td>
+                    <td colspan="5" class="meta-right">Sheet No.: <span  class="sheet-number" id="sheetNumber" style="min-width: 100px;">1</span></td>
                 </tr>
                 <tr>
                     <th rowspan="2" class="date-col">Date</th>
@@ -444,31 +405,31 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                 <?php if (!empty($rows)): ?>
                     <?php foreach ($rows as $r): ?>
                         <tr>
-                            <td contenteditable="true"><?php echo h($r['date'] ? date('n/j/Y', strtotime($r['date'])) : ''); ?></td>
-                            <td contenteditable="true"><?php echo h($r['ics_rrsp_no']); ?></td>
-                            <td contenteditable="true"><?php echo h($r['property_no']); ?></td>
-                            <td class="text-left" contenteditable="true"><?php echo h($r['item_description']); ?></td>
-                            <td contenteditable="true"><?php echo h($r['useful_life']); ?></td>
+                            <td ><?php echo h($r['date'] ? date('n/j/Y', strtotime($r['date'])) : ''); ?></td>
+                            <td ><?php echo h($r['ics_rrsp_no']); ?></td>
+                            <td ><?php echo h($r['property_no']); ?></td>
+                            <td class="text-left" ><?php echo h($r['item_description']); ?></td>
+                            <td ><?php echo h($r['useful_life']); ?></td>
                             <?php if ((float)$r['issued_qty'] > 0): ?>
-                                <td contenteditable="true"><?php echo number_format((float)$r['issued_qty']); ?></td>
-                                <td class="text-left" contenteditable="true"><?php echo h($r['issued_office']); ?></td>
+                                <td ><?php echo number_format((float)$r['issued_qty']); ?></td>
+                                <td class="text-left" ><?php echo h($r['issued_office']); ?></td>
                             <?php else: ?>
-                                <td contenteditable="true"></td>
-                                <td class="text-left" contenteditable="true"></td>
+                                <td ></td>
+                                <td class="text-left" ></td>
                             <?php endif; ?>
                             <?php if ((float)$r['returned_qty'] > 0): ?>
-                                <td contenteditable="true"><?php echo number_format((float)$r['returned_qty']); ?></td>
-                                <td class="text-left" contenteditable="true"><?php echo h($r['returned_office']); ?></td>
+                                <td ><?php echo number_format((float)$r['returned_qty']); ?></td>
+                                <td class="text-left" ><?php echo h($r['returned_office']); ?></td>
                             <?php else: ?>
-                                <td contenteditable="true"></td>
-                                <td class="text-left" contenteditable="true"></td>
+                                <td ></td>
+                                <td class="text-left" ></td>
                             <?php endif; ?>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true"></td>
-                            <td class="text-right" contenteditable="true"><?php echo number_format((float)$r['amount_total'], 2); ?></td>
-                            <td contenteditable="true"><?php echo h($r['remarks']); ?></td>
+                            <td><?= (int)$r['reissued_qty'] ?></td>
+                            <td><?= h($r['reissued_office']) ?></td>
+                            <td><?= (int)$r['disposed_qty1'] ?></td>
+                            <td><?= (int)$r['balance_qty'] ?></td>
+                            <td class="text-right" ><?php echo number_format((float)$r['amount_total'], 2); ?></td>
+                            <td ><?php echo h($r['remarks']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -476,26 +437,6 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                         <td colspan="15" style="text-align:center;">No records found.</td>
                     </tr>
                 <?php endif; ?>
-                <!-- Extra blank rows for manual edits -->
-                <?php for ($i=0; $i<15; $i++): ?>
-                <tr>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td class="text-left" contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td class="text-left" contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                    <td class="text-right" contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                </tr>
-                <?php endfor; ?>
             </tbody>
         </table>
     </div>
@@ -511,30 +452,6 @@ $categoryLabel = ($selected_category !== '') ? $selected_category : 'All';
                 }
             });
         });
-        
-        // Optional helper to add rows via Ctrl+Enter
-        function addRow() {
-            const tbody = document.querySelector('.main-table tbody');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td class="text-left" contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td class="text-left" contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td class="text-right" contenteditable="true"></td>
-                <td contenteditable="true"></td>`;
-            tbody.appendChild(tr);
-        }
-        document.addEventListener('keydown', function(e){ if (e.ctrlKey && e.key === 'Enter') addRow(); });
     </script>
 </body>
 </html>

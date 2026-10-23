@@ -286,6 +286,11 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
             line-height: 1.2;
         }
 
+        .main-table .signature-date .signatory-name {
+            white-space: nowrap;
+            font-size: 10px;
+        }
+
         .signature-text {
             text-align: center;
             font-size: 10px;
@@ -379,6 +384,8 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
             border-top: 2px solid black;
         }
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Materials and Supplies Issued Preview" data-preview-code="RSMI" data-preview-back="office_supplies/rsmi.php" data-preview-width="1100"></script>
 </head>
 <body>
     <!-- Export Instructions -->
@@ -511,7 +518,7 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
                                 echo '<td>&nbsp;</td>';
                                 echo '<td class="text-right" style="border: none; border-right: 2px solid black; border-left: 2px solid black;">₱ ' . number_format($recap_row['avg_unit_cost'], 2) . '</td>';
                                 echo '<td class="text-right" style="border: none; border-right: 2px solid black; border-left: 2px solid black;">₱ ' . number_format($recap_row['total_cost'], 2) . '</td>';
-                                echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">&nbsp;</td>'; // UACS Object Code
+                                echo '<td style="border: none; border-right: 2px solid black; border-left: 2px solid black;">' . rsmiH($recap_row['uacs_object_code'] ?? '') . '</td>'; // UACS Object Code
                                 echo '</tr>';
                                 $recap_count++;
                             }
@@ -559,7 +566,7 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
                         <?php if ($accounting_staff): ?>
                             <div class="signatory-name"><?= $accounting_staff ?></div>
                         <?php endif; ?><div class="signature-line"></div>Signature over Printed Name of<br> Designated Accounting Staff</td>
-                    <td style="border: 2px solid black; border-top: none; border-left: none; vertical-align: top;"><div class="signatory-name"><?= htmlspecialchars($report_date_display) ?></div><div class="signature-line"></div>Date</td>
+                    <td class="signature-date" style="border: 2px solid black; border-top: none; border-left: none; vertical-align: top;"><div class="signatory-name"><?= htmlspecialchars($report_date_display) ?></div><div class="signature-line"></div>Date</td>
                 </tr>
 
             </tbody>

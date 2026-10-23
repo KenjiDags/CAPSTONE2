@@ -156,7 +156,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="section-heading"><h2 id="inventoryTableTitle">Inventory Health Table</h2><p>Office supplies grouped by current stock health.</p></div>
     <article class="panel">
       <div class="inventory-table-toolbar">
-        <label class="mrp-search inventory-table-search"><span aria-hidden="true">&#128269;</span><input id="inventoryTableSearch" type="search" aria-label="Search inventory table" placeholder="Search by Stock number, item name, or description..." autocomplete="off"></label>
+        <label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="inventoryTableSearch" type="search" aria-label="Search inventory table" placeholder="Search by Stock number, item name, or description..." autocomplete="off"></label>
         <div class="inventory-table-filters" role="group" aria-label="Filter inventory health">
           <button type="button" class="inventory-filter active" data-table-status="all">Show All</button>
           <button type="button" class="inventory-filter" data-table-status="safe"><i class="safe"></i> Safe</button>

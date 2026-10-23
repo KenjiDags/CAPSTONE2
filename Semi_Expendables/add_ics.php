@@ -529,7 +529,7 @@ function generateICSNumberSimple($conn) {
                         <?php endforeach; ?>
                     </select>
                     <div class="search-container" style="margin-left:16px;">
-                        <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()" style="width:320px; max-width:100%;">
+                        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()" style="width:320px; max-width:100%;"></label>
                     </div>
                 </div>
                 <div id="clamp-notice" class="form-notice-warning" role="status" style="display:none;"></div>
@@ -551,14 +551,15 @@ function generateICSNumberSimple($conn) {
                             <tbody>
                                 <?php 
                                 // Read from semi_expendable_property, filter by category if selected
-                                if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
-                                    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? ORDER BY date DESC, id DESC");
+                                $savedIcsId = (int)($ics_id ?? 0);
+                                    if ($selected_category !== 'All' && columnExists($conn, 'semi_expendable_property', 'category')) {
+                                    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE category = ? AND ((NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0))) OR EXISTS (SELECT 1 FROM ics_items saved_item WHERE saved_item.ics_id = $savedIcsId AND saved_item.stock_number COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci)) ORDER BY date DESC, id DESC");
                                     $stmt->bind_param("s", $selected_category);
                                     $stmt->execute();
                                     $result = $stmt->get_result();
                                     $stmt->close();
                                 } else {
-                                    $result = $conn->query("SELECT * FROM semi_expendable_property ORDER BY date DESC, id DESC");
+                                    $result = $conn->query("SELECT * FROM semi_expendable_property WHERE ((NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0))) OR EXISTS (SELECT 1 FROM ics_items saved_item WHERE saved_item.ics_id = $savedIcsId AND saved_item.stock_number COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci)) ORDER BY date DESC, id DESC");
                                 }
                                 if ($result && $result->num_rows > 0) {
                                     while ($row = $result->fetch_assoc()) {

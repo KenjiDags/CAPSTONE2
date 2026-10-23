@@ -12,7 +12,7 @@ $search   = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $params = [];
 $types  = '';
-$where  = [];
+$where  = ["(NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0)))"];
 if ($category !== '') { $where[] = 'category = ?'; $params[] = $category; $types .= 's'; }
 if ($search !== '') {
     $where[] = '(item_description LIKE ? OR semi_expendable_property_no LIKE ? OR ics_rrsp_no LIKE ?)';
@@ -118,6 +118,8 @@ $conn->close();
     .meta-line { border-bottom:1px solid #000; display:inline-block; width:100%; height:14px; vertical-align:bottom; }
     .th-ref { text-decoration: underline; }
   </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Property Cards Preview" data-preview-code="SPC" data-preview-back="Semi_Expendables/PC_semi.php" data-preview-width="1200"></script>
 </head>
 <body>
   <div class="no-print" style="margin-bottom:12px;">

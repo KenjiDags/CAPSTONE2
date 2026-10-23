@@ -5,6 +5,21 @@ require dirname(__DIR__) . '/config.php';
 require dirname(__DIR__) . '/functions.php';
 require_once dirname(__DIR__) . '/inventory_count_cache.php';
 invalidateInventoryCountAfterWrite();
+// Keep older installations compatible before starting the save transaction.
+$daysColumn = $conn->query("SHOW COLUMNS FROM ris_items LIKE 'days_to_consume'");
+if ($daysColumn->num_rows === 0) {
+    $conn->query("ALTER TABLE ris_items ADD COLUMN days_to_consume INT UNSIGNED NULL");
+}
+
+function risRemainingDays($initial, $firstReceipt, $requestedDate) {
+    if (!preg_match('/^\s*(\d+)\s*(?:days?)?\s*$/i', (string)$initial, $match)) return null;
+    $days = min(2147483647, (int)$match[1]);
+    if (!$firstReceipt) return $days;
+    $start = new DateTimeImmutable(substr($firstReceipt, 0, 10));
+    $end = new DateTimeImmutable($requestedDate);
+    $elapsed = max(0, (int)$start->diff($end)->format('%r%a'));
+    return max(0, $days - $elapsed);
+}
 ob_start();
 ?>
 
@@ -135,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stock_availables = $_POST['stock_available'];
     $issued_quantities = $_POST['issued_quantity'];
     $remarks = $_POST['remarks'];
+    $days_values = $_POST['days_to_consume'] ?? [];
 
     // Insert new items and update inventory
     for ($i = 0; $i < count($stock_numbers); $i++) {
@@ -148,7 +164,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Get the CURRENT inventory data from the database
         $stmt = $conn->prepare("
-            SELECT item_id, quantity_on_hand, average_unit_cost
+            SELECT item_id, quantity_on_hand, average_unit_cost, estimated_life,
+                COALESCE((SELECT MIN(changed_at) FROM item_history h WHERE h.item_id = items.item_id AND h.quantity_change > 0), (SELECT MIN(created_at) FROM inventory_entries e WHERE e.item_id = items.item_id AND e.quantity > 0)) AS first_receipt
             FROM items
             WHERE stock_number = ?
             LIMIT 1 FOR UPDATE
@@ -179,10 +196,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
-            // INSERT INTO RIS_ITEMS WITH UNIT COST AT TIME OF ISSUE
-            $stmt = $conn->prepare("INSERT INTO ris_items (ris_id, stock_number, stock_available, issued_quantity, remarks, unit_cost_at_issue)
-                                VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ississ", $ris_id, $stock_no, $stock_available, $issued_qty, $remark, $current_unit_cost);
+            $daysInput = trim((string)($days_values[$i] ?? ''));
+            $days_to_consume = $daysInput === ''
+                ? risRemainingDays($item['estimated_life'], $item['first_receipt'], $date_requested)
+                : filter_var($daysInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 2147483647]]);
+            if ($days_to_consume === false) {
+                throw new InvalidArgumentException('No. of days to consume must be a whole number of zero or greater.');
+            }
+            // Save the days as a snapshot; leave the item's original estimate intact.
+            $stmt = $conn->prepare("INSERT INTO ris_items (ris_id, stock_number, stock_available, issued_quantity, remarks, unit_cost_at_issue, days_to_consume)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ississi", $ris_id, $stock_no, $stock_available, $issued_qty, $remark, $current_unit_cost, $days_to_consume);
             $stmt->execute();
             $stmt->close();
 
@@ -585,7 +609,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                     
                     <!-- Search Container -->
                     <div class="search-container">
-                        <input type="text" id="itemSearch" class="search-input" placeholder="🔍 Start typing to search items..." onkeyup="filterItems()">
+                        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()"></label>
                     </div>
                     
                     <div class="table-frame">
@@ -600,13 +624,15 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                         <th><i class="fas fa-cubes"></i> Quantity on Hand</th>
                                         <th><i class="fas fa-check-circle"></i> Stock Available</th>
                                         <th><i class="fas fa-sign-out-alt"></i> Issued Qty</th>
+                                        <th><i class="fas fa-calendar-day"></i> No. of days to consume</th>
                                         <th><i class="fas fa-comment"></i> Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php 
                                     $result = $conn->query("
-                                        SELECT *
+                                        SELECT items.*,
+                                            COALESCE((SELECT MIN(changed_at) FROM item_history h WHERE h.item_id = items.item_id AND h.quantity_change > 0), (SELECT MIN(created_at) FROM inventory_entries e WHERE e.item_id = items.item_id AND e.quantity > 0)) AS first_receipt
                                         FROM items
                                         WHERE quantity_on_hand > 0
                                         ORDER BY stock_number
@@ -615,6 +641,9 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                         while ($row = $result->fetch_assoc()) {
                                             $stock_number = $row['stock_number'];
                                             $existing_item = $ris_items[$stock_number] ?? null;
+                                            $savedDays = $existing_item['days_to_consume'] ?? null;
+                                            $remainingDays = $savedDays ?? risRemainingDays($row['estimated_life'], $row['first_receipt'], $ris_data['date_requested'] ?? date('Y-m-d'));
+                                            $initialDays = risRemainingDays($row['estimated_life'], null, date('Y-m-d'));
                                             
                                             echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_name'])) . '" data-description="' . htmlspecialchars(strtolower($row['description'])) . '" data-unit="' . htmlspecialchars(strtolower($row['unit'])) . '">';
                                             echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
@@ -629,11 +658,12 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                                     </select>
                                                 </td>';
                                             echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['issued_quantity']) : '') . '" min="0" max="' . htmlspecialchars($row['quantity_on_hand']) . '"></td>';
+                                            echo '<td><input type="number" class="days-to-consume" name="days_to_consume[]" min="0" max="2147483647" step="1" aria-label="No. of days to consume for ' . htmlspecialchars($stock_number, ENT_QUOTES, 'UTF-8') . '" value="' . htmlspecialchars((string)$remainingDays) . '" data-initial="' . htmlspecialchars((string)$initialDays) . '" data-start="' . htmlspecialchars(substr((string)$row['first_receipt'], 0, 10)) . '" data-manual="' . ($savedDays !== null ? '1' : '0') . '"></td>';
                                             echo '<td><input type="text" name="remarks[]" value="' . ($existing_item ? htmlspecialchars($existing_item['remarks']) : '') . '"></td>';
                                             echo '</tr>';
                                         }
                                     } else {
-                                        echo '<tr id="no-items-row"><td colspan="8">No inventory items found.</td></tr>';
+                                        echo '<tr id="no-items-row"><td colspan="9">No inventory items found.</td></tr>';
                                     }
                                     ?>
                                 </tbody>
@@ -737,6 +767,23 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
     </div>
 
     <script>
+        const requestedDate = document.querySelector('[name="date_requested"]');
+        const daysInputs = document.querySelectorAll('.days-to-consume');
+        function updateRemainingDays() {
+            daysInputs.forEach(input => {
+                if (input.dataset.manual === '1' || input.dataset.initial === '') return;
+                const start = Date.parse(input.dataset.start + 'T00:00:00Z');
+                const end = Date.parse(requestedDate.value + 'T00:00:00Z');
+                const elapsed = Number.isFinite(start) && Number.isFinite(end)
+                    ? Math.max(0, Math.round((end - start) / 86400000)) : 0;
+                input.value = Math.max(0, Number(input.dataset.initial) - elapsed);
+            });
+        }
+        daysInputs.forEach(input => input.addEventListener('input', () => {
+            input.dataset.manual = input.value === '' ? '0' : '1';
+            if (input.value === '') updateRemainingDays();
+        }));
+        requestedDate.addEventListener('change', updateRemainingDays);
         function filterItems() {
             // Get the search input value and convert to lowercase
             const searchValue = document.getElementById('itemSearch').value.toLowerCase();
@@ -776,7 +823,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 if (visibleRows === 0) {
                     // Show "no results found" message
                     noItemsRow.style.display = 'table-row';
-                    noItemsRow.innerHTML = '<td colspan="8">No items match your search criteria.</td>';
+                    noItemsRow.innerHTML = '<td colspan="9">No items match your search criteria.</td>';
                 } else {
                     // Hide the message
                     noItemsRow.style.display = 'none';

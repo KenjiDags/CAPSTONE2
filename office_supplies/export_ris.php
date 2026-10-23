@@ -352,6 +352,8 @@ $item_result = $conn->query($item_query);
         }
 
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Requisition and Issue Slip Preview" data-preview-code="RIS" data-preview-back="office_supplies/ris.php" data-preview-width="850"></script>
 </head>
 <body>
     <div class="no-print">

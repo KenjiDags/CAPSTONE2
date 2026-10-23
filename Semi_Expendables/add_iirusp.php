@@ -2,6 +2,25 @@
 require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
 
+function iiruspItemDetails(array $item): array {
+    $details = [];
+    foreach (['accumulated_impairment', 'carrying_amount', 'appraised_value', 'sales_amount'] as $field) {
+        $value = $item[$field] ?? '0';
+        if (!is_scalar($value) || !preg_match('/^\d{1,13}(\.\d{1,2})?$/D', (string)$value)) throw new InvalidArgumentException('Enter valid nonnegative item amounts with at most two decimal places.');
+        $details[$field] = (float)$value;
+    }
+    $details['disposal_mode'] = $item['disposal_mode'] ?? 'Destruction';
+    if (!in_array($details['disposal_mode'], ['Sale', 'Transfer', 'Destruction', 'Other'], true)) throw new InvalidArgumentException('Invalid disposal mode.');
+    foreach (['or_no' => 100, 'disposal_others' => 255] as $field => $limit) {
+        if (!is_string($item[$field] ?? '')) throw new InvalidArgumentException('Invalid item details.');
+        $details[$field] = trim($item[$field] ?? '');
+        if (strlen($details[$field]) > $limit) throw new InvalidArgumentException('Item details are too long.');
+    }
+    if ($details['disposal_mode'] !== 'Sale') { $details['or_no'] = ''; $details['sales_amount'] = 0; }
+    if ($details['disposal_mode'] !== 'Other') $details['disposal_others'] = '';
+    if ($details['disposal_mode'] === 'Other' && $details['disposal_others'] === '') throw new InvalidArgumentException('Specify the other disposal mode.');
+    return $details;
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Clean buffer to ensure JSON valid response
     ob_start();
@@ -55,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
 
         // C. Process Items
-        $item_stmt = $conn->prepare("INSERT INTO iirusp_items (iirusp_id, date_acquired, particulars, semi_expendable_property_no, quantity, unit, unit_cost, total_cost, disposal_sale, disposal_transfer, disposal_destruction, disposal_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $item_stmt = $conn->prepare("INSERT INTO iirusp_items (iirusp_id, date_acquired, particulars, semi_expendable_property_no, quantity, unit, unit_cost, total_cost, disposal_sale, disposal_transfer, disposal_destruction, disposal_total, remarks, accumulated_impairment, carrying_amount, appraised_value, or_no, sales_amount, disposal_others) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         // Prepare Master Update (Deduct Stock)
         $update_master = $conn->prepare("UPDATE semi_expendable_property SET quantity = quantity - ?, quantity_balance = quantity_balance - ?, quantity_disposed = quantity_disposed + ? WHERE semi_expendable_property_no = ? AND quantity >= ? AND quantity_balance >= ?");
@@ -71,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $total = $qty * $cost;
             
             // 1. Validate: Get current balance and check disposal qty
-            $check_stmt = $conn->prepare("SELECT id, quantity, quantity_balance, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE");
+            $check_stmt = $conn->prepare("SELECT id, quantity, quantity_balance, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? AND (quantity > 0 AND quantity_balance > 0) LIMIT 1 FOR UPDATE");
             $check_stmt->bind_param("s", $prop_no);
             $check_stmt->execute();
             $result = $check_stmt->get_result();
@@ -91,15 +110,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // 2. Insert Item to IIRUSP Table
-            $d_sale = (float)$item['disposal_sale'];
-            $d_trans = (float)$item['disposal_transfer'];
-            $d_destr = (float)$item['disposal_destruction'];
+            $details = iiruspItemDetails($item);
+            $d_sale = $details['disposal_mode'] === 'Sale' ? (float)$qty : 0.0;
+            $d_trans = $details['disposal_mode'] === 'Transfer' ? (float)$qty : 0.0;
+            $d_destr = $details['disposal_mode'] === 'Destruction' ? (float)$qty : 0.0;
             $d_tot = (float)$qty; // Total disposed (must be float for bind_param 'd')
             
             $unit_val = isset($item['unit']) ? $item['unit'] : '';
-            $item_stmt->bind_param("isssisdddddds", 
+            $item_stmt->bind_param("isssisddddddsdddsds",
                 $iirusp_id, $item['date_acquired'], $item['particulars'], $prop_no, $qty, $unit_val, 
-                $cost, $total, $d_sale, $d_trans, $d_destr, $d_tot, $item['remarks']
+                $cost, $total, $d_sale, $d_trans, $d_destr, $d_tot, $item['remarks'], $details['accumulated_impairment'], $details['carrying_amount'], $details['appraised_value'], $details['or_no'], $details['sales_amount'], $details['disposal_others']
             );
             
             if (!$item_stmt->execute()) {
@@ -113,10 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // 4. Add History Entry
-            $holder = !empty($master['office_officer_reissued']) ? $master['office_officer_reissued'] : 
-                      (!empty($master['office_officer_issued']) ? $master['office_officer_issued'] : 'Stock Room');
+            $holder = !empty($row['office_officer_reissued']) ? $row['office_officer_reissued'] :
+                      (!empty($row['office_officer_issued']) ? $row['office_officer_issued'] : 'Stock Room');
             $rem = "Disposed via IIRUSP " . $iirusp_no;
-            $history_stmt->bind_param("issisdds", $semi_id, $as_at, $iirusp_no, $qty, $holder, $uc, $tc, $rem);
+            $history_stmt->bind_param("issisdds", $semi_id, $as_at, $iirusp_no, $qty, $holder, $cost, $total, $rem);
             
             if (!$history_stmt->execute()) {
                 throw new Exception("Failed to log history: " . $history_stmt->error);
@@ -137,6 +157,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require dirname(__DIR__) . '/config.php';
 require dirname(__DIR__) . '/functions.php';
 ensure_iirusp_tables($conn);
+$current_user_full_name = '';
+$current_user_position = '';
+$userStmt = $conn->prepare('SELECT user_full_name, user_position FROM users WHERE user_id = ? LIMIT 1');
+$userStmt->bind_param('i', $_SESSION['user_id']);
+$userStmt->execute();
+$currentUser = $userStmt->get_result()->fetch_assoc();
+$userStmt->close();
+$current_user_full_name = $currentUser['user_full_name'] ?? '';
+$current_user_position = $currentUser['user_position'] ?? '';
+
 $officer_names = [];
 $officer_positions = [];
 $officer_result = $conn->query('SELECT DISTINCT officer_name, officer_position FROM officers WHERE LENGTH(TRIM(officer_name)) > 0 ORDER BY officer_name');
@@ -197,11 +227,11 @@ if ($officer_result) {
             <div class="form-grid">
                 <div class="form-group">
                     <label>Accountable Officer:</label>
-                    <input type="text" id="accountable_officer_name" placeholder="Name">
+                    <input type="text" id="accountable_officer_name" value="<?= htmlspecialchars($current_user_full_name, ENT_QUOTES, 'UTF-8') ?>" placeholder="Name">
                 </div>
                 <div class="form-group">
                     <label>Designation:</label>
-                    <input type="text" id="accountable_officer_designation" placeholder="Position">
+                    <input type="text" id="accountable_officer_designation" value="<?= htmlspecialchars($current_user_position, ENT_QUOTES, 'UTF-8') ?>" placeholder="Position">
                 </div>
                 <div class="form-group">
                     <label>Station:</label>
@@ -216,9 +246,9 @@ if ($officer_result) {
 
             <!-- Search Bar -->
             <div style="margin-bottom: 10px;">
-                <input type="text" id="itemSearch" class="search-input" 
+                <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input"
                     placeholder="Search Property No, Item Description, or Holder Name..." 
-                    onkeyup="filterTable()">
+                    onkeyup="filterTable()"></label>
             </div>
 
             <div class="table-frame">
@@ -226,7 +256,7 @@ if ($officer_result) {
                     <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table">
                         <thead>
                             <tr>
-                                <th style="min-width:90px;">Date Acq.</th>
+                                <th>Select</th><th style="min-width:90px;">Date Acq.</th>
                                 <th>Property No.</th>
                                 <th>Description</th>
                                 <th style="width:120px;">Held By</th>
@@ -240,37 +270,59 @@ if ($officer_result) {
                         <tbody>
                         <?php
                             // Pull items directly from semi_expendable_property for disposal
-                            $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 ORDER BY item_description";
+                            $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, unit, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount, amount_total, category, fund_cluster, remarks FROM semi_expendable_property WHERE quantity > 0 AND quantity_balance > 0 AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0))) ORDER BY item_description";
                             $res = $conn->query($sql);
                             if ($res && $res->num_rows > 0) {
                                 while ($row = $res->fetch_assoc()) {
                                     $search = strtolower($row['semi_expendable_property_no'] . " " . $row['item_description']);
     ?>
-        <tr class="item-row" data-search="<?= $search ?>">
+        <tr class="item-row" data-search="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" data-semi-id="<?= (int)$row['id'] ?>" data-stock-quantity="<?= max(0, min((int)$row['quantity'], (int)$row['quantity_balance'])) ?>"><td><input type="checkbox" class="item-checkbox" aria-label="Select <?= htmlspecialchars($row['item_description'], ENT_QUOTES, 'UTF-8') ?>" onchange="toggleIiruspItem(this)"></td>
             <td><?= htmlspecialchars($row['date']) ?></td>
             <td class="prop-cell"><?= htmlspecialchars($row['semi_expendable_property_no']) ?></td>
             <td class="desc-cell"><?= htmlspecialchars($row['item_description']) ?></td>
             <td class="holder-cell" style="font-weight:bold;">Inventory</td>
-            <td style="text-align:center; font-weight:bold; background:#e0f2fe;">
-                <?= (int)$row['quantity'] ?>
+            <td class="allocation-available" style="text-align:center; font-weight:bold; background:#e0f2fe;">
+                <?= max(0, min((int)$row['quantity'], (int)$row['quantity_balance'])) ?>
             </td>
             <td class="cost-cell" data-val="<?= $row['amount'] ?>">₱<?= number_format($row['amount'], 2) ?></td>
             <td>
-                <input type="number" class="disposal-qty" min="0" max="<?= (int)$row['quantity_balance'] ?>" placeholder="0">
+                <input type="number" class="disposal-qty" min="1" step="1" disabled max="<?= (int)$row['quantity_balance'] ?>" placeholder="0">
             </td>
             <td>
                 <input type="text" class="remarks-input" placeholder="e.g. Broken">
             </td>
             <td>
-                <select class="mode-select">
+                <select class="mode-select" onchange="syncIiruspFields(this.closest('tr'))">
                     <option value="Destruction">Destruction</option>
                     <option value="Sale">Sale</option>
-                    <option value="Transfer">Transfer</option>
+                    <option value="Transfer">Transfer</option><option value="Other">Other</option>
                 </select>
             </td>
             <td class="unit-cell" style="display:none;">
                 <?= htmlspecialchars($row['unit']) ?>
             </td>
+        </tr>
+        <tr class="item-sale-details" hidden>
+            <td colspan="10"><div class="form-grid">
+                <?php foreach (['accumulated_impairment' => 'Accumulated Impairment Losses', 'carrying_amount' => 'Carrying Amount', 'appraised_value' => 'Appraised Value'] as $field => $label): ?>
+                <div class="form-group">
+                    <label for="<?= $field ?>-<?= (int)$row['id'] ?>"><?= $label ?>:</label>
+                    <input type="number" id="<?= $field ?>-<?= (int)$row['id'] ?>" class="item-<?= $field ?>" min="0" step="0.01" value="0" disabled>
+                </div>
+                <?php endforeach; ?>
+                <div class="form-group" data-disposal-mode="Sale" hidden>
+                    <label for="or_no-<?= (int)$row['id'] ?>">O.R. No.:</label>
+                    <input type="text" id="or_no-<?= (int)$row['id'] ?>" class="sale-or-no" maxlength="100" placeholder="Official receipt number" disabled>
+                </div>
+                <div class="form-group" data-disposal-mode="Sale" hidden>
+                    <label for="sales_amount-<?= (int)$row['id'] ?>">Amount:</label>
+                    <input type="number" id="sales_amount-<?= (int)$row['id'] ?>" class="sale-amount" min="0" step="0.01" placeholder="0.00" disabled>
+                </div>
+                <div class="form-group" data-disposal-mode="Other" hidden>
+                    <label for="disposal_others-<?= (int)$row['id'] ?>">Other:</label>
+                    <input type="text" id="disposal_others-<?= (int)$row['id'] ?>" class="other-specification" maxlength="255" placeholder="Specify..." required disabled>
+                </div>
+            </div></td>
         </tr>
     <?php
                                 }
@@ -302,7 +354,7 @@ if ($officer_result) {
                 </div>
                 <div class="form-group">
                     <label>Approved By:</label>
-                    <div class="officer-name-field"><input type="text" id="approved_by" data-officer-autocomplete autocomplete="off"><div id="approved_by_dropdown" class="autocomplete-dropdown"></div></div>
+                    <div class="officer-name-field"><input type="text" id="approved_by" data-designation-target="approved_by_designation" data-officer-autocomplete autocomplete="off"><div id="approved_by_dropdown" class="autocomplete-dropdown"></div></div>
                 </div>
                 <div class="form-group">
                     <label>Approved By Designation:</label>
@@ -331,6 +383,92 @@ if ($officer_result) {
 
 <!-- JS LOGIC -->
 <script>
+let allocationSequence = 0;
+function appendRemainingAllocation(sourceRow) {
+    const row = sourceRow.cloneNode(true);
+    const details = sourceRow.nextElementSibling.cloneNode(true);
+    const suffix = '-allocation-' + (++allocationSequence);
+    row.dataset.splitAllocation = 'true';
+    row.querySelector('.item-checkbox').checked = false;
+    row.querySelector('.disposal-qty').value = '';
+    row.querySelector('.disposal-qty').setCustomValidity('');
+    row.querySelector('.remarks-input').value = '';
+    row.querySelector('.mode-select').value = 'Destruction';
+    details.querySelectorAll('input').forEach(input => {
+        const oldId = input.id;
+        input.id = oldId + suffix;
+        details.querySelectorAll('label').forEach(label => {
+            if (label.htmlFor === oldId) label.htmlFor = input.id;
+        });
+        input.value = input.classList.contains('sale-or-no') || input.classList.contains('other-specification') || input.classList.contains('sale-amount') ? '' : '0';
+        input.setCustomValidity('');
+    });
+    sourceRow.nextElementSibling.after(row, details);
+    syncIiruspFields(row);
+    return row;
+}
+function updateItemAllocations(semiId) {
+    let rows = Array.from(document.querySelectorAll('.item-row')).filter(row => row.dataset.semiId === semiId);
+    if (!rows.length) return;
+    let remaining = Number(rows[0].dataset.stockQuantity);
+    rows.forEach(row => {
+        const selected = row.querySelector('.item-checkbox').checked;
+        const input = row.querySelector('.disposal-qty');
+        const available = Math.max(0, remaining);
+        if (row.dataset.splitAllocation && !selected && available === 0) {
+            row.nextElementSibling.remove();
+            row.remove();
+            return;
+        }
+        row.querySelector('.allocation-available').textContent = available;
+        input.max = available;
+        input.setCustomValidity('');
+        const quantity = Number(input.value);
+        if (selected && Number.isInteger(quantity) && quantity > 0) {
+            if (quantity > available) input.setCustomValidity('The combined disposal quantities exceed the available stock for this item.');
+            remaining -= quantity;
+        }
+        syncIiruspFields(row);
+    });
+    rows = rows.filter(row => row.isConnected);
+    const last = rows[rows.length - 1];
+    const lastInput = last.querySelector('.disposal-qty');
+    if (remaining > 0 && last.querySelector('.item-checkbox').checked && Number(lastInput.value) > 0 && lastInput.checkValidity()) {
+        const copy = appendRemainingAllocation(last);
+        copy.querySelector('.allocation-available').textContent = remaining;
+        copy.querySelector('.disposal-qty').max = remaining;
+    }
+}
+document.getElementById('itemsTable').addEventListener('input', event => {
+    if (event.target.matches('.disposal-qty')) updateItemAllocations(event.target.closest('.item-row').dataset.semiId);
+});
+
+    function syncIiruspFields(row) {
+        const selected = row.querySelector('.item-checkbox').checked;
+        const details = row.nextElementSibling;
+        const mode = row.querySelector('.mode-select').value;
+        const quantity = row.querySelector('.disposal-qty');
+        quantity.disabled = !selected;
+        quantity.required = selected;
+        details.hidden = !selected || row.style.display === 'none';
+        details.querySelectorAll('input').forEach(input => { input.disabled = !selected; });
+        details.querySelectorAll('[data-disposal-mode]').forEach(group => {
+            const active = selected && group.dataset.disposalMode === mode;
+            group.hidden = !active;
+            group.querySelectorAll('input').forEach(input => { input.disabled = !active; });
+        });
+    }
+    function toggleIiruspItem(checkbox) {
+        const row = checkbox.closest('tr');
+        const quantity = row.querySelector('.disposal-qty');
+        if (checkbox.checked && !quantity.value && Number(quantity.max) > 0) quantity.value = '1';
+        if (!checkbox.checked) quantity.value = '';
+        syncIiruspFields(row);
+        quantity.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    document.getElementById('itemsTable').addEventListener('focusin', event => {
+        if (event.target.matches('.item-sale-details input[type="number"]') && Number(event.target.value) === 0) event.target.select();
+    });
     // 1. FILTERING
     function filterTable() {
         const input = document.getElementById('itemSearch').value.toLowerCase().trim();
@@ -340,6 +478,7 @@ if ($officer_result) {
             } else {
                 row.style.display = 'none';
             }
+            syncIiruspFields(row);
         });
     }
 
@@ -361,15 +500,24 @@ if ($officer_result) {
 
     // 3. SUBMIT
     async function submitIIRUSP() {
+        const semiIds = new Set(Array.from(document.querySelectorAll('.item-row'), row => row.dataset.semiId));
+        semiIds.forEach(updateItemAllocations);
+        const selected = Array.from(document.querySelectorAll('.item-row')).filter(row => row.querySelector('.item-checkbox').checked);
+        for (const row of selected) {
+            syncIiruspFields(row);
+            for (const input of [row.querySelector('.disposal-qty'), ...row.nextElementSibling.querySelectorAll('input:not(:disabled)')]) {
+                if (!input.reportValidity()) return;
+            }
+        }
         const items = [];
         
         document.querySelectorAll('.item-row').forEach(row => {
             const qty = parseInt(row.querySelector('.disposal-qty').value) || 0;
             
-            if (qty > 0) {
+            if (qty > 0 && row.querySelector('.item-checkbox').checked) {
                 const mode = row.querySelector('.mode-select').value;
                 items.push({
-                    date_acquired: row.cells[0].innerText.trim(),
+                    date_acquired: row.cells[1].innerText.trim(),
                     property_no: row.querySelector('.prop-cell').innerText.trim(),
                     particulars: row.querySelector('.desc-cell').innerText.trim(),
                     unit: row.querySelector('.unit-cell').innerText.trim(),
@@ -377,6 +525,13 @@ if ($officer_result) {
                     quantity: qty,
                     remarks: row.querySelector('.remarks-input').value.trim(),
                     
+                    disposal_mode: mode,
+                    accumulated_impairment: row.nextElementSibling.querySelector('.item-accumulated_impairment').value || '0',
+                    carrying_amount: row.nextElementSibling.querySelector('.item-carrying_amount').value || '0',
+                    appraised_value: row.nextElementSibling.querySelector('.item-appraised_value').value || '0',
+                    or_no: mode === 'Sale' ? row.nextElementSibling.querySelector('.sale-or-no').value.trim() : '',
+                    sales_amount: mode === 'Sale' ? (row.nextElementSibling.querySelector('.sale-amount').value || '0') : '0',
+                    disposal_others: mode === 'Other' ? row.nextElementSibling.querySelector('.other-specification').value.trim() : '',
                     // Map Modes
                     disposal_destruction: (mode === 'Destruction') ? qty : 0,
                     disposal_sale: (mode === 'Sale') ? qty : 0,

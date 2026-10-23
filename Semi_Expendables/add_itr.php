@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
               <!-- Dynamically populate categories if needed -->
             </select>
             <div class="search-container" style="margin-left:16px;">
-              <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()" style="width:320px; max-width:100%;">
+              <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()" style="width:320px; max-width:100%;"></label>
             </div>
           </div>
           <div class="table-frame">
@@ -227,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
               $sql = "SELECT ii.*, i.ics_no, i.date_issued
                         FROM ics_items ii
                         INNER JOIN ics i ON i.ics_id = ii.ics_id
+                        WHERE ((NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = ii.stock_number COLLATE utf8mb4_general_ci) OR EXISTS (SELECT 1 FROM semi_expendable_property serviceable WHERE serviceable.semi_expendable_property_no COLLATE utf8mb4_general_ci = ii.stock_number COLLATE utf8mb4_general_ci AND (COALESCE(serviceable.quantity, 0) > 0 AND (COALESCE(serviceable.quantity_balance, 0) > 0 OR COALESCE(serviceable.quantity_issued, 0) > 0 OR COALESCE(serviceable.quantity_reissued, 0) > 0)))) AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = ii.inventory_item_no COLLATE utf8mb4_general_ci) OR EXISTS (SELECT 1 FROM semi_expendable_property serviceable WHERE serviceable.semi_expendable_property_no COLLATE utf8mb4_general_ci = ii.inventory_item_no COLLATE utf8mb4_general_ci AND (COALESCE(serviceable.quantity, 0) > 0 AND (COALESCE(serviceable.quantity_balance, 0) > 0 OR COALESCE(serviceable.quantity_issued, 0) > 0 OR COALESCE(serviceable.quantity_reissued, 0) > 0)))))
                         ORDER BY i.date_issued DESC, ii.ics_item_id DESC";
               $result = $conn->query($sql);
               if ($result && $result->num_rows > 0) {

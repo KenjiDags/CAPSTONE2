@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_GET['save'])) {
 }
 
 // Build semi-expendable quick list for ICS numbers
-$semi=[]; $q=$conn->query("SELECT semi_expendable_property_no,item_description,amount,office_officer_issued FROM semi_expendable_property ORDER BY item_description");
+$semi=[]; $q=$conn->query("SELECT semi_expendable_property_no,item_description,amount,office_officer_issued FROM semi_expendable_property WHERE (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0))) ORDER BY item_description");
 if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 ?>
 <!DOCTYPE html>
@@ -211,14 +211,14 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 <body>
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
   <div class="container">
-    <h2>Edit RRSP Form</h2>
+    <h2><i class="fas fa-pen" aria-hidden="true"></i> Edit RRSP Form</h2>
 
     <form method="post" action="" class="inventory-item-form no-number-spinners">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <input type="hidden" name="rrsp_id" value="<?php echo $rrsp_id; ?>">
       
       <div class="section-card">
-        <h3 class="form-section-heading">RRSP Details</h3>
+        <h3 class="form-section-heading"><i class="fas fa-info-circle" aria-hidden="true"></i> RRSP Details</h3>
         <div class="form-grid">
           <div class="form-group">
             <label>Entity Name: <span class="required-indicator" aria-hidden="true">*</span></label>
@@ -242,10 +242,10 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       </div>
 
       <div class="section-card">
-        <h3 class="form-section-heading">RRSP Items</h3>
+        <h3 class="form-section-heading"><i class="fas fa-boxes-stacked" aria-hidden="true"></i> RRSP Items</h3>
         
         <div class="search-container">
-          <input type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()">
+          <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()"></label>
         </div>
         
         <div class="table-frame">
@@ -298,7 +298,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
       </div>
 
       <div class="section-card">
-        <h3 class="form-section-heading">Signatories</h3>
+        <h3 class="form-section-heading"><i class="fas fa-pen-nib" aria-hidden="true"></i> Signatories</h3>
         <div class="form-grid">
           <div class="form-group">
             <label>Returned By: <span class="required-indicator" aria-hidden="true">*</span></label>

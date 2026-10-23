@@ -105,6 +105,8 @@ $stmt->close();
     .meta-line { border-bottom:1px solid #000; display:inline-block; width:100%; height:14px; vertical-align:bottom; }
 
   </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Property Card Preview" data-preview-code="SPC" data-preview-back="Semi_Expendables/PC_semi.php" data-preview-width="1200"></script>
 </head>
 <body>
   <div class="no-print">

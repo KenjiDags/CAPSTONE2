@@ -36,7 +36,8 @@ function rsmiRecap(array $rows): array {
         $key = 'stock:' . $row['stock_number'];
         if (!isset($groups[$key])) {
             $groups[$key] = ['stock_number' => $row['stock_number'], 'total_issued' => 0,
-                'avg_unit_cost' => 0, 'total_cost' => 0, 'count' => 0];
+                'avg_unit_cost' => 0, 'total_cost' => 0, 'count' => 0,
+                'uacs_object_code' => $row['uacs_object_code'] ?? ''];
         }
         $groups[$key]['total_issued'] += (float)$row['issued_quantity'];
         $groups[$key]['avg_unit_cost'] += (float)$row['unit_cost'];

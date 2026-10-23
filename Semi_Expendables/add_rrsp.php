@@ -43,7 +43,7 @@ function rrspReturnOptions(mysqli $conn): array {
       sp.id AS semi_id, LEAST(ii.quantity, COALESCE(sp.quantity_issued, ii.quantity)) AS available_qty
       FROM ics_items ii JOIN ics i ON i.ics_id = ii.ics_id
       JOIN semi_expendable_property sp ON sp.semi_expendable_property_no = ii.stock_number
-      WHERE ii.quantity > 0 AND sp.quantity_issued > 0
+      WHERE ii.quantity > 0 AND sp.quantity_issued > 0 AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = sp.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(sp.quantity, 0) > 0 AND (COALESCE(sp.quantity_balance, 0) > 0 OR COALESCE(sp.quantity_issued, 0) > 0 OR COALESCE(sp.quantity_reissued, 0) > 0)))
       ORDER BY i.date_issued DESC, ii.ics_item_id DESC");
   foreach ($issued as $row) {
     $options[] = ['source_type' => 'issued', 'source_id' => (int)$row['ics_item_id'],
@@ -64,7 +64,7 @@ function rrspReturnOptions(mysqli $conn): array {
             OR source.stock_number = sp.semi_expendable_property_no)
         ORDER BY document.itr_date DESC, ti.itr_id DESC, ti.itr_item_id DESC LIMIT 1
       )
-      WHERE sp.quantity_reissued > 0
+      WHERE sp.quantity_reissued > 0 AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = sp.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(sp.quantity, 0) > 0 AND (COALESCE(sp.quantity_balance, 0) > 0 OR COALESCE(sp.quantity_issued, 0) > 0 OR COALESCE(sp.quantity_reissued, 0) > 0)))
       ORDER BY sp.item_description");
   foreach ($register as $row) {
     $options[] = ['source_type' => 'transferred', 'source_id' => (int)$row['id'],
@@ -277,7 +277,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
     <div class="section-card">
       <h3 class="form-section-heading"><i class="fa-solid fa-boxes-stacked"></i> RRSP Items</h3>
       <div class="search-container">
-        <input type="text" id="itemSearch" class="search-input" placeholder="Search issued or transferred items by property number, description, or holder..." onkeyup="filterItems()">
+        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Search issued or transferred items by property number, description, or holder..." onkeyup="filterItems()"></label>
       </div>
       <div class="items-selection">
         <div class="table-viewport">

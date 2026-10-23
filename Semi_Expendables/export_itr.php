@@ -194,6 +194,8 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
     .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
     .back-button:hover { background: #545b62; }
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Inventory Transfer Report Preview" data-preview-code="ITR" data-preview-back="Semi_Expendables/itr.php" data-preview-width="1100"></script>
 </head>
 <body>
     <div class="no-print">

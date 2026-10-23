@@ -238,6 +238,8 @@ $verified_by = $export_data['verified_by'] ?? '';
     }
 
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Physical Count of PPE Preview" data-preview-code="RPCPPE" data-preview-back="PPE/RPCPPE.php" data-preview-width="1500"></script>
 </head>
 <body>
 

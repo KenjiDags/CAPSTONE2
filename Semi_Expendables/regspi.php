@@ -1,626 +1,112 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
-require dirname(__DIR__) . '/config.php';
-require_once dirname(__DIR__) . '/functions.php';
 require dirname(__DIR__) . '/auth.php';
-
-
-$rows = [];
-
-// Read selected category from query string ("All" or empty => no filtering)
-$selected_category = isset($_GET['category']) ? trim($_GET['category']) : '';
-if ($selected_category === 'All') { $selected_category = ''; }
-
-// Build ICS-based dataset
-$sql = "
-    SELECT
-        i.date_issued AS date,
-        i.ics_no AS ics_rrsp_no,
-        ii.stock_number AS property_no,
-        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, ii.description) AS item_description,
-        COALESCE(sep.estimated_useful_life, ii.estimated_useful_life, '') AS useful_life,
-        ii.quantity AS issued_qty,
-        i.received_by AS issued_office,
-        0 AS returned_qty,
-        '' AS returned_office,
-        0 AS reissued_qty,
-        '' AS reissued_office,
-        0 AS disposed_qty,
-        GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
-        COALESCE(sep.amount, ii.unit_cost) * ii.quantity AS amount_total,
-        '' AS remarks,
-        0 AS row_type
-    FROM ics i
-    INNER JOIN ics_items ii ON ii.ics_id = i.ics_id
-    LEFT JOIN semi_expendable_property sep 
-        ON sep.semi_expendable_property_no = ii.stock_number COLLATE utf8mb4_general_ci
-    WHERE ii.quantity > 0
-
-    UNION ALL
-
-    SELECT
-        r.date_prepared AS date,
-        r.rrsp_no AS ics_rrsp_no,
-        rii.ics_no AS property_no,
-        COALESCE(NULLIF(sep.remarks, ''), sep.item_description, rii.item_description) AS item_description,
-        COALESCE(sep.estimated_useful_life, '') AS useful_life,
-        0 AS issued_qty,
-        '' AS issued_office,
-        rii.quantity AS returned_qty,
-        r.returned_by AS returned_office,
-        0 AS reissued_qty,
-        '' AS reissued_office,
-        0 AS disposed_qty,
-        GREATEST(0, COALESCE(sep.quantity, 0) - (COALESCE(sep.quantity_issued, 0) + COALESCE(sep.quantity_reissued, 0) + COALESCE(sep.quantity_disposed, 0))) AS balance_qty,
-        COALESCE(sep.amount, rii.unit_cost) * rii.quantity AS amount_total,
-        r.remarks AS remarks,
-        1 AS row_type
-    FROM rrsp r
-    INNER JOIN rrsp_items rii ON rii.rrsp_id = r.rrsp_id
-    LEFT JOIN semi_expendable_property sep 
-        ON sep.semi_expendable_property_no = rii.ics_no COLLATE utf8mb4_general_ci
-    WHERE rii.quantity > 0
-";
-
-$binds = [];
-$types = '';
-if ($selected_category !== '' && columnExists($conn, 'semi_expendable_property', 'category')) {
-    $sql .= " AND sep.category = ?";
-    $binds[] = $selected_category;
-    $types .= 's';
-}
-$sql .= " ORDER BY STR_TO_DATE(date, '%Y-%m-%d') ASC, row_type ASC, ics_rrsp_no ASC";
-
-if (!empty($binds)) {
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param($types, ...$binds);
-        if ($stmt->execute()) {
-            $res = $stmt->get_result();
-            while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-            $res->close();
-        }
-        $stmt->close();
-    }
-} else {
-    if ($res = $conn->query($sql)) {
-        while ($r = $res->fetch_assoc()) { $rows[] = $r; }
-        $res->close();
-    }
+// Page-local RegSPI functions; saving reports does not change inventory.
+function regspiH($value): string {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-if (!empty($rows)) {
-    foreach ($rows as &$__r) {
-        $rm = isset($__r['remarks']) ? trim((string)$__r['remarks']) : '';
-        if ($rm !== '' && preg_match('/initial\s+(receipt|report)/i', $rm)) {
-            $__r['remarks'] = '';
-        }
-    }
-    unset($__r);
+function regspiSchema(): string {
+    return "CREATE TABLE IF NOT EXISTS regspi_reports (
+        regspi_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        report_date DATE NOT NULL,
+        entity_name VARCHAR(255) NOT NULL,
+        fund_cluster VARCHAR(255) NOT NULL,
+        category VARCHAR(255) NOT NULL,
+        item_count INT UNSIGNED NOT NULL,
+        snapshot LONGTEXT NOT NULL,
+        created_by INT NOT NULL,
+        save_token CHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY regspi_save_token (save_token),
+        KEY regspi_report_date (report_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 }
+
+function regspiEnsureTable(mysqli $conn): void {
+    $conn->query(regspiSchema());
+}
+
+regspiEnsureTable($conn);
+$search = is_string($_GET['search'] ?? '') ? trim($_GET['search'] ?? '') : '';
+$sort = is_string($_GET['sort'] ?? '') ? ($_GET['sort'] ?? 'newest') : 'newest';
+$orders = ['newest' => 'report_date DESC, regspi_id DESC', 'oldest' => 'report_date ASC, regspi_id ASC', 'document_no' => 'regspi_id ASC'];
+if (!isset($orders[$sort])) $sort = 'newest';
+$stmt = $conn->prepare("SELECT regspi_id, report_date, entity_name, fund_cluster, category, item_count, created_at
+    FROM regspi_reports
+    WHERE entity_name LIKE ? OR category LIKE ? OR fund_cluster LIKE ?
+       OR CONCAT('REGSPI-', LPAD(regspi_id, GREATEST(4, CHAR_LENGTH(regspi_id)), '0')) LIKE ?
+    ORDER BY " . $orders[$sort]);
+$like = '%' . $search . '%';
+$stmt->bind_param('ssss', $like, $like, $like, $like);
+$stmt->execute();
+$reports = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
+    <base href="<?= regspiH(APP_ROOT_URL) ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registry of Semi-Expendable Property Issued</title>
+    <title>RegSPI Documents</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/fixed_head.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="Semi_Expendables/js/regspi_script.js?v=<?= time() ?>" defer></script>
-    <style>
-        /* Page-Specific Icon */
-        .container h2::before {
-            content: "\f0f6";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #3b82f6;
-        }
-        
-        /* Make the main REGSPI table scrollable */
-        .rsep-table-container { margin-top: 0; }
-        .rsep-table-wrapper {
-            max-height: 520px; 
-            overflow-y: auto; 
-            overflow-x: auto;
-            border: 1px solid #e5e7eb;
-            border-top: 0; 
-            border-radius: 0 0 8px 8px; 
-            -webkit-overflow-scrolling: touch;
-            scrollbar-gutter: stable; 
-            background: var(--white); 
-            position: relative; 
-        }
-        body.dark-mode .table-wrapper {
-            background: transparent !important;
-            border: none !important;
-        }
-
-        body.dark-mode .rsep-form {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        body.dark-mode .rsep-table-wrapper {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        body.dark-mode .rsep-table-wrapper {
-            scrollbar-color: #475569 #0f172a;
-            scrollbar-width: thin;
-        }
-        body.dark-mode .rsep-table-wrapper::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-        body.dark-mode .rsep-table-wrapper::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        body.dark-mode .rsep-table-wrapper::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 6px;
-            border: 2px solid #0f172a;
-        }
-        .rsep-table-container, .rsep-table-wrapper, .rsep-table {
-            border-top-left-radius: 0 !important;
-            border-top-right-radius: 0 !important;
-        }
-    .rsep-table { width: 100%; border-collapse: collapse; }
-    .rsep-table { overflow: visible !important; border-radius: 0 !important; background: transparent !important; margin-top: 0 !important; }
-    .rsep-table th, .rsep-table td { border: 0px solid #e5e7eb; padding: 6px 8px; }
-       body.dark-mode .rsep-table thead th {
-        border: 1px solid #475569 !important;
-        }
-
-        .rsep-table thead th {
-            position: sticky !important;
-            top: 0; 
-            z-index: 2;
-            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important; 
-            color: #fff !important;
-            height: 40px;
-            line-height: 1.2;
-            font-weight: 600 !important;
-            text-align: center !important;
-        }
-    .rsep-table thead tr:nth-child(1) th { z-index: 5; }
-    .rsep-table thead tr:nth-child(2) th { z-index: 4; }
-    .rsep-table thead tr:nth-child(3) th { z-index: 3; }
-
-        .rsep-table-wrapper.scrolling .rsep-table thead th {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .rsep-table-wrapper .rsep-table tbody tr:first-child td { border-top: 2px solid #002d80; }
-
-        .search-container .export-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            height: 44px;
-            padding: 0 16px;
-            line-height: 1;
-        }
-            .container > .table-wrapper { margin-top: 0; }
-            .rsep-form { margin-top: 0; margin-bottom: 8px; }
-    </style>
 </head>
 <body>
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
-    <div class="container">
-        <h2>Registry of Semi-Expendable Property Issued</h2>
-
-        <div class="table-wrapper">
-            <!-- Header Form -->
-            <div class="rsep-form">
-                <div class="form-fields">
-                    <div class="field-group">
-                        <label for="entity-name">Entity Name:</label>
-                        <input type="text" id="entity-name" name="entity_name" value="TESDA Regional Office">
-                    </div>
-                    <div class="field-group">
-                        <label for="fund-cluster">Fund Cluster:</label>
-                        <input type="text" id="fund-cluster" name="fund_cluster" value="101">
-                    </div>
-                    <div class="field-group">
-                        <label for="semi-expendable-property">Semi-Expendable Property:</label>
-                        <select id="semi-expendable-property" name="semi_expendable_property">
-                            <?php
-                            // Build category list
-                            $categories = [];
-                            if (function_exists('columnExists') && columnExists($conn, 'semi_expendable_property', 'category')) {
-                                if ($resCat = $conn->query("SELECT DISTINCT category FROM semi_expendable_property WHERE category IS NOT NULL AND category <> '' ORDER BY category ASC")) {
-                                    while ($rowCat = $resCat->fetch_assoc()) { $categories[] = $rowCat['category']; }
-                                    $resCat->close();
-                                }
-                            } else {
-                                // Fallback baseline categories if column missing
-                                $categories = ['ICT Equipment','Office Equipment','Other PPE'];
-                            }
-                            // Render options with persistence; default to All when no selection
-                            echo '<option value="All"' . ($selected_category === '' ? ' selected' : '') . '>All</option>';
-                            foreach ($categories as $cat) {
-                                $sel = ($selected_category !== '' && strcasecmp($selected_category, $cat) === 0) ? ' selected' : '';
-                                echo '<option value="' . htmlspecialchars($cat) . '"' . $sel . '>' . htmlspecialchars($cat) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-
-            <!-- Controls copied from RPCI -->
-            <div class="table-controls" style="margin: 12px 0; display:flex; gap:8px; align-items:center;">
-                <label for="rsep_row_limit">Show:</label>
-                <select id="rsep_row_limit" aria-label="Rows to display">
-                    <option value="5" selected>5</option>
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="all">All</option>
+<div class="container">
+    <h2>Registry of Semi-Expendable Property Issued</h2>
+    <?php if (isset($_GET['saved'])): ?><div class="alert alert-success" role="status">RegSPI document saved successfully.</div><?php endif; ?>
+    <form method="get" action="Semi_Expendables/regspi.php" class="filters">
+        <div class="inventory-controls">
+            <div class="control-sort">
+                <label for="sort-select"><i class="fas fa-sort"></i> Sort By:</label>
+                <select id="sort-select" name="sort" onchange="this.form.submit()">
+                    <?php foreach (['newest' => 'Date (Newest First)', 'oldest' => 'Date (Oldest First)', 'document_no' => 'Document No. (Ascending)'] as $key => $label): ?>
+                    <option value="<?= $key ?>" <?= $sort === $key ? 'selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
-
-            <!-- Main Table (single table like RPCI) -->
-            <div class="rsep-table-container">
-                <div class="rsep-table-wrapper">
-                    <table class="rsep-table" id="rsep-table">
-                        <thead>
-                            <tr>
-                                <th rowspan="3">Date</th>
-                                <th colspan="2">Reference</th>
-                                <th rowspan="3">Item Description</th>
-                                <th rowspan="3">Estimated Useful Life</th>
-                                <th colspan="2">Issued</th>
-                                <th colspan="2">Returned</th>
-                                <th colspan="2">Re-issued</th>
-                                <th colspan="1">Disposed</th>
-                                <th rowspan="3">Balance Qty.</th>
-                                <th rowspan="3">Amount (TOTAL)</th>
-                                <th rowspan="3">Remarks</th>
-                            </tr>
-                            <tr>
-                                <th rowspan="2">ICS/RRSP No.</th>
-                                <th rowspan="2">Semi-Expendable Property No.</th>
-                                <th rowspan="2">Qty.</th>
-                                <th rowspan="2">Office/Officer</th>
-                                <th rowspan="2">Qty.</th>
-                                <th rowspan="2">Office/Officer</th>
-                                <th rowspan="2">Qty.</th>
-                                <th rowspan="2">Office/Officer</th>
-                                <th rowspan="2">Qty.</th>
-                            </tr>
-                            <tr>
-                                <!-- Empty row for proper header structure -->
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                                <?php if (count($rows) > 0): ?>
-                                    <?php foreach ($rows as $row): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($row['date']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['ics_rrsp_no']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['property_no']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['item_description']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['useful_life']); ?></td>
-                                            <td><?php echo (int)($row['issued_qty'] ?? 0); ?></td>
-                                            <td><?php echo htmlspecialchars($row['issued_office'] ?? '-'); ?></td>
-                                            <td><?php echo (int)($row['returned_qty'] ?? 0); ?></td>
-                                            <td><?php echo htmlspecialchars($row['returned_office'] ?? '-'); ?></td>
-                                            <td><?php echo (int)($row['reissued_qty'] ?? 0); ?></td>
-                                            <td><?php echo htmlspecialchars($row['reissued_office'] ?? '-'); ?></td>
-                                            <td><?php echo (int)($row['disposed_qty1'] ?? 0); ?></td>
-                                            <td><?php echo (int)($row['balance_qty'] ?? 0); ?></td>
-                                            <td><?php echo '₱' . number_format((float)($row['amount_total'] ?? 0), 2); ?></td>
-                                            <td><?php echo htmlspecialchars($row['remarks'] ?? '-'); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="15" style="text-align:center;">No records found.</td></tr>
-                                <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="control-search">
+                <label for="searchInput"><i class="fas fa-search"></i> Search:</label>
+                <input type="search" id="searchInput" name="search" value="<?= regspiH($search) ?>" placeholder="Search document no., entity, fund, or category...">
+                <button type="submit" class="pill-btn pill-view">Search</button>
+            </div>
+            <div class="control-actions">
+                <a href="Semi_Expendables/add_regspi.php" class="pill-btn pill-add"><i class="fas fa-plus"></i> Add RegSPI Document</a>
             </div>
         </div>
-
-            <div class="search-container" style="display:flex; justify-content:center;">
-                <button type="button" class="export-btn" onclick="openExport()">
-                    <i class="fas fa-file-pdf"></i> Export to PDF
-                </button>
-            </div>
-
+    </form>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>Document No.</th><th>Report Date</th><th>Entity Name</th><th>Fund Cluster</th><th>Property Category</th><th>Rows</th><th>Actions</th></tr></thead>
+            <tbody>
+                <?php foreach ($reports as $report): ?>
+                <tr>
+                    <td><strong>REGSPI-<?= str_pad((string)$report['regspi_id'], 4, '0', STR_PAD_LEFT) ?></strong></td>
+                    <td><?= regspiH($report['report_date']) ?></td>
+                    <td><?= regspiH($report['entity_name']) ?></td>
+                    <td><?= regspiH($report['fund_cluster']) ?></td>
+                    <td><?= regspiH($report['category'] ?: 'All') ?></td>
+                    <td><?= (int)$report['item_count'] ?></td>
+                    <td class="actions-cell">
+                        <div class="actions-menu">
+                            <button type="button" class="actions-menu-toggle" aria-label="Open RegSPI actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                            <div class="actions-menu-list">
+                                <a href="Semi_Expendables/view_regspi.php?regspi_id=<?= (int)$report['regspi_id'] ?>"><i class="fas fa-eye"></i> View</a>
+                                <a href="Semi_Expendables/export_regspi.php?regspi_id=<?= (int)$report['regspi_id'] ?>"><i class="fas fa-download"></i> Export</a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if (!$reports): ?><tr><td colspan="7"><?= $search !== '' ? 'No matching RegSPI documents found.' : 'No saved RegSPI documents yet. Click Add RegSPI Document to create one.' ?></td></tr><?php endif; ?>
+            </tbody>
+        </table>
     </div>
-
-
-
-    <!-- Modal for Adding Items -->
-    <div class="modal-overlay" id="itemModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Add New Item</h3>
-                <button class="modal-close" id="closeModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form class="modal-form" id="itemForm">
-            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
-                    <div class="modal-field">
-                        <label for="itemDate">Date: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <input type="date" id="itemDate" name="date" required>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="icsRrspNo">ICS/RRSP No.: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <input type="text" id="icsRrspNo" name="ics_rrsp_no" placeholder="Enter ICS/RRSP Number" required>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="propertyNo">Semi-Expendable Property No.: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <input type="text" id="propertyNo" name="property_no" placeholder="Enter Property Number" required>
-                    </div>
-                    
-                    <div class="modal-field full-width">
-                        <label for="itemDescription">Item Description: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <textarea id="itemDescription" name="item_description" placeholder="Enter detailed item description" required></textarea>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="usefulLife">Estimated Useful Life: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <input type="text" id="usefulLife" name="useful_life" placeholder="e.g., 5 Years" required>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="issuedQty">Issued Quantity: <span class="required-indicator" aria-hidden="true">*</span></label>
-                        <input type="number" id="issuedQty" name="issued_qty" placeholder="0" min="0" required>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="issuedOffice">Issued Office/Officer:</label>
-                        <input type="text" id="issuedOffice" name="issued_office" placeholder="Enter office or officer name">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="returnedQty">Returned Quantity:</label>
-                        <input type="number" id="returnedQty" name="returned_qty" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="returnedOffice">Returned Office/Officer:</label>
-                        <input type="text" id="returnedOffice" name="returned_office" placeholder="Enter office or officer name">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="reissuedQty">Re-issued Quantity:</label>
-                        <input type="number" id="reissuedQty" name="reissued_qty" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="reissuedOffice">Re-issued Office/Officer:</label>
-                        <input type="text" id="reissuedOffice" name="reissued_office" placeholder="Enter office or officer name">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="disposedQty">Disposed Quantity:</label>
-                        <input type="number" id="disposedQty" name="disposed_qty" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="balanceQty">Balance Quantity:</label>
-                        <input type="number" id="balanceQty" name="balance_qty" placeholder="0" min="0" readonly>
-                    </div>
-                    
-                    <div class="modal-field">
-                        <label for="amount">Amount (Total):</label>
-                        <input type="text" id="amount" name="amount" placeholder="₱0.00">
-                    </div>
-                    
-                    <div class="modal-field full-width">
-                        <label for="remarks">Remarks:</label>
-                        <textarea id="remarks" name="remarks" placeholder="Enter any additional remarks or notes"></textarea>
-                    </div>
-                </form>
-                
-                <div class="modal-actions">
-                    <button type="button" class="modal-btn secondary" id="cancelBtn">Cancel</button>
-                    <button type="submit" class="modal-btn primary" id="addItemBtn">Add Item</button>
-                </div>
-                
-            </div>
-        </div>
-    </div>
-    
-    
-
-    <script>
-        // Modal functionality
-    const modal = document.getElementById('itemModal');
-    const addItemsBtn = document.getElementById('addItemsBtn');
-        const closeModal = document.getElementById('closeModal');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const addItemBtn = document.getElementById('addItemBtn');
-        const itemForm = document.getElementById('itemForm');
-        const tableBody = document.getElementById('tableBody');
-
-        // Open modal (only if Add button exists)
-        if (addItemsBtn) {
-            addItemsBtn.addEventListener('click', function() {
-                modal.classList.add('show');
-                // Set today's date as default
-                document.getElementById('itemDate').valueAsDate = new Date();
-            });
-        }
-
-        // Close modal functions
-        function closeModalFunc() {
-            modal.classList.remove('show');
-            itemForm.reset();
-        }
-
-        closeModal.addEventListener('click', closeModalFunc);
-        cancelBtn.addEventListener('click', closeModalFunc);
-
-        // Close modal when clicking outside
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeModalFunc();
-            }
-        });
-
-        // Auto-calculate balance quantity
-        function calculateBalance() {
-            const issued = parseInt(document.getElementById('issuedQty').value) || 0;
-            const returned = parseInt(document.getElementById('returnedQty').value) || 0;
-            const reissued = parseInt(document.getElementById('reissuedQty').value) || 0;
-            const disposed = parseInt(document.getElementById('disposedQty').value) || 0;
-            
-            const balance = issued - returned - reissued - disposed;
-            document.getElementById('balanceQty').value = Math.max(0, balance);
-        }
-
-        // Add event listeners for auto-calculation
-        ['issuedQty', 'returnedQty', 'reissuedQty', 'disposedQty'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateBalance);
-        });
-
-        // Add item to table
-        addItemBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(itemForm);
-            const data = Object.fromEntries(formData);
-            
-            // Validate required fields
-            if (!data.date || !data.ics_rrsp_no || !data.property_no || !data.item_description || !data.useful_life || !data.issued_qty) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-
-            // Create new row
-            const newRow = tableBody.insertRow();
-            newRow.innerHTML = `
-                <td>${data.date}</td>
-                <td>${data.ics_rrsp_no}</td>
-                <td>${data.property_no}</td>
-                <td>${data.item_description}</td>
-                <td>${data.useful_life}</td>
-                <td>${data.issued_qty}</td>
-                <td>${data.issued_office || '-'}</td>
-                <td>${data.returned_qty || '0'}</td>
-                <td>${data.returned_office || '-'}</td>
-                <td>${data.reissued_qty || '0'}</td>
-                <td>${data.reissued_office || '-'}</td>
-                <td>${data.disposed_qty || '0'}</td>
-                <td>${data.balance_qty || '0'}</td>
-                <td>${data.amount || '-'}</td>
-                <td>${data.remarks || '-'}</td>
-            `;
-
-            // Close modal and reset form
-            closeModalFunc();
-            
-            // Show success message
-            alert('Item added successfully!');
-        });
-    </script>
-    <script>
-    // Category filter: reload page with ?category=
-    document.addEventListener('DOMContentLoaded', function() {
-        const sel = document.getElementById('semi-expendable-property');
-        if (!sel) return;
-        sel.addEventListener('change', function() {
-            const val = sel.value || '';
-            const params = new URLSearchParams(window.location.search);
-            if (val && val !== 'All') {
-                params.set('category', val);
-            } else {
-                params.delete('category');
-            }
-            const qs = params.toString();
-            window.location.assign(window.location.pathname + (qs ? ('?' + qs) : ''));
-        });
-    });
-    </script>
-    <script>
-    // RPCI-like: Show N rows control adjusting wrapper height dynamically
-    document.addEventListener('DOMContentLoaded', () => {
-        const limitSelect = document.getElementById('rsep_row_limit');
-        const wrapper = document.querySelector('.rsep-table-wrapper');
-        const table = document.getElementById('rsep-table');
-        const thead = table ? table.querySelector('thead') : null;
-
-        function applyLimit() {
-            if (!limitSelect || !wrapper || !thead || !table) return;
-            const val = limitSelect.value;
-            const sampleRow = table.querySelector('tbody tr:not([style*="display: none"])') || table.querySelector('tbody tr');
-            if (!sampleRow) return;
-            const headerHeight = thead.getBoundingClientRect().height;
-            const rowHeight = sampleRow.getBoundingClientRect().height || 36;
-            if (val === 'all') {
-                wrapper.style.maxHeight = 'none';
-            } else {
-                const count = parseInt(val, 10);
-                wrapper.style.maxHeight = `${headerHeight + rowHeight * count}px`;
-            }
-        }
-
-        if (limitSelect) {
-            limitSelect.addEventListener('change', applyLimit);
-        }
-        applyLimit();
-        window.addEventListener('resize', applyLimit);
-    });
-    </script>
-    <script>
-    // RPCI-like: offset header rows so multi-row thead stays stacked while sticky
-    document.addEventListener('DOMContentLoaded', () => {
-        const thead = document.querySelector('#rsep-table thead');
-        if (!thead) return;
-
-        function offsetHeaderRows() {
-            const rows = thead.querySelectorAll('tr');
-            if (!rows || rows.length === 0) return;
-
-            const first = rows[0];
-            const firstH = first.getBoundingClientRect().height;
-            // Second row under first
-            const secondThs = thead.querySelectorAll('tr:nth-child(2) th');
-            secondThs.forEach(th => { th.style.top = firstH + 'px'; });
-
-            // Third row under first+second (if present)
-            const second = rows[1];
-            const thirdThs = thead.querySelectorAll('tr:nth-child(3) th');
-            if (second && thirdThs.length) {
-                const secondH = second.getBoundingClientRect().height;
-                const total = firstH + secondH;
-                thirdThs.forEach(th => { th.style.top = total + 'px'; });
-            }
-        }
-
-        offsetHeaderRows();
-        window.addEventListener('resize', offsetHeaderRows);
-    });
-    </script>
-    <script>
-    // Toggle shadow on sticky header when the table is scrolled
-    document.addEventListener('DOMContentLoaded', () => {
-        const wrapper = document.querySelector('.rsep-table-wrapper');
-        if (!wrapper) return;
-        const onScroll = () => {
-            if (wrapper.scrollTop > 0) {
-                wrapper.classList.add('scrolling');
-            } else {
-                wrapper.classList.remove('scrolling');
-            }
-        };
-        wrapper.addEventListener('scroll', onScroll);
-        onScroll(); // initialize state
-    });
-    </script>
-    
-
-
+</div>
+<script src="js/actions_menu.js"></script>
 </body>
 </html>

@@ -351,7 +351,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                                 <option value="all">All</option>
                             </select>
                             <div class="search-container" style="margin-left: 24px;">
-                                <input type="text" id="searchInput" class="search-input" placeholder="Search by PAR number, item name, or description...">
+                                <label class="compact-search-field" for="searchInput"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="searchInput" class="search-input" placeholder="Search by PAR number, item name, or description..."></label>
                             </div>
                     </div>
 

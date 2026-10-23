@@ -278,6 +278,10 @@ function ensure_iirusp_tables($conn) {
         disposal_total DECIMAL(15,2) NOT NULL DEFAULT 0,
         accumulated_impairment DECIMAL(15,2) NOT NULL DEFAULT 0,
         carrying_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        disposal_others VARCHAR(255) NULL,
+        appraised_value DECIMAL(15,2) NOT NULL DEFAULT 0,
+        or_no VARCHAR(100) NULL,
+        sales_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
         remarks TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -286,6 +290,17 @@ function ensure_iirusp_tables($conn) {
         INDEX idx_property_no (semi_expendable_property_no)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     try { $conn->query($sql); } catch (Throwable $e) { /* no-op */ }
+    // Older installations may not yet have the item-level disposal detail columns.
+    foreach ([
+        'accumulated_impairment' => 'DECIMAL(15,2) NOT NULL DEFAULT 0',
+        'carrying_amount' => 'DECIMAL(15,2) NOT NULL DEFAULT 0',
+        'disposal_others' => 'VARCHAR(255) NULL',
+        'appraised_value' => 'DECIMAL(15,2) NOT NULL DEFAULT 0',
+        'or_no' => 'VARCHAR(100) NULL',
+        'sales_amount' => 'DECIMAL(15,2) NOT NULL DEFAULT 0'
+    ] as $column => $definition) {
+        if (!columnExists($conn, 'iirusp_items', $column)) $conn->query("ALTER TABLE iirusp_items ADD COLUMN $column $definition");
+    }
 }
 
 /**

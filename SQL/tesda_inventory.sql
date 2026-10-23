@@ -515,7 +515,8 @@ CREATE TABLE IF NOT EXISTS `ris_items` (
   `stock_available` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `issued_quantity` int DEFAULT NULL,
   `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `unit_cost_at_issue` decimal(10,2) DEFAULT '0.00'
+  `unit_cost_at_issue` decimal(10,2) DEFAULT '0.00',
+  `days_to_consume` int unsigned DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
@@ -810,6 +811,32 @@ CREATE TABLE IF NOT EXISTS `rpci_reports` (
   KEY `rpci_date` (`report_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Saved REGSPI documents preserve report details and item snapshots.
+CREATE TABLE IF NOT EXISTS regspi_reports (
+        regspi_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        report_date DATE NOT NULL,
+        entity_name VARCHAR(255) NOT NULL,
+        fund_cluster VARCHAR(255) NOT NULL,
+        category VARCHAR(255) NOT NULL,
+        item_count INT UNSIGNED NOT NULL,
+        snapshot LONGTEXT NOT NULL,
+        created_by INT NOT NULL,
+        save_token CHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY regspi_save_token (save_token),
+        KEY regspi_report_date (report_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Saved RPCSP documents preserve report details and item snapshots.
+CREATE TABLE IF NOT EXISTS rpcsp_reports (
+        rpcsp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        report_date DATE NOT NULL, entity_name VARCHAR(255) NOT NULL,
+        accountable_officer VARCHAR(255) NOT NULL, item_count INT UNSIGNED NOT NULL,
+        snapshot LONGTEXT NOT NULL, created_by INT NOT NULL, save_token CHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY rpcsp_save_token (save_token), KEY rpcsp_report_date (report_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Property, Plant and Equipment schema.
 /* Table for Property, Plant and Equipment (PPE) Inventory */
 CREATE TABLE IF NOT EXISTS ppe_property (
@@ -1035,3 +1062,6 @@ CREATE TABLE IF NOT EXISTS ppe_iirup_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 COMMIT;
+
+-- Existing installations: preserve the days estimate saved with each RIS item.
+ALTER TABLE ris_items ADD COLUMN IF NOT EXISTS days_to_consume INT UNSIGNED NULL;

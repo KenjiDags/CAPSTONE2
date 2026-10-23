@@ -386,6 +386,8 @@ if (empty($item_pages)) {
             border: 2px solid #000 !important;
         }
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Physical Count of Inventories Preview" data-preview-code="RPCI" data-preview-back="office_supplies/rpci.php" data-preview-width="1100"></script>
 </head>
 <body>
     <div class="no-print">

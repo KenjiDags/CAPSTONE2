@@ -259,6 +259,8 @@ $dataRows = count($items);
     .sig-designation { width: 250px; }
 
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Unserviceable PPE Report Preview" data-preview-code="IIRUP" data-preview-back="PPE/PPE_iirup.php" data-preview-width="1500"></script>
 </head>
 <body>
 <div class="no-print">

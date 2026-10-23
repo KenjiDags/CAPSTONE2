@@ -160,6 +160,8 @@ require dirname(__DIR__) . '/functions.php';
         }
     }
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Property Card Preview" data-preview-code="PC" data-preview-back="PPE/PPE_PC.php" data-preview-width="1100"></script>
 </head>
 
 <body>

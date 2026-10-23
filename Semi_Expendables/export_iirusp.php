@@ -312,6 +312,8 @@ function h($value)
         }
     }
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Unserviceable Property Report Preview" data-preview-code="IIRUSP" data-preview-back="Semi_Expendables/iirusp.php" data-preview-width="1530"></script>
 </head>
 <body>
 <div class="no-print">
@@ -454,8 +456,8 @@ function h($value)
                         <td style="text-align:center;"><?= $unitCost > 0 ? 'P' . number_format($unitCost, 2) : '' ?></td>
                         <td style="text-align:center;"><?= $totalCost > 0 ? 'P' . number_format($totalCost, 2) : '' ?></td>
                         <td style="text-align:center;"></td>
-                        <td style="text-align:center;"></td>
-                        <td style="text-align:center;"></td>
+                        <td style="text-align:center;"><?= number_format((float)($item['accumulated_impairment'] ?? 0), 2) ?></td>
+                        <td style="text-align:center;"><?= number_format((float)($item['carrying_amount'] ?? 0), 2) ?></td>
                         <td id="remarksCol" style="text-align:left;"><?= h($item['remarks'] ?? '') ?></td>
                         <td><?= h($item['disposal_sale'] ?? '') ?></td>
                         <td><?= h($item['disposal_transfer'] ?? '') ?></td>

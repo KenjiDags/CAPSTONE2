@@ -46,6 +46,7 @@ if (isset($_GET['delete_id'])) {
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .currency { text-align: right; }
+    th.amount-col, td.amount-col { min-width: 140px; white-space: nowrap; }
   .filters { margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
   .filters .control { display:flex; align-items:center; gap:10px; }
   .filters select, .filters input {
@@ -178,11 +179,11 @@ if (isset($_GET['delete_id'])) {
             <th>Description</th>
             <th>Property Number</th>
             <th>Date</th>
-            <th>Reference/ICS No.</th>
+            <th>Reference No.</th>
             <th>Receipt Qty.</th>
             <th>Issue Qty.</th>
             <th>Balance Qty.</th>
-            <th>Amount</th>
+            <th class="amount-col">Amount</th>
             <th><i class="fas fa-cogs"></i>Actions</th>
           </tr>
         </thead>
@@ -190,7 +191,7 @@ if (isset($_GET['delete_id'])) {
           <?php
             $params = [];
             $types = '';
-            $where = [];
+            $where = ["(NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0)))"];
             if ($category !== '') { $where[] = 'category = ?'; $params[] = $category; $types .= 's'; }
             if ($search !== '') { $where[] = '(item_description LIKE ? OR semi_expendable_property_no LIKE ? OR ics_rrsp_no LIKE ?)'; $like = "%$search%"; $params[] = $like; $params[] = $like; $params[] = $like; $types .= 'sss'; }
             $sql = "SELECT id, date, ics_rrsp_no, semi_expendable_property_no, item_description, estimated_useful_life, quantity, quantity_issued, office_officer_issued, quantity_returned, office_officer_returned, quantity_reissued, office_officer_reissued, quantity_disposed, quantity_balance, amount_total, category, fund_cluster, remarks FROM semi_expendable_property";

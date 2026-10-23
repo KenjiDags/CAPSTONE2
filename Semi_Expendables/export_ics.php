@@ -486,6 +486,8 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             font-weight: bold;
         }
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Inventory Custody Slip Preview" data-preview-code="ICS" data-preview-back="Semi_Expendables/ics.php" data-preview-width="760"></script>
 </head>
 <body>
     <div class="no-print">

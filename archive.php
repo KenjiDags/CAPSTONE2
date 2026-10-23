@@ -118,7 +118,7 @@ if ($detail) {
     $tab = in_array($detail['record_type'], $itemTypes, true) ? 'items' : 'documents';
 }
 $isItems = $tab === 'items';
-$recordTypes = $isItems ? $itemTypes : ['SC', 'RIS', 'RSMI', 'RPCI', 'RPCPPE', 'ICS', 'ITR', 'PTR', 'PAR', 'PC', 'IIRUP', 'RRSP', 'IIRUSP'];
+$recordTypes = $isItems ? $itemTypes : ['SC', 'RIS', 'RSMI', 'RPCI', 'RPCSP', 'RPCPPE', 'ICS', 'ITR', 'PTR', 'PAR', 'PC', 'IIRUP', 'RRSP', 'IIRUSP'];
 if (!in_array($type, $recordTypes, true)) $type = '';
 $like = '%' . $search . '%';
 $groupCondition = $isItems
@@ -373,7 +373,8 @@ $records = $stmt->get_result();
 
     <main class="container">
 
-        <h2>Archive</h2>
+        <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="4" rx="1"></rect><path d="M5 7v13h14V7M10 11h4"></path></svg> Archive</h2>
+        <p class="archive-intro form-page-subtitle"><small>View, restore, or permanently delete archived records.</small></p>
         <nav class="category-tabs" aria-label="Archive category">
             <a class="category-tab <?= !$isItems ? 'active' : '' ?>" href="archive.php?tab=documents"<?= !$isItems ? ' aria-current="page"' : '' ?>>Documents</a>
             <a class="category-tab <?= $isItems ? 'active' : '' ?>" href="archive.php?tab=items"<?= $isItems ? ' aria-current="page"' : '' ?>>Items</a>

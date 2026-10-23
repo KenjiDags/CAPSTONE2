@@ -347,6 +347,8 @@ $received_by_date = $ptr['received_by_date'] ?? '';
             }
         }
   </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Property Transfer Report Preview" data-preview-code="PTR" data-preview-back="PPE/PPE_PTR.php" data-preview-width="1100"></script>
 </head>
 <body>
   <div class="no-print">

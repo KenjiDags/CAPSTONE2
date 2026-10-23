@@ -6,6 +6,17 @@ rsmiEnsureTable($conn);
 if (empty($_SESSION['rsmi_csrf'])) $_SESSION['rsmi_csrf'] = bin2hex(random_bytes(32));
 $error = '';
 $rows = rsmiSourceRows($conn);
+$uacs_values = $_SERVER['REQUEST_METHOD'] === 'POST' && is_array($_POST['uacs'] ?? null) ? $_POST['uacs'] : [];
+$uacs_error = '';
+foreach ($rows as &$sourceRow) {
+    $value = $uacs_values[base64_encode($sourceRow['stock_number'])] ?? '';
+    if (!is_string($value) || mb_strlen($value) > 50) {
+        $uacs_error = 'UACS Object Codes must be 50 characters or fewer.';
+        $value = '';
+    }
+    $sourceRow['uacs_object_code'] = trim($value);
+}
+unset($sourceRow);
 $report_date = date('Y-m-d');
 $custodian_value = null;
 $accounting_value = '';
@@ -18,7 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $custodian_value = trim((string)($_POST['custodian_name'] ?? ''));
     $accounting_value = trim((string)($_POST['accounting_staff'] ?? ''));
     $date = DateTime::createFromFormat('!Y-m-d', $report_date);
-    if (!$date || $date->format('Y-m-d') !== $report_date) {
+    if ($uacs_error !== '') {
+        $error = $uacs_error;
+    } elseif (!$date || $date->format('Y-m-d') !== $report_date) {
         $error = 'Enter a valid report date.';
     } elseif ($custodian_value === '' || $accounting_value === '') {
         $error = 'Enter both signatory names.';
@@ -181,6 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <tr>
                     <th><i class="fas fa-barcode"></i> Stock No.</th>
                     <th><i class="fas fa-cubes"></i> Total Quantity Issued</th>
+                    <th><i class="fas fa-code"></i> UACS Object Code</th>
                 </tr>
             </thead>
             <tbody>
@@ -193,10 +207,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo '<tr>';
                         echo '<td>' . htmlspecialchars($row['stock_number']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['total_issued']) . '</td>';
+                        echo '<td><input type="text" form="signatureForm" name="uacs[' . htmlspecialchars(base64_encode($row['stock_number']), ENT_QUOTES, 'UTF-8') . ']" maxlength="50" value="' . rsmiH($row['uacs_object_code'] ?? '') . '" aria-label="UACS Object Code for ' . rsmiH($row['stock_number']) . '" placeholder="Enter UACS Object Code"></td>';
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="2">No recapitulation data found.</td></tr>';
+                    echo '<tr><td colspan="3">No recapitulation data found.</td></tr>';
                 }
                 ?>
             </tbody>

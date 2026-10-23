@@ -184,6 +184,8 @@ body {
     font-size: 12px;
 }
 </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Stock Cards Preview" data-preview-code="SC" data-preview-back="office_supplies/SC.php" data-preview-width="850"></script>
 </head>
 <body>
 

@@ -28,6 +28,7 @@ function archiveSources(): array {
     return [
         'RSMI' => ['rsmi_reports', 'rsmi_id', 'serial_no', []],
         'RPCI' => ['rpci_reports', 'rpci_id', 'rpci_id', []],
+        'RPCSP' => ['rpcsp_reports', 'rpcsp_id', 'rpcsp_id', []],
         'RPCPPE' => ['rpcppe', 'rpcppe_id', 'rpcppe_id', ['rpcppe_items' => 'rpcppe_id']],
         'RIS' => ['ris', 'ris_id', 'ris_no', ['ris_items' => 'ris_id', 'item_history' => 'ris_id']],
         'SC' => ['items', 'item_id', 'stock_number', ['item_history' => 'item_id']],

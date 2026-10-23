@@ -523,9 +523,9 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <input type="number" id="estimated_useful_life" name="estimated_useful_life" 
                                value="<?php echo $_POST['estimated_useful_life'] ?? '5'; ?>" min="1" max="20" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group no-number-spinners">
                         <label for="amount">Amount <span class="required">*</span></label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0"
+                        <input type="number" id="amount" name="amount" class="theme-text-input" step="0.01" min="0"
                                value="<?php echo $_POST['amount'] ?? ''; ?>" 
                                placeholder="Unit amount (per item)" required>
                     </div>

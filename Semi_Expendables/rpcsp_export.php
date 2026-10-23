@@ -1,32 +1,33 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
-require dirname(__DIR__) . '/config.php';
-
-$export_data = $_POST + $_GET;
-
+function rpcspSchema(): string {
+    return "CREATE TABLE IF NOT EXISTS rpcsp_reports (
+        rpcsp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        report_date DATE NOT NULL, entity_name VARCHAR(255) NOT NULL,
+        accountable_officer VARCHAR(255) NOT NULL, item_count INT UNSIGNED NOT NULL,
+        snapshot LONGTEXT NOT NULL, created_by INT NOT NULL, save_token CHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY rpcsp_save_token (save_token), KEY rpcsp_report_date (report_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+}
+function rpcspH($value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+$conn->query(rpcspSchema());
+$id = filter_var($_GET['rpcsp_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if (!$id) { header('Location: rpcsp.php'); exit; }
+$stmt = $conn->prepare('SELECT snapshot FROM rpcsp_reports WHERE rpcsp_id = ?');
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$report = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+if (!$report) { http_response_code(404); exit('RPCSP document not found.'); }
+$data = json_decode($report['snapshot'], true, 512, JSON_THROW_ON_ERROR);
+$items = $data['rows'];
+$export_data = $data['metadata'] + $data['counts'];
 function rpcsp_count_value($data, $field, $id) {
-    $values = $data[$field] ?? [];
-    $value = is_array($values) ? ($values[$id] ?? '') : '';
-    return is_scalar($value) && is_numeric($value) ? (string)$value : '';
+    return (string)($data[$field][$id] ?? '');
 }
-// Load semi-expendable items
-$items = [];
-$sql = "SELECT id, category, item_description, semi_expendable_property_no, unit, amount, quantity_balance, remarks FROM semi_expendable_property ORDER BY item_description";
-$res = $conn->query($sql);
-if ($res) {
-    while ($r = $res->fetch_assoc()) { $items[] = $r; }
-}
-
-$report_date = htmlspecialchars($export_data['report_date'] ?? date('Y-m-d'));
-$fund_cluster = htmlspecialchars($export_data['fund_cluster'] ?? '');
-$accountable_officer = htmlspecialchars($export_data['accountable_officer'] ?? '');
-$official_designation = htmlspecialchars($export_data['official_designation'] ?? '');
-$entity_name = htmlspecialchars($export_data['entity_name'] ?? '');
-$assumption_date = htmlspecialchars($export_data['assumption_date'] ?? '');
-$signature_name_1 = htmlspecialchars($export_data['signature_name_1'] ?? '');
-$signature_name_2 = htmlspecialchars($export_data['signature_name_2'] ?? '');
-$signature_name_3 = htmlspecialchars($export_data['signature_name_3'] ?? '');
+foreach ($data['metadata'] as $field => $value) { $$field = rpcspH($value); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -212,11 +213,13 @@ $signature_name_3 = htmlspecialchars($export_data['signature_name_3'] ?? '');
       color: #fff;
     }
   </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Physical Count Preview" data-preview-code="RPCSP" data-preview-back="Semi_Expendables/rpcsp.php" data-preview-width="1100"></script>
 </head>
 <body>
   <div class="no-print">
     <button class="btn btn-print" onclick="window.print()">🖨️ Print/Save as PDF</button>
-    <a href="Semi_Expendables/rpcsp.php" class="btn btn-back" style="margin-left:8px;">← Back to Form</a>
+    <a href="Semi_Expendables/rpcsp.php" class="btn btn-back" style="margin-left:8px;">← Back to Documents</a>
     <hr style="margin: 20px 0;">
   </div>
 

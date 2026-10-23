@@ -280,6 +280,8 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
             background: #545b62;
         }
     </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Returned Semi-Expendable Property Preview" data-preview-code="RRSP" data-preview-back="Semi_Expendables/rrsp.php" data-preview-width="1000"></script>
 </head>
 <body>
     <div class="no-print">

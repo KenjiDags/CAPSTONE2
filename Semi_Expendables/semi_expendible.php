@@ -39,7 +39,7 @@ if (!in_array($category, $valid_categories)) {
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 
 // Build SQL query
-$sql = "SELECT * FROM semi_expendable_property WHERE category = ?";
+$sql = "SELECT * FROM semi_expendable_property WHERE category = ? AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0)))";
 $types = "s";
 $params = [$category];
 

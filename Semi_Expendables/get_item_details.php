@@ -15,7 +15,7 @@ if (!$id) {
 
 
 try {
-    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE id = ?");
+    $stmt = $conn->prepare("SELECT * FROM semi_expendable_property WHERE id = ? AND (NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0)))");
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $item = $stmt->get_result()->fetch_assoc();

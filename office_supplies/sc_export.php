@@ -13,7 +13,10 @@ if ($item_id <= 0) {
 }
 
 // Fetch item
-$item_stmt = $conn->prepare("SELECT * FROM items WHERE item_id = ?");
+$item_stmt = $conn->prepare("SELECT items.*,
+    COALESCE((SELECT MIN(changed_at) FROM item_history h WHERE h.item_id = items.item_id AND h.quantity_change > 0),
+             (SELECT MIN(created_at) FROM inventory_entries e WHERE e.item_id = items.item_id AND e.quantity > 0)) AS first_receipt
+    FROM items WHERE item_id = ?");
 $item_stmt->bind_param("i", $item_id);
 $item_stmt->execute();
 $item_result = $item_stmt->get_result();
@@ -23,8 +26,26 @@ if (!$item_result || $item_result->num_rows === 0) {
 $items = $item_result->fetch_assoc();
 $item_stmt->close();
 
+// Older installations can export before the new RIS form has added its column.
+$daysColumn = $conn->query("SHOW COLUMNS FROM ris_items LIKE 'days_to_consume'");
+$savedDaysSelect = $daysColumn->num_rows > 0
+    ? "(SELECT MAX(ri.days_to_consume) FROM ris_items ri WHERE ri.ris_id = ih.ris_id AND ri.stock_number = ih.stock_number)"
+    : "NULL";
+
+function stockCardRemainingDays($initial, $firstReceipt, $movementDate, $savedDays = null) {
+    if ($savedDays !== null) return max(0, (int)$savedDays) . ' days';
+    if (!preg_match('/^\s*(\d+)\s*(?:days?)?\s*$/i', (string)$initial, $match)) return '';
+    $days = min(2147483647, (int)$match[1]);
+    if ($firstReceipt) {
+        $start = new DateTimeImmutable(substr($firstReceipt, 0, 10));
+        $end = new DateTimeImmutable(substr($movementDate, 0, 10));
+        $days = max(0, $days - max(0, (int)$start->diff($end)->format('%r%a')));
+    }
+    return $days . ' days';
+}
+
 $history_stmt = $conn->prepare("
-  SELECT ih.*, r.ris_no AS ris_no, r.office AS ris_office
+  SELECT ih.*, r.ris_no AS ris_no, r.date_requested, r.office AS ris_office, r.fund_cluster AS movement_fund, $savedDaysSelect AS saved_days_to_consume
   FROM item_history ih
   LEFT JOIN ris r ON ih.ris_id = r.ris_id
   WHERE ih.item_id = ?
@@ -41,6 +62,22 @@ if ($history_result && $history_result->num_rows > 0) {
     }
 }
 $history_stmt->close();
+
+// Use the fund appearing in the most recorded movements.
+// Rows are newest first, so ties favor the most recently used fund.
+$fundCounts = [];
+foreach ($history_rows as $movement) {
+    $fund = trim((string)($movement['movement_fund'] ?? ''));
+    if ($fund !== '') $fundCounts[$fund] = ($fundCounts[$fund] ?? 0) + 1;
+}
+$stock_card_fund = '';
+$mostFundMovements = 0;
+foreach ($fundCounts as $fund => $count) {
+    if ($count > $mostFundMovements) {
+        $stock_card_fund = (string)$fund;
+        $mostFundMovements = $count;
+    }
+}
 
 // Entity (LGU)
 $ris = ['entity_name' => 'TESDA'];
@@ -204,6 +241,8 @@ $ris = ['entity_name' => 'TESDA'];
 
         
   </style>
+<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Stock Card Preview" data-preview-code="SC" data-preview-back="office_supplies/SC.php" data-preview-width="850" data-preview-reference="<?= htmlspecialchars((string)($items['stock_number'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></script>
 </head>
 <body>
   <div class="no-print">
@@ -239,7 +278,7 @@ $ris = ['entity_name' => 'TESDA'];
 
         <tr class="label-row">
           <th colspan="5" style="border: none; border-left: 1px solid #000;">LGU: <span class="underline" style="min-width: 200px;"><?php echo htmlspecialchars($ris['entity_name']); ?></span></th>
-          <th colspan="2" style="border: none; border-right: 1px solid #000;">Fund: <span class="underline" style="min-width: 100px;">(TEMP DATA)</span></th>
+          <th colspan="2" style="border: none; border-right: 1px solid #000;">Fund: <span class="underline" style="min-width: 100px;"><?= htmlspecialchars($stock_card_fund, ENT_QUOTES, 'UTF-8') ?></span></th>
         </tr>
 
         <tr class ="label-row">
@@ -279,7 +318,12 @@ $ris = ['entity_name' => 'TESDA'];
             $issue_qty = $h['quantity_change'] < 0 ? abs(htmlspecialchars($h['quantity_change'])) : '';
             $office = htmlspecialchars((string)($h['ris_office'] ?? ''), ENT_QUOTES, 'UTF-8');
             $balance = htmlspecialchars($h['quantity_on_hand']);
-            $days = htmlspecialchars((string)($items['estimated_life'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $days = htmlspecialchars(stockCardRemainingDays(
+                $items['estimated_life'] ?? '',
+                $items['first_receipt'],
+                $h['date_requested'] ?? $h['changed_at'],
+                $h['saved_days_to_consume']
+            ), ENT_QUOTES, 'UTF-8');
         ?>
             <tr>
               <td><?php echo $date; ?></td>

@@ -138,7 +138,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     <div class="section-card">
       <h3 class="form-section-heading">Items in this ITR</h3>
       <div class="search-container" style="margin-bottom:10px;">
-        <input type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()">
+        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Search ICS items..." onkeyup="filterItems()"></label>
       </div>
       <div class="table-frame">
         <div class="table-viewport">
