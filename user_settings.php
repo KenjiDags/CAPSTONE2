@@ -5,12 +5,13 @@ require 'config.php';
 if ($_SESSION['role'] !== 'admin' && isset($_POST['totp_action'])) {
     http_response_code(403); exit('Authenticator settings are only available to administrators.');
 }
+$totpNotice = '';
+$totpRecovery = [];
+$totpAccount = null;
 if ($_SESSION['role'] === 'admin') {
 require_once 'totp.php';
 totpTable($conn);
 if (empty($_SESSION['totp_csrf'])) $_SESSION['totp_csrf'] = bin2hex(random_bytes(32));
-$totpNotice = '';
-$totpRecovery = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['totp_action'])) {
     if (!hash_equals($_SESSION['totp_csrf'], (string)($_POST['totp_csrf'] ?? ''))) {
         http_response_code(400); exit('Invalid request. Reload settings and try again.');
