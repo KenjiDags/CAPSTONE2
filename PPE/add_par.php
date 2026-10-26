@@ -83,17 +83,17 @@ function parEscape($value): string { return htmlspecialchars((string)$value, ENT
 </head><body class="add-page ppe-page par-add-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <main class="container"><div class="form-container">
-<header class="par-page-header"><h1 class="form-page-title">Issue PPE — Add PAR</h1><p class="form-page-subtitle">Create a Property Acknowledgment Receipt and assign properties to an end user.</p></header>
+<header class="par-page-header"><h1 class="form-page-title"><i class="fas fa-file-invoice" aria-hidden="true"></i> Issue PPE — Add PAR</h1><p class="form-page-subtitle">Create a Property Acknowledgment Receipt and assign properties to an end user.</p></header>
 <?php if ($error): ?><div class="alert alert-danger" role="alert"><?= parEscape($error) ?></div><?php endif; ?>
 <form method="post" class="inventory-item-form">
 <input type="hidden" name="csrf" value="<?= parEscape($_SESSION['ppe_par_csrf']) ?>">
 <p class="required-fields-note"><span class="required-indicator">*</span> indicates a required field.</p>
-<section class="par-form-section"><h2>Receipt details</h2><p>PAR number is assigned automatically when you save.</p><div class="par-form-grid">
+<section class="par-form-section"><h2>Receipt details</h2><div class="par-form-grid">
 <?php foreach (['entity_name' => 'Entity Name', 'fund_cluster' => 'Fund Cluster'] as $field => $label): ?>
 <div class="form-group"><label for="<?= $field ?>"><?= $label ?> <span class="required-indicator">*</span></label><input id="<?= $field ?>" name="<?= $field ?>" maxlength="<?= $field === 'fund_cluster' ? 100 : 255 ?>" value="<?= parEscape($values[$field]) ?>" required></div>
 <?php endforeach; ?></div></section>
-<section class="par-form-section"><h2>Select properties</h2><p>Each selection issues all units on that property record. Use PTR to transfer an assigned property.</p>
-<label for="parItemSearch">Search available properties</label><input type="search" id="parItemSearch" placeholder="Search PPE number, item, or description...">
+<section class="par-form-section"><h2>Select properties</h2>
+<div class="par-search-field"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="parItemSearch" aria-label="Search available properties" placeholder="Search PPE number, item, or description..."></div>
 <div class="par-items-wrap"><table><thead><tr><th>Select</th><th>PPE No.</th><th>Item / Description</th><th>Quantity</th><th>Unit</th><th>Amount</th></tr></thead><tbody>
 <?php foreach ($available as $item): ?><tr data-par-item><td><input type="checkbox" name="item_ids[]" value="<?= (int)$item['id'] ?>" aria-label="Select <?= parEscape($item['PPE_no']) ?>" <?= in_array((int)$item['id'], $selected, true) ? 'checked' : '' ?>></td><td><?= parEscape($item['PPE_no']) ?></td><td><strong><?= parEscape($item['item_name']) ?></strong><br><?= parEscape($item['item_description']) ?></td><td><?= number_format($item['quantity']) ?></td><td><?= parEscape($item['unit']) ?></td><td>₱<?= number_format($item['amount'], 2) ?></td></tr><?php endforeach; ?>
 </tbody></table></div>
@@ -107,7 +107,7 @@ function parEscape($value): string { return htmlspecialchars((string)$value, ENT
 <?php endforeach; ?></section><?php endforeach; ?>
 </div>
 <datalist id="parOfficers"><?php foreach ($officers as $officer): ?><option value="<?= parEscape($officer['officer_name']) ?>"><?= parEscape($officer['officer_position']) ?></option><?php endforeach; ?></datalist>
-<div class="par-form-actions"><button type="submit" class="pill-btn pill-add" <?= !$available ? 'disabled' : '' ?>>Save PAR &amp; Issue Items</button><a class="pill-btn pill-view" href="PPE/PPE_PAR.php">Cancel</a></div>
+<div class="par-form-actions"><button type="submit" class="btn btn-primary" <?= !$available ? 'disabled' : '' ?>>Save PAR &amp; Issue Items</button><a class="btn btn-secondary" href="PPE/PPE_PAR.php">Cancel</a></div>
 </form></div></main>
 <script>
 const parRows = [...document.querySelectorAll('[data-par-item]')];
