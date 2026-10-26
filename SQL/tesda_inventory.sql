@@ -857,7 +857,7 @@ CREATE TABLE IF NOT EXISTS ppe_property (
     date_acquired DATE NULL,
 
     `condition` ENUM('Good', 'Fair', 'Poor', 'Unserviceable') DEFAULT 'Good',
-    status ENUM('Active', 'Transferred', 'Returned', 'For Repair', 'Unserviceable', 'Disposed') DEFAULT 'Active',
+    status ENUM('Active', 'Transferred', 'Returned', 'For Repair', 'Unserviceable', 'Disposed', 'Issued') DEFAULT 'Active',
 
     fund_cluster VARCHAR(10) DEFAULT '101',
     remarks TEXT,

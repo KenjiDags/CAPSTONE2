@@ -91,7 +91,7 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $whereClause = '';
 if ($search !== '') {
     $esc = $conn->real_escape_string($search);
-    $whereClause = " WHERE (par_no LIKE '%$esc%' OR property_number LIKE '%$esc%' OR received_from LIKE '%$esc%' OR received_by LIKE '%$esc%')";
+    $whereClause = " WHERE (par_no LIKE '%$esc%' OR property_number LIKE '%$esc%' OR issued_by LIKE '%$esc%' OR received_by LIKE '%$esc%')";
 }
 ?>
 <!DOCTYPE html>
@@ -120,7 +120,7 @@ if ($search !== '') {
 <div class="container">
     <h2>Property Acknowledgement Receipt (PAR)</h2>
 
-  <form id="par-filters" method="get" class="filters">
+  <form id="par-filters" method="get" class="filters" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; width:100%; box-sizing:border-box;">
       <div class="control">
         <label for="sort-select" style="margin-bottom:0;font-weight:500;display:flex;align-items:center;gap:6px;color:#001F80;">
           <i class="fas fa-sort"></i> Sort by:
@@ -139,7 +139,11 @@ if ($search !== '') {
         </label>
         <input type="text" id="searchInput" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search PAR no, property no, or officer..." />
       </div>
+      <div style="margin-left:auto; flex-shrink:0;">
+        <a href="PPE/add_par.php" class="pill-btn pill-add"><i class="fas fa-plus"></i> Add PAR</a>
+      </div>
     </form>
+    <?php if (isset($_GET['added'])): ?><div class="alert alert-success" role="status">PAR created and PPE items issued successfully.</div><?php endif; ?>
     
     <div class="table-container">
         <table>

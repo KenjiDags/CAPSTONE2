@@ -74,14 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fund_cluster, $remarks, $id
     );
     if ($stmt_update->execute()) {
-        $success = "PPE item updated successfully!";
-        // Refresh item data
-        $stmt = $conn->prepare("SELECT * FROM ppe_property WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $item = $result->fetch_assoc();
-        $stmt->close();
+        $stmt_update->close();
+        header('Location: ' . APP_ROOT_URL . $ppeReturnUrl, true, 303);
+        exit;
     } else {
         $error = "Failed to update item: " . $stmt_update->error;
     }
@@ -249,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="status">Status</label>
                     <select id="status" name="status">
                         <option value="Active" <?= $item['status'] == 'Active' ? 'selected' : '' ?>>Active</option>
+                        <option value="Issued" <?= $item['status'] == 'Issued' ? 'selected' : '' ?>>Issued</option>
                         <option value="Transferred" <?= $item['status'] == 'Transferred' ? 'selected' : '' ?>>Transferred</option>
                         <option value="Returned" <?= $item['status'] == 'Returned' ? 'selected' : '' ?>>Returned</option>
                         <option value="For Repair" <?= $item['status'] == 'For Repair' ? 'selected' : '' ?>>For Repair</option>

@@ -144,6 +144,7 @@ if ($category === 'semi-expendables') {
             'issuance_status' => $issuanceStatus,
             'item_statuses' => $statuses,
             'quantity' => (int)$row['quantity_balance'],
+            'disposed_quantity' => max(0, (int)$row['quantity_disposed']),
             'capital_value' => (float)$row['amount_total']
         ];
     }
@@ -189,16 +190,35 @@ if ($category === 'semi-expendables') {
         ];
     }
     $response['items'] = $items;
-    $summaryResult = $conn->query("SELECT COALESCE(SUM(quantity + quantity_disposed), 0) AS total_items, COALESCE(SUM(quantity - quantity_issued - quantity_reissued), 0) AS not_issued, COALESCE(SUM(quantity_issued + quantity_reissued), 0) AS currently_issued, COALESCE(SUM(quantity_disposed), 0) AS disposed, COALESCE(SUM(amount_total), 0) AS total_value FROM semi_expendable_property");
+    // Match the Available filter: issued/transferred rows are excluded even
+    // when historical balances still contain their assigned quantities.
+    $summaryResult = $conn->query("SELECT COALESCE(SUM(CASE WHEN COALESCE(quantity_issued, 0) <= 0 AND COALESCE(quantity_reissued, 0) <= 0 THEN GREATEST(COALESCE(quantity_balance, 0), 0) ELSE 0 END), 0) AS not_issued, COALESCE(SUM(GREATEST(COALESCE(quantity_issued, 0), 0) + GREATEST(COALESCE(quantity_reissued, 0), 0)), 0) AS currently_issued, COALESCE(SUM(GREATEST(COALESCE(quantity_disposed, 0), 0)), 0) AS disposed, COALESCE(SUM(amount_total), 0) AS total_value FROM semi_expendable_property");
     $summary = $summaryResult->fetch_assoc();
     $response['summary'] = [
-        'total' => max(0, (int)($summary['total_items'] ?? 0)),
+        'total' => (int)$summary['not_issued'] + (int)$summary['currently_issued'] + (int)$summary['disposed'],
         'not_issued' => max(0, (int)($summary['not_issued'] ?? 0)),
         'currently_issued' => max(0, (int)($summary['currently_issued'] ?? 0)),
         'disposed' => max(0, (int)($summary['disposed'] ?? 0)),
         'total_value' => (float)($summary['total_value'] ?? 0)
     ];
     
+    // Include every reported unserviceable unit, including orphaned report
+    // entries. Master disposal quantities overlap reports, so count each once.
+    $unserviceableTotal = array_sum(array_column($unserviceable, 'quantity'));
+    foreach ($items as $item) {
+        $reportedQuantity = (int)($unserviceable[(string)$item['property_no']]['quantity'] ?? 0);
+        $unserviceableTotal += max(0, (int)($item['disposed_quantity'] ?? 0) - $reportedQuantity);
+    }
+    $response['summary']['unserviceable'] = $unserviceableTotal;
+    $response['summary']['total'] = $response['summary']['not_issued'] + $response['summary']['currently_issued'] + $unserviceableTotal;
+    $response['summary']['category_values'] = [];
+    $categoryValues = $conn->query("SELECT COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS category_name, COALESCE(SUM(amount_total), 0) AS total_value FROM semi_expendable_property GROUP BY COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') ORDER BY total_value DESC, category_name ASC");
+    if ($categoryValues) {
+        while ($categoryValue = $categoryValues->fetch_assoc()) {
+            $response['summary']['category_values'][] = ['category' => $categoryValue['category_name'], 'value' => (float)$categoryValue['total_value']];
+        }
+        $categoryValues->close();
+    }
 } elseif ($category === 'ppe') {
     $itemsSql = "
         SELECT id,
@@ -369,6 +389,69 @@ if ($category === 'semi-expendables') {
         ];
     }
     $response['low_stock'] = $low;
+}
+
+// Disposal forms already subtract these units from the master balance.
+if (in_array($category, ['semi-expendables', 'ppe'], true)) {
+    $isSemi = $category === 'semi-expendables';
+    $table = $isSemi ? 'iirusp_items' : 'ppe_iirup_items';
+    $disposalRows = [];
+    $reportedProperties = [];
+    $tableExists = $conn->query("SHOW TABLES LIKE '$table'");
+    if ($tableExists && $tableExists->num_rows) {
+        $sql = $isSemi
+            ? "SELECT semi_expendable_property_no AS property_no, particulars, quantity, disposal_sale AS sold_quantity FROM iirusp_items WHERE quantity > 0 ORDER BY iirusp_id, semi_expendable_property_no"
+            : "SELECT PPE_no AS property_no, particulars, quantity, sale AS sold_quantity FROM ppe_iirup_items WHERE quantity > 0 ORDER BY ppe_iirup_id, PPE_no";
+        $reports = $conn->query($sql);
+        while ($report = $reports->fetch_assoc()) {
+            $property = (string)$report['property_no'];
+            $reportedProperties[$property] = true;
+            $quantity = max(0, (int)$report['quantity']);
+            $sold = min($quantity, max(0, (int)$report['sold_quantity']));
+            foreach (['Sold' => $sold, 'Disposed' => $quantity - $sold] as $status => $units) {
+                if (!$units) continue;
+                if ($isSemi) $status = $status === 'Sold' ? 'Unserviceable / Sold' : 'Unserviceable';
+                $disposalRows[] = [
+                    'property_no' => $property, 'item_name' => $report['particulars'],
+                    'description' => '', 'quantity' => $units, 'status' => $status,
+                    'issuance_status' => $status, 'item_statuses' => [$status],
+                    'condition' => 'Unserviceable', 'current_holder' => 'No current holder',
+                    'officer_incharge' => ''
+                ];
+            }
+        }
+    }
+    $assignmentRows = [];
+    foreach ($response['items'] as $item) {
+        if (isset($reportedProperties[(string)$item['property_no']])) {
+            if ((int)$item['quantity'] <= 0) continue;
+            unset($item['unserviceable_quantity']);
+        }
+        $assignmentRows[] = $item;
+    }
+    $response['assignment_items'] = array_merge($assignmentRows, $disposalRows);
+    if (!$isSemi) {
+        $serviceableUnits = 0;
+        $availableUnits = 0;
+        $unserviceableUnits = array_sum(array_column($disposalRows, 'quantity'));
+        foreach ($response['items'] as $item) {
+            $units = max(0, (int)$item['quantity']);
+            $condition = strtolower(trim((string)$item['condition']));
+            $status = strtolower(trim((string)$item['status']));
+            if (in_array($status, ['unserviceable', 'disposed', 'sold'], true) || $condition === 'unserviceable') {
+                $unserviceableUnits += $units;
+            } else {
+                $serviceableUnits += $units;
+                if (in_array(strtolower(trim((string)$item['issuance_status'])), ['not issued', 'returned', 'available'], true)) {
+                    $availableUnits += $units;
+                }
+            }
+        }
+        $response['summary']['serviceable'] = $serviceableUnits;
+        $response['summary']['available'] = $availableUnits;
+        $response['summary']['unserviceable'] = $unserviceableUnits;
+        $response['summary']['total'] = $serviceableUnits + $unserviceableUnits;
+    }
 }
 
 echo json_encode($response);

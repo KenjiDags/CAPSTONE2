@@ -3,6 +3,7 @@ require_once 'auth.php';
 require_once 'config.php';
 
 $currentPage = basename($_SERVER['PHP_SELF']);
+$ppeParActive = in_array($currentPage, ['PPE_PAR.php', 'add_par.php'], true);
 $ppePcActive = $currentPage === 'PPE_PC.php' || (in_array($currentPage, ['view_ppe_items.php', 'edit_ppe.php'], true) && isset($ppeReturnUrl) && str_starts_with($ppeReturnUrl, 'PPE/PPE_PC.php'));
 $ppeInventoryActive = $currentPage === 'PPE.php' || (in_array($currentPage, ['view_ppe_items.php', 'edit_ppe.php', 'add_ppe.php'], true) && !$ppePcActive);
 $sidebarIcon = static function ($name) {
@@ -46,7 +47,7 @@ try {
                     // Semi Expendables dropdown should be open for ICS and its subpages
                     $icsPages = ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php'];
                     $expendablesDropdownActive = in_array($currentPage, array_merge(['semi_expendible.php', 'PC.php', 'PC_semi.php', 'itr.php', 'rspi.php', 'regspi.php', 'add_regspi.php', 'view_regspi.php', 'rpcsp.php', 'add_rpcsp.php', 'view_rpcsp.php', 'rrsp.php', 'iirusp.php'], $icsPages));
-                    $ppeDropdownActive = in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'view_ppe_items.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php', 'PPE_iirup.php']);
+                    $ppeDropdownActive = $ppeParActive || in_array($currentPage, ['PPE.php', 'add_ppe.php', 'edit_ppe.php', 'view_ppe.php', 'view_ppe_items.php', 'PPE_PC.php', 'PPE_PTR.php', 'add_ptr.php', 'edit_ptr.php', 'view_ptr.php', 'export_ptr.php', 'PPE_PAR.php', 'view_par.php', 'edit_par.php', 'export_par.php', 'RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php', 'PPE_iirup.php']);
 
                 ?>
 
@@ -93,7 +94,7 @@ try {
                             <a href="PPE/PPE.php" class="<?= $ppeInventoryActive ? 'active' : '' ?>" aria-current="<?= $ppeInventoryActive ? 'page' : '' ?>"><?= $sidebarIcon('list') ?><span>Inventory List</span></a>
                             <a href="PPE/PPE_PC.php" class="<?= $ppePcActive ? 'active' : '' ?>" aria-current="<?= $ppePcActive ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PC</span></a>
                             <a href="PPE/PPE_PTR.php" class="<?= $currentPage == 'PPE_PTR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PTR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PTR</span></a>
-                            <a href="PPE/PPE_PAR.php" class="<?= $currentPage == 'PPE_PAR.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_PAR.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PAR</span></a>
+                            <a href="PPE/PPE_PAR.php" class="<?= $ppeParActive ? 'active' : '' ?>" aria-current="<?= $ppeParActive ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>PAR</span></a>
                             <a href="PPE/RPCPPE.php" class="<?= in_array($currentPage, ['RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php'], true) ? 'active' : '' ?>" aria-current="<?= in_array($currentPage, ['RPCPPE.php', 'add_RPCPPE.php', 'view_rpcppe.php', 'export_rpcppe.php'], true) ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCPPE</span></a>
                             <a href="PPE/PPE_iirup.php" class="<?= $currentPage == 'PPE_iirup.php' ? 'active' : '' ?>" aria-current="<?= $currentPage == 'PPE_iirup.php' ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>IIRUP</span></a>
                         </div></div>

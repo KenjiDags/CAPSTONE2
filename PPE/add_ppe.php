@@ -3,7 +3,16 @@ require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
 require dirname(__DIR__) . '/config.php';
 require dirname(__DIR__) . '/functions.php';
+$profileStmt = $conn->prepare("SELECT COALESCE(NULLIF(TRIM(user_full_name), ''), NULLIF(TRIM(full_name), ''), '') AS custodian_name FROM users WHERE user_id = ? LIMIT 1");
+$profileStmt->bind_param('i', $_SESSION['user_id']);
+$profileStmt->execute();
+$currentCustodian = (string)($profileStmt->get_result()->fetch_assoc()['custodian_name'] ?? '');
+$profileStmt->close();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($currentCustodian === '') {
+        http_response_code(400);
+        exit('Please set your full name in User Settings before adding a PPE item.');
+    }
     foreach (['quantity', 'quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed', 'quantity_balance'] as $field) {
         if (isset($_POST[$field]) && filter_var($_POST[$field], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
             http_response_code(400);
@@ -59,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $quantity = intval($_POST['quantity']);
         $unit = $_POST['unit'];
         $officer_incharge = $_POST['officer_incharge'];
-        $custodian = $_POST['custodian'];
+        $custodian = $currentCustodian;
         $entity_name = $_POST['entity_name'];
         $date_acquired = $_POST['date_acquired'] ?? date('Y-m-d');
         $status = $_POST['status'];
@@ -124,6 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert->execute();
         $insert->close();
         $stmt_insert->close();
+        header('Location: ' . APP_ROOT_URL . 'PPE/PPE.php', true, 303);
+        exit;
     } else {
         $error = "Failed to add item: " . $stmt_insert->error;
     }
@@ -218,6 +229,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .required {
         color: #dc2626;
     }
+    body.ppe-page .inventory-item-form #amount { color: #000; -webkit-text-fill-color: #000; caret-color: #000; font-weight: 400; }
+    body.dark-mode.ppe-page .inventory-item-form #amount { color: #fff; -webkit-text-fill-color: #fff; caret-color: #fff; }
 </style>
 </head>
 <body class="add-page ppe-page">
@@ -289,10 +302,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label for="custodian">Custodian <span class="required-indicator" aria-hidden="true">*</span></label>
-                    <input type="text" id="custodian" name="custodian" required>
-                </div>
                 <div class="form-group">
                     <label for="entity_name">Entity Name <span class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="text" id="entity_name" name="entity_name" value="TESDA Regional Office" required>

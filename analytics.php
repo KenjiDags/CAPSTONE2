@@ -98,11 +98,36 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </section>
 
   <section id="categoryInsights" class="category-insights" hidden>
-    <div class="section-heading"><h2 id="categoryInsightsTitle">Category analytics</h2><p id="categoryInsightsSubtitle">Item status and current assignments</p></div>
+    <div class="section-heading"><h2 id="categoryInsightsTitle">Category analytics</h2></div>
+    <div id="semiOverviewCards" class="semi-overview-cards" hidden></div>
     <div class="category-summary-cards" id="categorySummaryCards"></div>
+    <div id="ppeOverviewPanels" class="ppe-overview-panels" hidden>
+      <article id="ppeConditionPanel" class="panel ppe-condition-panel" aria-labelledby="ppeConditionTitle"></article>
+      <article class="panel ppe-accountability-panel" aria-labelledby="ppeAccountabilityTitle">
+        <h3 id="ppeAccountabilityTitle">Property Accountability</h3>
+        <div class="ppe-accountability-metrics">
+          <div><span>Available PPE</span><strong id="ppeUnassignedCount">0</strong><p>Awaiting assignment</p></div>
+          <div><span>Issued PPE</span><strong id="ppeAssignedCount">0</strong><p>Currently held by Officer</p></div>
+        </div>
+      </article>
+    </div>
     <article class="panel category-register-panel" aria-labelledby="categoryRegisterTitle">
-      <h3 id="categoryRegisterTitle">Item status and current holders</h3>
-      <p class="panel-caption">Recorded assignments in the current property register.</p>
+      <div class="property-assignments-heading">
+        <div class="property-assignments-title">
+          <h3 id="categoryRegisterTitle">Property Assignments</h3>
+          <p class="panel-caption">Track assigned properties and their custodians.</p>
+        </div>
+        <span id="categoryRegisterCount" class="property-record-count" role="status">0 records</span>
+      </div>
+      <div class="inventory-table-toolbar">
+        <label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="categoryRegisterSearch" type="search" aria-label="Search property number, item, description, or holder" placeholder="Search items or holders..." autocomplete="off"></label>
+        <div class="property-status-filters" role="group" aria-label="Filter property register by status">
+          <button type="button" class="active" data-register-status="all" aria-pressed="true">Show All</button>
+          <button type="button" data-register-status="issued" aria-pressed="false">Issued</button>
+          <button type="button" data-register-status="available" aria-pressed="false">Available</button>
+          <button type="button" data-register-status="disposal" aria-pressed="false">For Disposal</button>
+        </div>
+      </div>
       <div class="ppe-table-wrap category-register-wrap">
         <table class="ppe-action-table" aria-labelledby="categoryRegisterTitle">
           <thead id="categoryRegisterHead"></thead><tbody id="categoryRegisterBody"></tbody>
@@ -220,6 +245,11 @@ new Chart(document.getElementById('officeStatusChart'), {
 
 <script>
 const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
+const analyticsCategoryKey = 'analytics:category:' + location.pathname;
+try {
+  const savedCategory = localStorage.getItem(analyticsCategoryKey);
+  if (['office-supplies', 'semi-expendables', 'ppe'].includes(savedCategory)) state.category = savedCategory;
+} catch (_) {}
 const palette = { ink: '#263238', teal: '#4b7e87', rust: '#b44b31', grid: '#e7edef' };
 let demandForecastChart = null;
 let demandForecastRequest = 0;
@@ -427,25 +457,44 @@ function loadUnifiedInventoryTable() {
 function categoryStatusText(value) {
   const label = String(value || 'Not recorded');
   const status = label.trim().toLowerCase();
-  const color = status.includes('unserviceable') || status.includes('disposal') || status === 'disposed' ? 'red'
+  const color = status.includes('unserviceable') || status.includes('disposal') || status === 'disposed' || status === 'sold' ? 'red'
     : status.includes('transfer') || status.includes('reissued') ? 'blue'
     : ['active', 'issued', 'not issued', 'good', 'serviceable', 'fair'].includes(status) ? 'green' : '';
   return `<span class="category-status-text${color ? ' category-status-' + color : ''}">${escapeTableText(label)}</span>`;
 }
+let categoryRegisterStatus = 'all';
+let categoryAssignmentItems = [];
+function matchesCategoryRegisterStatus(item, filter, isSemi) {
+  if (filter === 'all') return true;
+  const statuses = (item.item_statuses || [item.issuance_status || item.status]).map(value => String(value || '').trim().toLowerCase());
+  const disposal = Number(item.unserviceable_quantity || 0) > 0
+    || [...statuses, String(item.condition || '').toLowerCase(), String(item.status || '').toLowerCase()]
+      .some(value => /unserviceable|disposal|disposed|sold/.test(value));
+  if (filter === 'disposal') return disposal;
+  const issued = statuses.some(value => ['issued', 'transferred', 'reissued'].includes(value));
+  if (filter === 'issued') return issued;
+  return !disposal && !issued && Number(item.quantity || 0) > 0
+    && statuses.some(value => ['not issued', 'returned', 'available'].includes(value));
+}
 function renderCategoryRegister() {
   const isSemi = state.category === 'semi-expendables';
-  document.getElementById('categoryRegisterTitle').textContent = isSemi
-    ? 'Semi-Expendables status and current holders' : 'PPE status and current holders';
+  document.querySelector('[data-register-status="disposal"]').textContent = 'Unserviceable';
+  document.getElementById('categoryRegisterTitle').textContent = 'Property Assignments';
   const columns = isSemi
-    ? ['Property number', 'Item', 'Status', 'Current holder / office', 'Remaining balance']
-    : ['Property number', 'Item', 'Status', 'Condition', 'Current holder / custodian', 'Officer in charge'];
+    ? ['Property number', 'Item', 'Status', 'Current holder / office', 'Quantity']
+    : ['Property number', 'Item', 'Status', 'Current holder / custodian', 'Officer in charge', 'Quantity'];
   document.getElementById('categoryRegisterHead').innerHTML = '<tr>' + columns.map(label => `<th scope="col">${label}</th>`).join('') + '</tr>';
-  document.getElementById('categoryRegisterBody').innerHTML = state.items.length
-    ? state.items.map(item => {
+  const query = document.getElementById('categoryRegisterSearch').value.trim().toLowerCase();
+  const rows = categoryAssignmentItems.filter(item => matchesCategoryRegisterStatus(item, categoryRegisterStatus, isSemi)
+    && (!query || [item.property_no, itemName(item), item.description, item.current_holder, item.officer_incharge, item.officer]
+      .join(' ').toLowerCase().includes(query)));
+  document.getElementById('categoryRegisterCount').textContent = `${rows.length.toLocaleString()} record${rows.length === 1 ? '' : 's'}`;
+  document.getElementById('categoryRegisterBody').innerHTML = rows.length
+    ? rows.map(item => {
       const name = `<strong>${escapeTableText(itemName(item))}</strong>` + (item.description ? `<div>${escapeTableText(item.description)}</div>` : '');
       const ppeStatus = String(item.condition || '').trim().toLowerCase() === 'unserviceable' && String(item.status || '').trim().toLowerCase() === 'active' ? 'Unserviceable' : item.status;
       const unserviceableQty = Number(item.unserviceable_quantity || 0);
-      let semiStatus = (item.item_statuses || [item.issuance_status]).map(categoryStatusText).join('<br>');
+      let semiStatus = (item.item_statuses || [item.issuance_status]).map(value => categoryStatusText(isSemi && /disposal|disposed/i.test(String(value)) ? 'Unserviceable' : value)).join('<br>');
       if (isSemi && unserviceableQty > 0) {
         const unserviceableStatus = categoryStatusText(`Unserviceable (${unserviceableQty.toLocaleString()} item${unserviceableQty === 1 ? '' : 's'})`);
         semiStatus = item.issuance_status === 'Disposed / For disposal' || item.issuance_status === 'Unserviceable'
@@ -453,20 +502,91 @@ function renderCategoryRegister() {
       }
       const cells = isSemi
         ? [escapeTableText(item.property_no || 'N/A'), name, semiStatus, escapeTableText(item.current_holder || 'Not recorded'), Number(item.quantity || 0).toLocaleString()]
-        : [escapeTableText(item.property_no || 'N/A'), name, (item.item_statuses || [ppeStatus]).map(categoryStatusText).join('<br>'), categoryStatusText(item.condition), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned')];
+        : [escapeTableText(item.property_no || 'N/A'), name, (item.item_statuses || [ppeStatus]).map(categoryStatusText).join('<br>'), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned'), Number(item.quantity || 0).toLocaleString()];
       return '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
     }).join('')
-    : `<tr><td colspan="${columns.length}" class="empty-state">No ${isSemi ? 'semi-expendable' : 'PPE'} items recorded.</td></tr>`;
+    : `<tr><td colspan="${columns.length}" class="empty-state">${state.items.length ? 'No items match the current search or status filter.' : `No ${isSemi ? 'semi-expendable' : 'PPE'} items recorded.`}</td></tr>`;
+}
+let semiStatusChart = null;
+function renderSemiStatusChart(container, summary) {
+  const total = Number(summary.total || 0).toLocaleString();
+  const labels = ['Unserviceable', 'Issued', 'Available / Not issued'];
+  const values = [summary.unserviceable, summary.currently_issued, summary.not_issued].map(value => Number(value || 0));
+  const colors = ['#dc2626', '#2563eb', '#16a34a'];
+  const totalValue = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(summary.total_value || 0));
+  container.innerHTML = `<article class="panel semi-status-panel"><h3>Semi-Expendables status</h3><div class="semi-status-layout"><div class="semi-donut-wrap"><canvas id="semiStatusChart" role="img" aria-label="Semi-Expendables: ${total} total items. ${labels.map((label, index) => `${label}: ${values[index].toLocaleString()}`).join('. ')}"></canvas><div class="semi-donut-center"><strong>${total}</strong><span>Total Items</span></div></div><div class="semi-status-details"><ul class="semi-status-legend">${labels.map((label, index) => `<li><i style="background:${colors[index]}" aria-hidden="true"></i><span>${label}</span><strong>${values[index].toLocaleString()}</strong></li>`).join('')}</ul><p class="panel-caption">Total Value: <strong>${totalValue}</strong></p></div></div></article>`;
+  semiStatusChart = new Chart(document.getElementById('semiStatusChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: false } } }
+  });
+  const categoryValues = summary.category_values || [];
+  const currency = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+  const maximum = Math.max(0, ...categoryValues.map(item => Number(item.value || 0)));
+  const barColors = ['#2563eb'];
+  container.insertAdjacentHTML('beforeend', `<article class="panel semi-value-panel"><h3>Value by Category</h3><div class="semi-value-bars">${categoryValues.length ? categoryValues.map((item, index) => {
+    const value = Number(item.value || 0);
+    const width = maximum > 0 ? Math.max(0, value / maximum * 100) : 0;
+    return `<div class="semi-value-row"><div class="semi-value-label"><span>${escapeTableText(item.category)}</span><strong>${currency.format(value)}</strong></div><div class="semi-value-track" role="img" aria-label="${escapeTableText(item.category)}: ${currency.format(value)}"><div class="semi-value-fill" style="width:${width}%;background:${barColors[index % barColors.length]}"></div></div></div>`;
+  }).join('') : '<p class="empty-state">No category values recorded.</p>'}</div></article>`);
 }
 function renderCategoryInsights(summary) {
+  if (semiStatusChart) { semiStatusChart.destroy(); semiStatusChart = null; }
   const insights = document.getElementById('categoryInsights');
   const isSemi = state.category === 'semi-expendables';
   const isPpe = state.category === 'ppe';
+  const conditionPanel = document.getElementById('ppeConditionPanel');
+  document.getElementById('ppeOverviewPanels').hidden = !isPpe;
+  if (isPpe) {
+    let assigned = 0;
+    let transferred = 0;
+    let unassigned = 0;
+    state.items.forEach(item => {
+      const assignment = String(item.issuance_status || '').trim().toLowerCase();
+      if (/unserviceable|disposed|sold/i.test(`${item.condition || ''} ${item.status || ''}`)) return;
+      if (assignment === 'issued') assigned++;
+      else if (['transferred', 'reissued'].includes(assignment)) transferred++;
+      else if (Number(item.quantity || 0) > 0 && ['not issued', 'returned', 'available'].includes(assignment)) unassigned++;
+    });
+    document.getElementById('ppeAssignedCount').textContent = (assigned + transferred).toLocaleString();
+    document.getElementById('ppeUnassignedCount').textContent = unassigned.toLocaleString();
+    const serviceable = Number(summary.serviceable || 0);
+    const unserviceable = Number(summary.unserviceable || 0);
+    const total = serviceable + unserviceable;
+    const percent = total > 0 ? serviceable / total * 100 : 0;
+    conditionPanel.innerHTML = `<div class="ppe-condition-heading"><h3 id="ppeConditionTitle">PPE Condition Overview</h3><span class="ppe-condition-badge">${total > 0 ? percent.toLocaleString(undefined, { maximumFractionDigits: 1 }) + '% Serviceable' : 'No items'}</span></div><div class="ppe-condition-metric"><strong>${serviceable.toLocaleString()} / ${total.toLocaleString()}</strong><span>Serviceable items</span></div><div class="ppe-condition-track" role="img" aria-label="${serviceable} serviceable and ${unserviceable} unserviceable items"><div class="ppe-condition-fill" style="width:${percent}%"></div></div><div class="ppe-condition-legend"><span><i class="serviceable" aria-hidden="true"></i>Serviceable: <strong>${serviceable.toLocaleString()}</strong></span><span><i class="unserviceable" aria-hidden="true"></i>Unserviceable: <strong>${unserviceable.toLocaleString()}</strong></span></div>`;
+  }
+  if (isPpe) {
+    conditionPanel.insertAdjacentHTML('beforeend', `<p class="panel-caption ppe-available-caption">Available: <strong>${Number(summary.available || 0).toLocaleString()}</strong> (included in serviceable items)</p>`);
+  }
+  const overview = document.getElementById('semiOverviewCards');
+  overview.hidden = !isSemi;
+  if (isSemi) {
+    const icons = [
+      '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.25l8 4.5"/>',
+      '<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 13 2 2 4-4"/>',
+      '<rect x="4" y="4" width="16" height="4" rx="1"/><path d="M5 8v11h14V8M9 12h6"/>',
+      '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M16 14h5M6 5V3h12v2"/>'
+    ];
+    const cards = [
+      ['Property Records', state.items.filter(item => item.item_id !== null).length.toLocaleString()],
+      ['Issued Units', Number(summary.currently_issued || 0).toLocaleString()],
+      ['Unserviceable Units', Number(summary.unserviceable || 0).toLocaleString()],
+      ['Total Value', new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(Number(summary.total_value || 0))]
+    ];
+    overview.innerHTML = cards.map(([label, value], index) => `<article class="semi-overview-card"><div><span>${label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[index]}</svg></div><strong>${value}</strong></article>`).join('');
+  }
   insights.hidden = !isSemi && !isPpe;
   if (!isSemi && !isPpe) return;
   document.getElementById('categoryInsightsTitle').textContent = isSemi ? 'Semi-Expendables analytics' : 'PPE analytics';
-  document.getElementById('categoryInsightsSubtitle').textContent = 'Item status and current assignments';
   const summaryCards = document.getElementById('categorySummaryCards');
+  summaryCards.classList.toggle('semi-chart-summary', isSemi);
+  if (isSemi) {
+    summaryCards.classList.remove('semi-summary', 'colored-summary');
+    renderSemiStatusChart(summaryCards, summary);
+    renderCategoryRegister();
+    return;
+  }
   summaryCards.classList.toggle('semi-summary', isSemi);
   summaryCards.classList.add('colored-summary');
   summaryCards.innerHTML = isSemi ? `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.not_issued || 0).toLocaleString()}</strong><span>Not issued</span></article><article class="category-summary-card active"><strong>${Number(summary.currently_issued || 0).toLocaleString()}</strong><span>Currently issued</span></article><article class="category-summary-card disposed"><strong>${Number(summary.disposed || 0).toLocaleString()}</strong><span>Disposed / For disposal</span></article>` : `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.serviceable || 0).toLocaleString()}</strong><span>Serviceable Items</span></article><article class="category-summary-card disposed"><strong>${Number(summary.unserviceable || 0).toLocaleString()}</strong><span>Unserviceable Items</span></article>`;
@@ -479,10 +599,12 @@ function renderCategoryInsights(summary) {
 let categoryRequest = 0;
 let categoryLoading = false;
 function loadCategory(category) {
+  try { localStorage.setItem(analyticsCategoryKey, category); } catch (_) {}
   const request = ++categoryRequest;
   categoryLoading = true;
   state.items = [];
   document.getElementById('categoryInsights').hidden = true;
+  document.getElementById('semiOverviewCards').hidden = true;
   if (state.mrpStockChart) { state.mrpStockChart.destroy(); state.mrpStockChart = null; }
   const scrollPosition = window.scrollY;
   state.category = category;
@@ -493,6 +615,7 @@ function loadCategory(category) {
   document.querySelectorAll('[data-mrp-status]').forEach(button => button.classList.remove('active'));
   document.getElementById('mrpFilterSelect').value = 'all';
   document.querySelectorAll('.scope-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.category === category));
+  document.querySelector('.office-overview').hidden = category !== 'office-supplies';
   document.getElementById('mrpSection').hidden = category !== 'office-supplies';
   document.getElementById('demandForecastSection').hidden = category !== 'office-supplies';
   document.getElementById('inventoryHealthSection').hidden = category !== 'office-supplies';
@@ -500,6 +623,7 @@ function loadCategory(category) {
   return fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => response.json()).then(data => {
     if (request !== categoryRequest) return;
     state.items = data.items || data.supply_list || [];
+    categoryAssignmentItems = data.assignment_items || state.items;
     state.criticalItems = data.critical_depletion || [];
     renderCategoryInsights(data.summary || {});
     if (category === 'office-supplies') renderAllItemsChart();
@@ -591,6 +715,17 @@ document.getElementById('mrpFilterSelect').addEventListener('change', event => {
   renderAllItemsChart();
 });
 document.getElementById('mrpSearchInput').addEventListener('input', event => { state.mrpSearch = event.target.value.trim().toLowerCase(); renderAllItemsChart(); });
+document.getElementById('categoryRegisterSearch').addEventListener('input', renderCategoryRegister);
+document.querySelectorAll('[data-register-status]').forEach(button => button.addEventListener('click', () => {
+  categoryRegisterStatus = button.dataset.registerStatus;
+  document.querySelectorAll('[data-register-status]').forEach(control => {
+    const active = control.dataset.registerStatus === categoryRegisterStatus;
+    control.classList.toggle('active', active);
+    control.setAttribute('aria-pressed', String(active));
+  });
+  renderCategoryRegister();
+}));
+
 document.getElementById('inventoryTableSearch').addEventListener('input', renderInventoryHealthTable);
 document.querySelectorAll('[data-table-status]').forEach(button => button.addEventListener('click', () => { state.inventoryTableStatus = button.dataset.tableStatus; document.querySelectorAll('[data-table-status]').forEach(item => item.classList.toggle('active', item.dataset.tableStatus === state.inventoryTableStatus)); renderInventoryHealthTable(); }));
 document.querySelectorAll('.scope-tab').forEach(tab => tab.addEventListener('click', event => { event.preventDefault(); loadCategory(tab.dataset.category); }));

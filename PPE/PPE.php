@@ -20,6 +20,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
 $search = $_GET['search'] ?? '';
 $sort_by = $_GET['sort'] ?? 'date_newest';
 $sql = "SELECT * FROM ppe_property";
+$iirupTable = $conn->query("SHOW TABLES LIKE 'ppe_iirup_items'");
+if ($iirupTable && $iirupTable->num_rows) {
+    $sql = "SELECT ppe_property.*, COALESCE((SELECT SUM(ii.quantity)
+        FROM ppe_iirup_items ii
+        WHERE ii.quantity > 0 AND (
+            (NULLIF(TRIM(ii.PPE_no), '') IS NOT NULL AND BINARY TRIM(ii.PPE_no) = BINARY TRIM(ppe_property.PPE_no))
+            OR (NULLIF(TRIM(ii.PPE_no), '') IS NULL
+                AND BINARY TRIM(ii.particulars) = BINARY TRIM(CONCAT(ppe_property.item_name, ', ', COALESCE(ppe_property.item_description, ''))))
+        )), 0) AS unserviceable_quantity FROM ppe_property";
+}
 $params = [];
 $types = "";
 
@@ -160,7 +170,13 @@ try {
                         <div style="font-size: 14px;">Start by adding your first property, plant, and equipment item</div>
                     </td></tr>
                 <?php else: ?>
-                    <?php foreach ($items as $item): ?>
+                    <?php foreach ($items as $item):
+                        $unserviceableQuantity = (int)($item['unserviceable_quantity'] ?? 0);
+                        $displayStatus = $item['status'] ?? '';
+                        $isUnserviceable = strtolower(trim($item['condition'] ?? '')) === 'unserviceable'
+                            || ($unserviceableQuantity > 0 && (int)$item['quantity'] <= 0);
+                        if ($isUnserviceable) $displayStatus = 'Unserviceable';
+                    ?>
                     <tr>
                         <td><?= htmlspecialchars($item['PPE_no']); ?></td> 
                         <td><?= htmlspecialchars($item['item_name']); ?></td>
@@ -168,7 +184,11 @@ try {
                         <td><?= number_format($item['quantity']); ?></td>
 
                         <td><?= htmlspecialchars($item['custodian']); ?></td>
-                        <td><span class="inventory-status" data-status="<?= htmlspecialchars(strtolower(trim($item['status'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($item['status'] ?? ''); ?></span></td>
+                        <td><span class="inventory-status" data-status="<?= htmlspecialchars(strtolower(trim($displayStatus)), ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($displayStatus); ?></span>
+                            <?php if ($unserviceableQuantity > 0 && !$isUnserviceable): ?>
+                                <span class="inventory-status" data-status="unserviceable">Unserviceable (<?= number_format($unserviceableQuantity) ?>)</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="currency">₱<?= number_format($item['amount'],2); ?></td>
                         <td class="actions-cell">
                             <div class="actions-menu">

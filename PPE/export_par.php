@@ -281,7 +281,7 @@ td.desc {
 
             <?php foreach ($items as $item): ?>
             <tr>
-                <td>1</td>
+                <td><?= number_format((int)$item['quantity']) ?></td>
                 <td><?= htmlspecialchars($item['unit'] ?? 'unit') ?></td>
                 <td class="desc" id="descColumn"><?= htmlspecialchars($item['item_name'] . ' - ' . $item['item_description']) ?></td>
                 <td><?= htmlspecialchars($par['par_no']) ?></td>
