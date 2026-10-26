@@ -67,6 +67,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </script>
   <link rel="stylesheet" href="css/analytics.css?v=<?= time() ?>">
   <script src="js/chart.min.js"></script>
+  <script src="js/stock-categories.js?v=<?= time() ?>"></script>
   <script src="js/mrp-stock.js?v=<?= time() ?>"></script>
 </head>
 <body>
@@ -77,18 +78,6 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div><div class="eyebrow">TESDA Inventory</div><h1>Inventory Analytics</h1></div>
   </header>
 
-  <section class="office-overview" aria-label="Office Supplies overview">
-    <div class="office-summary-cards">
-      <article class="office-summary-card blue"><span>Total Amount of Items</span><strong><?= number_format($officeTotalItems) ?></strong></article>
-      <article class="office-summary-card purple"><span>Items Issued This Month</span><strong><?= number_format($officeIssuedThisMonth) ?></strong></article>
-    </div>
-    <article class="office-status-panel">
-      <div><h2>Office Supplies Stock Status</h2><p>Current stock position against reorder thresholds.</p></div>
-      <div class="office-pie-wrap"><canvas id="officeStatusChart" aria-label="Office Supplies stock status pie chart"></canvas></div>
-      <div class="office-status-legend"><span><i class="above"></i>Above reorder point</span><span><i class="at"></i>At reorder point</span><span><i class="empty"></i>Empty</span></div>
-    </article>
-  </section>
-
   <section class="scope-bar" aria-label="Analytics scope">
     <div class="scope-tabs" role="tablist" aria-label="Inventory category">
       <button type="button" class="scope-tab active" data-category="office-supplies" role="tab">Office Supplies</button>
@@ -97,9 +86,38 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     </div>
   </section>
 
+  <section class="office-overview" aria-label="Office Supplies overview">
+    <div class="office-summary-cards analytics-summary-cards">
+      <article class="analytics-summary-card"><div><span>Total Stock Items</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.25l8 4.5"/></svg></div><strong><?= number_format($officeTotalItems) ?></strong></article>
+      <article class="analytics-summary-card"><div><span>Issued This Month</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 13 2 2 4-4"/></svg></div><strong><?= number_format($officeIssuedThisMonth) ?></strong></article>
+    </div>
+    <div class="office-status-layout">
+    <article class="office-status-panel">
+      <div class="office-status-heading"><h2>Stock Status Overview</h2><span class="property-record-count"><?= number_format($officeTotalItems) ?> items</span></div>
+      <div class="office-status-content">
+        <div class="office-pie-wrap">
+          <canvas id="officeStatusChart" role="img" aria-label="Office Supplies stock status doughnut chart"></canvas>
+          <div class="office-stock-total"><strong><?= number_format($officeTotalItems) ?></strong><span>Stock items</span></div>
+        </div>
+        <div class="office-status-legend">
+          <span><i class="above" aria-hidden="true"></i>Above reorder point<strong><?= number_format($officeAboveReorder) ?></strong></span>
+          <span><i class="at" aria-hidden="true"></i>At reorder point<strong><?= number_format($officeAtReorder) ?></strong></span>
+          <span><i class="empty" aria-hidden="true"></i>Empty<strong><?= number_format($officeEmpty) ?></strong></span>
+        </div>
+      </div>
+    </article>
+      <aside class="panel stock-category-health" aria-labelledby="stockCategoryHealthTitle">
+        <h3 id="stockCategoryHealthTitle">Stock Health by Category</h3>
+        <p class="panel-caption">Current stock availability across inventory categories.</p>
+        <div id="stockCategoryHealthRows"><p class="panel-caption" role="status">Loading stock health...</p></div>
+        <div class="stock-health-legend" aria-label="Stock health legend"><span><i class="safe" aria-hidden="true"></i>Safe</span><span><i class="reorder" aria-hidden="true"></i>At reorder</span><span><i class="empty" aria-hidden="true"></i>Empty</span></div>
+      </aside>
+    </div>
+  </section>
+
   <section id="categoryInsights" class="category-insights" hidden>
     <div class="section-heading"><h2 id="categoryInsightsTitle">Category analytics</h2></div>
-    <div id="semiOverviewCards" class="semi-overview-cards" hidden></div>
+    <div id="semiOverviewCards" class="analytics-summary-cards" hidden></div>
     <div class="category-summary-cards" id="categorySummaryCards"></div>
     <div id="ppeOverviewPanels" class="ppe-overview-panels" hidden>
       <article id="ppeConditionPanel" class="panel ppe-condition-panel" aria-labelledby="ppeConditionTitle"></article>
@@ -123,8 +141,8 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
         <label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="categoryRegisterSearch" type="search" aria-label="Search property number, item, description, or holder" placeholder="Search items or holders..." autocomplete="off"></label>
         <div class="property-status-filters" role="group" aria-label="Filter property register by status">
           <button type="button" class="active" data-register-status="all" aria-pressed="true">Show All</button>
-          <button type="button" data-register-status="issued" aria-pressed="false">Issued</button>
           <button type="button" data-register-status="available" aria-pressed="false">Available</button>
+          <button type="button" data-register-status="issued" aria-pressed="false">Issued</button>
           <button type="button" data-register-status="disposal" aria-pressed="false">For Disposal</button>
         </div>
       </div>
@@ -137,16 +155,27 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </section>
 
   <section id="mrpSection" class="mrp-section">
-    <div class="section-heading"><h2>Material requirements planning</h2><p>Baseline history compared with the demand trajectory</p></div>
+    <div class="section-heading"><h2>Monitor stock availability</h2><p>Baseline history compared with the demand trajectory</p></div>
     <article class="panel">
-      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Select a stock status. Critical: quantity greater than 1 and less than 5. All includes out-of-stock items.</p></div><div class="mrp-controls"><label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="mrpSearchInput" type="search" aria-label="Search stock items by stock number, item name, or description" placeholder="Search stock items..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Sort by Item Name</option><option value="lowest">Sort by Lowest Quantity First</option><option value="highest">Sort by Highest Quantity First</option></select></div></div>
-      <div class="mrp-status-legend"><button type="button" data-mrp-status="all">All</button><button type="button" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" data-mrp-status="low"><i class="low"></i>Low Stock</button><button type="button" data-mrp-status="critical"><i class="critical"></i>Critical</button><button type="button" data-mrp-status="empty"><i class="empty"></i>Empty</button><a id="criticalChartAction" class="critical-chart-action" href="office_supplies/add_multiple_items.php" hidden>Open Restock Inventory</a></div>
+      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Browse 20 items at a time. Hover over the scrollbar and use the mouse wheel to browse.</p></div><div class="mrp-controls"><label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="mrpSearchInput" type="search" aria-label="Search stock items by stock number, item name, or description" placeholder="Search stock items..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpCategorySelect" aria-label="Filter stock chart by item category"><option value="all">All categories</option></select><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Item name</option><option value="lowest">Quantity: low-high</option><option value="highest">Quantity: high-low</option></select></div></div>
+      <div class="mrp-status-legend">
+      <div class="mrp-label-segments" role="group" aria-label="Chart labels">
+        <button type="button" data-mrp-label="id" aria-pressed="true">Stock No.</button>
+        <button type="button" data-mrp-label="name" aria-pressed="false">Item name</button>
+      </div>
+<button type="button" class="inventory-filter active" data-mrp-status="all">Show All</button><button type="button" class="inventory-filter" data-mrp-status="safe"><i class="safe"></i>Safe</button><button type="button" class="inventory-filter" data-mrp-status="low"><i class="low"></i> Low</button><button type="button" class="inventory-filter" data-mrp-status="critical"><i class="critical"></i>Critical</button><button type="button" class="inventory-filter" data-mrp-status="empty"><i class="empty"></i>Empty</button><a id="criticalChartAction" class="critical-chart-action" href="office_supplies/add_multiple_items.php" hidden>Open Restock Inventory</a>
+      </div>
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">
           <div class="mrp-multi-chart-frame">
-            <canvas id="mrpStockChart"></canvas>
+            <div class="mrp-canvas-stage"><canvas id="mrpStockChart" role="img" aria-label="Stock quantities by stock number, showing up to 20 items"></canvas></div>
+            <div class="mrp-name-labels" aria-hidden="true" hidden></div>
             <div id="mrpEmptyState" class="mrp-empty-state" hidden><strong>No active stock items match the current filters.</strong></div>
             <div id="mrpNoResults" class="mrp-empty-state search-empty-state" hidden><strong>No items match your search query.</strong></div>
+          </div>
+          <div class="mrp-browse-footer">
+            <p id="mrpItemRange" class="panel-caption" role="status"></p>
+            <div id="mrpItemScrollbar" class="mrp-item-scrollbar" tabindex="0" role="region" aria-label="Browse stock items horizontally" aria-controls="mrpStockChart" hidden><div class="mrp-item-scroll-track"></div></div>
           </div>
         </div>
       </div>
@@ -156,12 +185,12 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   <section id="demandForecastSection" class="demand-forecast-section" aria-labelledby="demandForecastTitle">
     <div class="section-heading"><h2 id="demandForecastTitle">Inventory Demand Forecast</h2><p>Monthly actual issuance and SMA forecasts for Office Supplies</p></div>
     <article class="panel">
-      <div class="filters demand-forecast-toolbar">
-        <div class="control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
+      <div class="demand-forecast-toolbar">
+        <div class="control"><label for="horizonSelect">Analysis horizon</label><select id="horizonSelect" class="mrp-filter-select"><option value="ytd">Year to date</option><option value="12m" selected>Past 12 months</option><option value="24m">Past 24 months</option><option value="custom">Custom range</option></select></div>
         <div id="demandCustomRange" class="demand-custom-range" hidden>
           <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
-          <div class="control"><label for="demandStartMonth">From month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandStartMonth" type="month" required></div>
-          <div class="control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" type="month" required></div>
+          <div class="control"><label for="demandStartMonth">From month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandStartMonth" class="mrp-filter-select" type="month" required></div>
+          <div class="control"><label for="demandEndMonth">Through month <span class="required-indicator" aria-hidden="true">*</span></label><input id="demandEndMonth" class="mrp-filter-select" type="month" required></div>
         </div>
       </div>
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and predicted demand"></canvas></div>
@@ -204,47 +233,24 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
 
 <script>
 Chart.defaults.font.family = "'Century Gothic', Century Gothic, sans-serif";
-const officePieValueLabels = {
-  id: 'officePieValueLabels',
-  afterDatasetsDraw(chart) {
-    const dataset = chart.data.datasets[0];
-    const meta = chart.getDatasetMeta(0);
-    const total = dataset.data.reduce((sum, value) => sum + Number(value), 0);
-    const context = chart.ctx;
-    context.save();
-    context.fillStyle = '#ffffff';
-    context.font = '700 14px Century Gothic, sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    meta.data.forEach((arc, index) => {
-      const value = Number(dataset.data[index]);
-      if (!value || !total) return;
-      const angle = (arc.startAngle + arc.endAngle) / 2;
-      const radius = (arc.outerRadius + arc.innerRadius) / 2;
-      context.fillText(value.toLocaleString(), arc.x + Math.cos(angle) * radius, arc.y + Math.sin(angle) * radius);
-    });
-    context.restore();
-  }
-};
-
 new Chart(document.getElementById('officeStatusChart'), {
-  type: 'pie',
+  type: 'doughnut',
   data: {
     labels: ['Above reorder point', 'At reorder point', 'Empty'],
     datasets: [{
       data: [<?= $officeAboveReorder ?>, <?= $officeAtReorder ?>, <?= $officeEmpty ?>],
-      backgroundColor: ['#43a047', '#fb8c00', '#e53935'],
-      borderColor: '#ffffff',
-      borderWidth: 3
+      backgroundColor: ['#16a34a', '#f59e0b', '#ef4444'],
+      borderWidth: 0
     }]
   },
-  plugins: [officePieValueLabels],
-  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
 });
 </script>
 
 <script>
-const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '' };
+const state = { category: 'office-supplies', items: [], criticalItems: [], unifiedItems: [], inventoryTableStatus: 'all', velocityChart: null, forecastChart: null, mrpStockChart: null, mrpStatusFilter: 'all', mrpViewMode: 'all', mrpSearch: '', mrpItemCategory: 'all', mrpLabelMode: 'id', mrpOffset: 0, mrpChartItems: [] };
+const mrpItemPanel = MRPStock.createItemPanel(document.getElementById('mrpStockChart'));
+document.getElementById('mrpStockChart').tabIndex = 0;
 const analyticsCategoryKey = 'analytics:category:' + location.pathname;
 try {
   const savedCategory = localStorage.getItem(analyticsCategoryKey);
@@ -340,7 +346,7 @@ async function loadDemandForecast(background = false) {
     const stripeCanvas = document.createElement('canvas');
     stripeCanvas.width = stripeCanvas.height = 8;
     const stripeContext = stripeCanvas.getContext('2d');
-    stripeContext.fillStyle = '#9bc5ea';
+    stripeContext.fillStyle = '#fb923c';
     stripeContext.fillRect(0, 0, 8, 8);
     stripeContext.strokeStyle = '#ffffff';
     stripeContext.lineWidth = 1;
@@ -429,7 +435,19 @@ function renderInventoryHealthTable() {
   body.innerHTML = html.join('');
   empty.hidden = html.length > 0;
 }
+function renderStockHealthByCategory(items) {
+  const rows = StockCategories.summarizeHealth(items);
+  document.getElementById('stockCategoryHealthRows').innerHTML = rows.map(category => {
+    const description = category.label + ': ' + category.total + ' items; ' + category.safe + ' safe, ' + category.reorder + ' at reorder, ' + category.empty + ' empty.';
+    const segments = [['safe', 'Safe'], ['reorder', 'At reorder'], ['empty', 'Empty']].map(([status, label]) => {
+      const width = category.total ? category[status] / category.total * 100 : 0;
+      return '<span class="' + status + '" style="width:' + width + '%" title="' + label + ': ' + category[status] + ' items"></span>';
+    }).join('');
+    return '<div class="stock-health-row"><div class="stock-health-row-heading"><strong>' + escapeTableText(category.label) + '</strong><span>' + category.total.toLocaleString() + ' items</span></div><div class="stock-health-bar" role="img" aria-label="' + escapeTableText(description) + '">' + segments + '</div></div>';
+  }).join('');
+}
 function prepareUnifiedItems(payloads) {
+  if (payloads['office-supplies']) renderStockHealthByCategory(payloads['office-supplies'].supply_list || payloads['office-supplies'].items || []);
   const criticalById = new Map((payloads['office-supplies'].critical_depletion || []).map(item => [Number(item.item_id), item]));
   const categories = [
     ['office-supplies', 'Office Supplies']
@@ -530,6 +548,10 @@ function renderSemiStatusChart(container, summary) {
     return `<div class="semi-value-row"><div class="semi-value-label"><span>${escapeTableText(item.category)}</span><strong>${currency.format(value)}</strong></div><div class="semi-value-track" role="img" aria-label="${escapeTableText(item.category)}: ${currency.format(value)}"><div class="semi-value-fill" style="width:${width}%;background:${barColors[index % barColors.length]}"></div></div></div>`;
   }).join('') : '<p class="empty-state">No category values recorded.</p>'}</div></article>`);
 }
+function renderAnalyticsSummaryCards(cards) {
+  const icons = ["<path d=\"m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z\"/><path d=\"m4 7.5 8 4.5 8-4.5M12 12v9M8 5.25l8 4.5\"/>","<rect x=\"5\" y=\"5\" width=\"14\" height=\"16\" rx=\"2\"/><rect x=\"9\" y=\"3\" width=\"6\" height=\"4\" rx=\"1\"/><path d=\"m9 13 2 2 4-4\"/>","<rect x=\"4\" y=\"4\" width=\"16\" height=\"4\" rx=\"1\"/><path d=\"M5 8v11h14V8M9 12h6\"/>","<rect x=\"3\" y=\"5\" width=\"18\" height=\"15\" rx=\"2\"/><path d=\"M3 9h18M16 14h5M6 5V3h12v2\"/>"];
+  return cards.map(([label, value], index) => '<article class="analytics-summary-card"><div><span>' + escapeTableText(label) + '</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[index] + '</svg></div><strong>' + escapeTableText(String(value)) + '</strong></article>').join('');
+}
 function renderCategoryInsights(summary) {
   if (semiStatusChart) { semiStatusChart.destroy(); semiStatusChart = null; }
   const insights = document.getElementById('categoryInsights');
@@ -562,19 +584,12 @@ function renderCategoryInsights(summary) {
   const overview = document.getElementById('semiOverviewCards');
   overview.hidden = !isSemi;
   if (isSemi) {
-    const icons = [
-      '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.25l8 4.5"/>',
-      '<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 13 2 2 4-4"/>',
-      '<rect x="4" y="4" width="16" height="4" rx="1"/><path d="M5 8v11h14V8M9 12h6"/>',
-      '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M16 14h5M6 5V3h12v2"/>'
-    ];
-    const cards = [
+    overview.innerHTML = renderAnalyticsSummaryCards([
       ['Property Records', state.items.filter(item => item.item_id !== null).length.toLocaleString()],
       ['Issued Units', Number(summary.currently_issued || 0).toLocaleString()],
       ['Unserviceable Units', Number(summary.unserviceable || 0).toLocaleString()],
       ['Total Value', new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(Number(summary.total_value || 0))]
-    ];
-    overview.innerHTML = cards.map(([label, value], index) => `<article class="semi-overview-card"><div><span>${label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[index]}</svg></div><strong>${value}</strong></article>`).join('');
+    ]);
   }
   insights.hidden = !isSemi && !isPpe;
   if (!isSemi && !isPpe) return;
@@ -582,18 +597,19 @@ function renderCategoryInsights(summary) {
   const summaryCards = document.getElementById('categorySummaryCards');
   summaryCards.classList.toggle('semi-chart-summary', isSemi);
   if (isSemi) {
-    summaryCards.classList.remove('semi-summary', 'colored-summary');
+    summaryCards.classList.remove('semi-summary', 'colored-summary', 'analytics-summary-cards');
     renderSemiStatusChart(summaryCards, summary);
     renderCategoryRegister();
     return;
   }
-  summaryCards.classList.toggle('semi-summary', isSemi);
-  summaryCards.classList.add('colored-summary');
-  summaryCards.innerHTML = isSemi ? `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.not_issued || 0).toLocaleString()}</strong><span>Not issued</span></article><article class="category-summary-card active"><strong>${Number(summary.currently_issued || 0).toLocaleString()}</strong><span>Currently issued</span></article><article class="category-summary-card disposed"><strong>${Number(summary.disposed || 0).toLocaleString()}</strong><span>Disposed / For disposal</span></article>` : `<article class="category-summary-card total"><strong>${Number(summary.total || 0).toLocaleString()}</strong><span>Total Items</span></article><article class="category-summary-card issued"><strong>${Number(summary.serviceable || 0).toLocaleString()}</strong><span>Serviceable Items</span></article><article class="category-summary-card disposed"><strong>${Number(summary.unserviceable || 0).toLocaleString()}</strong><span>Unserviceable Items</span></article>`;
-  if (isSemi || isPpe) {
-    const totalValue = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(summary.total_value || 0));
-    summaryCards.insertAdjacentHTML('beforeend', `<article class="category-summary-card value"><strong>${totalValue}</strong><span>Total Value</span></article>`);
-  }
+  summaryCards.classList.remove('semi-summary', 'colored-summary');
+  summaryCards.classList.add('analytics-summary-cards');
+  summaryCards.innerHTML = renderAnalyticsSummaryCards([
+    ['Total Items', Number(summary.total || 0).toLocaleString()],
+    ['Serviceable Items', Number(summary.serviceable || 0).toLocaleString()],
+    ['Unserviceable Items', Number(summary.unserviceable || 0).toLocaleString()],
+    ['Total Value', new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(summary.total_value || 0))]
+  ]);
   renderCategoryRegister();
 }
 let categoryRequest = 0;
@@ -611,6 +627,9 @@ function loadCategory(category) {
   state.mrpStatusFilter = 'all';
   state.mrpViewMode = 'all';
   state.mrpSearch = '';
+  state.mrpItemCategory = 'all';
+  state.mrpOffset = 0;
+  document.getElementById('mrpCategorySelect').value = 'all';
   document.getElementById('mrpSearchInput').value = '';
   document.querySelectorAll('[data-mrp-status]').forEach(button => button.classList.remove('active'));
   document.getElementById('mrpFilterSelect').value = 'all';
@@ -623,6 +642,7 @@ function loadCategory(category) {
   return fetch('analytics_data.php?category=' + encodeURIComponent(category)).then(response => response.json()).then(data => {
     if (request !== categoryRequest) return;
     state.items = data.items || data.supply_list || [];
+    if (category === 'office-supplies') renderStockHealthByCategory(data.supply_list || data.items || []);
     categoryAssignmentItems = data.assignment_items || state.items;
     state.criticalItems = data.critical_depletion || [];
     renderCategoryInsights(data.summary || {});
@@ -648,23 +668,28 @@ function renderDiagnostics() {
 function itemDescription(item) { return String(item.description || '').trim(); }
 function itemSearchText(item) { return `${item.stock_number || item.property_no || ''} ${itemName(item)} ${itemDescription(item)}`.toLowerCase(); }
 function itemLabel(item) { const description = itemDescription(item); return `${item.stock_number || item.property_no || 'N/A'} — ${itemName(item)}${description ? ` (${description})` : ''}`; }
-function renderAllItemsChart() {
-  // Destroy first so no old bars, hover targets, or selected items survive a tab change.
-  if (state.mrpStockChart) { state.mrpStockChart.destroy(); state.mrpStockChart = null; }
-  const items = MRPStock.selectItems(state.items, state.mrpStatusFilter, state.mrpSearch, MRPStock.businessDate(), state.mrpViewMode);
+function renderAllItemsChart(resetPosition = true) {
+  mrpItemPanel.close();
+  if (resetPosition) state.mrpOffset = 0;
+  const matches = MRPStock.selectItems(state.items, state.mrpStatusFilter, state.mrpSearch, MRPStock.businessDate(), state.mrpViewMode, state.mrpItemCategory);
+  state.mrpChartItems = matches;
+  const view = MRPStock.itemWindow(matches, state.mrpOffset, 20);
+  state.mrpOffset = view.start;
+  const items = view.items;
   const critical = state.mrpStatusFilter === 'critical';
   const emptyStock = state.mrpStatusFilter === 'empty';
   const canvas = document.getElementById('mrpStockChart');
   const empty = document.getElementById('mrpEmptyState');
   canvas.hidden = items.length === 0;
+  canvas.parentNode.hidden = items.length === 0;
   empty.hidden = items.length > 0;
   empty.textContent = state.mrpSearch ? 'No matching items in this view.' : 'No items in this stock status.';
   document.getElementById('mrpNoResults').hidden = true;
   document.getElementById('criticalChartAction').hidden = !(critical || emptyStock);
   const sortOptions = document.getElementById('mrpFilterSelect').options;
-  sortOptions[0].textContent = 'Sort by Item Name';
-  sortOptions[1].textContent = 'Sort by Lowest Quantity First';
-  sortOptions[2].textContent = 'Sort by Highest Quantity First';
+  sortOptions[0].textContent = 'Item name';
+  sortOptions[1].textContent = 'Quantity: low-high';
+  sortOptions[2].textContent = 'Quantity: high-low';
   document.getElementById('forecastTitle').textContent = critical ? 'Critical stock — Quantity greater than 1 and less than 5' : 'Stock levels — Quantity (units)';
   if (emptyStock) document.getElementById('forecastTitle').textContent = 'Empty stock - Zero quantity';
   document.querySelectorAll('[data-mrp-status]').forEach(button => {
@@ -683,8 +708,23 @@ function renderAllItemsChart() {
   details.innerHTML = (critical || emptyStock) ? items.map(item =>
     `<article class="mrp-critical-item" tabindex="0" role="button" aria-expanded="false" aria-label="Show description for ${escapeTableText(item.itemName)}"><strong>${escapeTableText(item.sku)} — ${escapeTableText(item.itemName)}</strong>${(emptyStock ? ['Quantity: 0 units', ...MRPStock.tooltip(item)] : MRPStock.tooltip(item)).map((line, index) => `<p${index === 0 ? ' class="mrp-primary-metric"' : ''}>${escapeTableText(line)}</p>`).join('')}<p class="mrp-item-description" hidden><strong>Description:</strong> ${escapeTableText(item.description || 'No description available.')}</p><a href="office_supplies/add_multiple_items.php?item_id=${encodeURIComponent(item.id)}">Open Restock Inventory</a></article>`
   ).join('') : '';
-  if (items.length) state.mrpStockChart = new Chart(canvas, MRPStock.chartConfig(items, state.mrpStatusFilter,
-    item => { window.location.href = 'office_supplies/add_multiple_items.php?item_id=' + encodeURIComponent(item.id); }));
+  if (items.length) {
+    const config = MRPStock.chartConfig(items, state.mrpStatusFilter,
+      (item, anchor, chart) => mrpItemPanel.open(item, anchor, chart),
+      { dark: document.body.classList.contains('dark-mode'), labelMode: state.mrpLabelMode, onDismiss: () => mrpItemPanel.close(), onHoverItem: (item, anchor) => mrpItemPanel.hover(item, anchor) });
+    if (state.mrpStockChart) {
+      state.mrpStockChart.data = config.data;
+      state.mrpStockChart.options = config.options;
+      state.mrpStockChart.resize();
+      state.mrpStockChart.update('none');
+    } else state.mrpStockChart = new Chart(canvas, config);
+  } else if (state.mrpStockChart) {
+    state.mrpStockChart.destroy(); state.mrpStockChart = null;
+  }
+  document.getElementById('mrpItemRange').textContent = matches.length
+    ? 'Items ' + (view.start + 1) + ' to ' + (view.start + items.length) + ' of ' + matches.length
+    : '0 matching items';
+  updateMrpScrollbar();
 }
 function renderForecast(item, labels, values) {
   const cleanValues = values.map(Number).filter(Number.isFinite); const base = cleanValues.length ? cleanValues : [Number(item.quantity || 0)]; const average = base.reduce((sum, value) => sum + value, 0) / base.length; const recent = base.slice(-3).reduce((sum, value) => sum + value, 0) / Math.min(3, base.length); const futureLabels = ['+1 mo', '+2 mo', '+3 mo', '+4 mo', '+5 mo', '+6 mo']; const forecast = futureLabels.map((_, index) => Math.max(0, Math.round(recent + ((recent - average) * (index + 1) / 3))));
@@ -710,6 +750,58 @@ document.getElementById('mrpSection').addEventListener('keydown', event => {
     event.target.click();
   }
 });
+document.querySelectorAll('[data-mrp-label]').forEach(button => button.addEventListener('click', () => {
+  const mode = button.dataset.mrpLabel;
+  if (mode === state.mrpLabelMode) return;
+  state.mrpLabelMode = mode;
+  document.querySelectorAll('[data-mrp-label]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.mrpLabel === mode)));
+  document.getElementById('mrpStockChart').setAttribute('aria-label', 'Stock quantities by ' + (mode === 'name' ? 'item name' : 'stock number') + ', showing up to 20 items');
+  renderAllItemsChart(false);
+}));
+const mrpCategorySelect = document.getElementById('mrpCategorySelect');
+StockCategories.categories.forEach(category => {
+  const option = document.createElement('option'); option.value = category.id; option.textContent = category.label;
+  mrpCategorySelect.append(option);
+});
+mrpCategorySelect.addEventListener('change', event => { state.mrpItemCategory = event.target.value; renderAllItemsChart(); });
+function updateMrpScrollbar() {
+  const scrollbar = document.getElementById('mrpItemScrollbar');
+  const total = state.mrpChartItems.length;
+  scrollbar.hidden = total <= 20;
+  if (scrollbar.hidden) { scrollbar.scrollLeft = 0; return; }
+  scrollbar.firstElementChild.style.width = Math.ceil(scrollbar.clientWidth * total / 20) + 'px';
+  const maxScroll = scrollbar.scrollWidth - scrollbar.clientWidth;
+  const nextScroll = state.mrpOffset / (total - 20) * maxScroll;
+  if (Math.abs(scrollbar.scrollLeft - nextScroll) > 1) scrollbar.scrollLeft = nextScroll;
+}
+const mrpScrollbar = document.getElementById('mrpItemScrollbar');
+let mrpScrollPending = false;
+mrpScrollbar.addEventListener('scroll', () => {
+  if (mrpScrollPending) return;
+  mrpScrollPending = true;
+  requestAnimationFrame(() => {
+    mrpScrollPending = false;
+    const offset = MRPStock.scrollOffset(mrpScrollbar.scrollLeft, mrpScrollbar.scrollWidth - mrpScrollbar.clientWidth, state.mrpChartItems.length);
+    if (offset !== state.mrpOffset) { state.mrpOffset = offset; renderAllItemsChart(false); }
+  });
+}, { passive: true });
+mrpScrollbar.addEventListener('wheel', event => {
+  if (event.ctrlKey || mrpScrollbar.scrollWidth <= mrpScrollbar.clientWidth) return;
+  const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? mrpScrollbar.clientWidth : 1;
+  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+  if (!delta) return;
+  event.preventDefault();
+  mrpScrollbar.scrollLeft += delta * unit;
+}, { passive: false });
+window.addEventListener('resize', updateMrpScrollbar);
+let mrpDarkMode = document.body.classList.contains('dark-mode');
+new MutationObserver(() => {
+  const dark = document.body.classList.contains('dark-mode');
+  if (dark === mrpDarkMode) return;
+  mrpDarkMode = dark;
+  if (state.category === 'office-supplies') renderAllItemsChart(false);
+}).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+if ('ResizeObserver' in window) new ResizeObserver(updateMrpScrollbar).observe(mrpScrollbar.parentElement);
 document.getElementById('mrpFilterSelect').addEventListener('change', event => {
   state.mrpViewMode = event.target.value;
   renderAllItemsChart();
@@ -752,7 +844,7 @@ Promise.allSettled([initialDemandForecast, initialCategory, initialInventory, an
 let mrpRefreshing = false;
 async function refreshMrp() {
   if (document.hidden || state.category !== 'office-supplies' || categoryLoading || mrpRefreshing) return;
-  renderAllItemsChart();
+  renderAllItemsChart(false);
   const request = categoryRequest;
   mrpRefreshing = true;
   try {
@@ -763,7 +855,7 @@ async function refreshMrp() {
     state.items = data.supply_list || [];
     state.criticalItems = data.critical_depletion || [];
     prepareUnifiedItems({ 'office-supplies': data });
-    renderAllItemsChart();
+    renderAllItemsChart(false);
   } catch (error) {
     document.getElementById('forecastTitle').textContent += ' — refresh failed; showing last loaded stock';
   } finally { mrpRefreshing = false; }
@@ -773,7 +865,7 @@ setInterval(() => {
   const today = MRPStock.businessDate();
   if (today !== mrpBusinessDate) {
     mrpBusinessDate = today;
-    if (state.category === 'office-supplies') renderAllItemsChart();
+    if (state.category === 'office-supplies') renderAllItemsChart(false);
   }
 }, 1000);
 setInterval(refreshMrp, 60000);

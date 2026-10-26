@@ -621,6 +621,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property WHERE NULLIF(TRIM(officer_
     </div>
 </div>
 
+<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
 // Toggle "Others" input box visibility
 document.addEventListener('DOMContentLoaded', function() {
@@ -666,158 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 const officerData = <?php echo $officer_data_json; ?>;
-const officerNames = officerData.map(o => o.name);
-function setupAutocomplete(inputId, dropdownId, designationId) {
-    const input = document.getElementById(inputId);
-    const dropdown = document.getElementById(dropdownId);
-    const designationInput = designationId ? document.getElementById(designationId) : null;
-    if (!input || !dropdown) return;
-    function setDesignation(name) {
-        if (!designationInput) return;
-        const officer = officerData.find(o => o.name === name);
-        if (officer) {
-            designationInput.value = officer.position;
-        }
-    }
-    input.addEventListener('focus', function() {
-        if (this.value.trim() === '') {
-            showAllSuggestions(dropdown, input, designationInput);
-        } else {
-            filterSuggestions(this.value, dropdown, input, designationInput);
-        }
-    });
-    input.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (dropdown.style.display !== 'block') {
-            if (this.value.trim() === '') {
-                showAllSuggestions(dropdown, input, designationInput);
-            } else {
-                filterSuggestions(this.value, dropdown, input, designationInput);
-            }
-        }
-    });
-    input.addEventListener('input', function() {
-        const value = this.value;
-        if (value.trim() === '') {
-            showAllSuggestions(dropdown, input, designationInput);
-        } else {
-            filterSuggestions(value, dropdown, input, designationInput);
-        }
-        setDesignation(this.value);
-    });
-    input.addEventListener('keydown', function(e) {
-        if (dropdown.style.display !== 'block') return;
-        const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
-        if (items.length === 0) return;
-        const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
-        let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                currentIndex = (currentIndex + 1) % items.length;
-                highlightItem(items, currentIndex, dropdown);
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
-                highlightItem(items, currentIndex, dropdown);
-                break;
-            case 'Enter':
-                e.preventDefault();
-                if (selectedItem) {
-                    const text = selectedItem.textContent || selectedItem.innerText;
-                    input.value = text;
-                    dropdown.style.display = 'none';
-                    setDesignation(text);
-                }
-                break;
-            case 'Tab':
-                const itemToSelect = selectedItem || items[0];
-                if (itemToSelect) {
-                    const text = itemToSelect.textContent || itemToSelect.innerText;
-                    input.value = text;
-                    dropdown.style.display = 'none';
-                    setDesignation(text);
-                }
-                break;
-            case 'Escape':
-                dropdown.style.display = 'none';
-                break;
-        }
-    });
-    dropdown.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-    document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-}
-function highlightItem(items, index, dropdown) {
-    items.forEach(item => item.classList.remove('selected'));
-    if (index >= 0 && index < items.length) {
-        items[index].classList.add('selected');
-        const item = items[index];
-        const dropdownRect = dropdown.getBoundingClientRect();
-        const itemRect = item.getBoundingClientRect();
-        if (itemRect.bottom > dropdownRect.bottom) {
-            item.scrollIntoView({ block: 'end', behavior: 'smooth' });
-        } else if (itemRect.top < dropdownRect.top) {
-            item.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        }
-    }
-}
-function showAllSuggestions(dropdown, input, designationInput) {
-    dropdown.innerHTML = '';
-    if (officerData.length === 0) {
-        dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
-        dropdown.style.display = 'block';
-        return;
-    }
-    officerData.forEach(officer => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        item.textContent = officer.name;
-        item.addEventListener('click', function() {
-            input.value = officer.name;
-            dropdown.style.display = 'none';
-            if (designationInput) designationInput.value = officer.position;
-        });
-        dropdown.appendChild(item);
-    });
-    dropdown.style.display = 'block';
-}
-function filterSuggestions(value, dropdown, input, designationInput) {
-    dropdown.innerHTML = '';
-    const searchValue = value.toLowerCase();
-    const filtered = officerData.filter(o => o.name.toLowerCase().includes(searchValue));
-    if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
-        dropdown.style.display = 'block';
-        return;
-    }
-    filtered.forEach(officer => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        const index = officer.name.toLowerCase().indexOf(searchValue);
-        if (index !== -1) {
-            const before = officer.name.substring(0, index);
-            const match = officer.name.substring(index, index + searchValue.length);
-            const after = officer.name.substring(index + searchValue.length);
-            item.innerHTML = before + '<strong>' + match + '</strong>' + after;
-        } else {
-            item.textContent = officer.name;
-        }
-        item.addEventListener('click', function() {
-            input.value = officer.name;
-            dropdown.style.display = 'none';
-            if (designationInput) designationInput.value = officer.position;
-        });
-        dropdown.appendChild(item);
-    });
-    dropdown.style.display = 'block';
-}
+
 document.addEventListener('DOMContentLoaded', function() {
     setupAutocomplete('to_officer', 'to_officer_dropdown');
     setupAutocomplete('approved_by', 'approved_by_dropdown', 'approved_by_designation');
@@ -844,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toOfficerDropdown.addEventListener('click', function(e) {
             const selectedItem = e.target.closest('.autocomplete-item');
             if (selectedItem && selectedItem.textContent) {
-                const officer = officerData.find(o => o.name === selectedItem.textContent);
+                const officer = officerData.find(o => o.name === (selectedItem.dataset.officerName || selectedItem.textContent));
                 if (officer) {
                     toOfficerInput.value = officer.name;
                     receivedByInput.value = officer.name;

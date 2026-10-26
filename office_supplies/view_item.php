@@ -180,7 +180,7 @@ $conn->close();
     <h2>View Item: <?= h($item['item_name']) ?></h2>
 
     <div class="view-actions">
-        <a href="office_supplies/inventory.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Inventory</a>
+        <a href="office_supplies/inventory.php" class="btn btn-secondary" onclick="if (!event.ctrlKey &amp;&amp; !event.metaKey &amp;&amp; !event.shiftKey &amp;&amp; !event.altKey &amp;&amp; window.history.length > 1) { event.preventDefault(); window.history.back(); }"><i class="fas fa-arrow-left"></i> Back</a>
         <a href="office_supplies/add_multiple_items.php" class="btn btn-success"><i class="fas fa-box"></i> Restock Items</a>
     </div>
 

@@ -1,11 +1,12 @@
 <?php
 // PAR issues the whole quantity of each selected property record.
+// Active is the PPE entry form's status for new available stock.
 function ppeParEligible(array $item): bool {
     $status = strtolower(trim((string)($item['status'] ?? '')));
     $condition = strtolower(trim((string)($item['condition'] ?? '')));
     return (int)($item['quantity'] ?? 0) > 0
         && in_array($condition, ['good', 'fair', 'serviceable'], true)
-        && in_array($status, ['active', 'available', 'not issued', 'returned'], true)
+        && in_array($status, ['active', 'available', 'returned'], true)
         && ($status === 'returned' || empty($item['has_assignment']));
 }
 

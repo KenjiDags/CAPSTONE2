@@ -361,6 +361,7 @@ $officer_result->free();
         </a>
     </div>
 </div>
+<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
 // Replace a default zero immediately when typing into an item amount field.
 function selectDefaultZero(event) {
@@ -546,8 +547,6 @@ function fillInputsFromRow(checkbox) {
     updateItemAllocations(checkbox.closest('tr').dataset.ppeId);
 }
 </script>
-<script type="application/json" id="officerNameOptions"><?= json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script type="application/json" id="officerPositionOptions"><?= json_encode((object)$officer_positions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="js/officer-autocomplete.js?v=<?= time() ?>" defer></script>
+
 </body>
 </html>

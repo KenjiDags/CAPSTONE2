@@ -68,7 +68,6 @@ unset($_SESSION['success']);
                 <input id="reportSearch" type="search" name="search" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search report ID, officer, entity, or fund...">
             </div>
             <div class="control-actions">
-                <button type="submit" class="pill-btn pill-view">Search</button>
                 <a href="PPE/add_RPCPPE.php" class="pill-btn pill-add"><i class="fas fa-plus" aria-hidden="true"></i> Add RPCPPE</a>
             </div>
         </div>

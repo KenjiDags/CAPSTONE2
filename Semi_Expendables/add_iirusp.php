@@ -382,6 +382,7 @@ if ($officer_result) {
 
 
 <!-- JS LOGIC -->
+<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
 let allocationSequence = 0;
 function appendRemainingAllocation(sourceRow) {
@@ -576,8 +577,6 @@ document.getElementById('itemsTable').addEventListener('input', event => {
         }
     }
 </script>
-<script type="application/json" id="officerNameOptions"><?= json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script type="application/json" id="officerPositionOptions"><?= json_encode((object)$officer_positions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="js/officer-autocomplete.js?v=<?= time() ?>" defer></script>
+
 </body>
 </html>

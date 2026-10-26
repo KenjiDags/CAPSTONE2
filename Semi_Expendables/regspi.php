@@ -72,7 +72,6 @@ $stmt->close();
             <div class="control-search">
                 <label for="searchInput"><i class="fas fa-search"></i> Search:</label>
                 <input type="search" id="searchInput" name="search" value="<?= regspiH($search) ?>" placeholder="Search document no., entity, fund, or category...">
-                <button type="submit" class="pill-btn pill-view">Search</button>
             </div>
             <div class="control-actions">
                 <a href="Semi_Expendables/add_regspi.php" class="pill-btn pill-add"><i class="fas fa-plus"></i> Add RegSPI Document</a>

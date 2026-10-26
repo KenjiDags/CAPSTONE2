@@ -28,10 +28,12 @@ try {
     $rejected = false;
     try { ppeSavePar($conn, $header, [$id]); } catch (InvalidArgumentException $e) { $rejected = true; }
     parCheck($rejected, 'Already issued property was accepted.');
-    foreach ([['quantity' => 0], ['condition' => 'Unserviceable'], ['status' => 'Transferred'], ['has_assignment' => 1]] as $change) {
+    foreach ([['quantity' => 0], ['condition' => 'Unserviceable'], ['status' => 'Transferred'], ['status' => 'Unserviceable'], ['status' => 'For Repair'], ['status' => 'Disposed'], ['status' => 'Issued'], ['status' => 'Not Issued'], ['has_assignment' => 1]] as $change) {
         $available = ['quantity' => 2, 'condition' => 'Good', 'status' => 'Active', 'has_assignment' => 0];
         parCheck(!ppeParEligible(array_replace($available, $change)), 'Unavailable property was accepted.');
     }
+    parCheck(ppeParEligible(['quantity' => 1, 'condition' => 'Good', 'status' => 'Available', 'has_assignment' => 0]), 'Available property should be eligible.');
+    parCheck(!ppeParEligible(['quantity' => 1, 'condition' => 'Unserviceable', 'status' => 'Returned', 'has_assignment' => 1]), 'Unserviceable returned property must be rejected.');
     parCheck(ppeParEligible(['quantity' => 1, 'condition' => 'Good', 'status' => 'Returned', 'has_assignment' => 1]), 'Returned property should be available again.');
     echo "PASS: issuance, export linkage, quantities, history, duplicate protection, and availability rules.\n";
 } finally {

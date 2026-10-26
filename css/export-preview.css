@@ -82,3 +82,13 @@
     html[data-export-preview-theme="light"] .export-preview-toolbar .export-preview-back { background: #2563eb; color: #fff; }
     html[data-export-preview-theme="light"] .export-preview-toolbar .export-preview-back:hover { background: #1d4ed8; }
 }
+
+/* Keep horizontal navigation within reach when a zoomed document overflows. */
+@media screen {
+    .export-preview-shell, .export-preview-stage { min-width: 0; }
+    .export-preview-shell.export-preview-has-horizontal-scroll { padding-bottom: 22px; }
+    .export-preview-bottom-scroll { position: fixed; bottom: 0; z-index: 1000; height: 20px; overflow-x: auto; overflow-y: hidden; background: var(--preview-stage); color-scheme: inherit; }
+    .export-preview-bottom-scroll[hidden] { display: none !important; }
+    .export-preview-scroll-track { height: 1px; }
+    .export-preview-bottom-scroll:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; }
+}

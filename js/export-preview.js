@@ -176,6 +176,35 @@
     shell.append(header, toolbar, stage);
     body.append(shell);
     body.classList.add('export-preview-ready');
+    // Mirror the document's horizontal scroll at the bottom of the viewport.
+    const bottomScroll = document.createElement('div');
+    bottomScroll.className = 'export-preview-bottom-scroll export-preview-chrome';
+    bottomScroll.hidden = true;
+    bottomScroll.tabIndex = 0;
+    bottomScroll.setAttribute('role', 'region');
+    bottomScroll.setAttribute('aria-label', 'Scroll document horizontally');
+    const scrollTrack = document.createElement('div');
+    scrollTrack.className = 'export-preview-scroll-track';
+    bottomScroll.append(scrollTrack);
+    shell.append(bottomScroll);
+    function updateHorizontalScroll() {
+        const overflowing = stage.scrollWidth > stage.clientWidth + 1;
+        bottomScroll.hidden = !overflowing;
+        shell.classList.toggle('export-preview-has-horizontal-scroll', overflowing);
+        if (!overflowing) return;
+        const bounds = stage.getBoundingClientRect();
+        bottomScroll.style.left = bounds.left + 'px';
+        bottomScroll.style.width = stage.clientWidth + 'px';
+        scrollTrack.style.width = stage.scrollWidth + 'px';
+        bottomScroll.scrollLeft = stage.scrollLeft;
+    }
+    stage.addEventListener('scroll', () => {
+        if (bottomScroll.scrollLeft !== stage.scrollLeft) bottomScroll.scrollLeft = stage.scrollLeft;
+    }, { passive: true });
+    bottomScroll.addEventListener('scroll', () => {
+        if (stage.scrollLeft !== bottomScroll.scrollLeft) stage.scrollLeft = bottomScroll.scrollLeft;
+    }, { passive: true });
+
     let printing = false;
     // Wheel zoom is confined to the document preview; the rest of the page scrolls normally.
     function handleWheelZoom(event) {
@@ -204,6 +233,7 @@
         documentView.style.transform = 'scale(' + scale + ')';
         paper.style.width = Math.ceil(contentWidth * scale + 24) + 'px';
         paper.style.height = Math.ceil(contentHeight * scale + 24) + 'px';
+        updateHorizontalScroll();
     }
     function applyTheme() {
         let dark = false;
@@ -215,11 +245,13 @@
     window.addEventListener('storage', event => { if (event.key === 'theme') applyTheme(); });
     window.addEventListener('resize', fitPreview);
     window.addEventListener('load', fitPreview);
+    window.addEventListener('scroll', () => { if (!printing) updateHorizontalScroll(); }, { passive: true });
     documentView.querySelectorAll('img').forEach(img => img.addEventListener('load', fitPreview));
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPreview);
     if ('ResizeObserver' in window) new ResizeObserver(fitPreview).observe(documentView);
     window.addEventListener('beforeprint', () => {
         printing = true;
+        bottomScroll.hidden = true;
         entries.forEach(entry => entry.anchor.after(entry.node));
     });
     window.addEventListener('afterprint', () => {

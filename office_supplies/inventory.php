@@ -712,6 +712,7 @@ case 'update':
             }
         }
     </style>
+<script src="js/stock-categories.js?v=<?= time() ?>"></script>
 </head>
 <body>
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
@@ -1008,20 +1009,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const emptyRow = document.getElementById('category-empty-row');
     const activeTabStorageKey = 'inventoryActiveTab';
 
-    const categoryMap = {
-        'office-supplies': ['fastener', 'paper', 'bond', 'notebook', 'pad', 'ream', 'envelope', 'pen', 'ballpen', 'gel pen', 'marker', 'highlighter', 'ink', 'folder', 'file', 'filing', 'index tab', 'document holder', 'staples', 'paper clip', 'clip', 'binder clip', 'tape', 'glue', 'adhesive', 'paste', 'pin', 'note', 'book'],
-        'office-equipment': ['ruler', 'chair', 'table', 'desk', 'cabinet', 'printer', 'scanner', 'projector', 'laminator', 'shredder', 'furniture', 'cutter', 'stapler', 'staplers'],
-        'cleaning-supplies': ['conditioner', 'dishwashing', 'detergent', 'soap', 'bleach', 'mop', 'broom', 'brush', 'disinfectant', 'cleaner', 'trash bag', 'garbage', 'alcohol', 'tissue', 'towel', 'rags', 'sponge'],
-        'electronics': ['laptop', 'computer', 'monitor', 'keyboard', 'mouse', 'ups', 'router','calculator', 'switch', 'tablet', 'phone', 'speaker', 'camera', 'headset', 'microphone', 'usb', 'cable', 'charger', 'adapter', 'electronic', 'battery', 'led', 'bulb'],
-        'miscelaneous': ['misc', 'miscellaneous', 'assorted', 'other', 'general', 'various', 'accessory', 'supply']
-    };
-
-    const categoryExclusions = {
-        'office-equipment': ['pen', 'ballpen', 'paper', 'notebook', 'folder', 'ink', 'marker', 'highlighter']
-    };
-
-    const primaryCategories = ['office-supplies', 'office-equipment', 'cleaning-supplies', 'electronics'];
-
     function parseNumber(value) {
         const numericValue = parseFloat((value || '').replace(/[^0-9.-]/g, ''));
         return Number.isNaN(numericValue) ? 0 : numericValue;
@@ -1054,36 +1041,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function matchesCategory(rowText, category) {
-        if (rowText.includes('cutter paper')) {
-            return category === 'office-equipment';
-        }
-
-        if (rowText.includes('kitchen towel')) {
-            return category === 'cleaning-supplies';
-        }
-
-        if (rowText.includes('tape dispenser')) {
-            return category === 'office-equipment';
-        }
-
-        const keywords = categoryMap[category] || [];
-        let isMatch = keywords.some(function(keyword) {
-            return rowText.includes(keyword);
-        });
-
-        const exclusions = categoryExclusions[category] || [];
-        if (isMatch && exclusions.some(function(term) { return rowText.includes(term); })) {
-            isMatch = false;
-        }
-
-        if (category === 'office-supplies' && (rowText.includes('tissue paper') || rowText.includes('scouring pad') || rowText.includes('stapler'))) {
-            isMatch = false;
-        }
-
-        return isMatch;
-    }
-
     function filterByCategory(category) {
         closeExpandedRow();
         activeCategory = category;
@@ -1106,15 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const descriptionCell = (row.dataset.description || '').toLowerCase();
             const unitCell = (row.dataset.unit || '').toLowerCase();
             const rowText = itemCell + ' ' + descriptionCell;
-            let isMatch = false;
-
-            if (category === 'miscelaneous') {
-                isMatch = !primaryCategories.some(function(primaryCategory) {
-                    return matchesCategory(rowText, primaryCategory);
-                });
-            } else {
-                isMatch = matchesCategory(rowText, category);
-            }
+            const isMatch = StockCategories.matches(rowText, category);
 
             const matchesSearch = searchTerm === '' ||
                 stockCell.includes(searchTerm) ||

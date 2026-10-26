@@ -78,43 +78,46 @@ function parEscape($value): string { return htmlspecialchars((string)$value, ENT
 <title>Issue PPE — Add PAR</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
-<link rel="stylesheet" href="css/ppe-par.css?v=<?= time() ?>">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head><body class="add-page ppe-page par-add-page">
+</head><body class="add-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <main class="container"><div class="form-container">
-<header class="par-page-header"><h1 class="form-page-title"><i class="fas fa-file-invoice" aria-hidden="true"></i> Issue PPE — Add PAR</h1><p class="form-page-subtitle">Create a Property Acknowledgment Receipt and assign properties to an end user.</p></header>
+<header class="page-header"><h1 class="form-page-title"><i class="fas fa-file-invoice" aria-hidden="true"></i> Issue PPE — Add PAR</h1><p class="form-page-subtitle">Create a Property Acknowledgment Receipt and assign properties to an end user.</p></header>
 <?php if ($error): ?><div class="alert alert-danger" role="alert"><?= parEscape($error) ?></div><?php endif; ?>
 <form method="post" class="inventory-item-form">
 <input type="hidden" name="csrf" value="<?= parEscape($_SESSION['ppe_par_csrf']) ?>">
 <p class="required-fields-note"><span class="required-indicator">*</span> indicates a required field.</p>
-<section class="par-form-section"><h2>Receipt details</h2><div class="par-form-grid">
+<section class="section-card"><h3 class="form-section-heading">Receipt details</h3><div class="form-grid">
 <?php foreach (['entity_name' => 'Entity Name', 'fund_cluster' => 'Fund Cluster'] as $field => $label): ?>
 <div class="form-group"><label for="<?= $field ?>"><?= $label ?> <span class="required-indicator">*</span></label><input id="<?= $field ?>" name="<?= $field ?>" maxlength="<?= $field === 'fund_cluster' ? 100 : 255 ?>" value="<?= parEscape($values[$field]) ?>" required></div>
 <?php endforeach; ?></div></section>
-<section class="par-form-section"><h2>Select properties</h2>
-<div class="par-search-field"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="parItemSearch" aria-label="Search available properties" placeholder="Search PPE number, item, or description..."></div>
-<div class="par-items-wrap"><table><thead><tr><th>Select</th><th>PPE No.</th><th>Item / Description</th><th>Quantity</th><th>Unit</th><th>Amount</th></tr></thead><tbody>
-<?php foreach ($available as $item): ?><tr data-par-item><td><input type="checkbox" name="item_ids[]" value="<?= (int)$item['id'] ?>" aria-label="Select <?= parEscape($item['PPE_no']) ?>" <?= in_array((int)$item['id'], $selected, true) ? 'checked' : '' ?>></td><td><?= parEscape($item['PPE_no']) ?></td><td><strong><?= parEscape($item['item_name']) ?></strong><br><?= parEscape($item['item_description']) ?></td><td><?= number_format($item['quantity']) ?></td><td><?= parEscape($item['unit']) ?></td><td>₱<?= number_format($item['amount'], 2) ?></td></tr><?php endforeach; ?>
-</tbody></table></div>
-<p id="parItemsEmpty" <?= $available ? 'hidden' : '' ?>>No available properties<?= $available ? ' match your search' : ' to issue' ?>.</p><p id="parSelectionCount" role="status"></p>
+<section class="section-card"><h3 class="form-section-heading">Select properties</h3>
+<label class="compact-search-field compact-search-field-short" for="parItemSearch"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="parItemSearch" class="search-input" aria-label="Search available properties" placeholder="Search PPE number, item, or description..."></label>
+<div class="table-frame"><div class="table-viewport"><table class="scrollable-document-table"><thead><tr><th>Select</th><th>PPE No.</th><th>Item / Description</th><th>Quantity</th><th>Unit</th><th>Amount</th></tr></thead><tbody>
+<?php foreach ($available as $item): ?><tr data-par-item><td><input type="checkbox" name="item_ids[]" value="<?= (int)$item['id'] ?>" aria-label="Select <?= parEscape($item['PPE_no']) ?>" <?= in_array((int)$item['id'], $selected, true) ? 'checked' : '' ?>></td><td><?= parEscape($item['PPE_no']) ?></td><td><strong><?= parEscape($item['item_name']) ?></strong><br><?= parEscape($item['item_description']) ?></td><td><?= number_format($item['quantity']) ?></td><td><?= parEscape($item['unit']) ?></td><td class="currency">₱<?= number_format($item['amount'], 2) ?></td></tr><?php endforeach; ?>
+</tbody></table></div></div>
+<p class="form-page-subtitle" id="parItemsEmpty" <?= $available ? 'hidden' : '' ?>>No available properties<?= $available ? ' match your search' : ' to issue' ?>.</p><p class="form-page-subtitle" id="parSelectionCount" role="status"></p>
 </section>
-<div class="par-form-grid">
+<div class="form-grid">
 <?php foreach (['received' => 'Received by', 'issued' => 'Issued by'] as $prefix => $title): ?>
-<section class="par-form-section"><h2><?= $title ?></h2>
+<section class="section-card"><h3 class="form-section-heading"><?= $title ?></h3>
 <?php foreach (['_by' => 'Full name', '_by_designation' => 'Position / Office', '_by_date' => 'Date'] as $suffix => $label): $field = $prefix . $suffix; ?>
-<div class="form-group"><label for="<?= $field ?>"><?= $label ?> <span class="required-indicator">*</span></label><input type="<?= $suffix === '_by_date' ? 'date' : 'text' ?>" id="<?= $field ?>" name="<?= $field ?>" <?= $suffix === '_by' ? 'list="parOfficers"' : '' ?> maxlength="255" value="<?= parEscape($values[$field]) ?>" required></div>
+<div class="form-group"><label for="<?= $field ?>"><?= $label ?> <span class="required-indicator">*</span></label>
+<?php if ($field === 'received_by'): ?>
+<div class="officer-name-field"><input type="text" id="received_by" name="received_by" data-officer-autocomplete data-designation-target="received_by_designation" autocomplete="off" maxlength="255" value="<?= parEscape($values[$field]) ?>" required><div id="received_by_dropdown" class="autocomplete-dropdown"></div></div>
+<?php else: ?>
+<input type="<?= $suffix === '_by_date' ? 'date' : 'text' ?>" id="<?= $field ?>" name="<?= $field ?>" <?= $suffix === '_by' ? 'list="parOfficers"' : '' ?> maxlength="255" value="<?= parEscape($values[$field]) ?>" required>
+<?php endif; ?></div>
 <?php endforeach; ?></section><?php endforeach; ?>
 </div>
 <datalist id="parOfficers"><?php foreach ($officers as $officer): ?><option value="<?= parEscape($officer['officer_name']) ?>"><?= parEscape($officer['officer_position']) ?></option><?php endforeach; ?></datalist>
-<div class="par-form-actions"><button type="submit" class="btn btn-primary" <?= !$available ? 'disabled' : '' ?>>Save PAR &amp; Issue Items</button><a class="btn btn-secondary" href="PPE/PPE_PAR.php">Cancel</a></div>
+<div class="button-group"><button type="submit" class="btn btn-primary" <?= !$available ? 'disabled' : '' ?>>Save PAR &amp; Issue Items</button><a class="btn btn-secondary" href="PPE/PPE_PAR.php">Cancel</a></div>
 </form></div></main>
+<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
 const parRows = [...document.querySelectorAll('[data-par-item]')];
 document.getElementById('parItemSearch').addEventListener('input', event => {
-  const query = event.target.value.trim().toLowerCase();
-  parRows.forEach(row => { row.hidden = !row.textContent.toLowerCase().includes(query); });
-  document.getElementById('parItemsEmpty').hidden = parRows.some(row => !row.hidden);
+  document.getElementById('parItemsEmpty').hidden = inventoryControls.filterRows(parRows, event.target.value) > 0;
 });
 function updateParCount() {
   document.getElementById('parSelectionCount').textContent = document.querySelectorAll('[name="item_ids[]"]:checked').length + ' properties selected';
@@ -124,4 +127,5 @@ updateParCount();
 document.querySelector('form.inventory-item-form').addEventListener('submit', event => {
   if (!document.querySelector('[name="item_ids[]"]:checked')) { event.preventDefault(); document.getElementById('parSelectionCount').textContent = 'Select at least one property to issue.'; }
 });
-</script></body></html>
+</script>
+</body></html>

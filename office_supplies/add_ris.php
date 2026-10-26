@@ -766,7 +766,8 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         </div>
     </div>
 
-    <script>
+    <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<script>
         const requestedDate = document.querySelector('[name="date_requested"]');
         const daysInputs = document.querySelectorAll('.days-to-consume');
         function updateRemainingDays() {
@@ -835,7 +836,6 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 
     <script>
         // Officer names from database
-        const officerNames = <?php echo $officer_names_json; ?>;
         const officerPositions = <?php echo $officer_data_json; ?>;
 
         function fillDesignation(nameInput, designationInput) {
@@ -847,197 +847,6 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         }
 
         // Autocomplete functionality
-        function setupAutocomplete(inputId, dropdownId, designationInputId) {
-            const input = document.getElementById(inputId);
-            const dropdown = document.getElementById(dropdownId);
-            const designationInput = designationInputId ? document.getElementById(designationInputId) : null;
-            
-            if (!input || !dropdown) return;
-
-            // Show dropdown on focus
-            input.addEventListener('focus', function() {
-                if (this.value.trim() === '') {
-                    showAllSuggestions(dropdown, input, designationInput);
-                } else {
-                    filterSuggestions(this.value, dropdown, input, designationInput);
-                }
-            });
-
-            // Prevent click on input from closing dropdown
-            input.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (dropdown.style.display !== 'block') {
-                    if (this.value.trim() === '') {
-                        showAllSuggestions(dropdown, input, designationInput);
-                    } else {
-                        filterSuggestions(this.value, dropdown, input, designationInput);
-                    }
-                }
-            });
-
-            // Filter on input
-            input.addEventListener('input', function() {
-                const value = this.value;
-                if (value.trim() === '') {
-                    showAllSuggestions(dropdown, input, designationInput);
-                } else {
-                    filterSuggestions(value, dropdown, input, designationInput);
-                }
-            });
-
-            // Handle keyboard navigation
-            input.addEventListener('keydown', function(e) {
-                if (dropdown.style.display !== 'block') return;
-
-                const items = Array.from(dropdown.querySelectorAll('.autocomplete-item:not([style*="cursor: default"])'));
-                if (items.length === 0) return;
-
-                const selectedItem = dropdown.querySelector('.autocomplete-item.selected');
-                let currentIndex = selectedItem ? items.indexOf(selectedItem) : -1;
-
-                switch(e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        currentIndex = (currentIndex + 1) % items.length;
-                        highlightItem(items, currentIndex, dropdown);
-                        break;
-                    
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
-                        highlightItem(items, currentIndex, dropdown);
-                        break;
-                    
-                    case 'Enter':
-                        e.preventDefault();
-                        if (selectedItem) {
-                            const text = selectedItem.textContent || selectedItem.innerText;
-                            input.value = text;
-                            fillDesignation(input, designationInput);
-                            dropdown.style.display = 'none';
-                        }
-                        break;
-                    
-                    case 'Tab':
-                        const itemToSelect = selectedItem || items[0];
-                        if (itemToSelect) {
-                            const text = itemToSelect.textContent || itemToSelect.innerText;
-                            input.value = text;
-                            fillDesignation(input, designationInput);
-                            dropdown.style.display = 'none';
-                        }
-                        break;
-                    
-                    case 'Escape':
-                        dropdown.style.display = 'none';
-                        break;
-                }
-            });
-
-            // Prevent clicks inside dropdown from closing it
-            dropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-
-            input.addEventListener('blur', function() {
-                fillDesignation(input, designationInput);
-            });
-
-            // Hide dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.style.display = 'none';
-                }
-            });
-        }
-
-        // Highlight selected item and scroll into view
-        function highlightItem(items, index, dropdown) {
-            // Remove previous selection
-            items.forEach(item => item.classList.remove('selected'));
-            
-            // Add selection to current item
-            if (index >= 0 && index < items.length) {
-                items[index].classList.add('selected');
-                
-                // Scroll into view if needed
-                const item = items[index];
-                const dropdownRect = dropdown.getBoundingClientRect();
-                const itemRect = item.getBoundingClientRect();
-                
-                if (itemRect.bottom > dropdownRect.bottom) {
-                    item.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                } else if (itemRect.top < dropdownRect.top) {
-                    item.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                }
-            }
-        }
-
-        function showAllSuggestions(dropdown, input, designationInput) {
-            dropdown.innerHTML = '';
-            
-            if (officerNames.length === 0) {
-                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No officers available</div>';
-                dropdown.style.display = 'block';
-                return;
-            }
-
-            officerNames.forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'autocomplete-item';
-                item.textContent = name;
-                item.addEventListener('click', function() {
-                    input.value = name;
-                    fillDesignation(input, designationInput);
-                    dropdown.style.display = 'none';
-                });
-                dropdown.appendChild(item);
-            });
-            
-            dropdown.style.display = 'block';
-        }
-
-        function filterSuggestions(value, dropdown, input, designationInput) {
-            dropdown.innerHTML = '';
-            const searchValue = value.toLowerCase();
-            
-            const filtered = officerNames.filter(name => 
-                name.toLowerCase().includes(searchValue)
-            );
-
-            if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; cursor: default;">No matches found</div>';
-                dropdown.style.display = 'block';
-                return;
-            }
-
-            filtered.forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'autocomplete-item';
-                
-                // Highlight matching text
-                const index = name.toLowerCase().indexOf(searchValue);
-                if (index !== -1) {
-                    const before = name.substring(0, index);
-                    const match = name.substring(index, index + searchValue.length);
-                    const after = name.substring(index + searchValue.length);
-                    item.innerHTML = before + '<strong>' + match + '</strong>' + after;
-                } else {
-                    item.textContent = name;
-                }
-                
-                item.addEventListener('click', function() {
-                    input.value = name;
-                    fillDesignation(input, designationInput);
-                    dropdown.style.display = 'none';
-                });
-                dropdown.appendChild(item);
-            });
-            
-            dropdown.style.display = 'block';
-        }
-
-        // Initialize autocomplete for both fields
         document.addEventListener('DOMContentLoaded', function() {
             setupAutocomplete('requested_by', 'requested_by_dropdown', 'requested_by_designation');
             setupAutocomplete('received_by', 'received_by_dropdown', 'received_by_designation');
