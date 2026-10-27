@@ -257,7 +257,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       </div>
       <div class="inventory-table-wrap">
         <table class="inventory-health-table">
-          <thead><tr><th>Stock Number</th><th>Item Name &amp; Description</th><th>Category</th><th>Current Quantity</th><th>Reorder Threshold</th><th>Health Status</th><th>Depletion / Duration</th></tr></thead>
+          <thead><tr><th>Stock Number</th><th>Item Name &amp; Description</th><th>Current Quantity</th><th>Reorder Threshold</th><th>Health Status</th><th>Depletion / Duration</th></tr></thead>
           <tbody id="inventoryHealthTableBody"></tbody>
         </table>
         <div id="inventoryTableEmpty" class="empty-state" hidden>No inventory items match the current search or filter.</div>
@@ -471,11 +471,11 @@ function renderInventoryHealthTable() {
     const sectionRows = rows.filter(item => item.health === status);
     if (!sectionRows.length) return;
     const title = { safe: '🟢 Safe Stock', low: '🟡 Low Stock', critical: '🔴 Critical Stock (1–5 units)', empty: '⚫ Empty Stock' }[status];
-    html.push(`<tr class="inventory-section-row ${status}"><th colspan="7">${title}<span>${sectionRows.length} item${sectionRows.length === 1 ? '' : 's'}</span></th></tr>`);
+    html.push(`<tr class="inventory-section-row ${status}"><th colspan="6">${title}<span>${sectionRows.length} item${sectionRows.length === 1 ? '' : 's'}</span></th></tr>`);
     sectionRows.forEach(item => {
       const duration = status === 'empty' ? `<strong class="inventory-duration">Stuck for ${Number(item.daysEmpty || 0).toLocaleString()} Days</strong>` : '<span class="inventory-active">Active Stock</span>';
       const badge = { safe: 'Safe', low: 'Low Stock', critical: 'Critical', empty: 'Empty' }[status];
-      html.push(`<tr><td>${escapeTableText(item.sku || 'N/A')}</td><td><strong>${escapeTableText(item.name)}</strong><small>${escapeTableText(item.description || 'No description')}</small></td><td>${escapeTableText(item.category)}</td><td>${Number(item.quantity || 0).toLocaleString()} units</td><td>${item.reorderPoint === null ? '--' : Number(item.reorderPoint || 0).toLocaleString()}</td><td><span class="inventory-status ${status}"><i></i>${badge}</span></td><td>${duration}</td></tr>`);
+      html.push(`<tr><td>${escapeTableText(item.sku || 'N/A')}</td><td><strong>${escapeTableText(item.name)}</strong><small>${escapeTableText(item.description || 'No description')}</small></td><td>${Number(item.quantity || 0).toLocaleString()} units</td><td>${item.reorderPoint === null ? '--' : Number(item.reorderPoint || 0).toLocaleString()}</td><td><span class="inventory-status ${status}"><i></i>${badge}</span></td><td>${duration}</td></tr>`);
     });
   });
   body.innerHTML = html.join('');
@@ -837,8 +837,8 @@ mrpScrollbar.addEventListener('scroll', () => {
     if (offset !== state.mrpOffset) { state.mrpOffset = offset; renderAllItemsChart(false); }
   });
 }, { passive: true });
-mrpScrollbar.addEventListener('wheel', event => {
-  if (event.ctrlKey || mrpScrollbar.scrollWidth <= mrpScrollbar.clientWidth) return;
+document.querySelector('#mrpSection > .panel').addEventListener('wheel', event => {
+  if (event.ctrlKey || mrpScrollbar.hidden || mrpScrollbar.scrollWidth <= mrpScrollbar.clientWidth) return;
   const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? mrpScrollbar.clientWidth : 1;
   const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
   if (!delta) return;
