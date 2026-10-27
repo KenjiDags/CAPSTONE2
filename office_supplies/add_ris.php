@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($_POST['stock_number']) || !is_array($_POST['stock_number']) || !is_array($_POST['issued_quantity'] ?? null)) {
         throw new InvalidArgumentException('Please reload the RIS form and select items to issue.');
     }
-    
+
     // Check if we're editing or creating new
     $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
     $ris_id = $is_editing ? (int)$_POST['ris_id'] : null;
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          $ris_id);
         $stmt->execute();
         $stmt->close();
-        
+
         // Get old items to restore inventory quantities
         $old_items = [];
         $stmt = $conn->prepare("SELECT stock_number, issued_quantity FROM ris_items WHERE ris_id = ?");
@@ -112,13 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $old_items[$row['stock_number']] = ($old_items[$row['stock_number']] ?? 0) + (int)$row['issued_quantity'];
         }
         $stmt->close();
-        
+
         // Delete old items
         $stmt = $conn->prepare("DELETE FROM ris_items WHERE ris_id = ?");
         $stmt->bind_param("i", $ris_id);
         $stmt->execute();
         $stmt->close();
-        
+
         // Restore inventory quantities from old items
         foreach ($old_items as $stock_no => $old_qty) {
             $stmt = $conn->prepare("UPDATE items SET quantity_on_hand = quantity_on_hand + ? WHERE stock_number = ?");
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
         }
-        
+
     } else {
         // Insert new RIS
         $stmt = $conn->prepare("INSERT INTO ris (ris_no, entity_name, fund_cluster, division, office, 
@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("iid", $item_id, $negative_qty, $zero_cost);
                 $stmt->execute();
                 $stmt->close();
-                
+
                 // Log the history
                 logItemHistory($conn, $item_id, -$issued_qty, 'issued', $ris_id);
 
@@ -328,16 +328,16 @@ if ($is_editing) {
     $stmt->bind_param("i", $ris_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $ris_data = $result->fetch_assoc();
-        
+
         // Fetch RIS items
         $stmt = $conn->prepare("SELECT * FROM ris_items WHERE ris_id = ?");
         $stmt->bind_param("i", $ris_id);
         $stmt->execute();
         $items_result = $stmt->get_result();
-        
+
         while ($item = $items_result->fetch_assoc()) {
             $ris_items[$item['stock_number']] = $item;
         }
@@ -353,7 +353,7 @@ function generateRISNumber($conn) {
     $current_year = date('Y');
     $current_month = date('m');
     $prefix = $current_year . '/' . $current_month . '/';
-    
+
     // Get the highest RIS number for current month/year
     $query = "SELECT ris_no FROM ris WHERE ris_no LIKE ? ORDER BY ris_no DESC LIMIT 1";
     $stmt = $conn->prepare($query);
@@ -361,11 +361,11 @@ function generateRISNumber($conn) {
     $stmt->bind_param('s', $search_pattern);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $last_ris = $row['ris_no'];
-        
+
         // Extract the incremental part (last 4 digits)
         $last_increment = (int)substr($last_ris, -4);
         $next_increment = $last_increment + 1;
@@ -373,10 +373,10 @@ function generateRISNumber($conn) {
         // First RIS for this month/year
         $next_increment = 1;
     }
-    
+
     // Format the increment with leading zeros (4 digits)
     $formatted_increment = str_pad($next_increment, 4, '0', STR_PAD_LEFT);
-    
+
     return $prefix . $formatted_increment;
 }
 
@@ -385,26 +385,26 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $is_editing ? 'Edit RIS Form' : 'Add RIS Form'; ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-specific: smaller max-width for RIS forms */
         .form-container {
             max-width: 1200px;
         }
-        
+
         /* Form grid responsive */
         @media (max-width: 800px) { 
             .form-grid { grid-template-columns: 1fr; } 
         }
-        
+
         /* Scrollable items table */
         .table-frame { 
             border: 2px solid #e5e7eb; 
@@ -445,7 +445,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         #itemsTable thead th { 
             height: 44px; 
         }
-        
+
         /* Search container */
         .search-container { 
             margin: 8px 0 12px !important; 
@@ -463,7 +463,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
+
         /* Required field indicator */
         .required {
             color: #dc2626;
@@ -552,7 +552,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                     <input type="hidden" name="ris_id" value="<?php echo $ris_id; ?>">
                     <input type="hidden" name="is_editing" value="1">
                 <?php endif; ?>
-                
+
                 <div class="section-card">
                     <h3><i class="fas fa-info-circle"></i> RIS Details</h3>
                     <div class="form-grid">
@@ -606,12 +606,12 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 
                 <div class="section-card">
                     <h3><i class="fas fa-box"></i> RIS Items</h3>
-                    
+
                     <!-- Search Container -->
                     <div class="search-container">
                         <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()"></label>
                     </div>
-                    
+
                     <div class="table-frame">
                         <div class="table-viewport">
                             <table id="itemsTable">
@@ -644,7 +644,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                             $savedDays = $existing_item['days_to_consume'] ?? null;
                                             $remainingDays = $savedDays ?? risRemainingDays($row['estimated_life'], $row['first_receipt'], $ris_data['date_requested'] ?? date('Y-m-d'));
                                             $initialDays = risRemainingDays($row['estimated_life'], null, date('Y-m-d'));
-                                            
+
                                             echo '<tr class="item-row" data-stock="' . htmlspecialchars(strtolower($stock_number)) . '" data-item_name="' . htmlspecialchars(strtolower($row['item_name'])) . '" data-description="' . htmlspecialchars(strtolower($row['description'])) . '" data-unit="' . htmlspecialchars(strtolower($row['unit'])) . '">';
                                             echo '<td><input type="hidden" name="stock_number[]" value="' . htmlspecialchars($stock_number) . '">' . htmlspecialchars($stock_number) . '</td>';
                                             echo '<td>' . htmlspecialchars($row['item_name']) . '</td>';
@@ -788,13 +788,13 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         function filterItems() {
             // Get the search input value and convert to lowercase
             const searchValue = document.getElementById('itemSearch').value.toLowerCase();
-            
+
             // Get all item rows
             const itemRows = document.querySelectorAll('.item-row');
-            
+
             // Counter for visible rows
             let visibleRows = 0;
-            
+
             // Loop through each row
             itemRows.forEach(function(row) {
                 // Get the data attributes
@@ -802,7 +802,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                 const item_name = row.getAttribute('data-item_name');
                 const description = row.getAttribute('data-description');
                 const unit = row.getAttribute('data-unit');
-                
+
                 // Check if search value matches any of the fields
                 if (searchValue.trim() === '' || 
                     (stockNumber && stockNumber.includes(searchValue)) || 
@@ -817,7 +817,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                     row.style.display = 'none';
                 }
             });
-            
+
             // Handle the "no items found" message
             const noItemsRow = document.getElementById('no-items-row');
             if (noItemsRow) {

@@ -72,12 +72,12 @@ $officers = $conn->query('SELECT officer_name, officer_position FROM officers OR
 function parEscape($value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!doctype html>
-<html lang="en"><head>
+<html data-ppe-styles lang="en"><head>
 <base href="<?= parEscape(APP_ROOT_URL) ?>">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Issue PPE — Add PAR</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head><body class="add-page ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>

@@ -140,7 +140,7 @@ $records = $stmt->get_result();
 ?>
 
 <!doctype html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
 
     <meta charset="utf-8">
@@ -148,7 +148,7 @@ $records = $stmt->get_result();
 
     <title>Archive - TESDA Inventory</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/PPE.css">
+
 
     <style>
 
@@ -863,7 +863,7 @@ $records = $stmt->get_result();
         });
 
     </script>
-    
+
     <script>
         const archiveForm = document.getElementById('archive-filters');
         const recordType = document.getElementById('recordType');
@@ -888,7 +888,7 @@ $records = $stmt->get_result();
         }
     </script>
 
-    
+
 
 </body>
 

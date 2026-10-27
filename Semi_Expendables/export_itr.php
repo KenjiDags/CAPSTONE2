@@ -50,7 +50,7 @@ $isOthers = $tt === 'others' || ($tt !== '' && !$isDonation && !$isReassignment 
 $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -194,7 +194,7 @@ $otherText = $isOthers ? (string)($itr['transfer_other'] ?? '') : '';
     .back-button { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; }
     .back-button:hover { background: #545b62; }
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Inventory Transfer Report Preview" data-preview-code="ITR" data-preview-back="Semi_Expendables/itr.php" data-preview-width="1100"></script>
 </head>
 <body>

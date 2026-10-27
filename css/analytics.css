@@ -96,15 +96,29 @@ body.dark-mode #mrpSection .mrp-filter-select { background-image: url("data:imag
 .demand-forecast-section[hidden] { display: none; }
 .demand-chart-frame { height: 340px; position: relative; }
 .demand-chart-frame[hidden], .demand-summary[hidden], .demand-method[hidden] { display: none; }
-.demand-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 18px; }
-.demand-summary > div { padding: 14px; border: 1px solid #dce3e5; background: #f8faf9; }
-.demand-summary span { display: block; color: #66747a; font-size: 11px; font-weight: 700; }
-.demand-summary strong { display: block; margin-top: 7px; color: #263238; font-size: 20px; }
+.demand-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.demand-metric-group h4 { margin: 0 0 10px; color: #263238; font-size: 13px; }
+.demand-metric-group { min-width: 0; display: flex; flex-direction: column; }
+.demand-metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; flex: 1; }
+.demand-metric { min-width: 0; overflow-wrap: anywhere; padding: 12px; border: 1px solid #dce3e5; border-radius: 9px; background: #f8faf9; }
+.demand-metric-primary { background: #eef4fb; border-color: #c6d6e8; }
+.demand-metric > span { display: block; color: #526168; font-size: 13px; font-weight: 500; }
+.demand-metric strong { display: block; margin: 12px 0 10px; color: #263238; font-size: 20px; }
+.demand-metric-primary strong { font-size: 25px; }
+.demand-metric p { margin: 0; color: #526168; font-size: 13px; line-height: 1.5; }
+.demand-metric strong.demand-forecast-value { color: #2563a6; }
+.demand-metric strong.demand-change-down { color: #b42335; }
+.demand-metric strong.demand-change-up { color: #2563a6; }
 .demand-method { margin: 14px 0 0; }
 body.dark-mode .demand-forecast-section .panel { background: #1e293b; border-color: #475569; }
-body.dark-mode .demand-forecast-section h2, body.dark-mode .demand-forecast-section h3, body.dark-mode .demand-summary strong { color: #e2e8f0; }
-body.dark-mode .demand-forecast-section .section-heading p, body.dark-mode .demand-forecast-section .panel-caption, body.dark-mode .demand-forecast-section .empty-state, body.dark-mode .demand-summary span { color: #cbd5e1; }
-body.dark-mode .demand-summary > div { background: #273449; border-color: #475569; }
+body.dark-mode .demand-forecast-section h2, body.dark-mode .demand-forecast-section h3, body.dark-mode .demand-metric-group h4, body.dark-mode .demand-metric strong { color: #e2e8f0; }
+body.dark-mode .demand-forecast-section .section-heading p, body.dark-mode .demand-forecast-section .panel-caption, body.dark-mode .demand-forecast-section .empty-state, body.dark-mode .demand-metric > span, body.dark-mode .demand-metric p { color: #cbd5e1; }
+body.dark-mode .demand-metric { background: #1f2c40; border-color: #475569; }
+body.dark-mode .demand-metric-primary { background: #27364c; }
+body.dark-mode .analytics-shell .demand-metric strong.demand-forecast-value, body.dark-mode .analytics-shell .demand-metric strong.demand-change-up { color: #7db9ff; }
+body.dark-mode .analytics-shell .demand-metric strong.demand-change-down { color: #ff9a9e; }
+@media (max-width: 1000px) { .demand-summary { grid-template-columns: 1fr; } }
+@media (max-width: 550px) { .demand-metric-grid { grid-template-columns: 1fr; } }
 .inventory-table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
 .inventory-table-filters { display: flex; flex-wrap: wrap; gap: 7px; }
 .inventory-filter { padding: 7px 10px; border: 1px solid #cfd9dc; border-radius: 6px; background: #fff; color: #66747a; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
@@ -534,7 +548,7 @@ body.dark-mode .stock-health-bar { background: #334155; }
 .mrp-item-hover .mrp-item-status { flex-shrink: 0; }
 
 /* Office Supplies uses two cards with the shared category KPI appearance. */
-.analytics-summary-cards.office-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0; }
+.analytics-summary-cards.office-summary-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0; }
 @media (max-width: 600px) { .analytics-summary-cards.office-summary-cards { grid-template-columns: 1fr; } }
 
 /* The bar canvas stays fixed; only the name-label area extends downward. */
@@ -543,3 +557,5 @@ body.dark-mode .stock-health-bar { background: #334155; }
 .mrp-name-labels[hidden] { display: none; }
 .mrp-name-labels > span { position: absolute; top: 0; transform: translateX(-50%); text-align: center; overflow-wrap: anywhere; }
 body.dark-mode .mrp-name-labels { color: #fff; }
+
+#categoryRegisterBody a, #categoryRegisterBody a:hover, #categoryRegisterBody a:focus { text-decoration: none; }

@@ -49,7 +49,7 @@ $history_stmt = $conn->prepare("
   FROM item_history ih
   LEFT JOIN ris r ON ih.ris_id = r.ris_id
   WHERE ih.item_id = ?
-    
+
   ORDER BY ih.changed_at DESC
 ");
 $history_stmt->bind_param("i", $item_id);
@@ -84,7 +84,7 @@ $ris = ['entity_name' => 'TESDA'];
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8">
@@ -211,7 +211,7 @@ $ris = ['entity_name' => 'TESDA'];
       font-size: 12px;
       text-decoration: none;
     }
-    
+
     .instruction-box {
       background: #fffacd;
       border: 1px solid #ddd;
@@ -239,9 +239,9 @@ $ris = ['entity_name' => 'TESDA'];
       display: inline-block;
     }
 
-        
+
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Stock Card Preview" data-preview-code="SC" data-preview-back="office_supplies/SC.php" data-preview-width="850" data-preview-reference="<?= htmlspecialchars((string)($items['stock_number'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></script>
 </head>
 <body>

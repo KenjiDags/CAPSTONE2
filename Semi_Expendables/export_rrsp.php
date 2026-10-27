@@ -14,7 +14,7 @@ if ($rrsp_id) {
     $rr = $h->get_result();
     $rrsp = $rr->fetch_assoc();
     $h->close();
-    
+
     $i = $conn->prepare("SELECT * FROM rrsp_items WHERE rrsp_id=? ORDER BY rrsp_item_id ASC");
     $i->bind_param('i', $rrsp_id);
     $i->execute();
@@ -36,7 +36,7 @@ $returnedDate = htmlspecialchars(trim($rrsp['returned_date'] ?? ''));
 $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -280,7 +280,7 @@ $receivedDate = htmlspecialchars(trim($rrsp['received_date'] ?? ''));
             background: #545b62;
         }
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Returned Semi-Expendable Property Preview" data-preview-code="RRSP" data-preview-back="Semi_Expendables/rrsp.php" data-preview-width="1000"></script>
 </head>
 <body>

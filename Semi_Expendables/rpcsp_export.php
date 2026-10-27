@@ -30,7 +30,7 @@ function rpcsp_count_value($data, $field, $id) {
 foreach ($data['metadata'] as $field => $value) { $$field = rpcspH($value); }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8" />
@@ -213,7 +213,7 @@ foreach ($data['metadata'] as $field => $value) { $$field = rpcspH($value); }
       color: #fff;
     }
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Physical Count Preview" data-preview-code="RPCSP" data-preview-back="Semi_Expendables/rpcsp.php" data-preview-width="1100"></script>
 </head>
 <body>

@@ -27,14 +27,14 @@ $items = $conn->query("SELECT i.*,
     ORDER BY i.item_name ASC");
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restock Items - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link href="css/PPE.css?v=<?= time() ?>" rel="stylesheet">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* An explicit shell keeps navigation and the scrollable page side by side. */
@@ -103,7 +103,7 @@ $items = $conn->query("SELECT i.*,
         tbody tr:hover {
             background-color: #f9fafb;
         }
-        
+
         /* Input styling */
         input[type="number"] {
             padding: 8px 10px;
@@ -121,7 +121,7 @@ $items = $conn->query("SELECT i.*,
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
+
         /* Hidden row */
         .hidden-row {
             display: none;

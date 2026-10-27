@@ -32,7 +32,7 @@ if (!function_exists('generateICSNumberSimple')) {
     function generateICSNumberSimple($conn) {
         $year_short = date('y'); // Last 2 digits of year (e.g., '25' for 2025)
         $current_year = (int)date('Y');
-        
+
         // Get the highest number used THIS YEAR ONLY - always starts at 01 for new year
         $stmt = $conn->prepare("SELECT ics_no FROM ics WHERE YEAR(date_issued) = ? AND ics_no LIKE ? ORDER BY ics_id DESC LIMIT 1");
         $next_increment = 1;
@@ -53,7 +53,7 @@ if (!function_exists('generateICSNumberSimple')) {
             }
             $stmt->close();
         }
-        
+
         $formatted = str_pad((string)$next_increment, 2, '0', STR_PAD_LEFT);
         return $year_short . '-' . $formatted;
     }
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($quantity_issued_out > 0) {
                     // Determine ICS No: use user input if provided, otherwise generate
                     $auto_ics_no = ($ics_rrsp_no_input !== '') ? $ics_rrsp_no_input : generateICSNumberSimple($conn);
-                    
+
                     // Check if ICS No. already exists
                     $checkIcs = $conn->prepare("SELECT ics_id FROM ics WHERE ics_no = ? LIMIT 1");
                     $checkIcs->bind_param("s", $auto_ics_no);
@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Don't close $stmt here - it was already closed after insert
                     } else {
                         $checkIcs->close();
-                        
+
                         $entity_name = 'TESDA Regional Office';
                         $received_by = $office_officer_issued ?: 'N/A';
                         $received_by_position = '(auto)';
@@ -267,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 @ $h2->execute();
                                 $h2->close();
                             }
-                            
+
                             // Redirect back to listing with category filter after successful ICS creation
                             $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
                             if (ob_get_level() > 0) { ob_end_clean(); }
@@ -279,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 }
-                
+
                 // Only redirect if no error occurred and no ICS was needed
                 if (empty($error)) {
                     $redirectCategory = isset($category) && $category !== '' ? ('?category=' . urlencode($category)) : '';
@@ -299,16 +299,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $default_category = isset($_GET['category']) && in_array($_GET['category'], $valid_categories) ? $_GET['category'] : 'Other PPE';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Semi-Expendable Item</title>
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
     <style>
         body {
             font-family: 'Century Gothic', Century Gothic, sans-serif;
@@ -317,7 +317,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             margin: 0;
             padding: 0;
         }
-        
+
         .form-container {
             width: 100%;
             max-width: 800px;
@@ -487,7 +487,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <input type="text" id="ics_rrsp_no" name="ics_rrsp_no" 
                                value="<?php echo $_POST['ics_rrsp_no'] ?? ''; ?>" 
                                placeholder="e.g., 22-01 (optional)">
-                        
+
                     </div>
                 </div>
 
@@ -553,7 +553,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                 </div>
 
                 <h3 class="form-section-heading">Returns, Issued & Reissued (Optional)</h3>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="quantity_issued_out">Quantity Issued</label>
@@ -603,7 +603,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                         <label for="quantity_balance">Quantity Balance <span class="required">*</span></label>
                         <input type="number" id="quantity_balance" name="quantity_balance" min="0"
                                value="<?php echo $_POST['quantity_balance'] ?? '1'; ?>" required readonly>
-                    
+
                     </div>
                 </div>
 
@@ -654,7 +654,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
     const quantityFields = ['quantity_issued', 'quantity_issued_out', 'quantity_returned', 'quantity_reissued', 'quantity_disposed'];
-        
+
         quantityFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {

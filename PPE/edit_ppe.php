@@ -85,14 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit PPE Item</title>
 <link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="css/ppe.css">
+
 <style>
     .form-container {
         max-width: 800px;

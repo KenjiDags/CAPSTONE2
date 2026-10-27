@@ -199,14 +199,14 @@ $semi=[]; $q=$conn->query("SELECT semi_expendable_property_no,item_description,a
 if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit RRSP</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
+
 </head>
 <body>
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
@@ -216,7 +216,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
     <form method="post" action="" class="inventory-item-form no-number-spinners">
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
       <input type="hidden" name="rrsp_id" value="<?php echo $rrsp_id; ?>">
-      
+
       <div class="section-card">
         <h3 class="form-section-heading"><i class="fas fa-info-circle" aria-hidden="true"></i> RRSP Details</h3>
         <div class="form-grid">
@@ -243,11 +243,11 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
 
       <div class="section-card">
         <h3 class="form-section-heading"><i class="fas fa-boxes-stacked" aria-hidden="true"></i> RRSP Items</h3>
-        
+
         <div class="search-container">
           <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()"></label>
         </div>
-        
+
         <div class="table-frame">
           <div class="table-viewport">
             <table id="itemsTable" class="bordered-cell-inputs scrollable-document-table" tabindex="-1">

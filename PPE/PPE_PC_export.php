@@ -6,7 +6,7 @@ require dirname(__DIR__) . '/functions.php';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
@@ -54,7 +54,7 @@ require dirname(__DIR__) . '/functions.php';
         background: #f2f2f2; 
         font-weight:bold; 
     }
-    
+
     .underline {
         display: inline-block;
         width: 250px;
@@ -160,7 +160,7 @@ require dirname(__DIR__) . '/functions.php';
         }
     }
 </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Property Card Preview" data-preview-code="PC" data-preview-back="PPE/PPE_PC.php" data-preview-width="1100"></script>
 </head>
 

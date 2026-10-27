@@ -56,7 +56,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8">
@@ -140,7 +140,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
     .form-table td.text-left div {
       margin-bottom: 4px;
     }
-    
+
     .form-table {
       width: 100%;
       border: 2px solid #000;
@@ -158,14 +158,14 @@ $received_by_date = $ptr['received_by_date'] ?? '';
     .form-table td.text-left {
       text-align: left;
     }
-    
+
     .data-underline {
         display: inline-block;
         border-bottom: 1px solid #000; /* underline */
         width: 35%;        /* fill remaining space in parent */
         padding-left: 4px;  /* small space from label */
     }
-    
+
     .transfer-type {
       padding: 4px 8px;
     }
@@ -177,7 +177,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
       margin: 0 4px 0 8px;
       vertical-align: middle;
     }
-    
+
     .reason-cell {
         padding: 8px;
         min-height: 80px; 
@@ -248,7 +248,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
         height: 1em;
         margin-right: 10px;
     }
-    
+
     .print-button {
       background: #007cba;
       color: white;
@@ -347,7 +347,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
             }
         }
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Property Transfer Report Preview" data-preview-code="PTR" data-preview-back="PPE/PPE_PTR.php" data-preview-width="1100"></script>
 </head>
 <body>
@@ -453,7 +453,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
                 </div>
             </td>
         </tr>
-        
+
         <!-- Items Table Headers -->
         <tr>
             <th style="width: 12%;">Date Acquired</th>
@@ -468,7 +468,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
         $total_amount = 0;
         $row_count = 0;
         $max_rows = 20;
-        
+
         // Display actual items
         foreach ($items as $item): 
             $total_amount += $item['amount'];
@@ -483,7 +483,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
         </tr>
         <?php 
         endforeach;
-        
+
         // Fill remaining rows to reach 20 total rows
         for ($i = $row_count; $i < $max_rows; $i++): 
         ?>

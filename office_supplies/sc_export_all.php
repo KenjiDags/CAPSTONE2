@@ -48,7 +48,7 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
@@ -184,7 +184,7 @@ body {
     font-size: 12px;
 }
 </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Stock Cards Preview" data-preview-code="SC" data-preview-back="office_supplies/SC.php" data-preview-width="850"></script>
 </head>
 <body>

@@ -123,14 +123,14 @@ if ($search !== '') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Transfer Report (PTR) - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
     /* Page-Specific Icon */
@@ -140,14 +140,14 @@ if ($search !== '') {
         font-weight: 900;
         color: #3b82f6;
     }
-    
+
     /* Filters Section Styling */
     .filters .control { 
         display:flex; 
         align-items:center; 
         gap:10px; 
     }
-    
+
     /* Themed fields */
     .filters select, .filters input {
         height: 38px;
@@ -160,21 +160,21 @@ if ($search !== '') {
         outline: none;
         transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
     }
-    
+
     .filters input::placeholder { 
         color: #9ca3af; 
     }
-    
+
     .filters select:hover, .filters input:hover { 
         background-color: #ffffff; 
     }
-    
+
     .filters select:focus, .filters input:focus {
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px #3b82f626;
         background-color: #ffffff;
     }
-    
+
     .filters select {
         appearance: none;
         -webkit-appearance: none;
@@ -185,17 +185,17 @@ if ($search !== '') {
         background-position: right 12px center;
         background-size: 18px 18px;
     }
-    
+
     .filters .pill-btn { 
         height: 38px; 
         padding: 0 16px; 
     }
-    
+
     .filters #searchInput { 
         width: 400px; 
         max-width: 65vw; 
     }
-    
+
     </style>
 </head>
 <body class="ptr-page ppe-page">
@@ -256,7 +256,7 @@ if ($search !== '') {
                     $whereClause
                     $order_clause";
                 $result = $conn->query($query);
-                
+
                 if ($result && $result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         echo '<tr>';

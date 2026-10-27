@@ -7,5 +7,5 @@ while ($dropdownOfficerRow = $dropdownOfficerResult->fetch_assoc()) {
 }
 ?>
 <script type="application/json" id="officerDropdownPositions"><?= json_encode((object)$dropdownOfficerPositions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<link rel="stylesheet" href="css/officer-autocomplete.css?v=<?= time() ?>">
+
 <script src="js/inventory-controls.js?v=<?= time() ?>"></script>

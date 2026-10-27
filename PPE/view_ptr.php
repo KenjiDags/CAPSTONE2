@@ -18,14 +18,14 @@ $stmt->close();
 function ptrViewH($value): string { return htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <meta charset="UTF-8">
     <base href="<?= ptrViewH(APP_ROOT_URL) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View PTR <?= ptrViewH($ptr['ptr_no']) ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="detail-view-page ppe-page">

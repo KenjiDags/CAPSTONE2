@@ -215,7 +215,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -229,7 +229,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             .no-print { display: none !important; }
             .print-container { page-break-inside: avoid; border: none !important; }
         }
-        
+
         /* General styles */
         body {
             font-family: 'Century Gothic', Century Gothic, sans-serif;
@@ -240,7 +240,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             margin: 0;
             padding: 20px;
         }
-        
+
         .print-container {
             width: 100%;
             margin: 0 auto;
@@ -252,7 +252,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         @media screen {
             .print-container { max-width: 720px; }
         }
-        
+
         .header-title {
             text-align: center;
             font-weight: bold;
@@ -294,34 +294,34 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             letter-spacing: 0.5px;
             padding: 8px 6px !important;
         }
-        
+
         .info-section {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 5px;
         }
-        
+
         .info-section td {
             border: 1px solid #000;
             padding: 4px 6px;
             font-size: 9px;
         }
-        
+
         .info-section .label {
             font-weight: bold;
             width: 15%;
         }
-        
+
         .info-section .value {
             width: 35%;
         }
-        
+
         .items-table {
             width: 100%;
             border-collapse: collapse;
             border: 2px solid #000;
         }
-        
+
         .items-table th,
         .items-table td {
             padding: 4px 3px;
@@ -369,16 +369,16 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             padding-top: 5px;
             padding-bottom: 5px; 
         }
-        
+
         .items-table th {
             font-weight: bold;
         }
-        
+
         .items-table .description {
             text-align: left;
             font-size: 10px;
         }
-        
+
         .items-table tbody tr.history-row td {
             font-style: normal;
         }
@@ -398,12 +398,12 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         .items-table tbody tr.signatories-row td.signatories {
             border: 2px solid #000 !important;
         }
-        
+
         .signatures {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .signatures td {
             border: 2px solid #000;
             padding: 10px;
@@ -412,13 +412,13 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             vertical-align: top;
             width: 50%;
         }
-        
+
         .signature-title {
             font-weight: bold;
             margin-bottom: 10px;
             text-align: left;
         }
-        
+
         .signatures .signature-label {
             font-size: 7px;
             color: #666;
@@ -441,7 +441,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
         .signature-line.position {
             margin-top: 6px;
         }
-        
+
         .print-instructions {
             background: #fffacd;
             border: 1px solid #ddd;
@@ -449,7 +449,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             margin-bottom: 20px;
             border-radius: 5px;
         }
-        
+
         .print-button {
             background: #007cba;
             color: white;
@@ -460,11 +460,11 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             font-size: 12px;
             margin-right: 10px;
         }
-        
+
         .print-button:hover {
             background: #005a87;
         }
-        
+
         .back-button {
             background: #6c757d;
             color: white;
@@ -476,17 +476,17 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             text-decoration: none;
             display: inline-block;
         }
-        
+
         .back-button:hover {
             background: #545b62;
         }
-        
+
         .total-row {
             background-color: #f0f0f0;
             font-weight: bold;
         }
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Inventory Custody Slip Preview" data-preview-code="ICS" data-preview-back="Semi_Expendables/ics.php" data-preview-width="760"></script>
 </head>
 <body>
@@ -501,7 +501,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
             </ol>
             <p><strong>For best results:</strong> Use Chrome or Edge browser for optimal PDF formatting.</p>
         </div>
-        
+
         <button class="print-button" onclick="window.print()">🖨️ Print/Save as PDF</button>
         <a href="Semi_Expendables/ics.php" class="back-button">← Back to ICS List</a>
         <a href="Semi_Expendables/edit_ics.php?ics_id=<?php echo $ics_id; ?>" class="back-button">✏️ Edit ICS</a>
@@ -684,10 +684,10 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                     if ((float)$disposal['disposal_sale'] > 0) { $dispType = 'Disposed (Sale)'; }
                                     elseif ((float)$disposal['disposal_transfer'] > 0) { $dispType = 'Disposed (Transfer)'; }
                                     elseif ((float)$disposal['disposal_destruction'] > 0) { $dispType = 'Disposed (Destruction)'; }
-                                    
+
                                     $dispDate = $disposal['as_at'] ? date('m/d/Y', strtotime($disposal['as_at'])) : '';
                                     $dispNote = $dispType . ' via IIRUSP ' . htmlspecialchars($disposal['iirusp_no']);
-                                    
+
                                     echo '<tr class="history-row">';
                                     echo '<td>' . $dispQtyDisplay . '</td>';
                                     echo '<td>' . htmlspecialchars($unit) . '</td>';
@@ -715,7 +715,7 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                 echo '<td>' . htmlspecialchars($item['estimated_useful_life'] ?? '') . '</td>';
                                 echo '</tr>';
                                 $row_count++;
-                                
+
                                 // Then render disposal rows
                                 foreach ($iirusp_disposals_by_stock[$stockNo] as $disposal) {
                                     $dispQty = (float)($disposal['quantity'] ?? 0);
@@ -724,9 +724,9 @@ if ($iirusp_res && $iirusp_res->num_rows > 0) {
                                     if ((float)$disposal['disposal_sale'] > 0) { $dispType = 'Disposed (Sale)'; }
                                     elseif ((float)$disposal['disposal_transfer'] > 0) { $dispType = 'Disposed (Transfer)'; }
                                     elseif ((float)$disposal['disposal_destruction'] > 0) { $dispType = 'Disposed (Destruction)'; }
-                                    
+
                                     $dispNote = $dispType . ' via IIRUSP ' . htmlspecialchars($disposal['iirusp_no']);
-                                    
+
                                     echo '<tr class="history-row">';
                                     echo '<td>' . $dispQtyDisplay . '</td>';
                                     echo '<td>' . htmlspecialchars($unit) . '</td>';

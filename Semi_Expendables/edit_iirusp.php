@@ -18,7 +18,7 @@ if ($iirusp_id) {
     $result = $stmt->get_result();
     $iirusp = $result->fetch_assoc();
     $stmt->close();
-    
+
     $stmt = $conn->prepare("SELECT * FROM iirusp_items WHERE iirusp_id=? ORDER BY iirusp_item_id ASC");
     $stmt->bind_param('i', $iirusp_id);
     $stmt->execute();
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ob_clean();
     header('Content-Type: application/json');
     ini_set('display_errors', 0);
-    
+
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     try {
         $conn->begin_transaction();
@@ -59,13 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $prev_items[] = $row;
         }
         $stmt->close();
-        
+
         // Reverse stock deductions
         foreach ($prev_items as $item) {
             $prop_no = $item['semi_expendable_property_no'];
             $qty = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
             if ($qty === false) { throw new Exception('Disposal quantities must be positive whole numbers.'); }
-            
+
             if (!empty($prop_no) && $qty > 0) {
                 // Add back disposed qty to semi_expendable_property
                 $stmt = $conn->prepare("UPDATE semi_expendable_property SET quantity = quantity + ?, quantity_disposed = GREATEST(0, quantity_disposed - ?), quantity_balance = quantity_balance + ? WHERE semi_expendable_property_no = ?");
@@ -74,9 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
             }
         }
-        
 
-        
+
+
         // Update IIRUSP header
         $iirusp_no = trim($_POST['iirusp_no'] ?? '');
         $as_at = $_POST['as_at'] ?? date('Y-m-d');
@@ -91,97 +91,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $approved_by_designation = trim($_POST['approved_by_designation'] ?? '');
         $inspection_officer = trim($_POST['inspection_officer'] ?? '');
         $witness = trim($_POST['witness'] ?? '');
-        
+
         $stmt = $conn->prepare("UPDATE iirusp SET iirusp_no=?, as_at=?, entity_name=?, fund_cluster=?, accountable_officer_name=?, accountable_officer_designation=?, accountable_officer_station=?, requested_by=?, requested_by_designation=?, approved_by=?, approved_by_designation=?, inspection_officer=?, witness=? WHERE iirusp_id=?");
         $stmt->bind_param("sssssssssssssi", $iirusp_no, $as_at, $entity_name, $fund_cluster, $accountable_officer_name, $accountable_officer_designation, $accountable_officer_station, $requested_by, $requested_by_designation, $approved_by, $approved_by_designation, $inspection_officer, $witness, $iirusp_id);
-        
+
         if (!$stmt->execute()) {
             throw new Exception("Update Error: " . $stmt->error);
         }
         $stmt->close();
-        
+
         // Remove old items
         $conn->query("DELETE FROM iirusp_items WHERE iirusp_id=" . $iirusp_id);
-        
+
         // Insert new items and update stock
         if (!empty($_POST['items_json'])) {
             $items_json = $_POST['items_json'];
             $items = json_decode($items_json, true);
-            
+
             if (!empty($items) && is_array($items)) {
                 $item_stmt = $conn->prepare("INSERT INTO iirusp_items (iirusp_id, date_acquired, particulars, semi_expendable_property_no, quantity, unit, unit_cost, total_cost, disposal_sale, disposal_transfer, disposal_destruction, disposal_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                
+
                 $update_master = $conn->prepare("UPDATE semi_expendable_property SET quantity = quantity - ?, quantity_balance = quantity_balance - ?, quantity_disposed = quantity_disposed + ? WHERE semi_expendable_property_no = ? AND quantity >= ? AND quantity_balance >= ?");
-                
+
                 $history_stmt = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity_disposed, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                
+
                 foreach ($items as $item) {
                     $prop_no = $item['property_no'];
                     $qty = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
             if ($qty === false) { throw new Exception('Disposal quantities must be positive whole numbers.'); }
                     $cost = (float)$item['unit_cost'];
                     $total = $qty * $cost;
-                    
+
                     // Validate: Get current balance
                     $check_stmt = $conn->prepare("SELECT id, quantity, quantity_balance, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? LIMIT 1 FOR UPDATE");
                     $check_stmt->bind_param("s", $prop_no);
                     $check_stmt->execute();
                     $result = $check_stmt->get_result();
-                    
+
                     if ($result->num_rows === 0) {
                         throw new Exception("Item $prop_no not found");
                     }
-                    
+
                     $row = $result->fetch_assoc();
                     $semi_id = $row['id'];
                     $available_qty = min((int)$row['quantity'], (int)$row['quantity_balance']);
                     $check_stmt->close();
-                    
+
                     if ($qty > $available_qty) {
                         throw new Exception("Item $prop_no: Cannot dispose $qty units. Only $available_qty available.");
                     }
-                    
+
                     // Insert Item to IIRUSP Table
                     $d_sale = (float)($item['disposal_sale'] ?? 0);
                     $d_trans = (float)($item['disposal_transfer'] ?? 0);
                     $d_destr = (float)($item['disposal_destruction'] ?? 0);
                     $d_tot = (float)$qty;
-                    
+
                     $item_stmt->bind_param("isssisdddddds", 
                         $iirusp_id, $item['date_acquired'], $item['particulars'], $prop_no, $qty, $item['unit'], 
                         $cost, $total, $d_sale, $d_trans, $d_destr, $d_tot, $item['remarks']
                     );
-                    
+
                     if (!$item_stmt->execute()) {
                         throw new Exception("Failed to insert item: " . $item_stmt->error);
                     }
-                    
+
                     // Update Master Stock
                     $update_master->bind_param("iiisii", $qty, $qty, $qty, $prop_no, $qty, $qty);
                     if (!$update_master->execute() || $update_master->affected_rows !== 1) {
                         throw new Exception("Failed to update master: " . $update_master->error);
                     }
-                    
+
                     // Add History Entry
                     $holder = !empty($row['office_officer_reissued']) ? $row['office_officer_reissued'] : 
                               (!empty($row['office_officer_issued']) ? $row['office_officer_issued'] : 'Stock Room');
                     $rem = "Disposed via IIRUSP " . $iirusp_no;
                     $history_stmt->bind_param("issisdds", $semi_id, $as_at, $iirusp_no, $qty, $holder, $cost, $total, $rem);
-                    
+
                     if (!$history_stmt->execute()) {
                         throw new Exception("Failed to log history: " . $history_stmt->error);
                     }
                 }
-                
+
                 $item_stmt->close();
                 $update_master->close();
                 $history_stmt->close();
             }
         }
-        
+
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'IIRUSP updated successfully']);
-        
+
     } catch (Exception $e) {
         if ($conn) $conn->rollback();
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -190,14 +190,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Edit IIRUSP Form</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
+
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="iirusp-page">
@@ -227,9 +227,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" id="fund_cluster" value="<?php echo htmlspecialchars($iirusp['fund_cluster'] ?? ''); ?>">
             </div>
         </div>
-        
+
         <hr style="margin:20px 0; border:0; border-top:1px solid;">
-        
+
         <div class="form-grid">
             <div class="form-group">
                 <label>Accountable Officer:</label>
@@ -333,7 +333,7 @@ function submitForm() {
     data.append('inspection_officer', document.getElementById('inspection_officer').value);
     data.append('witness', document.getElementById('witness').value);
     data.append('items_json', JSON.stringify([])); // Empty items for now, can be extended
-    
+
     fetch(window.location.href, {
         method: 'POST',
         body: data

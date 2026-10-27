@@ -57,20 +57,20 @@ try {
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
     }
-    
+
     // Bind parameters dynamically
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
-    
+
     if (!$stmt->execute()) {
         throw new Exception("Execute failed: " . $stmt->error);
     }
-    
+
     $result = $stmt->get_result();
     $items = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
-    
+
 } catch (Exception $e) {
     $items = [];
     $error = "Database error: " . $e->getMessage();
@@ -82,14 +82,14 @@ $total_value = array_sum(array_column($items, 'amount_total'));
 $total_quantity = array_sum(array_column($items, 'quantity_balance'));
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($category); ?> - Semi-Expendable Property</title>
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -99,7 +99,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             font-weight: 900;
             color: #3b82f6;
         }
-        
+
         /* Category Tabs */
         .category-tabs {
             display: flex !important;
@@ -127,7 +127,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             border-bottom-color: #3b82f6 !important;
             font-weight: 600 !important;
         }
-        
+
         /* Statistics Cards */
         .stats-cards {
             display: grid !important;
@@ -170,24 +170,24 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             font-weight: 700 !important;
             margin: 0 !important;
         }
-        
+
         /* Search Section Layout */
         .add-btn-section {
             flex: 0 0 auto;
         }
-        
+
         .search-section {
             flex: 1;
             display: flex;
             justify-content: center;
         }
-        
+
         .search-form {
             display: flex;
             gap: 10px;
             align-items: center;
         }
-        
+
         .search-input {
             padding: 12px 16px;
             border-radius: 8px;
@@ -197,17 +197,17 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             font-size: 14px;
             transition: all 0.3s ease;
         }
-        
+
         .search-input:hover {
             border-color: #cbd5e1;
         }
-        
+
         .search-input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
+
         /* Alerts */
         .alert {
             padding: 15px;
@@ -224,7 +224,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
             color: #065f46;
             border: 1px solid #a7f3d0;
         }
-        
+
         /* Modal */
         .modal {
             display: none;
@@ -558,7 +558,7 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
                                     <div class="actions-menu">
                                         <button type="button" class="actions-menu-toggle" aria-label="Open actions" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
                                         <div class="actions-menu-list">
-                                            <a href="Semi_Expendables/view_semi_expendable.php?id=<?= (int)$item['id'] ?>&amp;return=<?= urlencode($viewReturnUrl) ?>"><i class="fas fa-eye"></i> View</a>
+                                            <a href="Semi_Expendables/view_item_semi.php?id=<?= (int)$item['id'] ?>&amp;return=<?= urlencode($viewReturnUrl) ?>"><i class="fas fa-eye"></i> View</a>
                                             <a href="Semi_Expendables/edit_semi_expendable.php?id=<?php echo $item['id']; ?>"><i class="fas fa-pen"></i> Edit</a>
                                             <a href="javascript:void(0)" class="delete-action" onclick="deleteItem(<?php echo (int)$item['id']; ?>, '<?php echo htmlspecialchars($category, ENT_QUOTES); ?>')"><i class="fas fa-trash"></i> Delete</a>
                                         </div>
@@ -583,6 +583,6 @@ $total_quantity = array_sum(array_column($items, 'quantity_balance'));
     </script>
 
     <script src="js/actions_menu.js"></script>
-    
+
 </body>
 </html>

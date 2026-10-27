@@ -51,14 +51,14 @@ if (isset($_SESSION['user_id'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add RPCPPE - Report on Physical Count of Property, Plant and Equipment</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="add-page inventory-report-page ppe-page">
@@ -108,6 +108,10 @@ if (isset($_SESSION['user_id'])) {
                             <div class="search-container">
                                 <label class="compact-search-field" for="searchInput"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="searchInput" class="search-input" placeholder="Search by PAR number, item name, or description..."></label>
                             </div>
+            <div class="button-tooltip">
+                <button type="button" id="match-balance" class="pill-btn pill-view" aria-describedby="match-balance-tooltip"><i class="fas fa-equals" aria-hidden="true"></i> Match Balance</button>
+                <span class="button-tooltip-text" id="match-balance-tooltip" role="tooltip">Set the counted quantity equal to the recorded balance</span>
+            </div>
                     </div>
 
             <div class="table-frame"><div class="table-viewport rpcppe-table-wrapper">
@@ -155,7 +159,7 @@ if (isset($_SESSION['user_id'])) {
                                 // Balance Per Card
                                 echo '<td>' . htmlspecialchars($item['quantity'] ?? '') . '</td>';
                                 // Input cells for manual entry with name attributes
-                                echo '<td><input type="number" name="on_hand_count[' . $ppe_id . ']" step="1" class="count-input" /></td>';
+                                echo '<td><input type="number" name="on_hand_count[' . $ppe_id . ']" data-recorded-balance="' . (int)($item['quantity'] ?? 0) . '" step="1" class="count-input" /></td>';
                                 echo '<td><input type="number" name="shortage_qty[' . $ppe_id . ']" step="1" class="count-input" /></td>';
                                 echo '<td><input type="number" name="shortage_value[' . $ppe_id . ']" step="0.01" class="count-input" /></td>';
                                 echo '<td><input type="text" name="remarks[' . $ppe_id . ']" class="count-input" /></td>';
@@ -214,6 +218,16 @@ if (isset($_SESSION['user_id'])) {
 
     <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
+const matchBalanceButton = document.getElementById('match-balance');
+if (matchBalanceButton) matchBalanceButton.addEventListener('click', function () {
+    document.querySelectorAll('#rpcppe-table input[data-recorded-balance]').forEach(input => {
+        if (input.readOnly) return;
+        input.value = input.dataset.recordedBalance;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+});
+
 
 
         document.addEventListener('DOMContentLoaded', function() {

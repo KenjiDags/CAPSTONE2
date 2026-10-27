@@ -79,7 +79,7 @@ if ($search !== '') {
 // Handle AJAX requests
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
-    
+
     // Reject invalid stock quantities before add/edit can write inventory.
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && array_key_exists('quantity_on_hand', $_POST)) {
         if (filter_var($_POST['quantity_on_hand'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
@@ -96,7 +96,7 @@ if (isset($_GET['action'])) {
                 $stmt->bind_param("s", $stock_number);
                 $stmt->execute();
                 $result = $stmt->get_result();
-                
+
                 if ($result->num_rows > 0) {
                     $row = $result->fetch_assoc();
                     echo json_encode([
@@ -118,7 +118,7 @@ if (isset($_GET['action'])) {
                 $stmt->close();
             }
             break;
-            
+
         case 'delete':
             if (isset($_POST['id'])) {
                 $id = intval($_POST['id']);
@@ -132,10 +132,10 @@ if (isset($_GET['action'])) {
                 }
             }
             break;
-            
+
         case 'add':
             if (isset($_POST['stock_number'])) {
-                
+
                 $stock_number = $_POST['stock_number'];
                 $item_name = $_POST['item_name'];
                 $description = $_POST['description'];
@@ -151,19 +151,19 @@ if (isset($_GET['action'])) {
                     exit();
                 }
                 $estimated_life = $estimated_life === '' ? null : $estimated_life;
-                
+
                 // Check if stock number already exists
                 $check_stmt = $conn->prepare("SELECT item_id FROM items WHERE stock_number = ?");
                 $check_stmt->bind_param("s", $stock_number);
                 $check_stmt->execute();
                 $check_result = $check_stmt->get_result();
-                
+
                 if ($check_result->num_rows > 0) {
                     // Add new inventory entry for existing item
                     $existing_item = $check_result->fetch_assoc();
                     $entry_stmt = $conn->prepare("INSERT INTO inventory_entries (item_id, quantity, unit_cost) VALUES (?, ?, ?)");
                     $entry_stmt->bind_param("iid", $existing_item['item_id'], $quantity_on_hand, $unit_cost);
-                    
+
                     // Check if this is the first entry for this item
                     $count_stmt = $conn->prepare("SELECT COUNT(*) as entry_count FROM inventory_entries WHERE item_id = ?");
                     $count_stmt->bind_param("i", $existing_item['item_id']);
@@ -202,7 +202,7 @@ if (isset($_GET['action'])) {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->bind_param("sssssidiis", $stock_number, $item_name, $description, $iar, $unit, $reorder_point, $unit_cost, $quantity_on_hand, $quantity_on_hand, $estimated_life);
-                    
+
                     if ($stmt->execute()) {
                         $new_id = $conn->insert_id;
 
@@ -239,7 +239,7 @@ if (isset($_GET['action'])) {
 case 'update':
     if (isset($_POST['item_id'])) {
         $id = intval($_POST['item_id']);
-        
+
         // Get current item data to compare changes
         $current_stmt = $conn->prepare("
             SELECT 
@@ -268,12 +268,12 @@ case 'update':
             echo json_encode(['success' => false, 'message' => 'Item not found']);
             break;
         }
-        
+
         $has_multiple_entries = ($current_data['initial_quantity'] > 0 && $current_data['entry_count'] > 0);
-        
+
         // Check if this is a selective update
         $is_selective_update = isset($_POST['selective_update']) && $_POST['selective_update'] === 'true';
-        
+
         // Define allowed fields and their types
         $allowed_fields = [
             'stock_number' => 'string',
@@ -286,17 +286,17 @@ case 'update':
             'unit_cost' => 'float',
             'quantity_on_hand' => 'int'
         ];
-        
+
         // Critical fields that affect inventory entries
         $critical_fields = ['unit_cost', 'quantity_on_hand'];
-        
+
         // Collect changed fields and their values
         $fields_to_update = [];
         $values_to_bind = [];
         $param_types = '';
         $critical_fields_changed = false;
         $updated_field_names = [];
-        
+
         foreach ($allowed_fields as $field => $type) {
             if (isset($_POST[$field])) {
                 $new_value = $_POST[$field];
@@ -305,7 +305,7 @@ case 'update':
                     echo json_encode(['success' => false, 'message' => 'No. of days to consume must be 100 characters or fewer.']);
                     exit();
                 }
-                
+
                 // Type conversion
                 switch ($type) {
                     case 'int':
@@ -321,7 +321,7 @@ case 'update':
                         $current_value = trim((string)($current_data[$field] ?? ''));
                         break;
                 }
-                
+
                 // Check if value actually changed
                 $value_changed = false;
                 if ($type === 'float') {
@@ -329,20 +329,20 @@ case 'update':
                 } else {
                     $value_changed = $new_value !== $current_value;
                 }
-                
+
                 if ($value_changed || !$is_selective_update) {
                     $fields_to_update[] = "$field = ?";
                     $values_to_bind[] = $new_value;
                     $param_types .= ($type === 'string') ? 's' : (($type === 'int') ? 'i' : 'd');
                     $updated_field_names[] = ucwords(str_replace('_', ' ', $field));
-                    
+
                     if (in_array($field, $critical_fields)) {
                         $critical_fields_changed = true;
                     }
                 }
             }
         }
-        
+
         // If no fields to update
         if (empty($fields_to_update)) {
             echo json_encode([
@@ -352,7 +352,7 @@ case 'update':
             ]);
             break;
         }
-        
+
         // Determine update strategy based on whether critical fields changed
         if ($has_multiple_entries && $critical_fields_changed) {
             // Critical fields changed - clear entries and reset to new base values
@@ -360,12 +360,12 @@ case 'update':
             $delete_entries_stmt->bind_param("i", $id);
             $delete_entries_stmt->execute();
             $delete_entries_stmt->close();
-            
+
             // Add fields to clear calculated values if critical fields changed
             $fields_to_update[] = "calculated_unit_cost = NULL";
             $fields_to_update[] = "calculated_quantity = NULL"; 
             $fields_to_update[] = "average_unit_cost = NULL";
-            
+
             // Update initial_quantity to match quantity_on_hand if quantity changed
             if ($critical_fields_changed) {
                 $new_qty = isset($_POST['quantity_on_hand']) ? intval($_POST['quantity_on_hand']) : $current_data['quantity_on_hand'];
@@ -374,11 +374,11 @@ case 'update':
                 $param_types .= 'i';
             }
 
-            
+
             $message = 'Updated: ' . implode(', ', $updated_field_names) . ' (all entries cleared due to critical changes)';
             $change_type = 'entries_cleared_and_updated';
             $final_has_multiple = false;
-            
+
         } else if ($has_multiple_entries && !$critical_fields_changed) {
             // Only non-critical fields changed - preserve entries and calculated values
             // Remove critical fields from update if they somehow got included
@@ -386,7 +386,7 @@ case 'update':
             $non_critical_values = [];
             $non_critical_types = '';
             $non_critical_names = [];
-            
+
             for ($i = 0; $i < count($fields_to_update); $i++) {
                 $field_name = explode(' = ', $fields_to_update[$i])[0];
                 if (!in_array($field_name, $critical_fields)) {
@@ -398,18 +398,18 @@ case 'update':
                     }
                 }
             }
-            
+
             $fields_to_update = $non_critical_updates;
             $values_to_bind = $non_critical_values;
             $param_types = $non_critical_types;
             $updated_field_names = $non_critical_names;
-            
+
             $message = empty($updated_field_names) ? 
                 'No non-critical fields to update (entries preserved)' : 
                 'Updated: ' . implode(', ', $updated_field_names) . ' (entries preserved)';
             $change_type = 'update_non_critical';
             $final_has_multiple = true;
-            
+
         } else {
     // No multiple entries - regular selective update
     $message = 'Updated: ' . implode(', ', $updated_field_names);
@@ -427,18 +427,18 @@ case 'update':
     }
 }
 
-        
+
         // Execute the update if there are fields to update
         if (!empty($fields_to_update)) {
             $sql = "UPDATE items SET " . implode(', ', $fields_to_update) . " WHERE item_id = ?";
             $values_to_bind[] = $id;
             $param_types .= 'i';
-            
+
             $stmt = $conn->prepare($sql);
             if (!empty($values_to_bind)) {
                 $stmt->bind_param($param_types, ...$values_to_bind);
             }
-            
+
             if ($stmt->execute()) {
                 // Log history
                 // Get quantity change (if provided), else null
@@ -456,7 +456,7 @@ case 'update':
                 $updated_result = $updated_stmt->get_result();
                 $updated_item = $updated_result->fetch_assoc();
                 $updated_stmt->close();
-                
+
                 echo json_encode([
                     'success' => true, 
                     'message' => $message,
@@ -489,7 +489,7 @@ case 'update':
         }
     }
     break;
-    
+
     case 'clear_entries':
     if (isset($_POST['item_id'])) {
         $item_id = intval($_POST['item_id']);
@@ -541,7 +541,7 @@ case 'update':
     case 'check_entries':
     if (isset($_POST['item_id'])) {
         $item_id = intval($_POST['item_id']);
-        
+
         $stmt = $conn->prepare("
             SELECT 
                 (SELECT COUNT(*) FROM inventory_entries WHERE item_id = ?) as entry_count,
@@ -553,9 +553,9 @@ case 'update':
         $result = $stmt->get_result();
         $data = $result->fetch_assoc();
         $stmt->close();
-        
+
         $hasMultipleEntries = ($data['initial_quantity'] > 0 && $data['entry_count'] > 0);
-        
+
         echo json_encode([
             'hasMultipleEntries' => $hasMultipleEntries,
             'entryCount' => $data['entry_count']
@@ -564,24 +564,24 @@ case 'update':
     break;
 
         }
-    
-        
+
+
     $conn->close();
     exit();
 
-    
+
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESDA Inventory Management System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -839,7 +839,7 @@ case 'update':
                         $last_updated = date('M d, Y H:i', strtotime($row['created_at'] ?? 'now'));
                         $item_name = htmlspecialchars($row['item_name'] ?? '', ENT_QUOTES, 'UTF-8');
                         $stock_number = htmlspecialchars($row['stock_number'] ?? '', ENT_QUOTES, 'UTF-8');
-                        
+
                         echo "<tr data-id='{$row['item_id']}' data-description='{$description}' data-unit='{$unit}' data-last-updated='{$last_updated}' class='inventory-clickable-row' aria-expanded='false'>
                             <td><strong>{$stock_number}</strong></td>
                             <td>{$item_name}</td>
@@ -879,7 +879,7 @@ case 'update':
                             </td>
                         </tr>";
                     }
-                            
+
                 } else {
                     echo "<tr><td colspan='6' style='text-align: center; color: #666; font-style: italic;'>
                             <i class='fas fa-inbox'></i> No inventory data found.
@@ -925,7 +925,7 @@ case 'update':
 
             <label for="add_quantity_on_hand">Quantity on Hand <span class="required-indicator" aria-hidden="true">*</span></label>
             <input type="number" name="quantity_on_hand" id="add_quantity_on_hand" placeholder="Quantity on Hand" required min="0">
-            
+
             <button type="submit" class="save-btn">
                 <i class="fas fa-save"></i> Save Item
             </button>

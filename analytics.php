@@ -3,11 +3,32 @@ require 'auth.php';
 require 'config.php';
 
 $officeTotalItems = 0;
+$officeTotalValue = 0;
 $officeIssuedThisMonth = 0;
 $officeAboveReorder = 0;
 $officeAtReorder = 0;
 $officeEmpty = 0;
 
+// Match the total-cost calculation used by the Office Supplies inventory list.
+$valueSql = "SELECT COALESCE(SUM(
+  COALESCE(i.calculated_quantity, i.quantity_on_hand) * CASE
+    WHEN i.calculated_unit_cost IS NOT NULL THEN i.calculated_unit_cost
+    WHEN i.initial_quantity > 0 AND entries.entry_count > 0
+      THEN ((i.initial_quantity * i.unit_cost) + entries.entry_value)
+        / NULLIF(i.initial_quantity + entries.entry_quantity, 0)
+    ELSE i.unit_cost
+  END
+), 0) AS total_value
+FROM items i
+LEFT JOIN (
+  SELECT item_id, COUNT(*) AS entry_count, SUM(quantity) AS entry_quantity,
+    SUM(quantity * unit_cost) AS entry_value
+  FROM inventory_entries GROUP BY item_id
+) entries ON entries.item_id = i.item_id";
+if ($result = $conn->query($valueSql)) {
+  $officeTotalValue = (float)($result->fetch_assoc()['total_value'] ?? 0);
+  $result->close();
+}
 if ($result = $conn->query("SELECT COUNT(*) AS total FROM items")) {
   $officeTotalItems = (int)($result->fetch_assoc()['total'] ?? 0);
   $result->close();
@@ -90,6 +111,7 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
     <div class="office-summary-cards analytics-summary-cards">
       <article class="analytics-summary-card"><div><span>Total Stock Items</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.25l8 4.5"/></svg></div><strong><?= number_format($officeTotalItems) ?></strong></article>
       <article class="analytics-summary-card"><div><span>Issued This Month</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 13 2 2 4-4"/></svg></div><strong><?= number_format($officeIssuedThisMonth) ?></strong></article>
+      <article class="analytics-summary-card"><div><span>Total Value</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M16 14h5M6 5V3h12v2"/></svg></div><strong class="currency">&#8369; <?= number_format($officeTotalValue, 2) ?></strong></article>
     </div>
     <div class="office-status-layout">
     <article class="office-status-panel">
@@ -196,12 +218,22 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       <div class="demand-chart-frame" id="demandChartFrame" hidden><canvas id="demandForecastChart" aria-label="Monthly actual issuance and predicted demand"></canvas></div>
       <p class="empty-state" id="demandForecastMessage">Loading demand history...</p>
       <div class="demand-summary" id="demandForecastSummary" hidden>
-        <div><span>Average monthly issuance</span><strong id="demandAverage"></strong></div>
-        <div><span id="demandNextLabel">Forecasted demand</span><strong id="demandNext"></strong></div>
-        <div><span>Previous complete month</span><strong id="demandPrevious"></strong></div>
-        <div><span>Office supply additions last month</span><strong id="demandReceipts"></strong></div>
-        <div><span>Projected change</span><strong id="demandChange"></strong></div>
-        <div><span>Demand trend</span><strong id="demandTrend"></strong></div>
+        <section class="demand-metric-group" aria-labelledby="demandPrimaryHeading">
+          <h4 id="demandPrimaryHeading">Primary metrics</h4>
+          <div class="demand-metric-grid">
+            <div class="demand-metric demand-metric-primary"><span id="demandNextLabel">Forecasted demand</span><strong id="demandNext" class="demand-forecast-value"></strong><p>3-month SMA projection</p></div>
+            <div class="demand-metric demand-metric-primary"><span>Average Monthly Issuance</span><strong id="demandAverage"></strong><p>Historical monthly average</p></div>
+            <div class="demand-metric demand-metric-primary"><span>Projected Change</span><strong id="demandChange"></strong><p id="demandChangeDescription"></p></div>
+          </div>
+        </section>
+        <section class="demand-metric-group" aria-labelledby="demandSupportingHeading">
+          <h4 id="demandSupportingHeading">Supporting metrics</h4>
+          <div class="demand-metric-grid">
+            <div class="demand-metric"><span>Previous Complete Month</span><strong id="demandPrevious"></strong><p id="demandPreviousDescription"></p></div>
+            <div class="demand-metric"><span>Supply Additions Last Month</span><strong id="demandReceipts"></strong><p id="demandReceiptsDescription"></p></div>
+            <div class="demand-metric"><span>Demand Trend</span><strong id="demandTrend"></strong><p>Projected month-over-month</p></div>
+          </div>
+        </section>
       </div>
     </article>
   </section>
@@ -326,6 +358,16 @@ async function loadDemandForecast(background = false) {
     document.getElementById('demandReceipts').textContent = number(data.receiptsPreviousMonth) + ' items';
     document.getElementById('demandChange').textContent = data.changePercent === null ? 'Unavailable' : (data.changePercent > 0 ? '+' : '') + data.changePercent + '%';
     document.getElementById('demandTrend').textContent = data.trend;
+    const previousDate = new Date(data.forecastMonth + '-01T00:00:00');
+    previousDate.setMonth(previousDate.getMonth() - 1);
+    const previousMonthLabel = previousDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    document.getElementById('demandPreviousDescription').textContent = previousMonthLabel;
+    document.getElementById('demandReceiptsDescription').textContent = previousMonthLabel;
+    document.getElementById('demandChangeDescription').textContent = data.changePercent === null
+      ? 'No comparison available for ' + previousMonthLabel
+      : 'Compared with ' + previousMonthLabel;
+    document.getElementById('demandChange').classList.toggle('demand-change-down', data.changePercent !== null && data.changePercent < 0);
+    document.getElementById('demandChange').classList.toggle('demand-change-up', data.changePercent !== null && data.changePercent > 0);
     }
     const chartMonths = [...data.months];
     const chartActual = [...data.actual];
@@ -509,7 +551,8 @@ function renderCategoryRegister() {
   document.getElementById('categoryRegisterCount').textContent = `${rows.length.toLocaleString()} record${rows.length === 1 ? '' : 's'}`;
   document.getElementById('categoryRegisterBody').innerHTML = rows.length
     ? rows.map(item => {
-      const name = `<strong>${escapeTableText(itemName(item))}</strong>` + (item.description ? `<div>${escapeTableText(item.description)}</div>` : '');
+      const viewUrl = (isSemi ? 'Semi_Expendables/view_item_semi.php' : 'PPE/view_item_ppe.php') + '?id=' + encodeURIComponent(item.item_id);
+      const name = `<a href="${escapeTableText(viewUrl)}"><strong>${escapeTableText(itemName(item))}</strong></a>` + (item.description ? `<div>${escapeTableText(item.description)}</div>` : '');
       const ppeStatus = String(item.condition || '').trim().toLowerCase() === 'unserviceable' && String(item.status || '').trim().toLowerCase() === 'active' ? 'Unserviceable' : item.status;
       const unserviceableQty = Number(item.unserviceable_quantity || 0);
       let semiStatus = (item.item_statuses || [item.issuance_status]).map(value => categoryStatusText(isSemi && /disposal|disposed/i.test(String(value)) ? 'Unserviceable' : value)).join('<br>');
@@ -521,10 +564,15 @@ function renderCategoryRegister() {
       const cells = isSemi
         ? [escapeTableText(item.property_no || 'N/A'), name, semiStatus, escapeTableText(item.current_holder || 'Not recorded'), Number(item.quantity || 0).toLocaleString()]
         : [escapeTableText(item.property_no || 'N/A'), name, (item.item_statuses || [ppeStatus]).map(categoryStatusText).join('<br>'), escapeTableText(item.current_holder || 'Unassigned'), escapeTableText(item.officer_incharge || 'Unassigned'), Number(item.quantity || 0).toLocaleString()];
-      return '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+      return `<tr data-item-view-url="${escapeTableText(viewUrl)}" style="cursor:pointer;">` + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
     }).join('')
     : `<tr><td colspan="${columns.length}" class="empty-state">${state.items.length ? 'No items match the current search or status filter.' : `No ${isSemi ? 'semi-expendable' : 'PPE'} items recorded.`}</td></tr>`;
 }
+document.getElementById('categoryRegisterBody').addEventListener('click', event => {
+  if (event.target.closest('a, button, input, select, textarea') || window.getSelection()?.toString()) return;
+  const row = event.target.closest('tr[data-item-view-url]');
+  if (row) window.location.assign(row.dataset.itemViewUrl);
+});
 let semiStatusChart = null;
 function renderSemiStatusChart(container, summary) {
   const total = Number(summary.total || 0).toLocaleString();

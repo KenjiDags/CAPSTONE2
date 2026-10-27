@@ -90,88 +90,15 @@ $history_stmt->close();
 $conn->close();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-item-detail-styles data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Item - TESDA Inventory Management System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .container h2::before {
-            content: "\f03a";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #3b82f6;
-        }
-
-        .view-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .view-card {
-            background: #fff;
-            border: 1px solid #dbe2ef;
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 18px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-        }
-
-        .view-card h3 {
-            margin-top: 0;
-            margin-bottom: 14px;
-            color: #0f172a;
-            font-size: 1.05rem;
-        }
-
-        .item-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 10px 16px;
-        }
-
-        .item-grid .field {
-            border-bottom: 1px dashed #e2e8f0;
-            padding-bottom: 8px;
-        }
-
-        .item-grid .label {
-            display: block;
-            font-size: 0.82rem;
-            color: #64748b;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .item-grid .value {
-            color: #0f172a;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .mini-note {
-            font-size: 0.86rem;
-            color: #64748b;
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-        }
-
-        table.compact-table th,
-        table.compact-table td {
-            font-size: 0.88rem;
-            padding: 10px;
-            white-space: nowrap;
-        }
-    </style>
 </head>
 <body class="item-detail-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>

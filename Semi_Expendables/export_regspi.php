@@ -49,7 +49,7 @@ $categoryLabel = $metadata['category'] ?: 'All';
 function h($value) { return regspiH($value); }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -326,10 +326,10 @@ function h($value) { return regspiH($value); }
         .remarks-col {
             width: 70px;
         }
-        
+
     </style>
 <?php /* keep head clean */ ?>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Registry of Property Issued Preview" data-preview-code="REGSPI" data-preview-back="Semi_Expendables/regspi.php" data-preview-width="1450"></script>
 </head>
 <body>

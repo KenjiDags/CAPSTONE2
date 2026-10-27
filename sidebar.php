@@ -24,7 +24,7 @@ $sidebarIcon = static function ($name) {
 ?>
 
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-<link rel="stylesheet" href="css/hover-sidebar.css?v=<?= time() ?>">
+
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <script>
 try {

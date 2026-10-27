@@ -13,7 +13,7 @@ if ($iirusp_id) {
     $stmt->execute();
     $iirusp = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
     $stmt = $conn->prepare("SELECT * FROM iirusp_items WHERE iirusp_id=? ORDER BY iirusp_item_id ASC");
     $stmt->bind_param('i', $iirusp_id);
     $stmt->execute();
@@ -25,13 +25,13 @@ if ($iirusp_id) {
 if (!$iirusp) { echo 'IIRUSP not found.'; exit; }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
 <title>View IIRUSP</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
 .container h2::before {
@@ -61,7 +61,7 @@ table tbody td[colspan]::before {
 
 <div class="container">
     <h2>IIRUSP Details</h2>
-    
+
     <div class="actions" style="margin-bottom:20px;">
         <a href="Semi_Expendables/iirusp.php" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back to List</a>
         <a href="Semi_Expendables/edit_iirusp.php?iirusp_id=<?= $iirusp_id ?>" class="btn-primary"><i class="fas fa-edit"></i> Edit</a>

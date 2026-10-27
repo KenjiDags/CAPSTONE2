@@ -9,14 +9,14 @@ if (!$report) { http_response_code(404); exit('RPCPPE report not found.'); }
 function rpcppeH($value): string { return htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8'); }
 ?>
 <!doctype html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= rpcppeH(APP_ROOT_URL) ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RPCPPE-<?= (int)$id ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="detail-view-page ppe-page">

@@ -109,7 +109,7 @@ if ($types !== '') {
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -194,7 +194,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     .underline { display:inline-block; border-bottom:1px solid #000; width: 60%;}
 
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Property Issued Preview" data-preview-code="RSPI" data-preview-back="Semi_Expendables/rspi.php" data-preview-width="1100"></script>
 </head>
 <body>

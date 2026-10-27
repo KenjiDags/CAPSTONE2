@@ -3,11 +3,11 @@ require_once __DIR__ . '/bootstrap.php';
 require dirname(__DIR__) . '/auth.php';
 require dirname(__DIR__) . '/config.php';
 require dirname(__DIR__) . '/functions.php';
- 
+
 // DELETE LOGIC (moved from delete_ris.php)
 if (isset($_GET['delete_ris_id'])) {
     $ris_id = (int)$_GET['delete_ris_id'];
-    
+
     try {
         require_once dirname(__DIR__) . '/archive_helpers.php';
     archiveRecord($conn, 'RIS', $ris_id);
@@ -15,15 +15,15 @@ if (isset($_GET['delete_ris_id'])) {
         // Rollback on error
         $conn->rollback();
         $conn->autocommit(TRUE);
-        
+
         // You can add error handling here
         error_log("Error deleting RIS: " . $e->getMessage());
-        
+
         // Optionally redirect with error message
         header("Location: ris.php?error=delete_failed");
         exit();
     }
-    
+
     // Redirect to avoid resubmission on refresh
     header("Location: ris.php");
     exit();
@@ -47,14 +47,14 @@ switch ($sort_by) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RIS - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -64,14 +64,14 @@ switch ($sort_by) {
             font-weight: 900;
             color: #3b82f6;
         }
-        
+
         /* Sort container styling */
         .sort-container {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .sort-container label {
             font-weight: 600;
             color: #001F80;
@@ -79,7 +79,7 @@ switch ($sort_by) {
             align-items: center;
             gap: 6px;
         }
-        
+
         .sort-container select {
             padding: 8px 12px;
             font-size: 14px;
@@ -89,13 +89,13 @@ switch ($sort_by) {
             cursor: pointer;
             transition: border-color 0.2s ease;
         }
-        
+
         .sort-container select:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-        
+
         .search-add-container .btn-success {
             padding: 12px 24px;
             font-size: 15px;
@@ -229,7 +229,7 @@ switch ($sort_by) {
             <i class="fas fa-plus"></i> Add RIS Form
         </button>
     </form>
-    
+
     <div class="table-container">
         <table id="risTable">
             <thead>
@@ -306,7 +306,7 @@ function sortTable(sortBy) {
     // Get current URL and update sort parameter
     const url = new URL(window.location);
     url.searchParams.set('sort', sortBy);
-    
+
     // Redirect to new URL with sort parameter
     window.location.href = url.toString();
 }

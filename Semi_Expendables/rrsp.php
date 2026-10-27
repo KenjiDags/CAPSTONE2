@@ -44,14 +44,14 @@ $result = $conn->query("SELECT r.*, (
 ) AS total_amount FROM rrsp r $whereClause $order_clause");
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RRSP - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
   .container h2::before {
@@ -61,7 +61,7 @@ $result = $conn->query("SELECT r.*, (
     margin-right: 12px;
     color: #3b82f6;
   }
- 
+
     .pill-btn {
       display: inline-flex;
       align-items: center;
@@ -86,7 +86,7 @@ $result = $conn->query("SELECT r.*, (
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>Receipt of Returned Semi-Expendable Property (RRSP)</h2>
-    
+
   <form id="rrsp-filters" method="get" class="filters">
       <div class="inventory-controls">
 

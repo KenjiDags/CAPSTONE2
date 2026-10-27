@@ -25,7 +25,7 @@ $approved_by = $export_data['approved_by'] ?? '';
 $verified_by = $export_data['verified_by'] ?? '';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
@@ -189,7 +189,7 @@ $verified_by = $export_data['verified_by'] ?? '';
         font-size: 11px;
         margin-top: 5px;
     }
-    
+
     .print-button {
         background: #007cba;
         color: white;
@@ -238,7 +238,7 @@ $verified_by = $export_data['verified_by'] ?? '';
     }
 
 </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Physical Count of PPE Preview" data-preview-code="RPCPPE" data-preview-back="PPE/RPCPPE.php" data-preview-width="1500"></script>
 </head>
 <body>
@@ -344,7 +344,7 @@ $verified_by = $export_data['verified_by'] ?? '';
         <tr>
             <td colspan="10" style="padding:5px 10px 5px 10px;">
                 <div style="display: flex; width: 100%;">
-                    
+
                     <!-- Certified Correct -->
                     <div style="display:flex; flex-direction:column; align-items:flex-start;;">
                         <div style="font-size:11px; margin-bottom:20px; margin-right:40px;  margin-left:0px;">Certified Correct by:</div>

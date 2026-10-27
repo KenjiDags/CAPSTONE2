@@ -67,14 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add ITR Form</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
@@ -385,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
       const data = collectForm();
       // For now, just open a simple print preview; can be replaced with a styled PDF later
       const w = window.open('', '_blank');
-      w.document.write('<html><head>\n<base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>"><title>ITR Preview</title><style>body{font-family:Arial; padding:16px;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ddd; padding:6px 8px;} th{background:#eef5ff;}</style></head><body>');
+      w.document.write('<html data-ppe-styles><head>\n<base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>"><title>ITR Preview</title><style>body{font-family:Arial; padding:16px;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ddd; padding:6px 8px;} th{background:#eef5ff;}</style></head><body>');
       w.document.write('<h2>Inventory Transfer Report</h2>');
       w.document.write('<p><strong>Entity:</strong> ' + (data.entity_name||'') + ' &nbsp; <strong>Fund Cluster:</strong> ' + (data.fund_cluster||'') + '</p>');
       w.document.write('<p><strong>From:</strong> ' + (data.from_accountable||'') + '<br/><strong>To:</strong> ' + (data.to_accountable||'') + '</p>');

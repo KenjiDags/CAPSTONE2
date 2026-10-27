@@ -43,14 +43,14 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit ITR Form</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" />
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     /* Page-Specific Icon */
@@ -60,7 +60,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
       font-weight: 900;
       color: #3b82f6;
     }
-    
+
     .section-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px; }
     .section-card h3 { margin:0 0 12px; }
     .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }

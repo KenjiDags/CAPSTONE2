@@ -4,7 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
     require dirname(__DIR__) . '/auth.php';
     require_once dirname(__DIR__) . '/archive_helpers.php';
     if (empty($_SESSION['archive_csrf'])) $_SESSION['archive_csrf'] = bin2hex(random_bytes(32));
-    
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_history']) && isset($_POST['item_id'])) {
         if (!hash_equals($_SESSION['archive_csrf'], (string)($_POST['csrf'] ?? ''))) {
             http_response_code(403);
@@ -32,14 +32,14 @@ require_once __DIR__ . '/bootstrap.php';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View SC - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
     /* Page-Specific Icon */
@@ -50,7 +50,7 @@ require_once __DIR__ . '/bootstrap.php';
         color: #3b82f6;
         margin-right: 10px;
     }
-    
+
     /* Page-specific container with left margin */
     .container {
         margin-left: 240px; 
@@ -183,7 +183,7 @@ require_once __DIR__ . '/bootstrap.php';
                                 'delete' => 'Deleted Item',
                                 'issue' => 'Issued Item',
                             ];
-                        
+
                                     foreach ($history_rows as $h): 
                                         $type_label = $change_labels[$h['change_type']] ?? ucfirst($h['change_type']);
                                     ?>

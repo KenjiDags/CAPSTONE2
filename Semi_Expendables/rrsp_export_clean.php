@@ -23,9 +23,9 @@ $received_date = htmlspecialchars($_GET['received_date'] ?? '');
 header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!doctype html>
-<html>
+<html data-export-styles>
 <head>
-    <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>"><meta charset="utf-8"><title>RRSP</title><link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+    <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>"><meta charset="utf-8"><title>RRSP</title><link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Returned Semi-Expendable Property Preview" data-preview-code="RRSP" data-preview-back="Semi_Expendables/rrsp.php" data-preview-width="1000"></script>
 </head>
 <body>

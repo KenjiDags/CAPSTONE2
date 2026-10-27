@@ -32,7 +32,7 @@ function h($value)
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
@@ -312,7 +312,7 @@ function h($value)
         }
     }
 </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Unserviceable Property Report Preview" data-preview-code="IIRUSP" data-preview-back="Semi_Expendables/iirusp.php" data-preview-width="1530"></script>
 </head>
 <body>

@@ -23,7 +23,7 @@ $received_date = htmlspecialchars($_GET['received_date'] ?? '');
 header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8" />
@@ -47,7 +47,7 @@ header('Content-Type: text/html; charset=UTF-8');
     .btn-print { background:#007cba; color:#fff; }
     .btn-back { background:#6c757d; color:#fff; }
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Returned Semi-Expendable Property Preview" data-preview-code="RRSP" data-preview-back="Semi_Expendables/rrsp.php" data-preview-width="1000"></script>
 </head>
 <body>

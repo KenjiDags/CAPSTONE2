@@ -229,14 +229,14 @@ try {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit ICS Form</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -246,7 +246,7 @@ try {
             font-weight: 900;
             color: #3b82f6;
         }
-        
+
         .section-card { 
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #e5e7eb;
@@ -315,7 +315,7 @@ try {
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
                 <input type="hidden" name="is_editing" value="1">
-                
+
                 <div class="section-card">
                     <h3 class="form-section-heading"><i class="fas fa-info-circle"></i>ICS Details</h3>
                     <div class="form-grid">

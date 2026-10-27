@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // B. Insert Header
         $stmt = $conn->prepare("INSERT INTO iirusp (iirusp_no, as_at, entity_name, fund_cluster, accountable_officer_name, accountable_officer_designation, accountable_officer_station, requested_by, requested_by_designation, approved_by, approved_by_designation, inspection_officer, witness) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
+
         $as_at = $_POST['as_at'] ?? date('Y-m-d');
         $ent = $_POST['entity_name'] ?? '';
         $fund = $_POST['fund_cluster'] ?? '';
@@ -68,17 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $wit = $_POST['witness'] ?? '';
 
         $stmt->bind_param("sssssssssssss", $iirusp_no, $as_at, $ent, $fund, $acc_n, $acc_d, $acc_s, $req, $req_d, $app, $app_d, $insp, $wit);
-        
+
         if (!$stmt->execute()) throw new Exception("Header Error: " . $stmt->error);
         $iirusp_id = $stmt->insert_id;
         $stmt->close();
 
         // C. Process Items
         $item_stmt = $conn->prepare("INSERT INTO iirusp_items (iirusp_id, date_acquired, particulars, semi_expendable_property_no, quantity, unit, unit_cost, total_cost, disposal_sale, disposal_transfer, disposal_destruction, disposal_total, remarks, accumulated_impairment, carrying_amount, appraised_value, or_no, sales_amount, disposal_others) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
+
         // Prepare Master Update (Deduct Stock)
         $update_master = $conn->prepare("UPDATE semi_expendable_property SET quantity = quantity - ?, quantity_balance = quantity_balance - ?, quantity_disposed = quantity_disposed + ? WHERE semi_expendable_property_no = ? AND quantity >= ? AND quantity_balance >= ?");
-        
+
         // Prepare History Insert
         $history_stmt = $conn->prepare("INSERT INTO semi_expendable_history (semi_id, date, ics_rrsp_no, quantity_disposed, office_officer_issued, amount, amount_total, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -88,23 +88,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($qty === false) { throw new Exception('Disposal quantities must be positive whole numbers.'); }
             $cost = (float)$item['unit_cost'];
             $total = $qty * $cost;
-            
+
             // 1. Validate: Get current balance and check disposal qty
             $check_stmt = $conn->prepare("SELECT id, quantity, quantity_balance, unit, office_officer_reissued, office_officer_issued FROM semi_expendable_property WHERE semi_expendable_property_no = ? AND (quantity > 0 AND quantity_balance > 0) LIMIT 1 FOR UPDATE");
             $check_stmt->bind_param("s", $prop_no);
             $check_stmt->execute();
             $result = $check_stmt->get_result();
-            
+
             if ($result->num_rows === 0) {
                 throw new Exception("Item $prop_no not found");
             }
-            
+
             $row = $result->fetch_assoc();
             $semi_id = $row['id'];
             $available_qty = min((int)$row['quantity'], (int)$row['quantity_balance']);
             $unit_val = isset($item['unit']) && $item['unit'] !== '' ? $item['unit'] : ($row['unit'] ?? '');
             $check_stmt->close();
-            
+
             if ($qty > $available_qty) {
                 throw new Exception("Item $prop_no: Cannot dispose $qty units. Only $available_qty available.");
             }
@@ -115,13 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $d_trans = $details['disposal_mode'] === 'Transfer' ? (float)$qty : 0.0;
             $d_destr = $details['disposal_mode'] === 'Destruction' ? (float)$qty : 0.0;
             $d_tot = (float)$qty; // Total disposed (must be float for bind_param 'd')
-            
+
             $unit_val = isset($item['unit']) ? $item['unit'] : '';
             $item_stmt->bind_param("isssisddddddsdddsds",
                 $iirusp_id, $item['date_acquired'], $item['particulars'], $prop_no, $qty, $unit_val, 
                 $cost, $total, $d_sale, $d_trans, $d_destr, $d_tot, $item['remarks'], $details['accumulated_impairment'], $details['carrying_amount'], $details['appraised_value'], $details['or_no'], $details['sales_amount'], $details['disposal_others']
             );
-            
+
             if (!$item_stmt->execute()) {
                 throw new Exception("Failed to insert item: " . $item_stmt->error);
             }
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       (!empty($row['office_officer_issued']) ? $row['office_officer_issued'] : 'Stock Room');
             $rem = "Disposed via IIRUSP " . $iirusp_no;
             $history_stmt->bind_param("issisdds", $semi_id, $as_at, $iirusp_no, $qty, $holder, $cost, $total, $rem);
-            
+
             if (!$history_stmt->execute()) {
                 throw new Exception("Failed to log history: " . $history_stmt->error);
             }
@@ -180,14 +180,14 @@ if ($officer_result) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Add IIRUSP Form</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
-<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>" /> 
+
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="add-page iirusp-page">
@@ -221,9 +221,9 @@ if ($officer_result) {
                     <input type="text" id="fund_cluster" value="101">
                 </div>
             </div>
-            
+
             <hr style="margin:20px 0; border:0; border-top:1px solid;">
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Accountable Officer:</label>
@@ -335,7 +335,7 @@ if ($officer_result) {
                 </div>
             </div>
         </div>
-        
+
         <div style="text-align:right; margin-bottom:30px;">
             <h3 style="display:inline-block; font-size:18px; margin: 0 !important;">Total Value: <span id="grand_total_display" style="color:#0056b3;">₱0.00</span></h3>
         </div>
@@ -491,7 +491,7 @@ document.getElementById('itemsTable').addEventListener('input', event => {
                 const qty = parseInt(row.querySelector('.disposal-qty').value) || 0;
                 const cost = parseFloat(row.querySelector('.cost-cell').dataset.val) || 0;
                 total += (qty * cost);
-                
+
                 // UX Highlight
                 row.style.background = (qty > 0) ? '#fff5f5' : ''; 
             });
@@ -511,10 +511,10 @@ document.getElementById('itemsTable').addEventListener('input', event => {
             }
         }
         const items = [];
-        
+
         document.querySelectorAll('.item-row').forEach(row => {
             const qty = parseInt(row.querySelector('.disposal-qty').value) || 0;
-            
+
             if (qty > 0 && row.querySelector('.item-checkbox').checked) {
                 const mode = row.querySelector('.mode-select').value;
                 items.push({
@@ -525,7 +525,7 @@ document.getElementById('itemsTable').addEventListener('input', event => {
                     unit_cost: row.querySelector('.cost-cell').dataset.val,
                     quantity: qty,
                     remarks: row.querySelector('.remarks-input').value.trim(),
-                    
+
                     disposal_mode: mode,
                     accumulated_impairment: row.nextElementSibling.querySelector('.item-accumulated_impairment').value || '0',
                     carrying_amount: row.nextElementSibling.querySelector('.item-carrying_amount').value || '0',

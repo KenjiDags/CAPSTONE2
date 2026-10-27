@@ -81,14 +81,14 @@ try {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PPE Inventory List</title>
 <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
+
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -201,7 +201,7 @@ try {
 
                                 <div class="actions-menu-list">
 
-                                    <a href="PPE/view_ppe_items.php?id=<?= (int)$item['id']; ?>" class="view-action">
+                                    <a href="PPE/view_item_ppe.php?id=<?= (int)$item['id']; ?>" class="view-action">
                                         <i class="fas fa-eye"></i> View
                                     </a>
 

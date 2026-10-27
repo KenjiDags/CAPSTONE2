@@ -4,7 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
     require dirname(__DIR__) . '/config.php'; 
     require_once dirname(__DIR__) . '/functions.php';
     ensure_semi_expendable_history($conn);
-    
+
     if (!isset($_GET['id'])) {
         die("❌ Error: item not found.");
     }
@@ -72,66 +72,55 @@ require_once __DIR__ . '/bootstrap.php';
     }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-item-detail-styles data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Semi-Expendable Property - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .container h2::before {
-            content: "\f06e";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #3b82f6;
-            margin-right: 10px;
-        }
-    </style>
 </head>
-<body>
+<body class="item-detail-page">
     <?php include dirname(__DIR__) . '/sidebar.php'; ?>
     <div class="container">
         <h2>Viewing Semi-Expendable Property No. <?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></h2>
 
-        <div class="ris-actions">
-            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to List
-            </a>
-            <a href="Semi_Expendables/PC_semi.php" class="btn btn-primary">
-                <i class="fas fa-table"></i> Property Card
+        <div class="view-actions">
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn btn-secondary" onclick="if (!event.ctrlKey &amp;&amp; !event.metaKey &amp;&amp; !event.shiftKey &amp;&amp; !event.altKey &amp;&amp; window.history.length > 1) { event.preventDefault(); window.history.back(); }">
+                <i class="fas fa-arrow-left"></i> Back
             </a>
             <a href="Semi_Expendables/semi_expendable_export.php?id=<?php echo (int)$id; ?>" class="btn btn-success">
                 <i class="fas fa-file-pdf"></i> Export PDF
             </a>
         </div>
 
-        <h3><i class="fas fa-info-circle"></i> Property Details</h3>
-        <div class="ris-details">
-            <p><strong>Entity Name:</strong> <span>TESDA</span></p>
-            <p><strong>ICS/RRSP No.:</strong> <span><?= htmlspecialchars((string)($item['ics_rrsp_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span></p>
-            <p><strong>Property No.:</strong> <span><?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></span></p>
-            <p><strong>Description:</strong> <span><?php echo htmlspecialchars($item['item_description']); ?></span></p>
-            <p><strong>Category:</strong> <span><?php echo htmlspecialchars($item['category']); ?></span></p>
-            <p><strong>Quantity:</strong> <span><?php echo number_format($baseQty); ?></span></p>
-            <p><strong>Quantity Issued:</strong> <span><?php echo htmlspecialchars($item['quantity_issued']); ?></span></p>
-            <p><strong><?php echo htmlspecialchars($summary_label); ?>:</strong> <span><?php echo htmlspecialchars($summary_officer); ?></span></p>
-            <p><strong>Quantity Returned:</strong> <span><?php echo htmlspecialchars($item['quantity_returned']); ?></span></p>
-            <p><strong>Quantity Re-issued:</strong> <span><?php echo htmlspecialchars($item['quantity_reissued']); ?></span></p>
-            <p><strong>Quantity Disposed:</strong> <span><?php echo htmlspecialchars($item['quantity_disposed']); ?></span></p>
-            <p><strong>Quantity Balance:</strong> <span><?php echo htmlspecialchars($item['quantity_balance']); ?></span></p>
-            <p><strong>Amount (Total):</strong> <span>₱<?php echo number_format((float)$item['amount_total'], 2); ?></span></p>
-            <p><strong>Fund Cluster:</strong> <span><?php echo htmlspecialchars($item['fund_cluster']); ?></span></p>
-            <p><strong>Estimated Useful Life:</strong> <span><?php echo htmlspecialchars($item['estimated_useful_life']); ?> years</span></p>
-            <p><strong>Date:</strong> <span><?php echo date('m/d/Y', strtotime($item['date'])); ?></span></p>
-            <p><strong>Remarks:</strong> <span><?php echo htmlspecialchars($item['remarks']); ?></span></p>
-        </div>
+        <div class="view-card">
+<h3><i class="fas fa-info-circle"></i> Property Details</h3>
+<div class="item-grid">
+            <div class="field"><span class="label">Entity Name</span><span class="value">TESDA</span></div>
+            <div class="field"><span class="label">ICS/RRSP No.</span><span class="value"><?= htmlspecialchars((string)($item['ics_rrsp_no'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span></div>
+            <div class="field"><span class="label">Property No.</span><span class="value"><?php echo htmlspecialchars($item['semi_expendable_property_no']); ?></span></div>
+            <div class="field"><span class="label">Description</span><span class="value"><?php echo htmlspecialchars($item['item_description']); ?></span></div>
+            <div class="field"><span class="label">Category</span><span class="value"><?php echo htmlspecialchars($item['category']); ?></span></div>
+            <div class="field"><span class="label">Quantity</span><span class="value"><?php echo number_format($baseQty); ?></span></div>
+            <div class="field"><span class="label">Quantity Issued</span><span class="value"><?php echo htmlspecialchars($item['quantity_issued']); ?></span></div>
+            <div class="field"><span class="label"><?php echo htmlspecialchars($summary_label); ?></span><span class="value"><?php echo htmlspecialchars($summary_officer); ?></span></div>
+            <div class="field"><span class="label">Quantity Returned</span><span class="value"><?php echo htmlspecialchars($item['quantity_returned']); ?></span></div>
+            <div class="field"><span class="label">Quantity Re-issued</span><span class="value"><?php echo htmlspecialchars($item['quantity_reissued']); ?></span></div>
+            <div class="field"><span class="label">Quantity Disposed</span><span class="value"><?php echo htmlspecialchars($item['quantity_disposed']); ?></span></div>
+            <div class="field"><span class="label">Quantity Balance</span><span class="value"><?php echo htmlspecialchars($item['quantity_balance']); ?></span></div>
+            <div class="field"><span class="label">Amount (Total)</span><span class="value">₱<?php echo number_format((float)$item['amount_total'], 2); ?></span></div>
+            <div class="field"><span class="label">Fund Cluster</span><span class="value"><?php echo htmlspecialchars($item['fund_cluster']); ?></span></div>
+            <div class="field"><span class="label">Estimated Useful Life</span><span class="value"><?php echo htmlspecialchars($item['estimated_useful_life']); ?> years</span></div>
+            <div class="field"><span class="label">Date</span><span class="value"><?php echo date('m/d/Y', strtotime($item['date'])); ?></span></div>
+            <div class="field"><span class="label">Remarks</span><span class="value"><?php echo htmlspecialchars($item['remarks']); ?></span></div>
+        </div></div>
 
-        <h3><i class="fas fa-box"></i> Stock Card History</h3>
-        <div class="table-container" style="margin: 25px 0;">
-            <table class="stock-card-history">
+        <div class="view-card"><h3><i class="fas fa-box"></i> Stock Card History</h3>
+        <div class="table-wrap">
+            <table class="compact-table">
                 <thead>
                     <tr>
                         <th rowspan="2" style="width:10%;">Date</th>
@@ -185,7 +174,7 @@ require_once __DIR__ . '/bootstrap.php';
                     <?php endif; ?>
                 </tbody>
             </table>
-        </div>
+        </div></div>
     </div>
 </body>
 </html>

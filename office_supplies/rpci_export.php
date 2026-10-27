@@ -20,7 +20,7 @@ if (empty($item_pages)) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -386,7 +386,7 @@ if (empty($item_pages)) {
             border: 2px solid #000 !important;
         }
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Physical Count of Inventories Preview" data-preview-code="RPCI" data-preview-back="office_supplies/rpci.php" data-preview-width="1100"></script>
 </head>
 <body>
@@ -551,7 +551,7 @@ if (empty($item_pages)) {
                         <td colspan="11" style="text-align: center !important; border-top: none !important; border-bottom: none;" class="fund-cluster-row">As at:
                             <span class="table-inline-input"><?= $report_date ?></span>
                         </td>
-                        
+
                     </tr>
 
                     <tr>
@@ -612,7 +612,7 @@ if (empty($item_pages)) {
                             $row_count++;
                         }
                     }
-                    
+
                     // Add empty rows to reach minimum of 17 rows
                     for ($i = $row_count; $i < 17; $i++) {
                         echo '<tr>';

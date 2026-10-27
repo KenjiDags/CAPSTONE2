@@ -48,7 +48,7 @@ $item_result = $conn->query($item_query);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -146,7 +146,7 @@ $item_result = $conn->query($item_query);
                 z-index: 1000;
             }
         }
-        
+
         /* General styles */
         body {
             font-family: 'Century Gothic', Century Gothic, sans-serif;
@@ -158,7 +158,7 @@ $item_result = $conn->query($item_query);
             padding: 20px;
             position: relative;
         }
-        
+
         .print-container {
             max-width: 800px;
             margin: 0 auto;
@@ -167,7 +167,7 @@ $item_result = $conn->query($item_query);
             border: 1px solid black;
             position: relative;
         }
-        
+
         .appendix-label {
             position: absolute;
             top: 8px;
@@ -178,7 +178,7 @@ $item_result = $conn->query($item_query);
             color: #333;
             z-index: 100;
         }
-        
+
         .header-title {
             text-align: center;
             font-weight: bold;
@@ -220,31 +220,31 @@ $item_result = $conn->query($item_query);
             border: 1px solid #000 !important;
             height: 30px;
         }
-        
+
         .info-section {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
         }
-        
-        
+
+
         .items-table .label {
             font-weight: bold;
             width: 15%;
             text-align: left;
         }
-        
+
         .items-table .value {
             width: 35%;
             text-decoration: underline;
         }
-        
+
         .items-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
         }
-        
+
         .items-table th,
         .items-table td {
             border: 1px solid #000;
@@ -253,7 +253,7 @@ $item_result = $conn->query($item_query);
             font-size: 8px;
             vertical-align: middle;
         }
-        
+
         .items-table td {
             font-weight: 600;
         }
@@ -261,18 +261,18 @@ $item_result = $conn->query($item_query);
         .items-table th {
             font-weight: bold;
         }
-        
+
         .items-table .description {
             text-align: left;
             font-size: 7px;
         }
-        
+
         .items-table .remarks {
             text-align: left;
             font-size: 7px;
         }
-        
-        
+
+
         .print-instructions {
             background: #fffacd;
             border: 1px solid #ddd;
@@ -280,7 +280,7 @@ $item_result = $conn->query($item_query);
             margin-bottom: 20px;
             border-radius: 5px;
         }
-        
+
         .print-button {
             background: #007cba;
             color: white;
@@ -291,11 +291,11 @@ $item_result = $conn->query($item_query);
             font-size: 12px;
             margin-right: 10px;
         }
-        
+
         .print-button:hover {
             background: #005a87;
         }
-        
+
         .back-button {
             background: #6c757d;
             color: white;
@@ -307,11 +307,11 @@ $item_result = $conn->query($item_query);
             text-decoration: none;
             display: inline-block;
         }
-        
+
         .back-button:hover {
             background: #545b62;
         }
-        
+
         .checkbox {
             font-size: 12px;
             font-weight: bold;
@@ -352,7 +352,7 @@ $item_result = $conn->query($item_query);
         }
 
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Requisition and Issue Slip Preview" data-preview-code="RIS" data-preview-back="office_supplies/ris.php" data-preview-width="850"></script>
 </head>
 <body>
@@ -367,12 +367,12 @@ $item_result = $conn->query($item_query);
             </ol>
             <p><strong>For best results:</strong> Use Chrome or Edge browser for optimal PDF formatting.</p>
         </div>
-        
+
         <button class="print-button" onclick="window.print()">🖨️ Print/Save as PDF</button>
         <button class="back-button" onclick="history.back()">← Back</button>
         <hr style="margin: 20px 0;">
     </div>
-    
+
     <div class="print-container">
         <div class="appendix-label">Appendix 63</div>
 
@@ -440,7 +440,7 @@ $item_result = $conn->query($item_query);
                     while ($item = $item_result->fetch_assoc()) {
                         $stock_available_yes = ($item['stock_available'] == 'Yes') ? '<span class="checkbox">✓</span>' : '';
                         $stock_available_no = ($item['stock_available'] == 'No') ? '<span class="checkbox">✓</span>' : '';
-                        
+
                         echo '<tr>';
                         echo '<td>' . htmlspecialchars($item['stock_number']) . '</td>';
                         echo '<td class="description">' . htmlspecialchars($item['item_name']) . ',' . htmlspecialchars($item['description']) . '</td>';
@@ -455,7 +455,7 @@ $item_result = $conn->query($item_query);
                         $row_count++;
                     }
                 }
-                
+
                 // Add empty rows to fill the table (minimum 12 rows total)
                 for ($i = $row_count; $i < 12; $i++) {
                     echo '<tr>';

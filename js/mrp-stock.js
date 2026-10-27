@@ -219,7 +219,7 @@
         onHoverItem(items[model.dataPoints[0].dataIndex], { x: model.caretX, y: model.caretY });
       } } },
       scales: {
-        x: { position: 'bottom', afterFit: scale => { scale.height = 44; }, grid: { display: false }, ticks: { color: axisColor, autoSkip: false, maxRotation: 0, minRotation: 0, callback: labelMode === 'name' ? () => '' : undefined, font: { size: 12 }, padding: 10 }, title: { display: false, text: 'Stock No.', color: axisColor } },
+        x: { position: 'bottom', afterFit: scale => { scale.height = 44; }, grid: { display: false }, ticks: { color: axisColor, autoSkip: false, maxRotation: 0, minRotation: 0, callback: function (value) { return labelMode === 'name' ? '' : this.getLabelForValue(value); }, font: { size: 12 }, padding: 10 }, title: { display: false, text: 'Stock No.', color: axisColor } },
         y: { beginAtZero: true, grid: { color: dark ? '#334155' : '#e7edef' }, ticks: { color: axisColor, precision: 0 }, title: { display: true, text: metric, color: axisColor } }
       }
     } };

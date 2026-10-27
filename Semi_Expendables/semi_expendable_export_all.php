@@ -52,7 +52,7 @@ if (isset($stmt) && $stmt) { $stmt->close(); }
 $conn->close();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@ $conn->close();
     .meta-line { border-bottom:1px solid #000; display:inline-block; width:100%; height:14px; vertical-align:bottom; }
     .th-ref { text-decoration: underline; }
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Property Cards Preview" data-preview-code="SPC" data-preview-back="Semi_Expendables/PC_semi.php" data-preview-width="1200"></script>
 </head>
 <body>

@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Issued quantities must be whole numbers of zero or greater.');
         }
     }
-    
+
     // Check if we're editing or creating new
     $is_editing = isset($_POST['is_editing']) && $_POST['is_editing'] == '1';
     $ics_id = $is_editing ? (int)$_POST['ics_id'] : null;
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          $received_by, $received_by_position, $received_from, $received_from_position, $ics_id);
         if (!$stmt->execute()) { throw new Exception('Failed to update ICS header: ' . $stmt->error); }
         $stmt->close();
-        
+
         // Get old items (with unit_cost) to restore semi-expendable quantities and preserve original unit amounts in history
         $old_items = [];
         $stmt = $conn->prepare("SELECT stock_number, quantity, unit_cost FROM ics_items WHERE ics_id = ?");
@@ -66,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         }
         $stmt->close();
-        
+
         // Delete old items
         $stmt = $conn->prepare("DELETE FROM ics_items WHERE ics_id = ?");
         $stmt->bind_param("i", $ics_id);
         if (!$stmt->execute()) { throw new Exception('Failed to delete old ICS items: ' . $stmt->error); }
         $stmt->close();
-        
+
         // Restore semi-expendable balances from old items
         foreach ($old_items as $stock_no => $old) {
             // stock_no holds semi_expendable_property_no in this ICS context
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $h->close();
             }
         }
-        
+
     } else {
         // Insert new ICS
         $stmt = $conn->prepare("INSERT INTO ics (ics_no, entity_name, fund_cluster, date_issued, 
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $total_cost = $issued_qty * $unit_cost;
 
                 // Pre-ICS snapshot intentionally removed per request to avoid extra baseline rows
-                
+
                 // Insert ICS item
                 $stmt = $conn->prepare("INSERT INTO ics_items (ics_id, stock_number, quantity, unit, unit_cost, total_cost, 
                                        description, inventory_item_no, estimated_useful_life, serial_number)
@@ -241,16 +241,16 @@ if ($is_editing) {
     $stmt->bind_param("i", $ics_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $ics_data = $result->fetch_assoc();
-        
+
         // Fetch ICS items
         $stmt = $conn->prepare("SELECT * FROM ics_items WHERE ics_id = ?");
         $stmt->bind_param("i", $ics_id);
         $stmt->execute();
         $items_result = $stmt->get_result();
-        
+
         while ($item = $items_result->fetch_assoc()) {
             $ics_items[$item['stock_number']] = $item;
         }
@@ -370,14 +370,14 @@ function generateICSNumberSimple($conn) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $is_editing ? 'Edit ICS Form' : 'Add ICS Form'; ?></title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -388,7 +388,7 @@ function generateICSNumberSimple($conn) {
             color: #3b82f6;
             margin-right: 12px;
         }
-        
+
         /* Lightweight layout helpers for better UX */
         .section-card { 
             background: rgba(255, 255, 255, 0.95);

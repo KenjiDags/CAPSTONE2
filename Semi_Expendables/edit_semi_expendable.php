@@ -38,13 +38,13 @@ if ($id > 0) {
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
-        
+
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $item = $result->fetch_assoc();
         $stmt->close();
-        
+
         if (!$item) {
             $error = "Item not found.";
         }
@@ -110,11 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
                 remarks = ?
             WHERE id = ?
         ");
-        
+
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
-        
+
         // Prepare variables (must be variables for bind_param references)
         $p_date = $_POST['date'];
         $p_ics_rrsp_no = ''; // Default empty value since field is removed
@@ -185,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             $p_remarks,
             $id
         );
-        
+
         if ($stmt->execute()) {
             // After successful update, sync related ICS items so ICS stays connected to Semi edits
             $stmt->close();
@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $item) {
             $newQuantity = (float)$p_qty_issued_out; // Use the issued quantity
             $newUnitCost = (float)$p_unit_amount;
             $newTotalCost = round($newQuantity * $newUnitCost, 2);
-            
+
             if ($u1 = $conn->prepare("UPDATE ics_items SET description = ?, estimated_useful_life = ?, unit = ?, quantity = ?, unit_cost = ?, total_cost = ? WHERE inventory_item_no = ? OR stock_number = ?")) {
                 $u1->bind_param("sssdddss", $newDesc, $newLife, $newUnit, $newQuantity, $newUnitCost, $newTotalCost, $newPropNo, $newPropNo);
                 @ $u1->execute();
@@ -271,14 +271,14 @@ if (!$item && empty($error)) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Semi-Expendable Item</title>
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?php echo time(); ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
@@ -288,7 +288,7 @@ if (!$item && empty($error)) {
             margin: 0;
             padding: 0;
         }
-        
+
         .form-container {
             max-width: 800px;
             margin: 30px auto;
@@ -503,7 +503,7 @@ if (!$item && empty($error)) {
                                    value="<?php echo htmlspecialchars($_POST['office_officer_issued'] ?? $item['office_officer_issued'] ?? ''); ?>">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="quantity_returned">Quantity Returned</label>

@@ -37,7 +37,7 @@ $items_stmt->close();
 $dataRows = count($items);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
@@ -205,7 +205,7 @@ $dataRows = count($items);
         .sig-name-lg { width: 110px !important; }
         .sig-name-md { width: 95px !important; }
         .sig-designation { width: 125px !important; }
-        
+
     }
 
     .instruction-box {
@@ -216,7 +216,7 @@ $dataRows = count($items);
         border-radius: 4px;
         font-size: 13px;
     }
-    
+
 
     .print-button {
         background: #007cba;
@@ -259,7 +259,7 @@ $dataRows = count($items);
     .sig-designation { width: 250px; }
 
 </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Unserviceable PPE Report Preview" data-preview-code="IIRUP" data-preview-back="PPE/PPE_iirup.php" data-preview-width="1500"></script>
 </head>
 <body>

@@ -25,7 +25,7 @@ $item = $result->fetch_assoc();
 $stmt->close();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8">
@@ -105,7 +105,7 @@ $stmt->close();
     .meta-line { border-bottom:1px solid #000; display:inline-block; width:100%; height:14px; vertical-align:bottom; }
 
   </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Semi-Expendable Property Card Preview" data-preview-code="SPC" data-preview-back="Semi_Expendables/PC_semi.php" data-preview-width="1200"></script>
 </head>
 <body>
@@ -280,7 +280,7 @@ echo $qty;
               $amountTotal = (float)($item['amount_total'] ?? 0);
               $unitCost = isset($item['amount']) && $item['amount'] !== null ? (float)$item['amount'] : ($qtyIssued > 0 ? $amountTotal / $qtyIssued : 0);
               // Include reissued in Issue/Transfer/Disposal summary
-          
+
               // Choose officer for snapshot
               $c_officer = '';
               if (!empty($item['office_officer_reissued']) || ((int)($item['quantity_reissued'] ?? 0)) > 0) {
@@ -307,7 +307,7 @@ echo $qty;
                         $qtyIssueTransfer = (int)$item['quantity_reissued'];
                     } elseif ((int)($item['quantity_disposed'] ?? 0) > 0) {
                         $qtyIssueTransfer = (int)$item['quantity_disposed'];
-                  
+
                     } else {
                         $qtyIssueTransfer = 0;
                     }

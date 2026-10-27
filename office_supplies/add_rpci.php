@@ -71,14 +71,14 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPCI - Report on Physical Count of Inventories</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -88,7 +88,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             font-weight: 900;
             color: #3b82f6;
         }
-        
+
         /* RPCI specific styles */
         .rpci-form {
             background: rgba(255, 255, 255, 0.9);
@@ -98,37 +98,37 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border-left: none !important;
         }
-        
+
         .rpci-header h2 {
             color: #1e293b;
             margin-bottom: 10px;
             border: none !important;
         }
-        
+
         .form-subtitle {
             color: #64748b;
             font-style: italic;
             margin-bottom: 20px;
         }
-        
+
         .rpci-meta {
             margin: 20px 0;
             padding-bottom: 12px;
             border-bottom: 3px solid #f2f2f3;
         }
-        
+
         .rpci-meta-row {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 10px;
         }
-        
+
         .rpci-meta-row label {
             font-weight: 600;
             color: #334155;
         }
-        
+
         .rpci-meta-row input[type="date"] {
             padding: 8px 12px;
             border: 2px solid #cbd5e1;
@@ -139,24 +139,24 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
         body.dark-mode .table-controls > label[for="row_limit"] {
             color: #ffffff !important;
         }
-        
+
         .form-fields {
             display: grid;
             gap: 15px;
             margin: 20px 0;
         }
-        
+
         .field-group {
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
-        
+
         .field-group label {
             font-weight: 600;
             color: #334155;
         }
-        
+
         .field-group input[type="text"],
         .field-group input[type="date"] {
             padding: 10px 12px;
@@ -164,24 +164,24 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             border-radius: 8px;
             font-size: 14px;
         }
-        
+
         .field-group input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-        
+
         .table-controls {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-        
+
         .table-controls label {
             font-weight: 600;
             color: #334155;
         }
-        
+
         .table-controls select {
             padding: 8px 8px;
             border: 2px solid #cbd5e1;
@@ -189,36 +189,36 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             background: white;
             cursor: pointer;
         }
-        
+
         .search-container {
             margin: 12px 0;
         }
-        
+
         .search-input-rpci:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-        
+
         .rpci-table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.07);
         }
-        
+
         .rpci-table {
             width: 100%;
             border-collapse: collapse;
             border-radius: 12px;
             overflow: hidden;
         }
-        
+
         .rpci-table thead {
             background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
             color: white;
         }
-        
+
         .rpci-table thead th {
             position: sticky !important;
             top: 0;
@@ -231,33 +231,33 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             vertical-align: middle;
             line-height: 1.4;
         }
-        
+
         .rpci-table tbody td {
             padding: 12px;
             white-space: normal;
             word-wrap: break-word;
             vertical-align: top;
         }
-        
+
         .rpci-table tbody tr {
             transition: background-color 0.2s ease;
         }
-        
+
         .rpci-table tbody tr:nth-child(even) {
             background-color: #f8fafc;
         }
-        
+
         .rpci-table tbody tr:hover {
             background-color: #e0f2fe;
         }
-        
+
         .signature-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin: 30px 0;
         }
-        
+
         .signature-box {
             background: #f8fafc;
             padding: 20px;
@@ -265,7 +265,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             border: 2px solid #e2e8f0;
             position: relative;
         }
-        
+
         body.dark-mode .signature-box h4 {
             color: #ffffff !important;
         }
@@ -274,7 +274,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             color: #334155;
             margin-bottom: 10px;
         }
-        
+
         .signature-input {
             width: 100%;
             padding: 10px 12px;
@@ -283,13 +283,13 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             margin-bottom: 10px;
             position: relative;
         }
-        
+
         .signature-text {
             font-size: 0.85em;
             color: #64748b;
             line-height: 1.4;
         }
-        
+
         .autocomplete-dropdown {
             position: absolute;
             top: 100%;
@@ -304,17 +304,17 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             z-index: 1000;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .autocomplete-item {
             padding: 10px 12px;
             cursor: pointer;
             transition: background 0.2s;
         }
-        
+
         .autocomplete-item:hover {
             background: #f0f4f8;
         }
-        
+
         .autocomplete-item.selected {
             background: #3b82f6;
             color: white;
@@ -372,7 +372,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                         <label for="fund_cluster">Fund Cluster:
                             <input type="text" id="fund_cluster" name="fund_cluster" placeholder="Enter Fund Cluster">
                         </label>
-                        
+
                     </div>
 
                     <div class="field-group" style="grid-column: 1 / -1;">
@@ -399,6 +399,10 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                     <div class="search-container" style="margin-left: 24px;">
                         <label class="compact-search-field" for="searchInput"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="searchInput" class="search-input" placeholder="Search by stock number, item, or unit..."></label>
                     </div>
+            <div class="button-tooltip">
+                <button type="button" id="match-balance" class="pill-btn pill-view" aria-describedby="match-balance-tooltip"><i class="fas fa-equals" aria-hidden="true"></i> Match Balance</button>
+                <span class="button-tooltip-text" id="match-balance-tooltip" role="tooltip">Set the counted quantity equal to the recorded balance</span>
+            </div>
                 </div>
 
             <div class="rpci-table-wrapper">
@@ -447,6 +451,9 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                                     }
                                     $defaultValue = '';
                                     $attributes = ' value="' . rpciH($defaultValue) . '" data-item-id="' . (int)$item['item_id'] . '" data-field="' . $field . '" aria-label="' . rpciH($label . ' for ' . $item['stock_number']) . '"';
+                                    if ($field === 'on_hand_per_count') {
+                                        $attributes .= ' data-recorded-balance="' . rpciH($item['balance_per_card']) . '"';
+                                    }
                                     if ($field === 'remarks') {
                                         echo '<td><input class="rpci-row-input" type="text" maxlength="1000"' . $attributes . '></td>';
                                     } else {
@@ -462,7 +469,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                     </tbody>
                 </table>
                 </div>
-                
+
                 <div class="signature-section">
                     <div class="signature-box">
                         <h4>Certified Correct by:</h4>
@@ -475,7 +482,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                             Committee Chair and Members
                         </div>
                     </div>
-                    
+
                     <div class="signature-box">
                         <h4>Approved by:</h4>
                         <div style="position: relative;">
@@ -487,7 +494,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                             or Authorized Representative
                         </div>
                     </div>
-                    
+
                     <div class="signature-box">
                         <h4>Verified by:</h4>
                         <div style="position: relative;">
@@ -499,7 +506,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 30px;">
                     <button type="submit" class="btn btn-success" id="save-rpci"><i class="fas fa-save"></i> Save</button>
                     <a href="office_supplies/rpci.php" class="btn btn-secondary">Back</a>
@@ -508,9 +515,19 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
             </form>
         </div>
     </div>
-    
+
     <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
+const matchBalanceButton = document.getElementById('match-balance');
+if (matchBalanceButton) matchBalanceButton.addEventListener('click', function () {
+    document.querySelectorAll('#rpci-table input[data-recorded-balance]').forEach(input => {
+        if (input.readOnly) return;
+        input.value = input.dataset.recordedBalance;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+});
+
 
         // Navigate editable cells with the arrow keys without changing values.
         document.getElementById('rpci-table').addEventListener('keydown', event => {

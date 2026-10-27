@@ -19,14 +19,14 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Property Card (PPE)</title>
 	<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-	<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	<style>
 		.container h2::before {

@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = "PPE item added successfully!";
             // Log history for initial addition to item_history_ppe
             $new_id = $conn->insert_id;
-            
+
             // Also create a corresponding ppe_pc record with the property_no
             $stmt_pc = $conn->prepare("
                 INSERT INTO ppe_pc
@@ -143,14 +143,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add New PPE Item</title>
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-<link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
 <style>
     .form-container {
         width: 100%;

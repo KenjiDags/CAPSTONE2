@@ -104,14 +104,14 @@ foreach ($items as $r) { $total_amount += (float)($r['amount'] ?? 0); }
 $total_amount = 0.0;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View ITR - TESDA Inventory System</title>
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-  <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     /* Page-Specific Icon */
@@ -121,7 +121,7 @@ $total_amount = 0.0;
       font-weight: 900;
       color: #3b82f6;
     }
-    
+
     /* Action Buttons Container */
     .view-actions {
       display: flex;
@@ -134,7 +134,7 @@ $total_amount = 0.0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
       border: 1px solid rgba(203, 213, 225, 0.5) !important;
     }
-    
+
     /* Details Container */
     .view-details {
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%) !important;
@@ -145,21 +145,21 @@ $total_amount = 0.0;
       margin-bottom: 24px !important;
       border: 1px solid rgba(203, 213, 225, 0.5) !important;
     }
-    
+
     .view-details p {
       margin: 12px 0 !important;
       font-size: 14px !important;
       color: #1e293b !important;
       line-height: 1.6 !important;
     }
-    
+
     .view-details p strong {
       color: #0f172a !important;
       font-weight: 600 !important;
       display: inline-block !important;
       min-width: 200px !important;
     }
-    
+
     /* Section Headers */
     .container h3 {
       color: #1e293b;
@@ -170,14 +170,14 @@ $total_amount = 0.0;
       align-items: center;
       gap: 10px;
     }
-    
+
     .container h3:nth-of-type(1)::before {
       content: "\f466";
       font-family: "Font Awesome 6 Free";
       font-weight: 900;
       color: #3b82f6;
     }
-    
+
     .container h3:nth-of-type(2)::before {
       content: "\f304";
       font-family: "Font Awesome 6 Free";

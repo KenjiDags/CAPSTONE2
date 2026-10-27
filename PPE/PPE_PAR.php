@@ -95,14 +95,14 @@ if ($search !== '') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Acknowledgement Receipt (PAR) - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
     /* Page-Specific Icon */
@@ -112,7 +112,7 @@ if ($search !== '') {
         font-weight: 900;
         color: #3b82f6;
     }
-    
+
     </style>
 </head>
 <body class="par-page ppe-page">
@@ -144,7 +144,7 @@ if ($search !== '') {
       </div>
     </form>
     <?php if (isset($_GET['added'])): ?><div class="alert alert-success" role="status">PAR created and PPE items issued successfully.</div><?php endif; ?>
-    
+
     <div class="table-container">
         <table>
             <thead>
@@ -171,7 +171,7 @@ if ($search !== '') {
                     $whereClause
                     $order_clause";
                 $result = $conn->query($query);
-                
+
                 if ($result && $result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         echo '<tr>';

@@ -119,14 +119,14 @@ if ($itrRes && $itrRes->num_rows > 0) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-ppe-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View ICS - TESDA Inventory System</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="css/PPE.css?v=<?= time() ?>">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Page-Specific Icon */
@@ -136,7 +136,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             font-weight: 900;
             color: #3b82f6;
         }
-        
+
         /* Action Buttons Container */
         .view-actions {
             display: flex;
@@ -149,7 +149,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
             border: 1px solid rgba(203, 213, 225, 0.5) !important;
         }
-        
+
         /* Details Container */
         .view-details {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
@@ -160,21 +160,21 @@ if ($itrRes && $itrRes->num_rows > 0) {
             margin-bottom: 24px !important;
             border: 1px solid rgba(203, 213, 225, 0.5) !important;
         }
-        
+
         .view-details p {
             margin: 12px 0 !important;
             font-size: 14px !important;
             color: #1e293b !important;
             line-height: 1.6 !important;
         }
-        
+
         .view-details p strong {
             color: #0f172a !important;
             font-weight: 600 !important;
             display: inline-block !important;
             min-width: 200px !important;
         }
-        
+
         /* Items Section */
         .container h3 {
             color: #1e293b;
@@ -185,7 +185,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             align-items: center;
             gap: 10px;
         }
-        
+
         .container h3::before {
             content: "\f466";
             font-family: "Font Awesome 6 Free";
@@ -266,7 +266,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
                         $unitCostVal = ($semi_amount !== null) ? $semi_amount : (float)$item['unit_cost'];
                         $currentTotalCostVal = ($semi_amount !== null) ? ($semi_amount * $currentQtyVal) : (float)$item['total_cost'];
                         $unit = isset($item['unit']) && $item['unit'] !== '' ? $item['unit'] : '-';
-                        
+
                         // History-aware rendering: baseline + per-transfer rows
                         if ($icsItemId > 0 && isset($historyByItemId[$icsItemId]) && !empty($historyByItemId[$icsItemId])) {
                             $historyEntries = $historyByItemId[$icsItemId];
@@ -390,7 +390,7 @@ if ($itrRes && $itrRes->num_rows > 0) {
             </table>
         </div>
 
-        
+
     </div>
 
     <script src="office_supplies/js/view_ris_script.js?v=<?= time() ?>"></script>

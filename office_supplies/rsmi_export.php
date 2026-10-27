@@ -22,7 +22,7 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html data-export-styles lang="en">
 <head>
     <base href="<?= htmlspecialchars(APP_ROOT_URL, ENT_QUOTES, 'UTF-8') ?>">
     <meta charset="UTF-8">
@@ -384,7 +384,7 @@ $report_date_display = date('F d, Y', strtotime($report['report_date']));
             border-top: 2px solid black;
         }
     </style>
-<link rel="stylesheet" href="css/export-preview.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 <script src="js/export-preview.js?v=<?= time() ?>" defer data-export-preview data-preview-title="Materials and Supplies Issued Preview" data-preview-code="RSMI" data-preview-back="office_supplies/rsmi.php" data-preview-width="1100"></script>
 </head>
 <body>
