@@ -31,6 +31,7 @@
     const stockoutDate = status === 'empty' ? (item.stockoutDate ?? null) : null;
     return { ...item, id: item.id ?? item.item_id, sku: item.sku ?? item.stock_number ?? '',
       itemName: item.itemName ?? item.item_name ?? 'Unnamed item', onHandQty, safetyStock, status, stockoutDate,
+      originalQty: Math.max(0, onHandQty, Number(item.stock_total ?? item.originalQty ?? item.initial_quantity ?? onHandQty) || 0),
       leadTimeDays: item.leadTimeDays ?? null,
       netRequirement: item.netRequirement ?? Math.max(0, safetyStock - onHandQty),
       daysOutOfStock: status === 'empty' ? daysOutOfStock(stockoutDate, today) : 0,
@@ -117,23 +118,24 @@
       const title = document.createElement('strong'); title.textContent = item.itemName; header.append(title);
       const badge = document.createElement('span'); badge.className = 'mrp-item-status ' + item.status;
       badge.textContent = { safe: 'Safe', low: 'At reorder point', critical: 'Critical', empty: 'Empty', invalid: 'Invalid balance' }[item.status];
+      header.append(badge);
       if (interactive) {
         const dismiss = document.createElement('button'); dismiss.type = 'button';
         dismiss.className = 'mrp-item-close'; dismiss.textContent = '×';
         dismiss.setAttribute('aria-label', 'Close item details');
         dismiss.addEventListener('click', () => close(true)); header.append(dismiss);
-      } else header.append(badge);
+      }
       const reference = document.createElement('p'); reference.className = 'mrp-item-reference';
       reference.textContent = (interactive ? '' : 'Stock No. ') + (item.sku || String(item.id));
       card.append(header, reference);
       if (interactive) {
         const description = document.createElement('p'); description.className = 'mrp-item-description-text';
         description.textContent = item.description || 'No description available.';
-        card.append(badge, description);
+        card.append(description);
       }
       const category = StockCategories.categories.find(entry => StockCategories.matches(item.itemName + ' ' + (item.description || ''), entry.id));
       const metrics = document.createElement('dl');
-      [['On hand', item.onHandQty.toLocaleString() + ' units'], ['Reorder point', item.safetyStock.toLocaleString() + ' units'], ['Category', category ? category.label : 'Miscellaneous']].forEach(([label, value]) => {
+      [['Total quantity', item.originalQty === null ? 'Not recorded' : Number(item.originalQty).toLocaleString() + ' units'], ['On hand', item.onHandQty.toLocaleString() + ' units'], ['Reorder point', item.safetyStock.toLocaleString() + ' units'], ['Category', category ? category.label : 'Miscellaneous']].forEach(([label, value]) => {
         const row = document.createElement('div'), name = document.createElement('dt'), result = document.createElement('dd');
         name.textContent = label; result.textContent = value; row.append(name, result); metrics.append(row);
       });
@@ -168,10 +170,24 @@
     const axisColor = dark ? '#ffffff' : '#526168';
     const colors = { safe: '#15803d', low: '#d97706', critical: '#dc2626', empty: '#64748b', invalid: '#7c3aed' };
     return { type: 'bar', data: { labels: items.map(item => String(labelMode === 'name' ? item.itemName : (item.sku || item.id))), datasets: [{
-      label: metric, data: items.map(item => item.onHandQty),
+      label: 'Current stock', data: items.map(item => item.onHandQty),
+      grouped: false, order: 0, barPercentage: 0.65,
       backgroundColor: items.map(item => colors[item.status]), borderRadius: 4,
       borderColor: context => context.chart.$mrpSelectedIndex === context.dataIndex ? (dark ? '#ffffff' : '#1d4ed8') : 'transparent',
-      borderWidth: context => context.chart.$mrpSelectedIndex === context.dataIndex ? 3 : 0
+      borderSkipped: false,
+      borderWidth: context => {
+        if (context.chart.$mrpSelectedIndex === context.dataIndex) return 3;
+        const item = items[context.dataIndex];
+        // Reveal a small gray cap when both quantities are equal, without changing the data.
+        return item?.onHandQty > 0 && Number(item.originalQty) === item.onHandQty
+          ? { top: 5, right: 0, bottom: 0, left: 0 } : 0;
+      }
+    }, {
+      label: 'Total quantity',
+      data: items.map(item => item.originalQty === null || item.originalQty === undefined || !Number.isFinite(Number(item.originalQty)) ? null : Math.max(0, Number(item.originalQty))),
+      grouped: false, order: 1, barPercentage: 0.85,
+      backgroundColor: dark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.10)',
+      borderWidth: 0, borderRadius: 4
     }] }, plugins: [{ id: 'mrpNameLabels', afterRender: renderNameLabels, beforeDestroy(chart) {
       const frame = chart.canvas?.parentNode?.closest('.mrp-multi-chart-frame');
       const labels = frame?.querySelector('.mrp-name-labels');
@@ -220,7 +236,7 @@
       } } },
       scales: {
         x: { position: 'bottom', afterFit: scale => { scale.height = 44; }, grid: { display: false }, ticks: { color: axisColor, autoSkip: false, maxRotation: 0, minRotation: 0, callback: function (value) { return labelMode === 'name' ? '' : this.getLabelForValue(value); }, font: { size: 12 }, padding: 10 }, title: { display: false, text: 'Stock No.', color: axisColor } },
-        y: { beginAtZero: true, grid: { color: dark ? '#334155' : '#e7edef' }, ticks: { color: axisColor, precision: 0 }, title: { display: true, text: metric, color: axisColor } }
+        y: { beginAtZero: true, grace: '10%', grid: { color: dark ? '#334155' : '#e7edef' }, ticks: { color: axisColor, precision: 0 }, title: { display: true, text: metric, color: axisColor } }
       }
     } };
   }

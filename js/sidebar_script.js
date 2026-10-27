@@ -73,6 +73,9 @@
         // Migrate older multi-open preferences to one valid category.
         const candidates = saved?.activeCategory ? [saved.activeCategory] : (Array.isArray(saved?.menus) ? saved.menus : []);
         activeCategory = candidates.find(id => Array.from(toggles).some(toggle => toggle.getAttribute('aria-controls') === id)) ?? null;
+        // Keep the current page's parent visible when entering a related subpage.
+        const currentMenu = sidebar.querySelector('nav a.active')?.closest('.dropdown-menu');
+        if (currentMenu) activeCategory = currentMenu.id;
         const restoredCategory = activeCategory;
         setOpen(saved?.open === true);
         if (saved?.compact && !saved?.open && restoredCategory) {
@@ -86,7 +89,17 @@
         // Keep normal link navigation, but don't bubble into global close handlers.
         sidebar.addEventListener('click', event => {
             event.stopPropagation();
-            if (event.target.closest?.('a')) saveState();
+            const link = event.target.closest?.('nav a[href]');
+            if (!link) return;
+            const target = new URL(link.href, document.baseURI);
+            // Preserve filters, scroll position and unsaved work on this page.
+            // Active section labels can also point to a parent list, so compare paths.
+            if (target.origin === location.origin && target.pathname === location.pathname &&
+                !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey &&
+                !link.hasAttribute('download') && (!link.target || link.target === '_self')) {
+                event.preventDefault();
+            }
+            saveState();
         }, options);
         toggles.forEach(toggle => {
             toggle.addEventListener('click', () => {
@@ -114,7 +127,5 @@
         window.removeEventListener('pageshow', mount);
     };
     mount();
-    try {
-        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
-    } catch (_) { /* Keep the default theme when storage is unavailable. */ }
+
 })();

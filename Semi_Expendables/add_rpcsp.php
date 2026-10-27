@@ -48,6 +48,12 @@ function rpcspValidateCounts(array $rows, $encoded): array {
             $counts[$field][$row['id']] = $value;
         }
     }
+    // Derive the difference from the trusted draft balance rather than posted totals.
+    foreach ($rows as $row) {
+        $onHand = $counts['on_hand_count'][$row['id']];
+        $counts['shortage_qty'][$row['id']] = $onHand === '' ? ''
+            : (string)((int)$onHand - (int)($row['quantity_balance'] ?? 0));
+    }
     return $counts;
 }
 function rpcspSave(mysqli $conn, array $metadata, array $items, array $counts, int $userId, string $token): int {
@@ -212,7 +218,7 @@ $title = $viewOnly ? 'RPCSP-' . str_pad((string)$id, 4, '0', STR_PAD_LEFT) : 'Ad
                                     <td class="currency">₱ <?= htmlspecialchars(isset($row['amount']) ? number_format((float)$row['amount'], 2) : '') ?></td>
                                     <td><?= htmlspecialchars((string)($row['quantity_balance'] ?? '')) ?></td>
                                     <td><input type="number" class="count-input" name="on_hand_count[<?= (int)$row['id'] ?>]" data-recorded-balance="<?= (int)($row['quantity_balance'] ?? 0) ?>" value="<?= rpcspH($counts['on_hand_count'][$row['id']] ?? '') ?>" <?= $viewOnly ? 'readonly' : '' ?> min="0" step="1" aria-label="On Hand Per Count"></td>
-                                    <td><input type="number" class="count-input" name="shortage_qty[<?= (int)$row['id'] ?>]" value="<?= rpcspH($counts['shortage_qty'][$row['id']] ?? '') ?>" <?= $viewOnly ? 'readonly' : '' ?> step="1" aria-label="Shortage or Overage Quantity"></td>
+                                    <td><input type="number" class="count-input" name="shortage_qty[<?= (int)$row['id'] ?>]" value="<?= rpcspH($counts['shortage_qty'][$row['id']] ?? '') ?>" readonly step="1" aria-label="Shortage or Overage Quantity"></td>
                                     <td><input type="number" class="count-input currency" name="shortage_value[<?= (int)$row['id'] ?>]" value="<?= rpcspH($counts['shortage_value'][$row['id']] ?? '') ?>" <?= $viewOnly ? 'readonly' : '' ?> step="0.01" aria-label="Shortage or Overage Value"></td>
                                     <td><?= htmlspecialchars($row['remarks'] ?? '') ?></td>
                                 </tr>
@@ -252,6 +258,19 @@ $title = $viewOnly ? 'RPCSP-' . str_pad((string)$id, 4, '0', STR_PAD_LEFT) : 'Ad
 </div>
 <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
+// Keep the displayed quantity difference in sync, including Match Balance.
+if (document.getElementById('rpcsp-save-form')) {
+    document.querySelectorAll('#rpci-table input[data-recorded-balance]').forEach(input => {
+        const difference = input.closest('tr').querySelector('input[name^="shortage_qty["]');
+        function updateDifference() {
+            difference.value = input.value === '' || !input.validity.valid ? ''
+                : String(Number(input.value) - Number(input.dataset.recordedBalance));
+        }
+        input.addEventListener('input', updateDifference);
+        input.addEventListener('change', updateDifference);
+        updateDifference();
+    });
+}
 const matchBalanceButton = document.getElementById('match-balance');
 if (matchBalanceButton) matchBalanceButton.addEventListener('click', function () {
     document.querySelectorAll('#rpci-table input[data-recorded-balance]').forEach(input => {

@@ -19,12 +19,13 @@ function rpcppeBuildItems(mysqli $conn, array $data, bool $lock = false): array 
         $id = (int)$row['id'];
         $remarks = $data['remarks'][$id] ?? '';
         if (!is_scalar($remarks)) throw new InvalidArgumentException('Invalid remarks.');
+        $onHand = rpcppeNumber($data, 'on_hand_count', $id);
         $items[] = [
             'ppe_id' => $id, 'article' => 'PPE', 'item_name' => $row['item_name'],
             'item_description' => $row['item_description'] ?? '', 'property_number' => $row['PPE_no'],
             'unit' => $row['unit'] ?? '', 'unit_value' => $row['amount'], 'qty_property_card' => $row['quantity'],
-            'qty_physical_count' => rpcppeNumber($data, 'on_hand_count', $id),
-            'shortage_qty' => rpcppeNumber($data, 'shortage_qty', $id),
+            'qty_physical_count' => $onHand,
+            'shortage_qty' => $onHand === '' ? '' : (string)((int)$onHand - (int)$row['quantity']),
             'shortage_value' => rpcppeNumber($data, 'shortage_value', $id), 'remarks' => (string)$remarks,
         ];
     }

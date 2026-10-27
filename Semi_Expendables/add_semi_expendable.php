@@ -348,6 +348,7 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             font-size: 14px;
             transition: all 0.3s ease;
         }
+        body.add-page .form-group input#amount { font-weight: 400; }
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
@@ -562,8 +563,10 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                     </div>
                     <div class="form-group">
                         <label for="office_officer_issued">Office/Officer Issued</label>
-                        <input type="text" id="office_officer_issued" name="office_officer_issued" 
-                               value="<?php echo $_POST['office_officer_issued'] ?? ''; ?>">
+                        <div class="officer-name-field"><input type="text" id="office_officer_issued" name="office_officer_issued" data-officer-autocomplete autocomplete="off"
+                               value="<?php echo htmlspecialchars($_POST['office_officer_issued'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <div id="office_officer_issued_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -575,8 +578,10 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                     </div>
                     <div class="form-group">
                         <label for="office_officer_returned">Office/Officer Returned</label>
-                        <input type="text" id="office_officer_returned" name="office_officer_returned" 
-                               value="<?php echo $_POST['office_officer_returned'] ?? ''; ?>">
+                        <div class="officer-name-field"><input type="text" id="office_officer_returned" name="office_officer_returned" data-officer-autocomplete autocomplete="off"
+                               value="<?php echo htmlspecialchars($_POST['office_officer_returned'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <div id="office_officer_returned_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -588,8 +593,10 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
                     </div>
                     <div class="form-group">
                         <label for="office_officer_reissued">Office/Officer Re-issued</label>
-                        <input type="text" id="office_officer_reissued" name="office_officer_reissued" 
-                               value="<?php echo $_POST['office_officer_reissued'] ?? ''; ?>">
+                        <div class="officer-name-field"><input type="text" id="office_officer_reissued" name="office_officer_reissued" data-officer-autocomplete autocomplete="off"
+                               value="<?php echo htmlspecialchars($_POST['office_officer_reissued'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <div id="office_officer_reissued_dropdown" class="autocomplete-dropdown"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -623,6 +630,8 @@ $default_category = isset($_GET['category']) && in_array($_GET['category'], $val
             </form>
         </div>
     </div>
+
+    <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 
     <script>
     // Auto-calculate balance when quantities change

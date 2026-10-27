@@ -177,9 +177,9 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
   </section>
 
   <section id="mrpSection" class="mrp-section">
-    <div class="section-heading"><h2>Monitor stock availability</h2><p>Baseline history compared with the demand trajectory</p></div>
+    <div class="section-heading"><h2>Monitor stock availability</h2><p>Current stock compared with the total at the latest addition</p></div>
     <article class="panel">
-      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3><p class="panel-caption" style="margin-bottom:0;">Browse 20 items at a time. Hover over the scrollbar and use the mouse wheel to browse.</p></div><div class="mrp-controls"><label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="mrpSearchInput" type="search" aria-label="Search stock items by stock number, item name, or description" placeholder="Search stock items..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpCategorySelect" aria-label="Filter stock chart by item category"><option value="all">All categories</option></select><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Item name</option><option value="lowest">Quantity: low-high</option><option value="highest">Quantity: high-low</option></select></div></div>
+      <div class="mrp-toolbar"><div><h3 id="forecastTitle">Stock levels by item</h3></div><div class="mrp-controls"><label class="mrp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="mrpSearchInput" type="search" aria-label="Search stock items by stock number, item name, or description" placeholder="Search stock items..." autocomplete="off"></label><select class="mrp-filter-select" id="mrpCategorySelect" aria-label="Filter stock chart by item category"><option value="all">All categories</option></select><select class="mrp-filter-select" id="mrpFilterSelect" aria-label="Filter and sort stock chart"><option value="all">Item name</option><option value="lowest">Quantity: low-high</option><option value="highest">Quantity: high-low</option></select></div></div>
       <div class="mrp-status-legend">
       <div class="mrp-label-segments" role="group" aria-label="Chart labels">
         <button type="button" data-mrp-label="id" aria-pressed="true">Stock No.</button>
@@ -190,12 +190,16 @@ if ($result = $conn->query("SELECT SUM(quantity_on_hand > reorder_point) AS abov
       <div class="mrp-chart-sections">
         <div class="mrp-primary-chart">
           <div class="mrp-multi-chart-frame">
-            <div class="mrp-canvas-stage"><canvas id="mrpStockChart" role="img" aria-label="Stock quantities by stock number, showing up to 20 items"></canvas></div>
+            <div class="mrp-canvas-stage"><canvas id="mrpStockChart" role="img" aria-label="Current and total stock quantities by stock number, showing up to 20 items"></canvas></div>
             <div class="mrp-name-labels" aria-hidden="true" hidden></div>
             <div id="mrpEmptyState" class="mrp-empty-state" hidden><strong>No active stock items match the current filters.</strong></div>
             <div id="mrpNoResults" class="mrp-empty-state search-empty-state" hidden><strong>No items match your search query.</strong></div>
           </div>
           <div class="mrp-browse-footer">
+            <div class="mrp-quantity-legend" role="group" aria-label="Stock quantity legend">
+              <span><i class="mrp-original-swatch" aria-hidden="true"></i>Total quantity</span>
+              <span><i class="mrp-current-swatch" aria-hidden="true"></i>Current stock</span>
+            </div>
             <p id="mrpItemRange" class="panel-caption" role="status"></p>
             <div id="mrpItemScrollbar" class="mrp-item-scrollbar" tabindex="0" role="region" aria-label="Browse stock items horizontally" aria-controls="mrpStockChart" hidden><div class="mrp-item-scroll-track"></div></div>
           </div>

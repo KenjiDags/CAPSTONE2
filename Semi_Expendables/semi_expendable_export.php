@@ -279,7 +279,17 @@ echo $qty;
               $qtyIssued = (int)($item['quantity'] ?? ($item['quantity_issued'] ?? 0));
               $amountTotal = (float)($item['amount_total'] ?? 0);
               $unitCost = isset($item['amount']) && $item['amount'] !== null ? (float)$item['amount'] : ($qtyIssued > 0 ? $amountTotal / $qtyIssued : 0);
-              // Include reissued in Issue/Transfer/Disposal summary
+                    // Only show the raw value for the first non-zero field (no addition)
+                    if ((int)($item['quantity_issued'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_issued'];
+                    } elseif ((int)($item['quantity_reissued'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_reissued'];
+                    } elseif ((int)($item['quantity_disposed'] ?? 0) > 0) {
+                        $qtyIssueTransfer = (int)$item['quantity_disposed'];
+
+                    } else {
+                        $qtyIssueTransfer = 0;
+                    }
 
               // Choose officer for snapshot
               $c_officer = '';
@@ -300,17 +310,6 @@ echo $qty;
                 <td><?php echo $show_item_no_c ? htmlspecialchars($item['semi_expendable_property_no'] ?? '') : ''; ?></td>
                 <td>
                   <?php
-                    // Only show the raw value for the first non-zero field (no addition)
-                    if ((int)($item['quantity_issued'] ?? 0) > 0) {
-                        $qtyIssueTransfer = (int)$item['quantity_issued'];
-                    } elseif ((int)($item['quantity_reissued'] ?? 0) > 0) {
-                        $qtyIssueTransfer = (int)$item['quantity_reissued'];
-                    } elseif ((int)($item['quantity_disposed'] ?? 0) > 0) {
-                        $qtyIssueTransfer = (int)$item['quantity_disposed'];
-
-                    } else {
-                        $qtyIssueTransfer = 0;
-                    }
                     echo $qtyIssueTransfer;
                   ?>
                 </td>

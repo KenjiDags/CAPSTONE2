@@ -559,3 +559,17 @@ body.dark-mode .stock-health-bar { background: #334155; }
 body.dark-mode .mrp-name-labels { color: #fff; }
 
 #categoryRegisterBody a, #categoryRegisterBody a:hover, #categoryRegisterBody a:focus { text-decoration: none; }
+
+/* Compact quantity legend below the stock chart. */
+.mrp-quantity-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; margin-bottom: 10px; color: #64748b; font-size: 11px; }
+.mrp-quantity-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.mrp-quantity-legend i { display: inline-block; width: 12px; height: 10px; border-radius: 2px; }
+.mrp-quantity-legend .mrp-original-swatch { background: rgba(100, 116, 139, 0.10); }
+.mrp-quantity-legend .mrp-current-swatch { background: linear-gradient(90deg, #15803d 0 33.33%, #d97706 33.33% 66.66%, #dc2626 66.66%); }
+body.dark-mode .mrp-quantity-legend { color: #cbd5e1; }
+body.dark-mode .mrp-quantity-legend .mrp-original-swatch { background: rgba(148, 163, 184, 0.16); }
+/* Clicked item details expand naturally instead of scrolling inside the chart. */
+.mrp-item-panel[role="dialog"] { width: 400px; max-height: none; overflow: visible; }
+.mrp-item-heading > strong { flex: 1; }
+.mrp-item-heading > .mrp-item-status { flex: 0 0 auto; margin-left: auto; }
+.mrp-item-panel[role="dialog"] dd { min-width: 0; overflow-wrap: anywhere; }

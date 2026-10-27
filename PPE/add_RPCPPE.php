@@ -159,8 +159,8 @@ if (isset($_SESSION['user_id'])) {
                                 // Balance Per Card
                                 echo '<td>' . htmlspecialchars($item['quantity'] ?? '') . '</td>';
                                 // Input cells for manual entry with name attributes
-                                echo '<td><input type="number" name="on_hand_count[' . $ppe_id . ']" data-recorded-balance="' . (int)($item['quantity'] ?? 0) . '" step="1" class="count-input" /></td>';
-                                echo '<td><input type="number" name="shortage_qty[' . $ppe_id . ']" step="1" class="count-input" /></td>';
+                                echo '<td><input type="number" name="on_hand_count[' . $ppe_id . ']" data-recorded-balance="' . (int)($item['quantity'] ?? 0) . '" min="0" step="1" class="count-input" /></td>';
+                                echo '<td><input type="number" name="shortage_qty[' . $ppe_id . ']" step="1" class="count-input" readonly /></td>';
                                 echo '<td><input type="number" name="shortage_value[' . $ppe_id . ']" step="0.01" class="count-input" /></td>';
                                 echo '<td><input type="text" name="remarks[' . $ppe_id . ']" class="count-input" /></td>';
                                 echo '</tr>';
@@ -218,6 +218,16 @@ if (isset($_SESSION['user_id'])) {
 
     <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
 <script>
+document.querySelectorAll('#rpcppe-table input[data-recorded-balance]').forEach(input => {
+    const difference = input.closest('tr').querySelector('input[name^="shortage_qty["]');
+    function updateDifference() {
+        difference.value = input.value === '' || !input.validity.valid ? ''
+            : String(Number(input.value) - Number(input.dataset.recordedBalance));
+    }
+    input.addEventListener('input', updateDifference);
+    input.addEventListener('change', updateDifference);
+    updateDifference();
+});
 const matchBalanceButton = document.getElementById('match-balance');
 if (matchBalanceButton) matchBalanceButton.addEventListener('click', function () {
     document.querySelectorAll('#rpcppe-table input[data-recorded-balance]').forEach(input => {

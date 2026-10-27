@@ -296,6 +296,20 @@ if ($category === 'semi-expendables') {
     $supplySql = "
          SELECT item_id, stock_number, item_name, description,
              quantity_on_hand AS quantity,
+             initial_quantity,
+             GREATEST(quantity_on_hand, COALESCE((
+                 SELECT receipt.quantity_on_hand
+                 FROM (
+                     SELECT history_id, item_id, changed_at, quantity_on_hand, quantity_change, change_type FROM item_history
+                     UNION ALL
+                     SELECT history_id, item_id, changed_at, quantity_on_hand, quantity_change, change_type FROM item_history_archive
+                 ) receipt
+                 WHERE receipt.item_id = items.item_id
+                   AND receipt.quantity_change > 0
+                   AND receipt.change_type IN ('add', 'entry', 'restock')
+                 ORDER BY receipt.changed_at DESC, receipt.history_id DESC
+                 LIMIT 1
+             ), NULLIF(initial_quantity, 0), quantity_on_hand)) AS stock_total,
              reorder_point,
              unit_cost,
              COALESCE((SELECT SUM(ABS(quantity_change)) FROM item_history h
@@ -313,6 +327,8 @@ if ($category === 'semi-expendables') {
             'item_name' => $row['item_name'],
             'description' => $row['description'],
             'quantity' => (int)$row['quantity'],
+            'initial_quantity' => $row['initial_quantity'] === null ? null : (int)$row['initial_quantity'],
+            'stock_total' => (int)$row['stock_total'],
             'reorder_point' => (int)$row['reorder_point'],
             'usage_volume' => (int)$row['usage_volume'],
             'capital_value' => (float)$row['quantity'] * (float)$row['unit_cost']
