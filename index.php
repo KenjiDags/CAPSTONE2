@@ -144,10 +144,13 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
     <title>Login - TESDA Inventory</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <style>
-        body { 
+        body.login-page {
             font-family: 'Century Gothic', Century Gothic, sans-serif;
             background: #f5f5f5;
-            min-height: 100vh; 
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            margin-left: 0 !important;
             margin: 0; 
             display: flex;
             align-items: center;
@@ -274,7 +277,7 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         }
     </style>
 </head>
-<body>
+<body class="login-page">
     <div class="login-container">
         <div class="logo">
             <img src="images/tesda_logo.png" alt="TESDA Logo">

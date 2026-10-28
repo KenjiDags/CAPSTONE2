@@ -67,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
     if (empty($from_officer) || empty($to_officer) || empty($transfer_date) || empty($item_ids)) {
         $error = "Please fill in all required fields and select at least one item.";
     } else {
+        try {
+        $conn->begin_transaction();
         // --- Insert PTR header ---
         $stmt = $conn->prepare("
             INSERT INTO ppe_ptr 
@@ -100,7 +102,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
             $update_stmt->close();
 
             // --- Auto-create PAR ---
-            $par_no = str_replace('PTR', 'PAR', $ptr_no);
+            // PAR and PTR have independent monthly sequences.
+            $par_prefix = $current_yy . '-' . $current_mm . '-';
+            $par_pattern = $par_prefix . '%';
+            $number_stmt = $conn->prepare('SELECT par_no FROM ppe_par WHERE par_no LIKE ?');
+            $number_stmt->bind_param('s', $par_pattern);
+            $number_stmt->execute();
+            $par_sequence = 0;
+            foreach ($number_stmt->get_result() as $number_row) {
+                $suffix = substr($number_row['par_no'], strlen($par_prefix));
+                if (ctype_digit($suffix)) $par_sequence = max($par_sequence, (int)$suffix);
+            }
+            $number_stmt->close();
+            $par_no = $par_prefix . str_pad((string)($par_sequence + 1), 2, '0', STR_PAD_LEFT);
             $par_stmt = $conn->prepare("
                 INSERT INTO ppe_par 
                 (par_no, entity_name, fund_cluster, date_acquired, property_number, received_by, received_by_designation, received_by_date, issued_by, issued_by_designation, issued_by_date) 
@@ -184,13 +198,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ptr'])) {
             }
             $par_stmt->close();
 
+            $conn->commit();
             $success = "Property Transfer Report and Property Acknowledgement Receipt created successfully!";
             header("Location: PPE_PTR.php");
             exit();
         } else {
-            $error = "Failed to create PTR: " . $stmt->error;
+            throw new RuntimeException('Failed to create PTR: ' . $stmt->error);
         }
         $stmt->close();
+        } catch (Throwable $exception) {
+            $conn->rollback();
+            error_log('PTR save failed: ' . $exception->getMessage());
+            $error = $exception instanceof mysqli_sql_exception && (int)$exception->getCode() === 1062
+                ? 'A document number was just used. Please submit the form again.'
+                : 'Unable to save the transfer. No changes were saved. Please try again.';
+        }
     }
 }
 
