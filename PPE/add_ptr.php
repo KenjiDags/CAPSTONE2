@@ -361,6 +361,14 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property WHERE NULLIF(TRIM(officer_
         overflow-y: auto;
         background: #f9fafb;
     }
+    .items-selection .table-bordered th,
+    .items-selection .table-bordered td {
+        border: 1px solid #cbd5e1;
+    }
+    body.dark-mode .items-selection .table-bordered th,
+    body.dark-mode .items-selection .table-bordered td {
+        border-color: #475569;
+    }
     .item-checkbox {
         display: flex;
         align-items: center;

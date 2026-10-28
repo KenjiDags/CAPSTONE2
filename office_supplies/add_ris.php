@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // RIS Items arrays from form
     $stock_numbers = $_POST['stock_number'];
-    $stock_availables = $_POST['stock_available'];
+
     $issued_quantities = $_POST['issued_quantity'];
     $remarks = $_POST['remarks'];
     $days_values = $_POST['days_to_consume'] ?? [];
@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Insert new items and update inventory
     for ($i = 0; $i < count($stock_numbers); $i++) {
         $stock_no = $stock_numbers[$i];
-        $stock_available = $stock_availables[$i];
+
         $issued_qty = (int)$issued_quantities[$i];
         $remark = $remarks[$i];
 
@@ -182,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $item_id = (int)$item['item_id'];
         $current_quantity = (int)$item['quantity_on_hand'];
+        $stock_available = $current_quantity > 0 ? 'Yes' : 'No';
         $current_unit_cost = (float)$item['average_unit_cost'];
 
         // NEVER allow issuing more than what is actually available
@@ -407,8 +408,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 
         /* Scrollable items table */
         .table-frame { 
-            border: 2px solid #e5e7eb; 
-            border-top: 0; 
+            border: 1px solid #cbd5e1;
             border-radius: 0 0 8px 8px; 
             overflow: hidden; 
         }
@@ -439,6 +439,8 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             border-top-right-radius: 0 !important; 
         }
         #itemsTable th, #itemsTable td { 
+            border: 0;
+            border-bottom: 1px solid #cbd5e1;
             padding: 10px 12px; 
             vertical-align: middle; 
         }
@@ -446,6 +448,10 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             height: 44px; 
         }
 
+        #itemsTable th:nth-child(4),
+        #itemsTable td:nth-child(4) {
+            min-width: 100px;
+        }
         /* Search container */
         .search-container { 
             margin: 8px 0 12px !important; 
@@ -494,7 +500,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             border-color: #475569;
         }
         body.dark-mode .table-frame {
-            border-color: transparent !important;
+            border: 1px solid #475569 !important;
         }
         body.dark-mode .table-viewport {
             scrollbar-color: #475569 #0f172a;
@@ -526,7 +532,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         }
         body.dark-mode #itemsTable th,
         body.dark-mode #itemsTable td {
-            border-color: transparent !important;
+            border-color: #475569 !important;
         }
         body.dark-mode .form-container input::placeholder,
         body.dark-mode .form-container textarea::placeholder {
@@ -609,7 +615,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
 
                     <!-- Search Container -->
                     <div class="search-container">
-                        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." onkeyup="filterItems()"></label>
+                        <label class="compact-search-field" for="itemSearch"><i class="fas fa-search" aria-hidden="true"></i><input aria-label="Search items" type="text" id="itemSearch" class="search-input" placeholder="Start typing to search items..." oninput="filterItems()"></label>
                     </div>
 
                     <div class="table-frame">
@@ -622,7 +628,6 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                         <th><i class="fas fa-align-left"></i> Description</th>
                                         <th><i class="fas fa-ruler"></i> Unit</th>
                                         <th><i class="fas fa-cubes"></i> Quantity on Hand</th>
-                                        <th><i class="fas fa-check-circle"></i> Stock Available</th>
                                         <th><i class="fas fa-sign-out-alt"></i> Issued Qty</th>
                                         <th><i class="fas fa-calendar-day"></i> No. of days to consume</th>
                                         <th><i class="fas fa-comment"></i> Remarks</th>
@@ -634,7 +639,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                         SELECT items.*,
                                             COALESCE((SELECT MIN(changed_at) FROM item_history h WHERE h.item_id = items.item_id AND h.quantity_change > 0), (SELECT MIN(created_at) FROM inventory_entries e WHERE e.item_id = items.item_id AND e.quantity > 0)) AS first_receipt
                                         FROM items
-                                        WHERE quantity_on_hand > 0
+                                        WHERE quantity_on_hand >= 0
                                         ORDER BY stock_number
                                     ");
                                     if ($result && $result->num_rows > 0) {
@@ -651,19 +656,13 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
                                             echo '<td>' . htmlspecialchars($row['description']) . '</td>';
                                             echo '<td>' . htmlspecialchars($row['unit']) . '</td>';
                                             echo '<td>' . htmlspecialchars($row['quantity_on_hand']) . '</td>';
-                                            echo '<td>
-                                                    <select name="stock_available[]">
-                                                        <option value="Yes"' . (($existing_item && $existing_item['stock_available'] == 'Yes') ? ' selected' : '') . '>Yes</option>
-                                                        <option value="No"' . (($existing_item && $existing_item['stock_available'] == 'No') ? ' selected' : '') . '>No</option>
-                                                    </select>
-                                                </td>';
                                             echo '<td><input type="number" name="issued_quantity[]" value="' . ($existing_item ? htmlspecialchars($existing_item['issued_quantity']) : '') . '" min="0" max="' . htmlspecialchars($row['quantity_on_hand']) . '"></td>';
                                             echo '<td><input type="number" class="days-to-consume" name="days_to_consume[]" min="0" max="2147483647" step="1" aria-label="No. of days to consume for ' . htmlspecialchars($stock_number, ENT_QUOTES, 'UTF-8') . '" value="' . htmlspecialchars((string)$remainingDays) . '" data-initial="' . htmlspecialchars((string)$initialDays) . '" data-start="' . htmlspecialchars(substr((string)$row['first_receipt'], 0, 10)) . '" data-manual="' . ($savedDays !== null ? '1' : '0') . '"></td>';
                                             echo '<td><input type="text" name="remarks[]" value="' . ($existing_item ? htmlspecialchars($existing_item['remarks']) : '') . '"></td>';
                                             echo '</tr>';
                                         }
                                     } else {
-                                        echo '<tr id="no-items-row"><td colspan="9">No inventory items found.</td></tr>';
+                                        echo '<tr id="no-items-row"><td colspan="8">No inventory items found.</td></tr>';
                                     }
                                     ?>
                                 </tbody>
@@ -787,7 +786,8 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         requestedDate.addEventListener('change', updateRemainingDays);
         function filterItems() {
             // Get the search input value and convert to lowercase
-            const searchValue = document.getElementById('itemSearch').value.toLowerCase();
+            const searchValue = document.getElementById('itemSearch').value.trim().toLowerCase();
+            document.querySelector('.table-viewport').scrollTop = 0;
 
             // Get all item rows
             const itemRows = document.querySelectorAll('.item-row');
@@ -819,12 +819,17 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
             });
 
             // Handle the "no items found" message
-            const noItemsRow = document.getElementById('no-items-row');
+            let noItemsRow = document.getElementById('no-items-row');
+            if (!noItemsRow) {
+                noItemsRow = document.createElement('tr');
+                noItemsRow.id = 'no-items-row';
+                document.querySelector('#itemsTable tbody').appendChild(noItemsRow);
+            }
             if (noItemsRow) {
                 if (visibleRows === 0) {
                     // Show "no results found" message
                     noItemsRow.style.display = 'table-row';
-                    noItemsRow.innerHTML = '<td colspan="9">No items match your search criteria.</td>';
+                    noItemsRow.innerHTML = '<td colspan="8">No items match your search criteria.</td>';
                 } else {
                     // Hide the message
                     noItemsRow.style.display = 'none';
