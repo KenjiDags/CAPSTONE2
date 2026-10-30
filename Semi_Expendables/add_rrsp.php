@@ -233,7 +233,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
 </style>
 
 </head>
-<body class="add-page rrsp-page">
+<body class="add-page rrsp-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="content">

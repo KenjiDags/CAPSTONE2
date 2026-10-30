@@ -142,7 +142,7 @@ $title = $viewOnly ? 'RPCSP-' . str_pad((string)$id, 4, '0', STR_PAD_LEFT) : 'Ad
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="add-page">
+<body class="add-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="add-ris-page content">
 <div class="form-container inventory-item-form">

@@ -446,7 +446,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property ORDER BY property_no ASC, 
                         <div class="item-checkbox">
                             <input type="checkbox" name="item_ids[]" value="<?= $item['id'] ?>" id="item_<?= $item['id'] ?>" <?= in_array($item['id'], $existing_item_ids) ? 'checked' : '' ?>>
                             <label for="item_<?= $item['id'] ?>" class="item-info">
-                                <strong><?= htmlspecialchars($item['par_no']) ?></strong> - 
+                                <strong><?= htmlspecialchars($item['property_no'] ?? '') ?></strong> -
                                 <?= htmlspecialchars($item['item_name']) ?> - 
                                 <?= htmlspecialchars($item['item_description']) ?> 
                                 <span class="currency">(₱<?= number_format($item['amount'], 2) ?>)</span>

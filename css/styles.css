@@ -4141,3 +4141,139 @@ body.dark-mode .officer-dropdown .officer-option-position { color: #cbd5e1; }
         }
 
 }
+
+/* Shared sun/moon theme switch for admin and user settings. */
+    .theme-switch { position: relative; display: inline-flex; align-items: center; justify-content: space-between; flex: 0 0 90px; width: 90px; height: 46px; padding: 9px 11px; border: 1px solid #64748b; border-radius: 26px; background: #e2e8f0; color: #475569; cursor: pointer; }
+    .theme-switch svg { position: relative; z-index: 1; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .theme-switch-thumb { position: absolute; top: 4px; left: 4px; width: 36px; height: 36px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px #0003; transition: transform .2s ease; }
+    .theme-switch[aria-checked="true"] { background: #243d60; border-color: #58759a; color: #bfdbfe; }
+    .theme-switch[aria-checked="true"] .theme-switch-thumb { transform: translateX(44px); background: #3c5c87; }
+    .theme-switch:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { .theme-switch-thumb { transition: none; } }
+
+/* Keep officer headings readable against the light settings panel. */
+body:not(.dark-mode) .officers-manager table.registered-officers thead th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-weight: 700;
+}
+/* Consistent RIS-style item tables on inventory add and edit pages. */
+body.item-entry-page {
+    --entry-table-bg: #fff;
+    --entry-table-border: #cbd5e1;
+    --entry-table-text: #334155;
+    --entry-table-header: #f1f5f9;
+    --entry-table-heading: #1e293b;
+    --entry-table-hover: #f8fafc;
+}
+body.item-entry-page.dark-mode {
+    --entry-table-bg: #1e293b;
+    --entry-table-border: #475569;
+    --entry-table-text: #e2e8f0;
+    --entry-table-header: #1e293b;
+    --entry-table-heading: #f1f5f9;
+    --entry-table-hover: #273449;
+}
+body.item-entry-page :is(.table-frame, .table-viewport, .table-container, .rpci-table-wrapper, .rpcppe-table-wrapper, .rsmi-table-viewport):has(table) {
+    background: var(--entry-table-bg) !important;
+    border-radius: 10px !important;
+    border-color: var(--entry-table-border) !important;
+    box-shadow: none !important;
+}
+body.item-entry-page :is(.table-frame, .table-container, .rpci-table-wrapper, .rpcppe-table-wrapper):has(table) {
+    border: 1px solid var(--entry-table-border) !important;
+    overflow: hidden;
+}
+body.item-entry-page :is(.table-viewport, .table-container, .rpci-table-wrapper, .rpcppe-table-wrapper, .rsmi-table-viewport):has(> table) {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--entry-table-border) var(--entry-table-bg);
+}
+body.item-entry-page :is(table, #itemsTable, #restockTable, #rpci-table, #rpcppe-table, #rsmiTable, #recapTable) {
+    width: 100%;
+    margin-top: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0;
+    border-radius: 10px !important;
+    background: var(--entry-table-bg) !important;
+    box-shadow: none !important;
+}
+body.item-entry-page :is(.table-viewport, .table-container, .rpci-table-wrapper, .rpcppe-table-wrapper, .rsmi-table-viewport) > table {
+    overflow: visible !important;
+}
+body.item-entry-page :is(table, #itemsTable, #restockTable, #rpci-table, #rpcppe-table, #rsmiTable, #recapTable) :is(th, td) {
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--entry-table-border) !important;
+    vertical-align: middle;
+    color: var(--entry-table-text) !important;
+    background: var(--entry-table-bg) !important;
+    font-size: 14px;
+    line-height: 1.5;
+}
+body.item-entry-page :is(table, #itemsTable, #restockTable, #rpci-table, #rpcppe-table, #rsmiTable, #recapTable) thead th {
+    background: var(--entry-table-header) !important;
+    color: var(--entry-table-heading) !important;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: none;
+}
+body.item-entry-page :is(.table-viewport, .table-container, .rpci-table-wrapper, .rpcppe-table-wrapper, .rsmi-table-viewport) > table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+body.item-entry-page table thead tr:first-child th:first-child { border-top-left-radius: 9px; }
+body.item-entry-page table thead tr:first-child th:last-child { border-top-right-radius: 9px; }
+body.item-entry-page table tbody tr { transform: none !important; box-shadow: none !important; }
+body.item-entry-page :is(table, #itemsTable, #restockTable, #rpci-table, #rpcppe-table, #rsmiTable, #recapTable) tbody tr:hover > td {
+    background: var(--entry-table-hover) !important;
+}
+body.item-entry-page table td :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    border: 1px solid var(--entry-table-border) !important;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+/* Keep both RegSPI header rows together while the item list scrolls. */
+body.item-entry-page .table-viewport > table.compact-document-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--entry-table-header);
+}
+body.item-entry-page .table-viewport > table.compact-document-table thead th {
+    position: static !important;
+    top: auto;
+}
+/* Slightly larger item entries on Add IIRUSP. */
+body.add-page.iirusp-page.item-entry-page #itemsTable :is(th, td) {
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+}
+body.add-page.iirusp-page.item-entry-page #itemsTable thead th {
+    font-size: 13px !important;
+}
+body.add-page.iirusp-page.item-entry-page #itemsTable td :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 15px !important;
+}
+.container h2.rpcppe-page-title::before { content: none !important; }
+.rpcppe-page-title > svg { flex-shrink: 0; color: #3b82f6; }
+/* Navigation scrollbars follow the sidebar surface, including compact laptop menus. */
+body.dark-mode .sidebar.sidebar--hover,
+body.dark-mode .sidebar.sidebar--hover :is(nav, .dropdown-menu, .submenu-content) {
+    color-scheme: dark;
+    scrollbar-color: #64748b #111827;
+    scrollbar-width: thin;
+}
+body.dark-mode .sidebar.sidebar--hover::-webkit-scrollbar,
+body.dark-mode .sidebar.sidebar--hover :is(nav, .dropdown-menu, .submenu-content)::-webkit-scrollbar { width: 8px; height: 8px; }
+body.dark-mode .sidebar.sidebar--hover::-webkit-scrollbar-track,
+body.dark-mode .sidebar.sidebar--hover :is(nav, .dropdown-menu, .submenu-content)::-webkit-scrollbar-track,
+body.dark-mode .sidebar.sidebar--hover::-webkit-scrollbar-corner,
+body.dark-mode .sidebar.sidebar--hover :is(nav, .dropdown-menu, .submenu-content)::-webkit-scrollbar-corner { background: #111827; }
+body.dark-mode .sidebar.sidebar--hover::-webkit-scrollbar-thumb,
+body.dark-mode .sidebar.sidebar--hover :is(nav, .dropdown-menu, .submenu-content)::-webkit-scrollbar-thumb { background: #64748b; border: 2px solid #111827; border-radius: 8px; }

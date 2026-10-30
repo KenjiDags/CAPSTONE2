@@ -97,6 +97,14 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		table th.actions-col, table td.actions-col { padding-left: 12px; padding-right: 12px; }
 		.action-stack { display: inline-flex; flex-direction: row; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
 		.amount-col { white-space: nowrap; min-width: 100px; }
+        #ppe-property-cards { table-layout: fixed; min-width: 1100px; }
+        #ppe-property-cards .description-col { width: auto; white-space: normal; overflow-wrap: anywhere; }
+        #ppe-property-cards :is(th, td):nth-child(n+5):nth-child(-n+7) { width: auto; min-width: 0; padding-inline: 6px !important; text-align: center; }
+        #ppe-property-cards thead th:nth-child(n+5):nth-child(-n+7) { white-space: normal; overflow-wrap: normal; font-size: 12px; }
+        #ppe-property-cards .actions-col, #ppe-property-cards .amount-col { width: auto; min-width: 0; }
+        body.dark-mode .table-wrapper:has(#ppe-property-cards) { background: #1e293b; }
+        body.dark-mode #ppe-property-cards :is(tbody tr, tbody td) { border-color: #334155 !important; }
+        body.dark-mode #ppe-property-cards tbody tr { box-shadow: none; }
 	</style>
 </head>
 <body class="ppe-page">
@@ -138,7 +146,8 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 		</form>
 
 		<div class="table-wrapper">
-			<table  style="margin-bottom: 0px !important;">
+			<table id="ppe-property-cards" style="margin-bottom: 0px !important;">
+<colgroup><col style="width:34%"><col style="width:10%"><col style="width:9%"><col style="width:13%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:11%"><col style="width:8%"></colgroup>
 				<thead>
 					<tr>
 						<th>Description</th>
@@ -202,7 +211,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 								$issueQty = (int)($row['issue_qty'] ?? 0);
 								$balanceQty = (int)($row['balance_qty'] ?? 0);
 								$amount = (float)($row['unit_cost'] ?? 0) * (int)($row['quantity_on_hand'] ?? 0);
-								$rowClass = !empty($row['ppe_id']);
+								$rowClass = !empty($row['ppe_id']) ? ' class="clickable-row"' : '';
 								$rowViewAttr = !empty($row['ppe_id']) ? ' data-view-url="PPE/view_ppe_items.php?id=' . (int)$row['ppe_id'] . '&return=' . urlencode($pcReturnUrl) . '"' : '';
 								echo '<tr' . $rowClass . $rowViewAttr . '>';
 								echo '<td class="description-col">' . htmlspecialchars($itemName);

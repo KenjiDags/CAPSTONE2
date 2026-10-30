@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         body.dark-mode .rsmi-table-viewport { scrollbar-color: #475569 #0f172a; }
     </style>
 </head>
-<body class="add-page">
+<body class="add-page item-entry-page">
     <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
     <div class="container">

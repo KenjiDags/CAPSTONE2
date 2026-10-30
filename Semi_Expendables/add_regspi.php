@@ -228,7 +228,7 @@ $title = $viewOnly ? 'REGSPI-' . str_pad((string)$report['regspi_id'], 4, '0', S
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="add-page">
+<body class="add-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="add-ris-page content">
     <div class="form-container inventory-item-form">

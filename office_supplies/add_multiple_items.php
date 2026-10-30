@@ -173,7 +173,7 @@ $items = $conn->query("SELECT i.*,
         }
     </style>
 </head>
-<body class="add-page restock-page">
+<body class="add-page restock-page item-entry-page">
 <div class="app-layout restock-layout">
 <?php require dirname(__DIR__) . '/sidebar.php'; ?>
 

@@ -50,7 +50,7 @@ unset($_SESSION['success']);
 <body class="ppe-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <main class="container">
-    <h2>Report on Physical Count of Property, Plant and Equipment (RPCPPE)</h2>
+    <h2 class="rpcppe-page-title"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 13 2 2 4-4M9 18h6"/></svg><span>Report on Physical Count of Property, Plant and Equipment (RPCPPE)</span></h2>
     <?php if ($success !== ''): ?><div class="alert alert-success" role="status"><?= htmlspecialchars($success) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <form method="get" action="PPE/RPCPPE.php" class="filters report-list-filters">

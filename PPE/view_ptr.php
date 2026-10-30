@@ -10,7 +10,7 @@ $stmt->execute();
 $ptr = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 if (!$ptr) { http_response_code(404); exit('PTR document not found.'); }
-$stmt = $conn->prepare('SELECT p.*, pi.ppe_id AS linked_ppe_id FROM ppe_ptr_items pi LEFT JOIN ppe_property p ON p.id = pi.ppe_id WHERE pi.ptr_id = ? ORDER BY p.par_no, pi.ppe_id');
+$stmt = $conn->prepare('SELECT p.*, pi.ppe_id AS linked_ppe_id FROM ppe_ptr_items pi LEFT JOIN ppe_property p ON p.id = pi.ppe_id WHERE pi.ptr_id = ? ORDER BY p.property_no, pi.ppe_id');
 $stmt->bind_param('i', $ptr_id);
 $stmt->execute();
 $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -49,7 +49,7 @@ function ptrViewH($value): string { return htmlspecialchars((string)($value ?? '
             <thead><tr>
                 <th scope="col"><i class="fas fa-calendar"></i> Date Acquired</th>
                 <th scope="col"><i class="fas fa-barcode"></i> PPE No.</th>
-                <th scope="col"><i class="fas fa-hashtag"></i> PAR No.</th>
+                <th scope="col"><i class="fas fa-hashtag"></i> Property No.</th>
                 <th scope="col"><i class="fas fa-tag"></i> Item</th>
                 <th scope="col"><i class="fas fa-align-left"></i> Description</th>
                 <th scope="col"><i class="fas fa-coins"></i> Amount</th>
@@ -60,7 +60,7 @@ function ptrViewH($value): string { return htmlspecialchars((string)($value ?? '
                 <tr>
                     <td><?= ptrViewH($item['date_acquired'] ?? '') ?></td>
                     <td><?= ptrViewH($item['PPE_no'] ?? '') ?></td>
-                    <td><?= ptrViewH($item['par_no'] ?? '') ?></td>
+                    <td><?= ptrViewH($item['property_no'] ?? '') ?></td>
                     <td><?= ptrViewH($item['item_name'] ?? ('PPE item #' . $item['linked_ppe_id'] . ' unavailable')) ?></td>
                     <td><?= ptrViewH($item['item_description'] ?? '') ?></td>
                     <td class="currency"><?= $item['amount'] !== null ? '&#8369; ' . number_format((float)$item['amount'], 2) : '' ?></td>

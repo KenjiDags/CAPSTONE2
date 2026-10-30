@@ -79,7 +79,7 @@ function parEscape($value): string { return htmlspecialchars((string)$value, ENT
 <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head><body class="add-page ppe-page">
+</head><body class="add-page ppe-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <main class="container"><div class="form-container">
 <header class="page-header"><h1 class="form-page-title"><i class="fas fa-file-invoice" aria-hidden="true"></i> Issue PPE — Add PAR</h1><p class="form-page-subtitle">Create a Property Acknowledgment Receipt and assign properties to an end user.</p></header>

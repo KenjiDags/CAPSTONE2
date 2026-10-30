@@ -17,6 +17,15 @@ try {
         @$conn->query("ALTER TABLE ics_items ADD COLUMN unit VARCHAR(64) NULL AFTER quantity");
     }
 } catch (Throwable $e) { /* non-fatal safeguard */ }
+$save_error = '';
+function icsAvailableQuantity(array $item, int $editingQuantity = 0): int
+{
+    $calculated = (int)($item['quantity'] ?? 0)
+        - max(0, (int)($item['quantity_issued'] ?? 0) - $editingQuantity)
+        - (int)($item['quantity_reissued'] ?? 0)
+        - (int)($item['quantity_disposed'] ?? 0);
+    return max(0, min($calculated, (int)($item['quantity_balance'] ?? 0) + $editingQuantity));
+}
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Wrap everything in a transaction for consistency
@@ -152,7 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $reissued = (float)$item_data['quantity_reissued'];
                 $disposed = (float)$item_data['quantity_disposed'];
                 $available = max(0, $qty - ($issued + $reissued + $disposed));
-                if ($issued_qty > $available || $issued_qty > (float)$item_data['quantity_balance']) { throw new Exception("Cannot issue {$issued_qty} of {$stock_no}: insufficient stock."); }
+                $available = icsAvailableQuantity($item_data);
+                if ($issued_qty > $available) { throw new Exception("Cannot issue {$issued_qty} of {$stock_no}: only {$available} available after issued, reissued, and disposed quantities are deducted."); }
                 if ($issued_qty <= 0) { continue; }
                 $unit_cost = (float)$item_data['amount'];
                 $total_cost = $issued_qty * $unit_cost;
@@ -219,9 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     } catch (Throwable $e) {
         if (method_exists($conn, 'rollback')) { $conn->rollback(); }
-        // Basic error handling: show a simple message
-        echo '<div style="color:#b91c1c; background:#fee2e2; padding:12px; border:1px solid #fca5a5; margin:10px 0;">'
-            . 'ICS save failed: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        $save_error = 'ICS save failed: ' . $e->getMessage();
     }
 }
 
@@ -476,9 +484,11 @@ function generateICSNumberSimple($conn) {
         background: #3b82f6;
         color: white;
     }
+    .ics-save-error { padding: 12px 16px; margin: 0 0 20px; border: 1px solid #fca5a5; border-radius: 8px; background: #fef2f2; color: #991b1b; overflow-wrap: anywhere; }
+    body.dark-mode .ics-save-error { background: #452532; border-color: #9f465c; color: #fecdd3; }
     </style>
 </head>
-<body class="add-page">
+<body class="add-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="add-ris-page content">
     <div class="form-container">
@@ -490,6 +500,7 @@ function generateICSNumberSimple($conn) {
             <p class="form-page-subtitle"><?php echo $is_editing ? 'Update inventory custody slip details' : 'Create a new inventory custody slip'; ?></p>
         </header>
         <form method="post" action="" class="inventory-item-form">
+            <?php if ($save_error !== ''): ?><div class="ics-save-error" role="alert" tabindex="-1" id="ics-save-error"><?= htmlspecialchars($save_error, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
             <?php if ($is_editing): ?>
                 <input type="hidden" name="ics_id" value="<?php echo $ics_id; ?>">
@@ -565,7 +576,7 @@ function generateICSNumberSimple($conn) {
                                     while ($row = $result->fetch_assoc()) {
                                         $stock_number = $row['semi_expendable_property_no'];
                                         $existing_item = $ics_items[$stock_number] ?? null;
-                                        $qtyOnHand = (int)$row['quantity_balance'];
+                                        $qtyOnHand = icsAvailableQuantity($row, (int)($existing_item['quantity'] ?? 0));
                                         $unitCost = (float)($row['amount'] ?? 0);
                                         $remarks = $row['remarks'] ?? '';
                                         $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
@@ -778,5 +789,6 @@ function generateICSNumberSimple($conn) {
             });
         });
     </script>
+<script>const saveError = document.getElementById("ics-save-error"); if (saveError) { saveError.focus(); }</script>
 </body>
 </html>

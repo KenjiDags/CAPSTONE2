@@ -302,7 +302,7 @@ try {
     .search-container { margin: 8px 0 12px !important; }
     </style>
 </head>
-<body>
+<body class="item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
     <div class="content">
         <div class="form-container">

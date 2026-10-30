@@ -28,7 +28,7 @@ $items_stmt = $conn->prepare("
     FROM ppe_ptr_items pi
     JOIN ppe_property p ON p.id = pi.ppe_id
     WHERE pi.ptr_id = ?
-    ORDER BY p.par_no
+    ORDER BY p.property_no, pi.ppe_id
 ");
 $items_stmt->bind_param("i", $ptr_id);
 $items_stmt->execute();
@@ -476,7 +476,7 @@ $received_by_date = $ptr['received_by_date'] ?? '';
         ?>
         <tr>
             <td><?= htmlspecialchars($item['date_acquired'] ?? 'N/A') ?></td>
-            <td><?= htmlspecialchars($item['par_no']) ?></td>
+            <td><?= htmlspecialchars($item['property_no'] ?? '') ?></td>
             <td class="text-left"><?= htmlspecialchars($item['item_name'] . ' - ' . $item['item_description']) ?></td>
             <td>₱<?= number_format($item['amount'], 2) ?></td>
             <td><?= htmlspecialchars($item['condition']) ?></td>

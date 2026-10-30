@@ -190,7 +190,7 @@ if ($officer_result) {
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="add-page iirusp-page">
+<body class="add-page iirusp-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

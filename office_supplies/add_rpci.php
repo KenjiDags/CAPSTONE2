@@ -347,7 +347,7 @@ $officer_names_json = json_encode($officer_names, JSON_HEX_TAG | JSON_HEX_AMP | 
         }
     </style>
 </head>
-<body>
+<body class="item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container">

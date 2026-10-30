@@ -7,6 +7,21 @@
             && field.tabIndex >= 0 && field.getClientRects().length > 0
             && getComputedStyle(field).visibility !== 'hidden';
     }
+    // Select zero defaults so the first typed digit replaces them without changing stored values.
+    const isEntryPage = /(?:^|\/)(?:add[^/]*|edit[^/]*)\.php$/i.test(location.pathname);
+    if (isEntryPage) {
+        const selectZero = event => {
+            const field = event.target;
+            if (!(field instanceof HTMLInputElement) || !editable(field)) return;
+            const numeric = field.type === 'number'
+                || (['text', ''].includes(field.type) && ['numeric', 'decimal'].includes(field.inputMode));
+            if (!numeric || !/^[+-]?0+(?:\.0+)?$/.test(field.value.trim())) return;
+            field.select();
+        };
+        document.addEventListener('focusin', selectZero);
+        // A mouse click can collapse the selection made by focusin; restore it afterward.
+        document.addEventListener('click', selectZero);
+    }
     document.addEventListener('keydown', event => {
         if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey
             || event.metaKey || event.shiftKey

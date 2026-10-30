@@ -95,6 +95,7 @@
             // Preserve filters, scroll position and unsaved work on this page.
             // Active section labels can also point to a parent list, so compare paths.
             if (target.origin === location.origin && target.pathname === location.pathname &&
+                (sidebar.dataset.queryNavigation !== 'true' || target.search === location.search) &&
                 !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey &&
                 !link.hasAttribute('download') && (!link.target || link.target === '_self')) {
                 event.preventDefault();

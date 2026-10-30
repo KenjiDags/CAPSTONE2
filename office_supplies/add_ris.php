@@ -540,7 +540,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         }
     </style>
 </head>
-<body class="add-page">
+<body class="add-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
     <div class="content">
         <div class="form-container">

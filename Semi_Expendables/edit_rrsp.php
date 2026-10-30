@@ -208,7 +208,7 @@ if($q){ while($r=$q->fetch_assoc()){ $semi[]=$r; } }
   <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>" />
 
 </head>
-<body>
+<body class="item-entry-page">
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
   <div class="container">
     <h2><i class="fas fa-pen" aria-hidden="true"></i> Edit RRSP Form</h2>

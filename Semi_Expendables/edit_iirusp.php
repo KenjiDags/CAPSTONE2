@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="iirusp-page">
+<body class="iirusp-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
 <div class="container inventory-item-form no-number-spinners">

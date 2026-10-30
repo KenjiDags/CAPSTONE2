@@ -458,7 +458,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property WHERE NULLIF(TRIM(officer_
     }
 </style>
 </head>
-<body class="add-page ppe-page">
+<body class="add-page ppe-page item-entry-page">
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="content">
     <div class="form-container inventory-item-form no-number-spinners">

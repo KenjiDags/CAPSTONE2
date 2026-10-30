@@ -363,6 +363,11 @@ $records = $stmt->get_result();
 
         .archive-filters .control-search { min-width: 0; padding-left: 0; }
         }
+        .archive-page-header { margin-bottom: 24px; padding: 20px; border: 1px solid rgba(59,130,246,.2); border-radius: 12px; background: linear-gradient(135deg,rgba(255,255,255,.95),rgba(240,249,255,.95)); box-shadow: 0 4px 12px #0000001a; }
+        .container .archive-page-header h2, body.dark-mode .container .archive-page-header h2 { margin: 0 0 8px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; backdrop-filter: none !important; }
+        .archive-page-header .archive-intro { margin: 0; }
+        body.dark-mode .archive-page-header { background: #1e293b; border-color: #334155; }
+        body.dark-mode .archive-page-header .archive-intro { color: #cbd5e1; }
     </style>
 
 </head>
@@ -373,7 +378,10 @@ $records = $stmt->get_result();
 
     <main class="container">
 
+        <header class="archive-page-header">
         <h2><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="4" rx="1"></rect><path d="M5 7v13h14V7M10 11h4"></path></svg> Archive</h2>
+        <p class="archive-intro">Review archived documents and items, restore records you still need, or permanently delete them.</p>
+        </header>
         <nav class="category-tabs" aria-label="Archive category">
             <a class="category-tab <?= !$isItems ? 'active' : '' ?>" href="archive.php?tab=documents"<?= !$isItems ? ' aria-current="page"' : '' ?>>Documents</a>
             <a class="category-tab <?= $isItems ? 'active' : '' ?>" href="archive.php?tab=items"<?= $isItems ? ' aria-current="page"' : '' ?>>Items</a>

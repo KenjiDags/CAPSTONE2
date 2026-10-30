@@ -73,7 +73,7 @@ $current_username = $_SESSION['username'];
 // Fetch current user information
 $stmt = $conn->prepare("
     SELECT 
-        u.user_full_name,
+        COALESCE(NULLIF(TRIM(u.user_full_name), ''), NULLIF(TRIM(u.full_name), ''), '') AS user_full_name,
         u.username,
         u.user_position
     FROM users u
@@ -133,8 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_full_name'])) 
         $_SESSION['error_message'] = 'Full name cannot be empty.';
     } else {
         // Update full name
-        $update = $conn->prepare("UPDATE users SET user_full_name = ? WHERE user_id = ?");
-        $update->bind_param("si", $new_full_name, $user_id);
+        $update = $conn->prepare("UPDATE users SET user_full_name = ?, full_name = ? WHERE user_id = ?");
+        $update->bind_param("ssi", $new_full_name, $new_full_name, $user_id);
         
         if ($update->execute()) {
             $_SESSION['success_message'] = 'Full name updated successfully!';
@@ -576,18 +576,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
             background-color: #f9fafb;
         }
 
-        .settings-header .theme-toggle {
-            grid-column: 2;
-            grid-row: 1;
-            justify-self: end;
-            margin-top: 0;
-            width: auto;
-            background: #1e293b;
-        }
+        .settings-header .theme-switch { grid-column: 2; grid-row: 1; justify-self: end; margin-top: 0; }
 
-        .theme-toggle:hover {
-            background: #0f172a;
-        }
+
 
         .dark-mode .settings-header h1,
         .dark-mode .settings-section h2,
@@ -658,10 +649,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     User Settings
                 </h1>
                 <p>Manage your account information and security settings</p>
-                <button type="button" id="themeToggle" class="btn-update theme-toggle" aria-pressed="false">
-                    <?= $settingsOutlineIcon('moon') ?>
-                    <span>Dark Mode</span>
-                </button>
+                <button type="button" id="themeToggle" class="theme-switch" role="switch" aria-checked="false" aria-label="Dark theme" title="Switch to dark theme"><svg class="switch-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="switch-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/></svg><span class="theme-switch-thumb" aria-hidden="true"></span></button>
             </header>
             
             <?php if ($success_message): ?>
@@ -949,17 +937,13 @@ if ($officers_result && $officers_result->num_rows > 0) {
         function updateThemeToggle() {
             const button = document.getElementById('themeToggle');
             const darkModeEnabled = document.body.classList.contains('dark-mode');
-            const icon = button.querySelector('i');
-            const label = button.querySelector('span');
-
-            button.setAttribute('aria-pressed', darkModeEnabled ? 'true' : 'false');
-            icon.querySelector('use').setAttribute('href', darkModeEnabled ? '#settings-icon-sun' : '#settings-icon-moon');
-            label.textContent = darkModeEnabled ? 'Light Mode' : 'Dark Mode';
+            button.setAttribute('aria-checked', String(darkModeEnabled));
+            button.title = darkModeEnabled ? 'Switch to light theme' : 'Switch to dark theme';
         }
 
         document.getElementById('themeToggle').addEventListener('click', function() {
             const darkModeEnabled = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', darkModeEnabled ? 'dark' : 'light');
+            try { localStorage.setItem('theme', darkModeEnabled ? 'dark' : 'light'); } catch (_) {}
             updateThemeToggle();
         });
         updateThemeToggle();

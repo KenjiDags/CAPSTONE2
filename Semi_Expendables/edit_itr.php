@@ -73,7 +73,7 @@ if (preg_match('/^(\d{1,4})-(\d{2})-(\d{4})$/', (string)$itr['itr_no'], $m)) {
     .has-error input, .has-error textarea, .has-error select { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
   </style>
 </head>
-<body>
+<body class="item-entry-page">
   <?php include dirname(__DIR__) . '/sidebar.php'; ?>
   <div class="container inventory-item-form no-number-spinners">
     <h2>Edit Inventory Transfer Report (ITR)</h2>
