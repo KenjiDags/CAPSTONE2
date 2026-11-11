@@ -256,7 +256,7 @@ $title = $viewOnly ? 'RPCSP-' . str_pad((string)$id, 4, '0', STR_PAD_LEFT) : 'Ad
     <?php if (!$viewOnly): ?></form><?php endif; ?>
 </div>
 </div>
-<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 // Keep the displayed quantity difference in sync, including Match Balance.
 if (document.getElementById('rpcsp-save-form')) {

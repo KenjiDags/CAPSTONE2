@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
         http_response_code(400);
         exit('Invalid request. Reload the inventory and try again.');
     }
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     try {
         archiveRecord($conn, 'Supply', (int)$_POST['delete_id']);
         header('Location: inventory.php?archived=1');
@@ -122,7 +122,7 @@ if (isset($_GET['action'])) {
         case 'delete':
             if (isset($_POST['id'])) {
                 $id = intval($_POST['id']);
-                require_once dirname(__DIR__) . '/archive_helpers.php';
+                require_once dirname(__DIR__) . '/archive.php';
                 try {
                     archiveRecord($conn, 'Supply', $id);
                     echo json_encode(['success' => true, 'message' => 'Item moved to Archive']);

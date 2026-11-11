@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trust_confirm'])) {
                 }
                 session_regenerate_id(true);
                 $_SESSION['totp_setup_pending'] = ['id' => (int)$user['user_id'], 'expires' => time() + 900, 'attempts' => 0];
-                header('Location: totp_setup.php'); exit;
+                header('Location: totp.php?page=setup'); exit;
             } else {
                 $error = 'Invalid credentials or account awaiting administrator approval.';
             }

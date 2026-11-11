@@ -2,7 +2,7 @@
 require_once __DIR__ . '/bootstrap.php'; 
     require dirname(__DIR__) . '/auth.php';
     require dirname(__DIR__) . '/config.php';
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     if (empty($_SESSION['archive_csrf'])) $_SESSION['archive_csrf'] = bin2hex(random_bytes(32));
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_sc_id'])) {

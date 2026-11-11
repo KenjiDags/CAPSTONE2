@@ -51,7 +51,7 @@ if ($accessUser['role'] === 'admin') {
 $_SESSION['role'] = $accessUser['role'];
 $_SESSION['username'] = $accessUser['username'];
 if ($accessUser['role'] === 'admin' && !empty($_SESSION['totp_new_recovery']) && !defined('RECOVERY_PAGE')) {
-    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'totp_recovery.php');
+    header('Location: ' . (defined('APP_ROOT_URL') ? APP_ROOT_URL : '') . 'totp.php?page=recovery');
     exit;
 }
 if ($accessUser['role'] === 'admin' && !defined('ADMIN_PAGE') && !defined('ACCOUNT_PAGE')) {

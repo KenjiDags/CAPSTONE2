@@ -16,7 +16,7 @@ if ((
     )) {
     $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_id'];
     if ($delete_id > 0) {
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'Semi-expendable', $delete_id);
     }
     $redirectCategory = isset($_POST['category']) ? $_POST['category'] : (isset($_GET['category']) ? $_GET['category'] : '');

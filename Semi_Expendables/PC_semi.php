@@ -7,7 +7,7 @@ require_once dirname(__DIR__) . '/config.php';
 if (isset($_GET['delete_id'])) {
   $deleteId = (int)$_GET['delete_id'];
   if ($deleteId > 0) {
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'Semi-expendable', $deleteId);
   }
 

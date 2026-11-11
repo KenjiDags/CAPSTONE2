@@ -8,7 +8,7 @@ require dirname(__DIR__) . '/functions.php';
 if (isset($_GET['delete_itr_id'])) {
     $del_id = (int)$_GET['delete_itr_id'];
     try {
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'ITR', $del_id);
     } catch (Throwable $e) {
         http_response_code(500);

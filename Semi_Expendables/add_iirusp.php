@@ -382,7 +382,7 @@ if ($officer_result) {
 
 
 <!-- JS LOGIC -->
-<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 let allocationSequence = 0;
 function appendRemainingAllocation(sourceRow) {

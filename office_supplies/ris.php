@@ -9,7 +9,7 @@ if (isset($_GET['delete_ris_id'])) {
     $ris_id = (int)$_GET['delete_ris_id'];
 
     try {
-        require_once dirname(__DIR__) . '/archive_helpers.php';
+        require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'RIS', $ris_id);
     } catch (Exception $e) {
         // Rollback on error

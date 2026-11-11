@@ -83,7 +83,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS ppe_ptr_items (
 // DELETE LOGIC
 if (isset($_GET['delete_ptr_id'])) {
     $ptr_id = (int)$_GET['delete_ptr_id'];
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'PTR', $ptr_id);
     // Redirect to avoid resubmission on refresh
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';

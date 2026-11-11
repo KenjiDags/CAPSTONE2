@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
         $error = 'Invalid delete request. Reload the page and try again.';
     } else {
         try {
-            require_once dirname(__DIR__) . '/archive_helpers.php';
+            require_once dirname(__DIR__) . '/archive.php';
             archiveRecord($conn, 'RPCPPE', $id);
             $_SESSION['success'] = 'RPCPPE report moved to Archive.';
             header('Location: ' . APP_ROOT_URL . 'PPE/RPCPPE.php?' . http_build_query(['search' => $search, 'sort' => $sort]));

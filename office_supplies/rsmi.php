@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = filter_var($_POST['delete_rsmi_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     try {
         if (!$id) throw new InvalidArgumentException('Invalid RSMI document.');
-        require_once dirname(__DIR__) . '/archive_helpers.php';
+        require_once dirname(__DIR__) . '/archive.php';
         archiveRecord($conn, 'RSMI', $id);
         $_SESSION['rsmi_notice'] = ['success', 'RSMI document deleted. You can restore it from Archives.'];
     } catch (Throwable $e) {

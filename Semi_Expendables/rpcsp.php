@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = filter_var($_POST['delete_rpcsp_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     try {
         if (!$id) throw new InvalidArgumentException('Invalid RPCSP document.');
-        require_once dirname(__DIR__) . '/archive_helpers.php';
+        require_once dirname(__DIR__) . '/archive.php';
         archiveRecord($conn, 'RPCSP', $id);
         $_SESSION['rpcsp_notice'] = ['success', 'RPCSP document deleted. You can restore it from Archives.'];
     } catch (Throwable $error) {

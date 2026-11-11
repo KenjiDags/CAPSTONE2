@@ -651,7 +651,7 @@ $ppe_items = $conn->query("SELECT * FROM ppe_property WHERE NULLIF(TRIM(officer_
     </div>
 </div>
 
-<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 // Toggle "Others" input box visibility
 document.addEventListener('DOMContentLoaded', function() {

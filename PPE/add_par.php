@@ -113,7 +113,7 @@ function parEscape($value): string { return htmlspecialchars((string)$value, ENT
 <datalist id="parOfficers"><?php foreach ($officers as $officer): ?><option value="<?= parEscape($officer['officer_name']) ?>"><?= parEscape($officer['officer_position']) ?></option><?php endforeach; ?></datalist>
 <div class="button-group"><button type="submit" class="btn btn-primary" <?= !$available ? 'disabled' : '' ?>>Save PAR &amp; Issue Items</button><a class="btn btn-secondary" href="PPE/PPE_PAR.php">Cancel</a></div>
 </form></div></main>
-<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 const parRows = [...document.querySelectorAll('[data-par-item]')];
 document.getElementById('parItemSearch').addEventListener('input', event => {

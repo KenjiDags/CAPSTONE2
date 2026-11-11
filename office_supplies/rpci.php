@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = filter_var($_POST['delete_rpci_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     try {
         if (!$id) throw new InvalidArgumentException('Invalid RPCI document.');
-        require_once dirname(__DIR__) . '/archive_helpers.php';
+        require_once dirname(__DIR__) . '/archive.php';
         archiveRecord($conn, 'RPCI', $id);
         $_SESSION['rpci_notice'] = ['success', 'RPCI document deleted. You can restore it from Archives.'];
     } catch (Throwable $error) {

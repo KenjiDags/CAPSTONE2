@@ -9,7 +9,7 @@ require dirname(__DIR__) . '/functions.php';
 if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) || isset($_GET['delete_iirusp_id'])) {
     $delete_id = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : (int)$_GET['delete_iirusp_id'];
     if ($delete_id > 0) {
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'IIRUSP', $delete_id);
     }
     if (ob_get_level() > 0) { ob_end_clean(); }

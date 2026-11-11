@@ -216,7 +216,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
-    <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+    <?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 document.querySelectorAll('#rpcppe-table input[data-recorded-balance]').forEach(input => {
     const difference = input.closest('tr').querySelector('input[name^="shortage_qty["]');

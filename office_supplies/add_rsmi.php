@@ -309,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+    <?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
         // Add mobile sidebar toggle functionality if needed
         function toggleSidebar() {

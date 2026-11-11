@@ -765,7 +765,7 @@ $auto_ris_number = $is_editing ? $ris_data['ris_no'] : generateRISNumber($conn);
         </div>
     </div>
 
-    <?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+    <?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
         const requestedDate = document.querySelector('[name="date_requested"]');
         const daysInputs = document.querySelectorAll('.days-to-consume');

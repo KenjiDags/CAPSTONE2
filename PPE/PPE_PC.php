@@ -10,7 +10,7 @@ $pcReturnUrl = 'PPE/PPE_PC.php?' . http_build_query([
 // DELETE LOGIC (moved from pc_delete.php)
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 	$id = (int)$_GET['delete_id'];
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'PC', $id);
 	// Redirect back to the return URL or PPE_PC.php
 	$return = isset($_GET['return']) ? $_GET['return'] : 'PPE_PC.php';

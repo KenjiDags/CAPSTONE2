@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/config.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $delete_id = (int)$_POST['delete_id'];
     if ($delete_id > 0) {
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'PPE', $delete_id);
     }
     if (ob_get_level() > 0) { ob_end_clean(); }

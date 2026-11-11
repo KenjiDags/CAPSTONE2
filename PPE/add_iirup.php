@@ -361,7 +361,7 @@ $officer_result->free();
         </a>
     </div>
 </div>
-<?php require dirname(__DIR__) . '/officer_dropdown_options.php'; ?>
+<?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
 <script>
 // Replace a default zero immediately when typing into an item amount field.
 function selectDefaultZero(event) {

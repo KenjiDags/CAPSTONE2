@@ -22,7 +22,7 @@ function formatICSNo($ics_no) {
 // DELETE LOGIC
 if (isset($_GET['delete_ics_id'])) {
     $ics_id = (int)$_GET['delete_ics_id'];
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'ICS', $ics_id);
     // Redirect to avoid resubmission on refresh (preserve sort param if present)
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';

@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/functions.php';
 // RRSP listing page (mirrors ICS listing). If deletion requested, process first.
 if (isset($_GET['delete_rrsp_id'])) {
     $del_id = (int)$_GET['delete_rrsp_id'];
-    require_once dirname(__DIR__) . '/archive_helpers.php';
+    require_once dirname(__DIR__) . '/archive.php';
     archiveRecord($conn, 'RRSP', $del_id);
     $sortParam = isset($_GET['sort']) ? ('?sort=' . urlencode($_GET['sort'])) : '';
     header("Location: rrsp.php" . $sortParam);
