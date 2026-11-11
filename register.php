@@ -53,10 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Register - TESDA Inventory</title>
     <link rel="stylesheet" href="css/styles.css?v=<?= time() ?>">
     <style>
-        body { 
+        body.register-page {
             font-family: 'Century Gothic', Century Gothic, sans-serif;
             background: #f5f5f5;
-            min-height: 100vh; 
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            margin-left: 0 !important;
             margin: 0; 
             display: flex;
             align-items: center;
@@ -64,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
         }
         .register-container { 
+            flex-shrink: 0;
+            margin-block: auto;
             max-width: 380px; 
             width: 100%; 
             background: #fff; 
@@ -174,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
-<body>
+<body class="register-page">
     <div class="register-container">
         <div class="logo">
             <img src="images/tesda_logo.png" alt="TESDA Logo">

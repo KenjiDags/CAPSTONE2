@@ -186,7 +186,7 @@
       label: 'Total quantity',
       data: items.map(item => item.originalQty === null || item.originalQty === undefined || !Number.isFinite(Number(item.originalQty)) ? null : Math.max(0, Number(item.originalQty))),
       grouped: false, order: 1, barPercentage: 0.85,
-      backgroundColor: dark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.10)',
+      backgroundColor: dark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.35)',
       borderWidth: 0, borderRadius: 4
     }] }, plugins: [{ id: 'mrpNameLabels', afterRender: renderNameLabels, beforeDestroy(chart) {
       const frame = chart.canvas?.parentNode?.closest('.mrp-multi-chart-frame');
