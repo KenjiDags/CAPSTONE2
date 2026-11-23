@@ -6,20 +6,16 @@
 .DS_Store
 
 # Dependencies
-/vendor/
 /node_modules/
-composer.phar
 
 # Project specific
 *.log
 *.zip
 *.sqlite
-# Keep database migrations, application images, and composer.lock in Git.
+# Keep database migrations and application images in Git.
 # Store private database dumps and machine-specific configuration here instead.
 /backups/
 /db/backups/
 /config.local.php
 /uploads/
 /www/cache/
-/tcpdf1/
-tcpdf_temp.zip

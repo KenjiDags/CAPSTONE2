@@ -2,6 +2,25 @@
 define('ACCOUNT_PAGE', true);
 require 'auth.php';
 require 'config.php';
+$adminSettings = ($_GET['view'] ?? '') === 'admin';
+$settingsUrl = $adminSettings ? 'user_settings.php?view=admin' : 'user_settings.php';
+if ($adminSettings) {
+    if ($_SESSION['role'] !== 'admin') {
+        header('Location: user_settings.php');
+        exit;
+    }
+    $_SESSION['admin_settings_csrf'] ??= bin2hex(random_bytes(32));
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $nameFields = ['admin_settings_csrf', 'update_full_name', 'new_full_name'];
+        $passwordFields = ['admin_settings_csrf', 'update_password', 'current_password', 'new_password', 'confirm_password'];
+        $allowedFields = isset($_POST['update_full_name']) ? $nameFields : $passwordFields;
+        if (array_diff(array_keys($_POST), $allowedFields) ||
+            !hash_equals($_SESSION['admin_settings_csrf'], (string)($_POST['admin_settings_csrf'] ?? ''))) {
+            http_response_code(400);
+            exit('Invalid settings request. Reload the page and try again.');
+        }
+    }
+}
 if ($_SESSION['role'] !== 'admin' && isset($_POST['totp_action'])) {
     http_response_code(403); exit('Authenticator settings are only available to administrators.');
 }
@@ -143,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_full_name'])) 
         }
         $update->close();
     }
-    header('Location: user_settings.php');
+    header('Location: ' . $settingsUrl);
     exit;
 }
 
@@ -223,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_password'])) {
         }
         $stmt->close();
     }
-    header('Location: user_settings.php');
+    header('Location: ' . $settingsUrl);
     exit;
 }
 
@@ -639,7 +658,11 @@ if ($officers_result && $officers_result->num_rows > 0) {
 <svg class="settings-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0">
     <defs><?php foreach ($settingsIconPaths as $name => $paths): ?><symbol id="settings-icon-<?= $name ?>" viewBox="0 0 24 24"><?= $paths ?></symbol><?php endforeach; ?></defs>
 </svg>
-    <?php include 'sidebar.php'; ?>
+    <?php if ($adminSettings): ?>
+        <?php $adminSidebarView = 'settings'; require __DIR__ . '/admin_sidebar.php'; ?>
+    <?php else: ?>
+        <?php include 'sidebar.php'; ?>
+    <?php endif; ?>
     
     <div class="content">
         <div class="settings-container">
@@ -670,9 +693,12 @@ if ($officers_result && $officers_result->num_rows > 0) {
             <section class="settings-section settings-card">
                 <h2>
                     <?= $settingsOutlineIcon('user-circle') ?>
-                    User Information
+                    <?= $adminSettings ? 'Change Name' : 'User Information' ?>
                 </h2>
                     <form method="POST" id="inlineNameForm" autocomplete="off">
+                        <?php if ($adminSettings): ?>
+                            <input type="hidden" name="admin_settings_csrf" value="<?= htmlspecialchars($_SESSION['admin_settings_csrf']) ?>">
+                        <?php endif; ?>
                         <div class="form-row">
                             <label for="inline_full_name"><?= $settingsOutlineIcon('id-card') ?> Full Name:</label>
                             <input 
@@ -685,8 +711,12 @@ if ($officers_result && $officers_result->num_rows > 0) {
                             >
                         </div>
                         <input type="hidden" name="update_full_name" value="1">
+                        <?php if ($adminSettings): ?>
+                            <button type="submit" class="btn-update">Update Name</button>
+                        <?php endif; ?>
                     </form>
 
+                    <?php if (!$adminSettings): ?>
                     <div class="settings-inline-fields">
                     <form method="POST" id="inlineUserPositionForm" autocomplete="off">
                         <div class="form-row">
@@ -719,10 +749,11 @@ if ($officers_result && $officers_result->num_rows > 0) {
                         <input type="hidden" name="update_username" value="1">
                     </form>
                     </div>
+                    <?php endif; ?>
                 </section>
             
             
-            <?php if ($_SESSION['role'] === 'admin'): ?>
+            <?php if (!$adminSettings && $_SESSION['role'] === 'admin'): ?>
             <section class="settings-section">
                 <h2><?= $settingsOutlineIcon('shield-alt') ?> Authenticator App</h2>
                 <?php if ($totpNotice): ?><div class="alert <?= $totpRecovery ? 'alert-success' : 'alert-error' ?>" role="status"><?= htmlspecialchars($totpNotice) ?></div><?php endif; ?>
@@ -774,6 +805,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
                 </h2>
                 
                 <form method="POST">
+                    <?php if ($adminSettings): ?>
+                        <input type="hidden" name="admin_settings_csrf" value="<?= htmlspecialchars($_SESSION['admin_settings_csrf']) ?>">
+                    <?php endif; ?>
                     <div class="form-row">
                         <label for="current_password">Current Password</label>
                         <div class="password-toggle-wrapper">
@@ -828,6 +862,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
             </section>
             
             <!-- Officers Management Section -->
+            <?php if (!$adminSettings): ?>
             <section class="settings-section settings-card officers-manager">
                 <div class="officers-manager-header">
                     <h2><?= $settingsOutlineIcon('user-friends') ?> Manage Officers</h2>
@@ -895,6 +930,7 @@ if ($officers_result && $officers_result->num_rows > 0) {
                     <?php endif; ?>
                 </div>
             </section>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -946,6 +982,9 @@ if ($officers_result && $officers_result->num_rows > 0) {
             try { localStorage.setItem('theme', darkModeEnabled ? 'dark' : 'light'); } catch (_) {}
             updateThemeToggle();
         });
+        try {
+            document.body.classList.toggle('dark-mode', localStorage.getItem('theme') === 'dark');
+        } catch (_) {}
         updateThemeToggle();
         
         // Auto-hide success/error messages after 5 seconds

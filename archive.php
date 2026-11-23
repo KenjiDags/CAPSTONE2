@@ -312,6 +312,22 @@ function archiveEscape($value): string
     );
 }
 
+function archiveDetailLabel(string $key): string
+{
+    $terms = [
+        'id' => 'ID', 'no' => 'Number', 'iar' => 'IAR', 'uacs' => 'UACS',
+        'ris' => 'RIS', 'rsmi' => 'RSMI', 'rpci' => 'RPCI', 'rpcsp' => 'RPCSP',
+        'rpcppe' => 'RPCPPE', 'ics' => 'ICS', 'itr' => 'ITR', 'ptr' => 'PTR',
+        'par' => 'PAR', 'rrsp' => 'RRSP', 'iirup' => 'IIRUP', 'iirusp' => 'IIRUSP',
+        'ppe' => 'PPE', 'sc' => 'SC', 'pc' => 'PC', 'ict' => 'ICT',
+        'qty' => 'Quantity',
+    ];
+    return implode(' ', array_map(
+        static fn(string $word): string => $terms[$word] ?? ucfirst($word),
+        explode('_', strtolower($key))
+    ));
+}
+
 $search = trim((string) ($_GET['search'] ?? ''));
 $type = (string) ($_GET['type'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
@@ -486,10 +502,9 @@ $records = $stmt->get_result();
             overflow-wrap: anywhere;
         }
 
-        .archive-back {
-            display: inline-block;
-            color: #1d4ed8;
-            font-weight: 700;
+        .archive-back:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
         }
 
         .archive-detail details {
@@ -515,14 +530,18 @@ $records = $stmt->get_result();
             grid-template-columns:
                 repeat(
                     auto-fit,
-                    minmax(min(100%, 240px), 1fr)
+                    minmax(min(100%, 300px), 1fr)
                 );
-            gap: 18px 24px;
+            gap: 10px;
             margin: 0;
         }
 
         .archive-field {
             min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
         }
 
         .archive-fields dt {
@@ -555,8 +574,9 @@ $records = $stmt->get_result();
             color: #cbd5e1;
         }
 
-        body.dark-mode .archive-back {
-            color: #93c5fd;
+        body.dark-mode .archive-field {
+            background: #1e293b;
+            border-color: #475569;
         }
 
         .archive-filters #recordType { padding-right: 44px; min-width: 160px; box-sizing: border-box; }
@@ -712,7 +732,7 @@ $records = $stmt->get_result();
             >
 
                 <a
-                    class="archive-back"
+                    class="archive-back pill-btn pill-view"
                     href="archive.php?<?= archiveEscape(
                         http_build_query([
                             'tab' => $tab,
@@ -721,7 +741,8 @@ $records = $stmt->get_result();
                         ])
                     ) ?>"
                 >
-                    &larr; Back to Archive
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Back to Archive
                 </a>
 
 
@@ -747,6 +768,7 @@ $records = $stmt->get_result();
                     512,
                     JSON_THROW_ON_ERROR
                 );
+                $primaryTable = archiveSources()[$detail['record_type']][0] ?? null;
                 ?>
 
 
@@ -755,15 +777,9 @@ $records = $stmt->get_result();
                     <details open>
 
                         <summary>
-                            <?= archiveEscape(
-                                ucwords(
-                                    str_replace(
-                                        '_',
-                                        ' ',
-                                        $table
-                                    )
-                                )
-                            ) ?>
+                            <?= archiveEscape($table === $primaryTable
+                                ? $detail['record_type'] . ' Details'
+                                : archiveDetailLabel($table)) ?>
 
                             (<?= count($rows) ?>)
                         </summary>
@@ -799,25 +815,8 @@ $records = $stmt->get_result();
 
                                             <div class="archive-field">
 
-                                                <dt>
-                                                    <?= archiveEscape(
-                                                        ucwords(
-                                                            str_replace(
-                                                                '_',
-                                                                ' ',
-                                                                $column
-                                                            )
-                                                        )
-                                                    ) ?>
-                                                </dt>
-
-                                                <dd>
-                                                    <?=
-                                                        $value === null || $value === ''
-                                                            ? '&mdash;'
-                                                            : archiveEscape($value)
-                                                    ?>
-                                                </dd>
+                                                <dt><?= archiveEscape(archiveDetailLabel($column)) ?></dt>
+                                                <dd><?= $value === null || $value === '' ? '—' : archiveEscape($value) ?></dd>
 
                                             </div>
 

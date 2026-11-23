@@ -188,7 +188,7 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     }
     @media (max-width: 420px) { .cards, tr { grid-template-columns: 1fr; } td:first-child, .account-actions-cell { grid-column: auto; } }
     .admin-header { background: #1c2a40; border-bottom: 1px solid #334155; }
-    .admin-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 14px; }
+    .admin-header-inner { padding-block: 14px; }
     .admin-header-title { font-size: 16px; }
     .admin-header-subtitle { margin: 5px 0 0; color: #b8c5d8; font-size: 13px; }
     .admin-role { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; white-space: nowrap; }
@@ -213,7 +213,7 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
     body.dark-mode .pending-request { border-color: #3b4d65; }
     body.dark-mode .request-avatar { background: #334e76; color: #dbeafe; }
     body.dark-mode .request-note, body.dark-mode .request-verification { color: #a8b8ce; }
-    @media (max-width: 480px) { .admin-header-inner { flex-wrap: wrap; gap: 10px; } .pending-panel { padding: 14px; } .request-footer .account-actions { margin-left: 0; } }
+    @media (max-width: 480px) { .pending-panel { padding: 14px; } .request-footer .account-actions { margin-left: 0; } }
     body.dark-mode .badge.role-badge { background: #475569; color: #fff; }
     .accounts-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
     .accounts-toolbar label { display: grid; gap: 6px; font-size: 12px; color: #64748b; }
@@ -328,28 +328,11 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
   </style>
 </head>
 <body>
-<aside class="sidebar sidebar--hover" id="admin-sidebar" aria-label="Admin navigation" data-query-navigation="true">
-  <div class="logo-text"><div class="logo"><img src="images/tesda_logo.png" alt="TESDA logo" width="64" height="64"><h3>TESDA Inventory</h3></div></div>
-  <nav id="admin-menu" aria-label="Administration">
-    <a href="admin.php?view=overview" class="<?= $view === 'overview' ? 'active' : '' ?>" <?= $view === 'overview' ? 'aria-current="page"' : '' ?>>
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><span>Overview</span>
-    </a>
-    <a href="admin.php?view=accounts" class="<?= $view === 'accounts' ? 'active' : '' ?>" <?= $view === 'accounts' ? 'aria-current="page"' : '' ?>>
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v1"/></svg><span>Accounts</span>
-    </a>
-    <a href="admin.php?view=recovery" class="<?= $view === 'recovery' ? 'active' : '' ?>" <?= $view === 'recovery' ? 'aria-current="page"' : '' ?>>
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M8 14h8M12 10l-4 4 4 4"/></svg><span>Recover accounts</span>
-    </a>
-  </nav>
-  <div class="logout-wrapper"><a href="logout.php" class="logout-btn"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M9 12h12M17 8l4 4-4 4"/></svg><span>Logout</span></a></div>
-</aside>
-<button type="button" class="sidebar-edge-toggle" aria-label="Open sidebar" aria-expanded="false" aria-controls="admin-menu"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
-<script src="js/sidebar_script.js?v=<?= filemtime(__DIR__ . '/js/sidebar_script.js') ?>"></script>
+<?php $adminSidebarView = $view; require __DIR__ . '/admin_sidebar.php'; ?>
 <main class="admin-main">
 <header class="admin-header">
     <div class="admin-header-inner">
     <div><p class="admin-header-title">Administration</p><p class="admin-header-subtitle">Account management</p></div>
-    <button type="button" id="admin-theme-toggle" class="theme-switch" role="switch" aria-checked="false" aria-label="Dark theme" title="Switch to dark theme"><svg class="switch-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="switch-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/></svg><span class="theme-switch-thumb" aria-hidden="true"></span></button>
   </div>
 </header>
 <div class="admin-content">
@@ -581,18 +564,6 @@ function admin_action(int $id, string $action, string $label, string $csrf, stri
   try {
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
   } catch (_) {}
-  const themeToggle = document.getElementById('admin-theme-toggle');
-  const updateAdminTheme = () => {
-    const dark = document.body.classList.contains('dark-mode');
-    themeToggle.setAttribute('aria-checked', String(dark));
-    themeToggle.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
-  };
-  themeToggle.addEventListener('click', () => {
-    const dark = document.body.classList.toggle('dark-mode');
-    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (_) {}
-    updateAdminTheme();
-  });
-  updateAdminTheme();
 })();
 </script>
 </body>

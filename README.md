@@ -64,26 +64,26 @@ Removing an account now blocks access and moves it to Recover accounts. Restorin
 it returns the account to its previous status. Accounts permanently deleted
 before this change can only be restored from a database backup.
 
-If Composer dependencies changed, run `composer install`. Commit `composer.lock`
-when generated so teammates install the same dependency versions; do not commit
-the generated `vendor/` directory. Reload the page with Ctrl+F5 after updating.
+Reload the page with Ctrl+F5 after updating.
 
 ## First-time setup
 
+See the [System Setup section of the user manual](USER_MANUAL.md#1-system-setup)
+for the Windows installation steps.
+
 1. Clone the project into XAMPP's `htdocs` folder.
 2. Start Apache and MySQL/MariaDB.
-3. Import `SQL/tesda_inventory.sql` into a new local database. Import
-   `SQL/items.sql` if you want the included seed data, then import
-   `SQL/create_admin.sql` to create the user profile schema and default
-   administrator account. The latter script resets the default admin password when
-   rerun; use it for initial setup.
+3. Import `SQL/tesda_inventory.sql` in phpMyAdmin. It creates the local
+   database, inventory and account tables, initial administrator, and
+   trusted-device table. Import `SQL/items.sql` once if you want the
+   included seed data.
 4. Check the database connection in `config.php`. This file is currently tracked;
    do not commit private database credentials.
 5. Run the migration commands above.
-6. Run `composer install` for the dependencies in `composer.json`.
-7. Open `http://localhost/CAPSTONE2/` (adjust the folder name if needed).
-8. Sign in with the default administrator from `SQL/create_admin.sql` and change
-   its password. New registrations include a User Position and require approval.
+6. Open `http://localhost/CAPSTONE2/` (adjust the folder name if needed).
+7. Sign in with the initial administrator credentials listed at the top of
+   `SQL/tesda_inventory.sql`, set up two-factor authentication, and change the
+   password. New registrations include a User Position and require approval.
 
 ## Diagnose missing changes
 

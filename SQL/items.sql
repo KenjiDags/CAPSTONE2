@@ -258,15 +258,6 @@ INSERT INTO `item_history` (`history_id`, `item_id`, `stock_number`, `item_name`
 INSERT INTO `ris_items` (`item_id`, `ris_id`, `stock_number`, `stock_available`, `issued_quantity`, `remarks`, `unit_cost_at_issue`) VALUES
 (0, 31, 'A.03.b', 'Yes', 1, '', 0.00);
 
-INSERT INTO `rspi_items` (`id`, `rspi_id`, `ics_no`, `responsibility_center_code`, `property_no`, `description`, `unit`, `quantity_issued`, `unit_cost`, `created_at`) VALUES
-(1, 1, 'ICS-001', 'IT-001', 'PROP-001', 'Desktop Computer', 'unit', 5, 25000.00, '2025-10-27 05:55:30'),
-(2, 1, 'ICS-002', 'IT-002', 'PROP-002', 'Printer', 'unit', 2, 8000.00, '2025-10-27 05:55:30'),
-(3, 2, 'ICS-003', 'ADM-001', 'PROP-003', 'Office Chair', 'piece', 10, 1500.00, '2025-10-27 05:55:30');
-
-INSERT INTO `rspi_reports` (`id`, `serial_no`, `entity_name`, `fund_cluster`, `report_date`, `custodian_name`, `posted_by`, `status`, `created_at`, `updated_at`) VALUES
-(1, '2025-10-001', 'TESDA Provincial Office', '101', '2025-10-20', 'Juan Dela Cruz', 'Maria Santos', 'posted', '2025-10-27 05:55:30', '2025-10-27 05:55:30'),
-(2, '2025-10-002', 'TESDA Provincial Office', '102', '2025-10-23', 'Pedro Reyes', 'Maria Santos', 'posted', '2025-10-27 05:55:30', '2025-10-27 05:55:30');
-
 -- Sample data from the semi-expendable schema.
 INSERT INTO `property_cards` (`entity_name`, `fund_cluster`, `ppe_type`, `description`, `property_number`, `transaction_date`, `reference_par_no`, `receipt_qty`, `issue_qty`, `office_officer`, `amount`, `remarks`, `transaction_type`) VALUES
   ('Department of Education', '01', 'Office Equipment', 'Desktop Computer - Dell OptiPlex 3070, Intel Core i5, 8GB RAM, 256GB SSD, Serial: DL123456', 'PPE-2024-001', '2024-01-15', 'IAR-2024-001', 1.00, 0.00, NULL, 45000.00, 'Brand new unit for Admin Office', 'receipt'),

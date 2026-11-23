@@ -16,7 +16,6 @@ $sidebarRoutes = [
     'Semi_Expendables/ics.php' => ['ics.php', 'add_ics.php', 'edit_ics.php', 'view_ics.php', 'export_ics.php'],
     'Semi_Expendables/regspi.php' => ['regspi.php', 'add_regspi.php', 'view_regspi.php', 'export_regspi.php'],
     'Semi_Expendables/itr.php' => ['itr.php', 'add_itr.php', 'edit_itr.php', 'view_itr.php', 'export_itr.php'],
-    'Semi_Expendables/rspi.php' => ['rspi.php', 'view_rspi.php', 'export_rspi.php'],
     'Semi_Expendables/rpcsp.php' => ['rpcsp.php', 'add_rpcsp.php', 'view_rpcsp.php', 'rpcsp_export.php'],
     'Semi_Expendables/rrsp.php' => ['rrsp.php', 'add_rrsp.php', 'edit_rrsp.php', 'view_rrsp.php', 'export_rrsp.php', 'rrsp_export.php', 'rrsp_export_clean.php'],
     'Semi_Expendables/iirusp.php' => ['iirusp.php', 'add_iirusp.php', 'edit_iirusp.php', 'view_iirusp.php', 'export_iirusp.php'],
@@ -113,7 +112,6 @@ try {
                             <a href="Semi_Expendables/ics.php" class="<?= $sidebarActive('Semi_Expendables/ics.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/ics.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>ICS</span></a>
                             <a href="Semi_Expendables/regspi.php" class="<?= $sidebarActive('Semi_Expendables/regspi.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/regspi.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RegSPI</span></a>
                             <a href="Semi_Expendables/itr.php" class="<?= $sidebarActive('Semi_Expendables/itr.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/itr.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>ITR</span></a>
-                            <a href="Semi_Expendables/rspi.php" class="<?= $sidebarActive('Semi_Expendables/rspi.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/rspi.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RSPI</span></a>
                             <a href="Semi_Expendables/rpcsp.php" class="<?= $sidebarActive('Semi_Expendables/rpcsp.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/rpcsp.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RPCSP</span></a>
                             <a href="Semi_Expendables/rrsp.php" class="<?= $sidebarActive('Semi_Expendables/rrsp.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/rrsp.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>RRSP</span></a>
                             <a href="Semi_Expendables/iirusp.php" class="<?= $sidebarActive('Semi_Expendables/iirusp.php') ? 'active' : '' ?>" aria-current="<?= $sidebarActive('Semi_Expendables/iirusp.php') ? 'page' : '' ?>"><?= $sidebarIcon('file') ?><span>IIRUSP</span></a>

@@ -1,3 +1,6 @@
+-- TESDA Inventory first-time setup for MariaDB (XAMPP).
+-- Initial administrator: admin / admin123. Change the password after signing in.
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
@@ -647,51 +650,6 @@ CREATE TABLE IF NOT EXISTS rsmi_reports (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `rspi_items`
---
-
-CREATE TABLE IF NOT EXISTS `rspi_items` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `rspi_id` int NOT NULL,
-  `ics_no` varchar(50) NOT NULL,
-  `responsibility_center_code` varchar(50) DEFAULT NULL,
-  `property_no` varchar(50) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `unit` varchar(50) DEFAULT NULL,
-  `quantity_issued` int DEFAULT '0',
-  `unit_cost` decimal(12,2) DEFAULT '0.00',
-  `amount` decimal(12,2) GENERATED ALWAYS AS ((`quantity_issued` * `unit_cost`)) STORED,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `rspi_id` (`rspi_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- --------------------------------------------------------
-
---
--- Table structure for table `rspi_reports`
---
-
-CREATE TABLE IF NOT EXISTS `rspi_reports` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `serial_no` varchar(20) NOT NULL,
-  `entity_name` varchar(100) NOT NULL,
-  `fund_cluster` varchar(50) NOT NULL,
-  `report_date` date NOT NULL,
-  `custodian_name` varchar(100) NOT NULL,
-  `posted_by` varchar(100) DEFAULT NULL,
-  `status` enum('draft','posted','archived') DEFAULT 'draft',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `serial_no` (`serial_no`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `semi_expendable_history`
 --
 
@@ -769,7 +727,7 @@ CREATE TABLE IF NOT EXISTS `stock_card` (
 -- --------------------------------------------------------
 
 --
--- User accounts and profile fields are maintained in SQL/create_admin.sql.
+-- User accounts and profile fields are defined below.
 -- Import that script after this file when setting up a new database.
 -- --------------------------------------------------------
 
@@ -1065,3 +1023,123 @@ COMMIT;
 
 -- Existing installations: preserve the days estimate saved with each RIS item.
 ALTER TABLE ris_items ADD COLUMN IF NOT EXISTS days_to_consume INT UNSIGNED NULL;
+
+-- ---------------------------------------------------------
+-- Users Table
+-- ---------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id INT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(250) NOT NULL,
+
+    full_name VARCHAR(255) NULL,
+    user_full_name VARCHAR(255) NULL,
+    user_position VARCHAR(255) NULL,
+    email VARCHAR(255) NULL,
+
+    remember_token VARCHAR(255) NULL,
+
+    role VARCHAR(16) NOT NULL DEFAULT 'user',
+    status VARCHAR(16) NOT NULL DEFAULT 'active',
+
+    removed_at DATETIME NULL,
+    removed_from_status VARCHAR(16) NULL,
+
+    PRIMARY KEY (user_id),
+    UNIQUE KEY username (username),
+    UNIQUE KEY unique_user_email (email)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+
+-- Add missing columns if the users table already exists.
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS full_name VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS user_full_name VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS user_position VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS email VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS remember_token VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS role VARCHAR(16) NOT NULL DEFAULT 'user',
+    ADD COLUMN IF NOT EXISTS status VARCHAR(16) NOT NULL DEFAULT 'active',
+    ADD COLUMN IF NOT EXISTS removed_at DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS removed_from_status VARCHAR(16) NULL;
+
+ALTER TABLE users
+    ADD UNIQUE INDEX IF NOT EXISTS unique_user_email (email);
+
+
+-- ---------------------------------------------------------
+-- Deleted Records Archive
+-- ---------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS deleted_records (
+    archive_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    record_type VARCHAR(40) NOT NULL,
+    record_label VARCHAR(255) NOT NULL,
+    source_id INT NOT NULL,
+    snapshot LONGTEXT NOT NULL,
+    deleted_by INT NOT NULL,
+    deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (archive_id),
+    KEY archive_date (deleted_at)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------
+-- Item Stockout Tracking
+-- ---------------------------------------------------------
+CREATE TABLE IF NOT EXISTS item_stockouts (
+        item_id INT NOT NULL,
+        started_at DATETIME NOT NULL,
+        date_source VARCHAR(20) NOT NULL,
+
+        PRIMARY KEY (item_id),
+
+        CONSTRAINT fk_stockout_item
+            FOREIGN KEY (item_id)
+            REFERENCES items(item_id)
+            ON DELETE CASCADE
+    ) ENGINE=InnoDB
+      DEFAULT CHARSET=utf8mb4
+      COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------
+-- Default Administrator Account
+-- ---------------------------------------------------------
+
+INSERT INTO users (
+    username,
+    password,
+    full_name,
+    role,
+    status
+)
+VALUES (
+    'admin',
+    '$2y$10$QulA.kft0OBoeo2sf6u5pOXnRmUxVpcphVG4G1BFsCFCivJjFkFW6',
+    'Administrator',
+    'admin',
+    'active'
+)
+ON DUPLICATE KEY UPDATE username = VALUES(username);
+
+-- Trusted Devices
+-- Expiry dates use UTC; raw tokens are never stored.
+CREATE TABLE IF NOT EXISTS auth_trusted_devices (
+    device_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    credential_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    UNIQUE KEY uq_device_token (token_hash),
+    KEY idx_device_user_expiry (user_id, expires_at),
+    KEY idx_device_expiry (expires_at)
+) ENGINE=InnoDB;
+-- Optional cleanup: DELETE FROM auth_trusted_devices WHERE expires_at <= UTC_TIMESTAMP();

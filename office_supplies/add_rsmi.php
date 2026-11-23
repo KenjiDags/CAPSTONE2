@@ -64,69 +64,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Page-Specific Icon */
-        .container h2::before {
-            content: "\f570";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #3b82f6;
+        .rsmi-form-page { max-width: 1120px; margin-inline: auto; }
+        .rsmi-form-page .currency { white-space: nowrap; }
+        .rsmi-form-page .table-viewport input { min-width: 10rem; }
+        .rsmi-form-page #signatureForm {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
         }
-
-        /* Align export button properly in container */
-        .search-add-container {
-            align-items: center;
-            padding: 15px 20px 0px 20px;
-        }
-
-        .rsmi-back-actions {
-            background: transparent;
-            margin-bottom: 16px;
-        }
-
-        .export-section {
-            margin-bottom: 20px;
-        }
-
-        /* Currency cell styling - green color override */
-        .currency {
-            color: #059669;
-        }
-
-        .recapitulation-heading {
-            margin-top: 40px !important;
-        }
-        .rsmi-table-viewport {
-            max-height: 420px;
-            overflow-y: auto;
-            overflow-x: auto;
-            scrollbar-gutter: stable;
-        }
-        .rsmi-table-viewport table {
-            width: 100%;
-            border-collapse: collapse;
-            overflow: visible !important;
-            margin: 0;
-        }
-        .rsmi-table-viewport thead th {
-            position: sticky;
-            top: 0;
-            z-index: 3;
-            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-            color: #fff;
-        }
-        body.dark-mode .rsmi-table-viewport { scrollbar-color: #475569 #0f172a; }
     </style>
 </head>
 <body class="add-page item-entry-page">
     <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 
-    <div class="container">
-        <h2>Add RSMI Document</h2>
-        <div class="rsmi-back-actions"><a href="office_supplies/rsmi.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to RSMI</a></div>
+    <div class="add-ris-page content">
+    <div class="form-container inventory-item-form rsmi-form-page">
+        <header class="page-header">
+            <h1 class="form-page-title"><i class="fas fa-file-invoice" aria-hidden="true"></i> Add RSMI Document</h1>
+            <p class="form-page-subtitle">Review issued supplies and prepare the report for signing.</p>
+        </header>
         <?php if ($error): ?><div class="alert alert-error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
 
-        <div class="table-container rsmi-table-viewport" tabindex="0" role="region" aria-label="RSMI entries, scroll to view rows">
-            <table id="rsmiTable">
+        <section class="section-card" aria-labelledby="rsmi-entries-heading">
+            <h3 class="form-section-heading" id="rsmi-entries-heading"><i class="fas fa-boxes-stacked" aria-hidden="true"></i> Issued Supplies</h3>
+            <div class="table-frame"><div class="table-viewport" tabindex="0" role="region" aria-label="RSMI entries, scroll to view rows">
+            <table id="rsmiTable" class="compact-document-table">
             <thead>
                 <tr>
                     <th><i class="fas fa-hashtag"></i> RIS No.</th>
@@ -186,10 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </table>
         </div>
 
-        <h2 class="recapitulation-heading">Recapitulation</h2>
+        </div></section>
+        <section class="section-card" aria-labelledby="rsmi-recap-heading">
+            <h3 class="form-section-heading" id="rsmi-recap-heading"><i class="fas fa-list-alt" aria-hidden="true"></i> Recapitulation</h3>
 
-        <div class="table-container rsmi-table-viewport" tabindex="0" role="region" aria-label="Recapitulation, scroll to view rows">
-            <table id="recapTable">
+        <div class="table-frame"><div class="table-viewport" tabindex="0" role="region" aria-label="Recapitulation, scroll to view rows">
+            <table id="recapTable" class="compact-document-table">
             <thead>
                 <tr>
                     <th><i class="fas fa-barcode"></i> Stock No.</th>
@@ -218,15 +180,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </table>
         </div>
 
-        <!-- Signature Names Form -->
-        <div class="section-card signatory-card" style="background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-top: 30px; margin-bottom: 20px;">
-            <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-signature"></i> Signatory Information
-            </h3>
-            <form method="post" id="signatureForm" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: end;">
-                <div class="form-group" style="margin: 0;">
-                    <label for="custodian_name" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
-                        <i class="fas fa-user"></i> Supply/Property Custodian:
+        </div></section>
+        <section class="section-card signatory-card" aria-labelledby="rsmi-signatory-heading">
+            <h3 class="form-section-heading" id="rsmi-signatory-heading"><i class="fas fa-signature" aria-hidden="true"></i> Signatory Information</h3>
+            <p class="required-fields-note"><span class="required-indicator" aria-hidden="true">*</span> indicates a required field.</p>
+            <form method="post" id="signatureForm" class="form-grid">
+                <div class="form-group">
+                    <label for="custodian_name">
+                        <i class="fas fa-user"></i> Supply/Property Custodian: <span class="required-indicator" aria-hidden="true">*</span>
                     </label>
                     <input
                         type="text"
@@ -234,12 +195,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="custodian_name" required maxlength="255"
                         value="<?php echo htmlspecialchars($custodian_value ?? $default_custodian, ENT_QUOTES, 'UTF-8'); ?>"
                         placeholder="Enter name"
-                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+
                     >
                 </div>
-                <div class="form-group" style="margin: 0; position: relative;">
-                    <label for="accounting_staff" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
-                        <i class="fas fa-calculator"></i> Designated Accounting Staff:
+                <div class="form-group officer-name-field">
+                    <label for="accounting_staff">
+                        <i class="fas fa-calculator"></i> Designated Accounting Staff: <span class="required-indicator" aria-hidden="true">*</span>
                     </label>
                     <input
                         type="text"
@@ -247,66 +208,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         name="accounting_staff" required maxlength="255" value="<?= htmlspecialchars($accounting_value, ENT_QUOTES, 'UTF-8') ?>"
                         placeholder="Enter name"
                         autocomplete="off"
-                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+
                     >
-                    <div id="accounting_staff_dropdown" class="autocomplete-dropdown"></div>
+                    <div id="accounting_staff_dropdown" class="autocomplete-dropdown officer-dropdown"></div>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label for="report_date" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155; font-size: 14px;">
-                        <i class="fas fa-calendar"></i> Date:
+                <div class="form-group">
+                    <label for="report_date">
+                        <i class="fas fa-calendar"></i> Date: <span class="required-indicator" aria-hidden="true">*</span>
                     </label>
                     <input
                         type="date"
                         id="report_date"
                         name="report_date" required
                         value="<?= htmlspecialchars($report_date, ENT_QUOTES) ?>"
-                        style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: all 0.3s ease;"
+
                     >
                 </div>
                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['rsmi_csrf'], ENT_QUOTES) ?>">
             </form>
-            <style>
-                #signatureForm input:hover {
-                    border-color: #cbd5e1;
-                }
-                #signatureForm input:focus {
-                    outline: none;
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                }
-                .autocomplete-dropdown {
-                    position: absolute;
-                    top: 100%;
-                    left: 0;
-                    right: 0;
-                    background: white;
-                    border: none;
-                    border-radius: 0 0 6px 6px;
-                    max-height: 250px;
-                    overflow-y: auto;
-                    display: none;
-                    z-index: 1000;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                }
-                .autocomplete-item {
-                    padding: 10px 12px;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                }
-                .autocomplete-item:hover {
-                    background: #f0f4f8;
-                }
-                .autocomplete-item.selected {
-                    background: #3b82f6;
-                    color: white;
-                }
-            </style>
+        </section>
+        <div class="actions">
+            <button type="submit" form="signatureForm" class="pill-btn pill-add"><i class="fas fa-save" aria-hidden="true"></i> Save Document</button>
+            <a href="office_supplies/rsmi.php" class="pill-btn pill-view"><i class="fas fa-ban" aria-hidden="true"></i> Cancel</a>
         </div>
-
-        <!-- Save Document -->
-        <div class="search-add-container">
-            <button type="submit" form="signatureForm" class="btn btn-success"><i class="fas fa-save"></i> Save RSMI Document</button>
-        </div>
+    </div>
     </div>
 
     <?php require_once dirname(__DIR__) . '/functions.php'; renderOfficerDropdownOptions($conn); ?>
@@ -320,6 +245,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Officer names for autocomplete
 
         document.addEventListener('DOMContentLoaded', function() {
+            const recapTable = document.getElementById('recapTable');
+            const recapViewport = recapTable.closest('.table-viewport');
+            const sixthRecapRow = recapTable.tBodies[0].rows[5];
+            if (sixthRecapRow) {
+                const fitRecapRows = () => {
+                    const rowsHeight = sixthRecapRow.getBoundingClientRect().bottom - recapTable.getBoundingClientRect().top;
+                    const scrollbarHeight = recapViewport.offsetHeight - recapViewport.clientHeight;
+                    recapViewport.style.maxHeight = Math.ceil(rowsHeight + scrollbarHeight) + 'px';
+                };
+                fitRecapRows();
+                new ResizeObserver(fitRecapRows).observe(recapTable);
+            }
+
             const menuButton = document.querySelector('.menu-button');
             if (menuButton) {
                 menuButton.addEventListener('click', toggleSidebar);

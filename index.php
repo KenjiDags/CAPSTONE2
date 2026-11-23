@@ -220,6 +220,27 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
         input[type="checkbox"] {
             margin-right: 6px;
         }
+        .password-toggle-wrapper {
+            position: relative;
+        }
+        .password-toggle-wrapper #password {
+            padding-right: 48px;
+        }
+        .password-toggle-wrapper .password-toggle {
+            position: absolute;
+            inset: 0 4px 0 auto;
+            display: grid;
+            place-items: center;
+            width: 40px;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            color: #475569;
+        }
+        .password-toggle:hover { color: #0066cc; }
+        .password-toggle svg { width: 20px; height: 20px; }
+        .password-toggle[aria-pressed="false"] .eye-slash,
+        .password-toggle[aria-pressed="true"] .eye { display: none; }
         .error { 
             color: #dc3545; 
             margin-bottom: 16px; 
@@ -329,7 +350,15 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" required>
+                <div class="password-toggle-wrapper">
+                    <input type="password" name="password" id="password" autocomplete="current-password" required>
+                    <button type="button" class="password-toggle" id="login-password-toggle" aria-label="Show password" aria-controls="password" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <g class="eye"><path d="M2 12C2 12 6 5 12 5s10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></g>
+                            <path class="eye-slash" d="m3 3 18 18M10.5 5.1 12 5c6 0 10 7 10 7a19 19 0 0 1-3 3.8M6.5 6.5A20 20 0 0 0 2 12s4 7 10 7c1.5 0 2.9-.4 4.1-1M10 10a3 3 0 0 0 4 4"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="form-group remember-group">
                 <input type="checkbox" name="remember" id="remember" <?= $remember_checked ? 'checked' : '' ?>>
@@ -337,6 +366,15 @@ $logged_out = isset($_GET['logged_out']) && $_GET['logged_out'] === '1';
             </div>
             <button type="submit">Login</button>
         </form>
+        <script>
+            const loginPassword = document.getElementById('password');
+            const loginPasswordToggle = document.getElementById('login-password-toggle');
+            loginPasswordToggle.addEventListener('click', () => {
+                const visible = loginPassword.type === 'password';
+                loginPassword.type = visible ? 'text' : 'password';
+                loginPasswordToggle.setAttribute('aria-pressed', String(visible));
+            });
+        </script>
         <?php endif; ?>
 
         <div class="signup-link">
