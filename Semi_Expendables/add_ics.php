@@ -572,11 +572,16 @@ function generateICSNumberSimple($conn) {
                                 } else {
                                     $result = $conn->query("SELECT * FROM semi_expendable_property WHERE ((NOT EXISTS (SELECT 1 FROM iirusp_items disposed_item WHERE disposed_item.semi_expendable_property_no COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci) OR (COALESCE(semi_expendable_property.quantity, 0) > 0 AND (COALESCE(semi_expendable_property.quantity_balance, 0) > 0 OR COALESCE(semi_expendable_property.quantity_issued, 0) > 0 OR COALESCE(semi_expendable_property.quantity_reissued, 0) > 0))) OR EXISTS (SELECT 1 FROM ics_items saved_item WHERE saved_item.ics_id = $savedIcsId AND saved_item.stock_number COLLATE utf8mb4_general_ci = semi_expendable_property.semi_expendable_property_no COLLATE utf8mb4_general_ci)) ORDER BY date DESC, id DESC");
                                 }
-                                if ($result && $result->num_rows > 0) {
+                                $hasVisibleItems = false;
+                                if ($result) {
                                     while ($row = $result->fetch_assoc()) {
                                         $stock_number = $row['semi_expendable_property_no'];
                                         $existing_item = $ics_items[$stock_number] ?? null;
                                         $qtyOnHand = icsAvailableQuantity($row, (int)($existing_item['quantity'] ?? 0));
+                                        if ($qtyOnHand === 0 && $existing_item === null) {
+                                            continue;
+                                        }
+                                        $hasVisibleItems = true;
                                         $unitCost = (float)($row['amount'] ?? 0);
                                         $remarks = $row['remarks'] ?? '';
                                         $existingDesc = $existing_item && isset($existing_item['description']) ? (string)$existing_item['description'] : '';
@@ -599,8 +604,9 @@ function generateICSNumberSimple($conn) {
                                 echo '<td><input type="text" name="estimated_useful_life[]" value="' . ($existing_item ? htmlspecialchars($existing_item['estimated_useful_life']) : htmlspecialchars($row['estimated_useful_life'])) . '" placeholder="e.g., 5 years"></td>';
                                 echo '</tr>';
                             }
-                        } else {
-                            echo '<tr id="no-items-row"><td colspan="8">No semi-expendable items found.</td></tr>';
+                        }
+                        if (!$hasVisibleItems) {
+                            echo '<tr id="no-items-row"><td colspan="8">No semi-expendable items with available stock found.</td></tr>';
                         }
                         ?>
                     </tbody>
