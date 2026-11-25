@@ -23,6 +23,9 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Sorting
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'date_newest';
+$editQuery = ['from' => 'list', 'sort' => $sort_by, 'search' => $search];
+$savedReport = $_SESSION['ppe_iirup_saved']['list'] ?? null;
+unset($_SESSION['ppe_iirup_saved']['list']);
 switch ($sort_by) {
     case 'id':
         $order_clause = "ORDER BY id ASC"; break;
@@ -119,6 +122,9 @@ $result = $conn->query($query);
 <?php include dirname(__DIR__) . '/sidebar.php'; ?>
 <div class="container">
     <h2>Inventory and Inspection Report of Unserviceable PPE (IIRUP)</h2>
+    <?php if ($savedReport !== null): ?>
+        <div class="alert alert-success" role="status">PPE IIRUP #<?= (int)$savedReport ?> saved successfully.</div>
+    <?php endif; ?>
 
   <form id="ppe-iirup-filters" method="get" class="filters" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
@@ -186,7 +192,7 @@ $result = $conn->query($query);
                                             <i class="fas fa-eye"></i> View
                                         </a>
 
-                                        <a href="edit_ppe_iirup.php?id=<?= (int)$row['id'] ?>" class="edit-action">
+                                        <a href="PPE/edit_ppe_iirup.php?<?= htmlspecialchars(http_build_query(['id' => (int)$row['id']] + $editQuery), ENT_QUOTES, 'UTF-8') ?>" class="edit-action">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
 

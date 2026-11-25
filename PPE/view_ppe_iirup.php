@@ -31,6 +31,8 @@ while ($row = $items_result->fetch_assoc()) {
     $items[] = $row;
 }
 $items_stmt->close();
+$reportSaved = isset($_SESSION['ppe_iirup_saved']['detail'][$iirup_id]);
+unset($_SESSION['ppe_iirup_saved']['detail'][$iirup_id]);
 
 function h($value)
 {
@@ -72,10 +74,13 @@ function date_or_na($value)
 
 <div class="container">
     <h2><i class="fas fa-file-alt" aria-hidden="true"></i> View PPE IIRUP #<?= (int) $iirup['id'] ?></h2>
+    <?php if ($reportSaved): ?>
+        <div class="alert alert-success" role="status">PPE IIRUP saved successfully.</div>
+    <?php endif; ?>
 
     <div class="ris-actions">
         <a href="PPE/PPE_iirup.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
-        <a href="edit_ppe_iirup.php?id=<?= (int) $iirup['id'] ?>" class="btn btn-success"><i class="fas fa-edit"></i> Edit IIRUP</a>
+        <a href="PPE/edit_ppe_iirup.php?id=<?= (int) $iirup['id'] ?>" class="btn btn-success"><i class="fas fa-edit"></i> Edit IIRUP</a>
         <a href="PPE/PPE_iirup_export.php?id=<?= (int) $iirup['id'] ?>" class="btn btn-success"><i class="fas fa-download"></i> Export</a>
     </div>
 
